@@ -1,12 +1,12 @@
 package crestedbutte
 
 import crestedbutte.Location.StopLocation
-import crestedbutte.dom.Bulma
+import crestedbutte.dom.BulmaLocal
 import crestedbutte.time.{BusDuration, BusTime}
 import org.scalajs.dom.html.{Anchor, Div}
 import scalatags.JsDom
 
-object TagsOnly {
+object TagsOnlyLocal {
   import scalatags.JsDom.all._
 
   def createPopupContent(scheduleAtStop: BusScheduleAtStop) =
@@ -41,7 +41,7 @@ object TagsOnly {
   def overallPageLayout(pageMode: AppMode.Value,
                         componentData: Seq[ComponentData]) =
     div(id := "container")(
-      Bulma.menu(componentData),
+      BulmaLocal.menu(componentData),
       componentData.map(
         singleComponentData =>
           busScheduleDiv(singleComponentData.componentName),
@@ -167,7 +167,7 @@ object TagsOnly {
       )(stopTimeInfo.time.toDumbAmericanString),
       div(cls := "wait-time")(
         renderWaitTime(stopTimeInfo.waitingDuration),
-        Bulma.bulmaModal(
+        BulmaLocal.bulmaModal(
           busScheduleAtStop,
           modalContentElementName(busScheduleAtStop.location,
                                   routeName),
@@ -194,7 +194,7 @@ object TagsOnly {
             UpcomingArrivalInfo(location, content),
             fullScheduleAtStop,
             ) => {
-          TagsOnly.createBusTimeElement(
+          TagsOnlyLocal.createBusTimeElement(
             location,
             content match {
               case Left(stopTimeInfo) =>

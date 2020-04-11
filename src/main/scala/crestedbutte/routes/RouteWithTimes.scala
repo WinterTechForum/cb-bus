@@ -20,7 +20,9 @@ class RouteWithTimes(
             if (combinedStop.isDefined) {
               val (beforeStop, replacedStop :: afterStop) =
                 stopsAcc.splitAt(
-                  stopsAcc.indexWhere(_.location == nextStop.location),
+                  stopsAcc.indexWhere(
+                    _.location == nextStop.location,
+                  ),
                 )
               beforeStop :+ combinedStop.get :++ afterStop
             } else {
