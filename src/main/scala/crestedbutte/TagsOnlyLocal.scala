@@ -48,6 +48,7 @@ object TagsOnlyLocal {
             data("route") := componentData.componentName,
           )(componentData.namedRoute.routeName.userFriendlyName)
         },
+        "Routes",
       ),
       allComponentData.map(
         singleComponentData =>
