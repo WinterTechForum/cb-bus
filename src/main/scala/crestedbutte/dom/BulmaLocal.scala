@@ -37,13 +37,4 @@ object BulmaLocal {
       button(cls := "modal-close is-large", aria.label := "close")(),
     )
 
-  def menu(allComponentData: Seq[ComponentData]) =
-    Bulma.menu(
-      allComponentData.map { componentData =>
-        a(
-          cls := "navbar-item route using-library",
-          data("route") := componentData.componentName,
-        )(componentData.namedRoute.routeName.userFriendlyName + "_")
-      },
-    )
 }

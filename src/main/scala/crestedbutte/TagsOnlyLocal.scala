@@ -1,7 +1,7 @@
 package crestedbutte
 
 import crestedbutte.Location.StopLocation
-import crestedbutte.dom.BulmaLocal
+import crestedbutte.dom.{Bulma, BulmaLocal}
 import crestedbutte.time.{BusDuration, BusTime}
 import org.scalajs.dom.html.{Anchor, Div}
 import scalatags.JsDom
@@ -39,10 +39,17 @@ object TagsOnlyLocal {
     )
 
   def overallPageLayout(pageMode: AppMode.Value,
-                        componentData: Seq[ComponentData]) =
+                        allComponentData: Seq[ComponentData]) =
     div(id := "container")(
-      BulmaLocal.menu(componentData),
-      componentData.map(
+      Bulma.menu(
+        allComponentData.map { componentData =>
+          a(
+            cls := "navbar-item route using-library",
+            data("route") := componentData.componentName,
+          )(componentData.namedRoute.routeName.userFriendlyName)
+        },
+      ),
+      allComponentData.map(
         singleComponentData =>
           busScheduleDiv(singleComponentData.componentName),
       ),
