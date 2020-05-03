@@ -1,6 +1,7 @@
 package crestedbutte
 
-import crestedbutte.time.{BusDuration, BusTime}
+import com.billding.time.BusTime
+import com.billding.time.BusDuration
 
 case class BusScheduleAtStop(location: Location.Value,
                              times: Seq[BusTime]) {

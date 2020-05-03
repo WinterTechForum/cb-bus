@@ -1,15 +1,9 @@
 package crestedbutte
 
-import zio._
-import zio.console._
-import zio.test.{DefaultRunnableSpec, test, testM, _}
+import com.billding.time.BusDuration.toBusDuration
+import com.billding.time.BusTime
 import zio.test.Assertion._
-import zio.test.environment._
-import crestedbutte.TimeCalculations
-import crestedbutte.time.{BusDuration, BusTime}
-import crestedbutte.time.BusDuration.toBusDuration
-
-import scala.util.Success // Enables Int.minutes syntax
+import zio.test.{DefaultRunnableSpec, test, _} // Enables Int.minutes syntax
 
 object BusTimeSpec
     extends DefaultRunnableSpec(

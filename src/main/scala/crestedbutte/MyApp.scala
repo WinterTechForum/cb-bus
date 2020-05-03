@@ -2,7 +2,7 @@ package crestedbutte
 
 import java.util.concurrent.TimeUnit
 
-import crestedbutte.time.BusTime
+import com.billding.time.{BusTime, ColoradoClock, TurboClock}
 import crestedbutte.dom.BulmaBehaviorLocal
 import crestedbutte.routes._
 import org.scalajs.dom.experimental.serviceworkers._
@@ -88,7 +88,8 @@ object MyApp extends App {
       )
       _ <- UnsafeCallbacks.attachMenuBehavior
       environmentDependencies = if (fixedTime.isDefined)
-        new FixedClock.Fixed(
+        // TODO make TURBO
+        new TurboClock.TurboClock(
           s"2020-02-20T${fixedTime.get.toString}:00.00-07:00",
         ) with Console.Live with BrowserLive
       else
@@ -108,7 +109,7 @@ object MyApp extends App {
           // TODO Try to provide *only* a clock here.
           environmentDependencies,
         )
-        .repeat(Schedule.spaced(Duration.apply(10, TimeUnit.SECONDS)))
+        .repeat(Schedule.spaced(Duration.apply(1, TimeUnit.SECONDS)))
     } yield {
       0
     }

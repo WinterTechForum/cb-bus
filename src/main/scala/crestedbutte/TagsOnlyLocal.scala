@@ -2,7 +2,8 @@ package crestedbutte
 
 import crestedbutte.Location.StopLocation
 import crestedbutte.dom.{Bulma, BulmaLocal}
-import crestedbutte.time.{BusDuration, BusTime}
+import com.billding.time.BusTime
+import com.billding.time.BusDuration
 import org.scalajs.dom.html.{Anchor, Div}
 import scalatags.JsDom
 

@@ -1,6 +1,6 @@
 package crestedbutte.routes
 
-import crestedbutte.time.BusDuration.toBusDuration
+import com.billding.time.BusDuration.toBusDuration
 import crestedbutte._
 
 object RtaSouthbound {

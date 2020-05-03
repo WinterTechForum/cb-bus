@@ -1,7 +1,6 @@
 package crestedbutte.routes
 
-import crestedbutte.time.BusDuration
-import crestedbutte.time.BusDuration.toBusDuration
+import com.billding.time.BusDuration.toBusDuration
 import crestedbutte.{
   BusSchedule,
   BusScheduleAtStop,
@@ -40,4 +39,4 @@ object CrystalCastleShuttle
           (Location.HunterHillTimberline, 2.minutes),
         ),
       ),
-    )
+    ) {}

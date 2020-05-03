@@ -1,6 +1,6 @@
 package crestedbutte
 
-import crestedbutte.time.BusTime
+import com.billding.time.BusTime
 import zio.ZIO
 import zio.clock.Clock
 

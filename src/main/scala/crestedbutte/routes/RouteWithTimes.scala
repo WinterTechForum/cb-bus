@@ -1,7 +1,7 @@
 package crestedbutte.routes
 
 import crestedbutte.{BusScheduleAtStop, Location}
-import crestedbutte.time.BusDuration
+import com.billding.time.BusDuration
 
 class RouteWithTimes(
   val allStops: Seq[BusScheduleAtStop],

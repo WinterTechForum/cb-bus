@@ -7,7 +7,7 @@ import crestedbutte.{
   NamedRoute,
   RouteName,
 }
-import crestedbutte.time.BusDuration.toBusDuration
+import com.billding.time.BusDuration.toBusDuration
 
 /*
   Every 60 minutes from 8:25 AM to 10:25 PM

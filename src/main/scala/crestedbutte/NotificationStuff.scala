@@ -1,6 +1,6 @@
 package crestedbutte
 
-import crestedbutte.time.BusTime
+import com.billding.time.BusTime
 import org.scalajs.dom
 import org.scalajs.dom.MouseEvent
 import org.scalajs.dom.experimental.{

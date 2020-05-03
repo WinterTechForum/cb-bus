@@ -1,13 +1,12 @@
 package crestedbutte.dom
 
-import crestedbutte.{BusScheduleAtStop, ComponentData}
-import crestedbutte.TagsOnlyLocal.svgIconForAlarm
+import crestedbutte.BusScheduleAtStop
 
 object BulmaLocal {
   import scalatags.JsDom.all._
 
   def bulmaModal(scheduleAtStop: BusScheduleAtStop, idValue: String) =
-    Bulma.bulmaModal(
+    Bulma.modal(
       div(
         h4(textAlign := "center")(
           scheduleAtStop.location.name,

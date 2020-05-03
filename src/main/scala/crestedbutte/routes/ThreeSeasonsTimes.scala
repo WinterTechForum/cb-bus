@@ -7,7 +7,7 @@ import crestedbutte.{
   NamedRoute,
   RouteName,
 }
-import crestedbutte.time.BusDuration.toBusDuration
+import com.billding.time.BusDuration.toBusDuration
 
 /*
 

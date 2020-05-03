@@ -7,7 +7,7 @@ import crestedbutte.{
   NamedRoute,
   RouteName,
 }
-import crestedbutte.time.BusDuration.toBusDuration
+import com.billding.time.BusDuration.toBusDuration
 
 /*
   Regular Winter Schedule: November 27th through April 12th
