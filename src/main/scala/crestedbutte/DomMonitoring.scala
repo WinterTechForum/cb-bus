@@ -4,9 +4,9 @@ import zio.ZIO
 
 object DomMonitoring {
 
-  val modalIsOpen: ZIO[Browser, Nothing, Boolean] =
+  val modalIsOpen: ZIO[BrowserLive, Nothing, Boolean] =
     ZIO
-      .environment[Browser]
+      .environment[BrowserLive]
       .map { browser =>
         browser.browser
           .body()

@@ -19,8 +19,8 @@ object NotificationStuff {
   desiredAlarms.empty
 
   val addNotificationPermissionRequestToButton
-    : ZIO[Browser, Nothing, Unit] =
-    ZIO.environment[Browser].map { browser =>
+    : ZIO[BrowserLive, Nothing, Unit] =
+    ZIO.environment[BrowserLive].map { browser =>
       val requestPermissionButton =
         browser.browser
           .body()
@@ -51,7 +51,7 @@ object NotificationStuff {
         )
     }
 
-  val addAlarmBehaviorToTimes = ZIO.environment[Browser].map {
+  val addAlarmBehaviorToTimes = ZIO.environment[BrowserLive].map {
     browser =>
       if (Notification.permission == "granted") {
         browser.browser
@@ -126,8 +126,8 @@ object NotificationStuff {
       ()
     }
 
-  val displayNotificationPermission = ZIO.environment[Browser].map {
-    browser =>
+  val displayNotificationPermission =
+    ZIO.environment[BrowserLive].map { browser =>
       val actionButton =
         browser.browser
           .body()
@@ -152,5 +152,5 @@ object NotificationStuff {
 
             },
           )
-  }
+    }
 }

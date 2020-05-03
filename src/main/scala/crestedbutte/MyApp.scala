@@ -2,6 +2,7 @@ package crestedbutte
 
 import java.util.concurrent.TimeUnit
 
+import crestedbutte.time.BusTime
 import crestedbutte.dom.BulmaBehaviorLocal
 import crestedbutte.routes._
 import org.scalajs.dom.experimental.serviceworkers._
@@ -27,9 +28,10 @@ object MyApp extends App {
   def loopLogic(
     pageMode: AppMode.Value,
     components: Seq[ComponentData],
-  ): ZIO[Browser with Clock with Console, Nothing, Unit] =
+  ): ZIO[BrowserLive with Clock with Console, Nothing, Unit] =
     for {
-      routeNameOpt <- QueryParameters.getRouteQueryParamValue
+      routeNameOpt <- QueryParameters.getOptional("route",
+                                                  x => Some(x))
       selectedComponent: ComponentData = routeNameOpt
         .flatMap(
           routeNameStringParam =>
@@ -70,12 +72,16 @@ object MyApp extends App {
       ),
     )
 
-  val fullApplicationLogic: ZIO[Clock with Browser, Nothing, Int] =
+  val fullApplicationLogic
+    : ZIO[Clock with BrowserLive, Nothing, Int] =
     for {
-      pageMode <- QueryParameters.getCurrentPageMode.map(
-        _.getOrElse(AppMode.Production),
-      )
-      fixedTime <- QueryParameters.getCurrentTimeParamValue
+      pageMode <- QueryParameters
+        .getOptional("mode", AppMode.fromString)
+        .map(
+          _.getOrElse(AppMode.Production),
+        )
+      fixedTime <- QueryParameters.getOptional("time",
+                                               x => Some(BusTime(x)))
       _ <- DomManipulation.createAndApplyPageStructure(
         pageMode,
         components,
@@ -132,7 +138,7 @@ object MyApp extends App {
   def updateUpcomingArrivalsOnPage(
     selectedRoute: ComponentData,
     components: Seq[ComponentData],
-  ): ZIO[Browser with Clock with Console, Nothing, Unit] =
+  ): ZIO[BrowserLive with Clock with Console, Nothing, Unit] =
     for {
       modalIsOpen <- DomMonitoring.modalIsOpen
       _ <- if (modalIsOpen) ZIO.succeed()
@@ -149,7 +155,7 @@ object MyApp extends App {
 
   def registerServiceWorker() =
     ZIO
-      .environment[Browser]
+      .environment[BrowserLive]
       .map { browser =>
         // TODO Ew. Try to get this removed after first version of PWA is working
         import scala.concurrent.ExecutionContext.Implicits.global

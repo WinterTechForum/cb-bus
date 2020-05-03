@@ -8,7 +8,7 @@ object UnsafeCallbacks {
 
   val attachMenuBehavior =
     ZIO
-      .environment[Browser]
+      .environment[BrowserLive]
       .map(
         browser =>
           browser.browser
@@ -19,7 +19,7 @@ object UnsafeCallbacks {
               (_: Any) => {
 
                 def menuCallbackBehavior(node: Node,
-                                         browser: Browser) =
+                                         browser: BrowserLive) =
                   (_: MouseEvent) =>
                     // Get the target from the "data-target" attribute
                     // POTENTIALLY VERY EXPENSIVE. It's jumping back to the root of the document with this search.

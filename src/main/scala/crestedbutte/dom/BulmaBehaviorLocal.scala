@@ -1,6 +1,6 @@
 package crestedbutte.dom
 
-import crestedbutte.Browser
+import crestedbutte.BrowserLive
 import org.scalajs.dom.{Element, Event}
 import org.scalajs.dom.raw.MouseEvent
 import zio.{DefaultRuntime, IO, ZIO}
@@ -9,7 +9,7 @@ object BulmaBehaviorLocal {
 
   def addMenuBehavior(input: IO[Nothing, Unit]) =
     ZIO
-      .environment[Browser]
+      .environment[BrowserLive]
       .map { browser =>
         browser.browser
           .querySelector(
@@ -55,7 +55,7 @@ object BulmaBehaviorLocal {
   // This isn't really Bulma specific, rather than the .is-active class
   def hideOnClickOutside(element: Element) =
     ZIO
-      .environment[Browser]
+      .environment[BrowserLive]
       .map { browser =>
         println("setting up click-outside-menu behavior")
         def outsideClickListener(): MouseEvent => Unit =

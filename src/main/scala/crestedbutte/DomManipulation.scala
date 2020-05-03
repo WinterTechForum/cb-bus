@@ -11,9 +11,9 @@ object DomManipulation {
   def createAndApplyPageStructure(
     pageMode: AppMode.Value,
     componentData: Seq[ComponentData],
-  ): ZIO[Browser, Nothing, Node] =
+  ): ZIO[BrowserLive, Nothing, Node] =
     ZIO
-      .environment[Browser]
+      .environment[BrowserLive]
       .map { browser =>
         browser.browser
           .querySelector("#landing-message")
@@ -29,9 +29,9 @@ object DomManipulation {
 
   def appendMessageToPage(
     message: String,
-  ): ZIO[Browser, Throwable, Unit] =
+  ): ZIO[BrowserLive, Throwable, Unit] =
     ZIO
-      .environment[Browser]
+      .environment[BrowserLive]
       .map[Unit](
         browser => {
           println("Should show timezones: " + message)
@@ -44,9 +44,9 @@ object DomManipulation {
   def updateUpcomingBusSectionInsideElement(
     elementName: String,
     newContent: JsDom.TypedTag[Div],
-  ): ZIO[Browser, Nothing, Unit] =
+  ): ZIO[BrowserLive, Nothing, Unit] =
     ZIO
-      .environment[Browser]
+      .environment[BrowserLive]
       .map { browser =>
         browser.browser
           .querySelector(s"#$elementName") // TODO Handle case where this is missing
@@ -65,9 +65,9 @@ object DomManipulation {
 
   def hideUpcomingBusSectionInsideElement(
     elementName: String,
-  ): ZIO[Browser, Nothing, Unit] =
+  ): ZIO[BrowserLive, Nothing, Unit] =
     ZIO
-      .environment[Browser]
+      .environment[BrowserLive]
       .map { browser =>
         browser.browser
           .querySelector(s"#$elementName") // TODO Handle case where this is missing

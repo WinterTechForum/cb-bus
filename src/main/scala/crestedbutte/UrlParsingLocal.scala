@@ -2,7 +2,7 @@ package crestedbutte
 
 import scala.scalajs.js
 
-object UrlParsing {
+object UrlParsingLocal {
 
   def parseRawUrl(rawUrl: String) =
     java.net.URI
