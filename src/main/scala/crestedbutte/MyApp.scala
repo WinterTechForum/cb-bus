@@ -30,8 +30,7 @@ object MyApp extends App {
     components: Seq[ComponentData],
   ): ZIO[BrowserLive with Clock with Console, Nothing, Unit] =
     for {
-      routeNameOpt <- QueryParameters.getOptional("route",
-                                                  x => Some(x))
+      routeNameOpt <- QueryParameters.getOptional("route")
       selectedComponent: ComponentData = routeNameOpt
         .flatMap(
           routeNameStringParam =>
