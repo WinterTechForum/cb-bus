@@ -143,7 +143,8 @@ object MyApp extends App {
   ): ZIO[BrowserLive with Clock with Console, Nothing, Unit] =
     for {
       modalIsOpen <- DomMonitoring.modalIsOpen
-      _ <- if (modalIsOpen) ZIO.succeed()
+    } yield
+      if (modalIsOpen) ZIO.succeed()
       else
         ZIO.sequence(
           components.map(
@@ -153,7 +154,6 @@ object MyApp extends App {
             ),
           ),
         )
-    } yield ()
 
   def registerServiceWorker() =
     ZIO
