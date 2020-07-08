@@ -10,7 +10,7 @@ object ModalBehavior {
 
   val addModalOpenBehavior =
     ZIO
-      .environment[BrowserLive]
+      .environment[Browser]
       .map { browser =>
         def activateModal(targetName: String): Unit =
           browser.browser
@@ -65,7 +65,7 @@ object ModalBehavior {
           }
       }
 
-  def removeClippedHtml(browser: BrowserLive) =
+  def removeClippedHtml(browser: Browser) =
     browser.browser.workOnFullHtmlElement(
       _.classList
         .remove("is-clipped"),
@@ -73,7 +73,7 @@ object ModalBehavior {
 
   val addModalCloseBehavior =
     ZIO
-      .environment[BrowserLive]
+      .environment[Browser]
       .map(
         browser =>
           browser.browser
