@@ -81,11 +81,6 @@ object MyApp extends App {
         )
       fixedTime <- QueryParameters.getOptional("time",
                                                x => Some(BusTime(x)))
-      _ <- DomManipulation.createAndApplyPageStructure(
-        pageMode,
-        components,
-      )
-      _ <- UnsafeCallbacks.attachMenuBehavior
       environmentDependencies = if (fixedTime.isDefined)
         // TODO make TURBO
         new TurboClock.TurboClock(
@@ -93,6 +88,11 @@ object MyApp extends App {
         ) with Console.Live with BrowserLive
       else
         new ColoradoClock.Live with Console.Live with BrowserLive
+      _ <- DomManipulation.createAndApplyPageStructure(
+        pageMode,
+        components,
+      )
+      _ <- UnsafeCallbacks.attachMenuBehavior
       _ <- registerServiceWorker()
       _ <- NotificationStuff.addNotificationPermissionRequestToButton
       _ <- NotificationStuff.displayNotificationPermission
@@ -117,23 +117,25 @@ object MyApp extends App {
     componentData: ComponentData,
     currentlySelectedRoute: ComponentData,
   ) =
-    if (componentData == currentlySelectedRoute)
-      for {
-        arrivalsAtAllRouteStops <- TimeCalculations
-          .getUpComingArrivalsWithFullSchedule(
-            componentData.namedRoute,
+    componentData match {
+      case `currentlySelectedRoute` =>
+        for {
+          arrivalsAtAllRouteStops <- TimeCalculations
+            .getUpComingArrivalsWithFullSchedule(
+              componentData.namedRoute,
+            )
+          _ <- DomManipulation.updateUpcomingBusSectionInsideElement(
+            componentData.componentName,
+            TagsOnlyLocal.structuredSetOfUpcomingArrivals(
+              arrivalsAtAllRouteStops,
+            ),
           )
-        _ <- DomManipulation.updateUpcomingBusSectionInsideElement(
+        } yield ()
+      case other =>
+        DomManipulation.hideUpcomingBusSectionInsideElement(
           componentData.componentName,
-          TagsOnlyLocal.structuredSetOfUpcomingArrivals(
-            arrivalsAtAllRouteStops,
-          ),
         )
-      } yield ()
-    else
-      DomManipulation.hideUpcomingBusSectionInsideElement(
-        componentData.componentName,
-      )
+    }
 
   def updateUpcomingArrivalsOnPage(
     selectedRoute: ComponentData,
