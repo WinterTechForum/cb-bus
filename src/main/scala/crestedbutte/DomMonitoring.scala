@@ -1,14 +1,14 @@
 package crestedbutte
 
-import zio.ZIO
+import zio.{Has, ZIO}
 
 object DomMonitoring {
 
-  val modalIsOpen: ZIO[BrowserLive, Nothing, Boolean] =
+  val modalIsOpen: ZIO[Has[Browser.Service], Nothing, Boolean] =
     ZIO
-      .environment[BrowserLive]
+      .access[Has[Browser.Service]](_.get)
       .map { browser =>
-        browser.browser
+        browser
           .body()
           .querySelectorAll(".modal.is-active") // LONG SEARCH
           .length > 0

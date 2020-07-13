@@ -10,26 +10,22 @@ resolvers += "jitpack" at "https://jitpack.io"
 resolvers += Resolver.url("typesafe", url("http://repo.typesafe.com/typesafe/ivy-releases/"))(Resolver.ivyStylePatterns)
 resolvers += Resolver.githubPackages("swoogles", "BulmaScala")
 
+val zioVersion = "1.0.0-RC18"
 
 libraryDependencies ++= Seq(
   "default" %%% "bulmalibrary" % "0.2.14",
-  "com.billding" %%% "scalajsziolibrary" % "0.0.5",
-  "com.billding" %%% "brieftime" % "0.0.5",
-  "dev.zio" %%% "zio" % "1.0.0-RC17",
-  "dev.zio" %%% "zio-streams" % "1.0.0-RC17",
+  "com.billding" %%% "scalajsziolibrary" % "0.0.9",
+  "com.billding" %%% "brieftime" % "0.0.9",
+  "dev.zio" %%% "zio" % zioVersion,
+  "dev.zio" %%% "zio-streams" % zioVersion,
   "com.lihaoyi" %%% "scalatags" % "0.8.6",
   "org.scala-js" %%% "scalajs-dom" % "1.0.0",
   "io.github.cquiroz" %%% "scala-java-time" % "2.0.0-RC5",
-//  "io.github.cquiroz" %%% "scala-java-time-tzdb" % "2.0.0-RC3_2019a",
-//    libraryDependencies += "io.github.cquiroz" % "scala-java-time_2.13" % "2.0.0-RC3"
-  "dev.zio" %%% "zio-test"     % "1.0.0-RC17" % "tst",
-  "dev.zio" %%% "zio-test-sbt" % "1.0.0-RC17" % "test",
+  "dev.zio" %%% "zio-test"     % zioVersion % "test",
+  "dev.zio" %%% "zio-test-sbt" % zioVersion % "test",
   "com.lihaoyi" %%% "pprint" % "0.5.9",
   "com.github.japgolly.scalacss" %%% "core" % "0.6.0",
   "com.github.japgolly.scalacss" %%% "ext-scalatags" % "0.6.0",
-//  "io.github.outwatch" %%% "outwatch" % "1.0.0-RC2",
-  "com.github.outwatch.outwatch" %%% "outwatch" % "a332851",
-//  "com.raquo" %%% "laminar" % "0.8.0"   // Scala.js 1.x only
 )
 
 testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))

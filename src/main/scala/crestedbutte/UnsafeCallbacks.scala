@@ -2,16 +2,16 @@ package crestedbutte
 
 import org.scalajs.dom.Node
 import org.scalajs.dom.raw.MouseEvent
-import zio.ZIO
+import zio.{Has, ZIO}
 
 object UnsafeCallbacks {
 
-  val attachMenuBehavior =
+  val attachMenuBehavior: ZIO[Has[Browser.Service], Nothing, Unit] =
     ZIO
-      .environment[Browser]
+      .access[Has[Browser.Service]](_.get)
       .map(
         browser =>
-          browser.browser
+          browser
             .window()
             .document
             .addEventListener(
@@ -19,11 +19,11 @@ object UnsafeCallbacks {
               (_: Any) => {
 
                 def menuCallbackBehavior(node: Node,
-                                         browser: Browser) =
+                                         browser: Browser.Service) =
                   (_: MouseEvent) =>
                     // Get the target from the "data-target" attribute
                     // POTENTIALLY VERY EXPENSIVE. It's jumping back to the root of the document with this search.
-                    browser.browser
+                    browser
                       .querySelector(
                         "#" + node.attributes
                           .getNamedItem("data-target")
@@ -31,7 +31,7 @@ object UnsafeCallbacks {
                       )
                       .map(_.classList.toggle("is-active"))
 
-                browser.browser
+                browser
                   .querySelectorAll(".navbar-burger")
                   .foreach(
                     node =>

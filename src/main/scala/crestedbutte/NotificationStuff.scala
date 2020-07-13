@@ -7,7 +7,7 @@ import org.scalajs.dom.experimental.{
   Notification,
   NotificationOptions,
 }
-import zio.ZIO
+import zio.{Has, ZIO}
 import zio.clock.Clock
 
 import scala.collection.mutable
@@ -19,10 +19,10 @@ object NotificationStuff {
   desiredAlarms.empty
 
   val addNotificationPermissionRequestToButton
-    : ZIO[BrowserLive, Nothing, Unit] =
-    ZIO.environment[BrowserLive].map { browser =>
+    : ZIO[Has[Browser.Service], Nothing, Unit] =
+    ZIO.access[Has[Browser.Service]](_.get).map { browser =>
       val requestPermissionButton =
-        browser.browser
+        browser
           .body()
           .querySelector(
             s"#${ElementNames.Notifications.requestPermission}",
@@ -51,10 +51,10 @@ object NotificationStuff {
         )
     }
 
-  val addAlarmBehaviorToTimes = ZIO.environment[BrowserLive].map {
-    browser =>
+  val addAlarmBehaviorToTimes =
+    ZIO.access[Has[Browser.Service]](_.get).map { browser =>
       if (Notification.permission == "granted") {
-        browser.browser
+        browser
           .querySelectorAll(
             ".arrival-time-alarm",
           )
@@ -91,12 +91,12 @@ object NotificationStuff {
               )
           }
       }
-  }
+    }
 
-  val checkSubmittedAlarms: ZIO[Clock, Nothing, Unit] =
+  val checkSubmittedAlarms: ZIO[Has[Clock.Service], Nothing, Unit] =
     for {
-      clock <- ZIO.environment[Clock]
-      now   <- clock.clock.currentDateTime
+      clock <- ZIO.access[Has[Clock.Service]](_.get)
+      now   <- clock.currentDateTime
       localTime = new BusTime(now.toLocalTime)
     } yield {
       // TODO Make sure it's at least 2 minutes in the future (or whatever offset is appropriate)
@@ -127,9 +127,9 @@ object NotificationStuff {
     }
 
   val displayNotificationPermission =
-    ZIO.environment[BrowserLive].map { browser =>
+    ZIO.access[Has[Browser.Service]](_.get).map { browser =>
       val actionButton =
-        browser.browser
+        browser
           .body()
           .querySelector(
             s"#${ElementNames.Notifications.notificationAction}",

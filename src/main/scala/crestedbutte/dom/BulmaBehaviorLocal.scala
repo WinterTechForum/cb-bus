@@ -1,25 +1,27 @@
 package crestedbutte.dom
 
-import crestedbutte.BrowserLive
+import crestedbutte.Browser
 import org.scalajs.dom.{Element, Event}
 import org.scalajs.dom.raw.MouseEvent
-import zio.{DefaultRuntime, IO, ZIO}
+import zio.{DefaultRuntime, Has, IO, Task, ZIO}
 
 object BulmaBehaviorLocal {
 
-  def addMenuBehavior(input: IO[Nothing, Unit]) =
+  def addMenuBehavior(
+    input: IO[Nothing, Unit],
+  ): ZIO[Has[Browser.Service], Nothing, Option[Element]] =
     ZIO
-      .environment[BrowserLive]
+      .access[Has[Browser.Service]](_.get)
       .map { browser =>
-        browser.browser
+        browser
           .querySelector(
             "#main-menu",
           )
           .map { element =>
-            new DefaultRuntime {}
-              .unsafeRun(hideOnClickOutside(element).provide(browser))
+//            new DefaultRuntime {}
+//              .unsafeRun(hideOnClickOutside(element, browser))
 
-            browser.browser
+            browser
               .convertNodesToList(
                 element.querySelectorAll(".navbar-item .route"),
               )
@@ -29,18 +31,17 @@ object BulmaBehaviorLocal {
                   (_: MouseEvent) => {
                     val targetRoute =
                       node.attributes.getNamedItem("data-route").value
-                    if (browser.browser
+                    if (browser
                           .url()
                           .getPath
                           .contains("index_dev"))
-                      browser.browser.rewriteCurrentUrl("route",
-                                                        targetRoute)
+                      browser.rewriteCurrentUrl("route", targetRoute)
                     else
-                      browser.browser
+                      browser
                         .alterUrlWithNewValue("/index.html",
                                               "route",
                                               targetRoute)
-                    browser.browser
+                    browser
                       .querySelector("#navbarBasicExample")
                       .foreach(_.classList.remove("is-active"))
                     new DefaultRuntime {}.unsafeRun(input)
@@ -53,41 +54,40 @@ object BulmaBehaviorLocal {
       }
 
   // This isn't really Bulma specific, rather than the .is-active class
-  def hideOnClickOutside(element: Element) =
-    ZIO
-      .environment[BrowserLive]
-      .map { browser =>
-        println("setting up click-outside-menu behavior")
-        def outsideClickListener(): MouseEvent => Unit =
-          (event: MouseEvent) => {
-            println(
-              "you might have clicked outside of the main-menu!",
-            )
-            // TODO Get rid of terrible cast! It probably doesn't even work anyways!
+  def hideOnClickOutside(element: Element,
+                         browser: Browser.Service): Task[Unit] =
+    ZIO {
+      println("setting up click-outside-menu behavior")
+      def outsideClickListener(): MouseEvent => Unit =
+        (event: MouseEvent) => {
+          println(
+            "you might have clicked outside of the main-menu!",
+          )
+          // TODO Get rid of terrible cast! It probably doesn't even work anyways!
 //            if (!element.contains(*clickedElement*) && isVisible(
-            if (isVisible(
-                  element,
-                )) {
-              println(
-                "Just going to close the menu because you clicked on *anything*",
-              )
-              element.classList.remove("is-active")
-              removeClickListener() // TODO Make unsafe behavior more explicit
-            }
+          if (isVisible(
+                element,
+              )) {
+            println(
+              "Just going to close the menu because you clicked on *anything*",
+            )
+            element.classList.remove("is-active")
+            removeClickListener() // TODO Make unsafe behavior more explicit
           }
+        }
 
-        def removeClickListener() =
-          () =>
-            browser.browser
-              .window()
-              .document
-              .removeEventListener("click", outsideClickListener())
+      def removeClickListener() =
+        () =>
+          browser
+            .window()
+            .document
+            .removeEventListener("click", outsideClickListener())
 
-        browser.browser
-          .window()
-          .document
-          .addEventListener("click", outsideClickListener())
-      }
+      browser
+        .window()
+        .document
+        .addEventListener("click", outsideClickListener())
+    }
 
   val isVisible = (element: Element) =>
     element.classList.contains("is-active")

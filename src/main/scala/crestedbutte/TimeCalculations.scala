@@ -1,7 +1,7 @@
 package crestedbutte
 
 import com.billding.time.BusTime
-import zio.ZIO
+import zio.{Has, ZIO}
 import zio.clock.Clock
 
 object TimeCalculations {
@@ -57,10 +57,10 @@ object TimeCalculations {
 
   def getUpComingArrivals(
     busRoute: NamedRoute,
-  ): ZIO[Clock, Nothing, Seq[UpcomingArrivalInfo]] =
+  ): ZIO[Has[Clock.Service], Nothing, Seq[UpcomingArrivalInfo]] =
     for {
-      clockProper <- ZIO.environment[Clock]
-      now         <- clockProper.clock.currentDateTime
+      clockProper <- ZIO.access[Has[Clock.Service]](_.get)
+      now         <- clockProper.currentDateTime
       localTime = new BusTime(now.toLocalTime)
     } yield {
       TimeCalculations.calculateUpcomingArrivalAtAllStops(
@@ -71,10 +71,10 @@ object TimeCalculations {
 
   def getUpComingArrivalsWithFullSchedule(
     busRoute: NamedRoute,
-  ): ZIO[Clock, Nothing, UpcomingArrivalComponentData] =
+  ): ZIO[Has[Clock.Service], Nothing, UpcomingArrivalComponentData] =
     for {
-      clockProper <- ZIO.environment[Clock]
-      now         <- clockProper.clock.currentDateTime
+      clockProper <- ZIO.access[Has[Clock.Service]](_.get)
+      now         <- clockProper.currentDateTime
       localTime = new BusTime(now.toLocalTime)
     } yield {
       UpcomingArrivalComponentData(

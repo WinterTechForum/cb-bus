@@ -3,7 +3,7 @@ package crestedbutte
 import org.scalajs.dom.html.Div
 import org.scalajs.dom.raw.Node
 import scalatags.JsDom
-import zio.ZIO
+import zio.{Has, ZIO}
 
 object DomManipulation {
   import scalatags.JsDom.all._
@@ -11,14 +11,14 @@ object DomManipulation {
   def createAndApplyPageStructure(
     pageMode: AppMode.Value,
     componentData: Seq[ComponentData],
-  ): ZIO[BrowserLive, Nothing, Node] =
+  ): ZIO[Has[Browser.Service], Nothing, Node] =
     ZIO
-      .environment[BrowserLive]
+      .access[Has[Browser.Service]](_.get)
       .map { browser =>
-        browser.browser
+        browser
           .querySelector("#landing-message")
-          .map(browser.browser.body().removeChild(_))
-        browser.browser
+          .map(browser.body().removeChild(_))
+        browser
           .body()
           .appendChild(
             TagsOnlyLocal
@@ -29,13 +29,13 @@ object DomManipulation {
 
   def appendMessageToPage(
     message: String,
-  ): ZIO[BrowserLive, Throwable, Unit] =
+  ): ZIO[Has[Browser.Service], Throwable, Unit] =
     ZIO
-      .environment[BrowserLive]
+      .access[Has[Browser.Service]](_.get)
       .map[Unit](
         browser => {
           println("Should show timezones: " + message)
-          browser.browser
+          browser
             .querySelector(".timezone")
             .foreach(_.appendChild(div(message).render))
         },
@@ -44,11 +44,11 @@ object DomManipulation {
   def updateUpcomingBusSectionInsideElement(
     elementName: String,
     newContent: JsDom.TypedTag[Div],
-  ): ZIO[BrowserLive, Nothing, Unit] =
+  ): ZIO[Has[Browser.Service], Nothing, Unit] =
     ZIO
-      .environment[BrowserLive]
+      .access[Has[Browser.Service]](_.get)
       .map { browser =>
-        browser.browser
+        browser
           .querySelector(s"#$elementName") // TODO Handle case where this is missing
           .foreach { routeElementResult =>
             routeElementResult
@@ -65,11 +65,11 @@ object DomManipulation {
 
   def hideUpcomingBusSectionInsideElement(
     elementName: String,
-  ): ZIO[BrowserLive, Nothing, Unit] =
+  ): ZIO[Has[Browser.Service], Nothing, Unit] =
     ZIO
-      .environment[BrowserLive]
+      .access[Has[Browser.Service]](_.get)
       .map { browser =>
-        browser.browser
+        browser
           .querySelector(s"#$elementName") // TODO Handle case where this is missing
           .foreach { routeElementResult =>
             routeElementResult.setAttribute(
