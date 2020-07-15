@@ -106,7 +106,6 @@ object MyApp extends App {
         )
       fixedTime <- getOptional("time", x => Some(BusTime(x)))
       environmentDependencies = if (fixedTime.isDefined)
-        // TODO make TURBO
         ZLayer.succeed(
           TurboClock.TurboClock(
             s"2020-02-20T${fixedTime.get.toString}:00.00-07:00",
@@ -132,11 +131,20 @@ object MyApp extends App {
             environmentDependencies,
           ),
       )
+      _ <- putStrLn("attached to menu")
       _ <- loopLogic(pageMode, components)
         .provideLayer(
           environmentDependencies,
         )
-        .repeat(Schedule.spaced(Duration.apply(1, TimeUnit.SECONDS)))
+        .repeat(
+          Schedule.forever
+            .addDelay(_ => Duration.apply(5, TimeUnit.SECONDS)),
+        )
+        //        .compose(Schedule.spaced(Duration.apply(5, TimeUnit.SECONDS)))
+        //        .delay(Duration.apply(5, TimeUnit.SECONDS))
+        //        .repeat(Schedule.spaced(Duration.apply(5, TimeUnit.SECONDS)))
+        //        .repeat(Schedule.spaced(Duration.apply(1, TimeUnit.SECONDS)))
+        .forever
     } yield {
       0
     }
@@ -156,7 +164,6 @@ object MyApp extends App {
           .getUpComingArrivalsWithFullSchedule(
             componentData.namedRoute,
           )
-        _ <- ZIO.succeed(pprint.pprintln(arrivalsAtAllRouteStops))
         _ <- DomManipulation.updateUpcomingBusSectionInsideElement(
           componentData.componentName,
           TagsOnlyLocal.structuredSetOfUpcomingArrivals(
