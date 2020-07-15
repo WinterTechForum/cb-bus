@@ -12,6 +12,7 @@ import zio.clock._
 import zio.console.Console
 import zio.duration.Duration
 import zio.{App, Has, Schedule, ZIO, ZLayer}
+import zio.console._
 
 import scala.util.{Failure, Success}
 
@@ -20,18 +21,15 @@ object MyApp extends App {
   override def run(
     args: List[String],
   ): ZIO[zio.ZEnv, Nothing, Int] = {
-    val console = ZLayer.succeed(Console.live)
+    val console = Console.live
     val clock =
       ZLayer.succeed(ColoradoClock.Live)
     val browser =
       ZLayer.succeed(BrowserLive.browser)
 
-    val myEnvironment
-      : ZLayer[Any, Nothing, Has[Clock.Service] with Has[
-        Browser.Service,
-      ]] =
+    val myEnvironment =
 //      console ++ clock ++ browser ++ zio.random.Random.live ++ zio.system.System.live
-      clock ++ browser
+      clock ++ browser ++ console
 
     fullApplicationLogic.provideLayer(myEnvironment)
   }
@@ -55,10 +53,9 @@ object MyApp extends App {
   def loopLogic(
     pageMode: AppMode.Value,
     components: Seq[ComponentData],
-  ): ZIO[Has[Clock.Service] with Has[Browser.Service],
-         Nothing,
-         Unit] =
+  ) =
     for {
+      _            <- putStrLn("loopin")
       routeNameOpt <- getOptional("route", x => Some(x))
       selectedComponent: ComponentData = routeNameOpt
         .flatMap(
@@ -71,10 +68,11 @@ object MyApp extends App {
         .getOrElse(components.head)
 
       _ <- updateUpcomingArrivalsOnPage(selectedComponent, components)
+      _ <- putStrLn("got past arrival updates")
       _ <- NotificationStuff.addAlarmBehaviorToTimes
       _ <- ModalBehavior.addModalOpenBehavior
       _ <- ModalBehavior.addModalCloseBehavior
-      _ <- NotificationStuff.checkSubmittedAlarms
+//      _ <- NotificationStuff.checkSubmittedAlarms
     } yield ()
 
   val mtnExpressRoutes =
@@ -100,9 +98,7 @@ object MyApp extends App {
       ),
     )
 
-  val fullApplicationLogic: ZIO[Has[Clock.Service] with Has[
-    Browser.Service,
-  ], Nothing, Int] =
+  val fullApplicationLogic =
     for {
       pageMode <- getOptional("mode", AppMode.fromString)
         .map(
@@ -117,11 +113,11 @@ object MyApp extends App {
           ),
         ) ++ ZLayer.succeed(
           BrowserLive.browser,
-        )
+        ) ++ Console.live
       else
         ZLayer.succeed(ColoradoClock.Live) ++ ZLayer.succeed(
           BrowserLive.browser,
-        )
+        ) ++ Console.live
       _ <- DomManipulation.createAndApplyPageStructure(
         pageMode,
         components,
@@ -148,42 +144,45 @@ object MyApp extends App {
   def updateUpcomingArrivalsForRoute(
     componentData: ComponentData,
     currentlySelectedRoute: ComponentData,
-  ): ZIO[Has[Browser.Service] with Has[Clock.Service],
+  ): ZIO[Has[Browser.Service] with Has[Clock.Service] with Console,
          Nothing,
          Unit] =
-    componentData match {
-      case `currentlySelectedRoute` =>
-        for {
-          arrivalsAtAllRouteStops <- TimeCalculations
-            .getUpComingArrivalsWithFullSchedule(
-              componentData.namedRoute,
-            )
-          _ <- DomManipulation.updateUpcomingBusSectionInsideElement(
-            componentData.componentName,
-            TagsOnlyLocal.structuredSetOfUpcomingArrivals(
-              arrivalsAtAllRouteStops,
-            ),
+    if (componentData == currentlySelectedRoute) {
+      println("sanity")
+      for {
+        _ <- ZIO.succeed(println("eh??"))
+        _ <- putStrLn("matched with backticks")
+        arrivalsAtAllRouteStops <- TimeCalculations
+          .getUpComingArrivalsWithFullSchedule(
+            componentData.namedRoute,
           )
-        } yield ()
-      case other =>
-        DomManipulation.hideUpcomingBusSectionInsideElement(
+        _ <- ZIO.succeed(pprint.pprintln(arrivalsAtAllRouteStops))
+        _ <- DomManipulation.updateUpcomingBusSectionInsideElement(
           componentData.componentName,
+          TagsOnlyLocal.structuredSetOfUpcomingArrivals(
+            arrivalsAtAllRouteStops,
+          ),
         )
+      } yield ()
+      putStrLn("running anything?!")
+    } else {
+      println("hiding: " + componentData)
+      DomManipulation.hideUpcomingBusSectionInsideElement(
+        componentData.componentName,
+      )
     }
 
   def updateUpcomingArrivalsOnPage(
     selectedRoute: ComponentData,
     components: Seq[ComponentData],
-  ): ZIO[Has[Browser.Service] with Has[Clock.Service],
+  ): ZIO[Has[Browser.Service] with Has[Clock.Service] with Console,
          Nothing,
-         Any,
-  ] =
+         Unit] =
     for {
       modalIsOpen <- DomMonitoring.modalIsOpen
-    } yield
-      if (modalIsOpen) ZIO.succeed()
-      else
-        ZIO.sequence(
+      _ <- if (modalIsOpen) ZIO.succeed(List())
+      else {
+        ZIO.collectAll(
           components.map(
             updateUpcomingArrivalsForRoute(
               _,
@@ -191,6 +190,8 @@ object MyApp extends App {
             ),
           ),
         )
+      }
+    } yield ()
 
   def registerServiceWorker()
     : ZIO[Has[Browser.Service], Nothing, Unit] =
@@ -205,23 +206,23 @@ object MyApp extends App {
           .toFuture
           .onComplete {
             case Success(registration) =>
-              browser
-                .querySelector(
-                  "#" + ElementNames.Notifications.submitMessageToServiceWorker,
-                )
-                .foreach(
-                  _.addEventListener(
-                    "click",
-                    (_: MouseEvent) => {
-                      println(
-                        "submitting message to service worker",
-                      )
-                      registration.active.postMessage(
-                        "Submitting a message to the serviceWorker!",
-                      )
-                    },
-                  ),
-                )
+//              browser
+//                .querySelector(
+//                  "#" + ElementNames.Notifications.submitMessageToServiceWorker,
+//                )
+//                .foreach(
+//                  _.addEventListener(
+//                    "click",
+//                    (_: MouseEvent) => {
+//                      println(
+//                        "submitting message to service worker",
+//                      )
+//                      registration.active.postMessage(
+//                        "Submitting a message to the serviceWorker!",
+//                      )
+//                    },
+//                  ),
+//                )
               registration.update()
             case Failure(error) =>
               println(

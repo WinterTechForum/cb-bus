@@ -9,6 +9,7 @@ import org.scalajs.dom.experimental.{
 }
 import zio.{Has, ZIO}
 import zio.clock.Clock
+import zio.console._
 
 import scala.collection.mutable
 import scala.scalajs.js
@@ -93,11 +94,12 @@ object NotificationStuff {
       }
     }
 
-  val checkSubmittedAlarms: ZIO[Has[Clock.Service], Nothing, Unit] =
+  val checkSubmittedAlarms =
     for {
       clock <- ZIO.access[Has[Clock.Service]](_.get)
       now   <- clock.currentDateTime
       localTime = new BusTime(now.toLocalTime)
+      _ <- putStrLn("got time")
     } yield {
       // TODO Make sure it's at least 2 minutes in the future (or whatever offset is appropriate)
       val busTimes = desiredAlarms.dequeueAll { _ =>
@@ -108,20 +110,22 @@ object NotificationStuff {
         if (localTime
               .between(busTime)
               .toMinutes >= headsUpAmount)
-          dom.window.setTimeout(
-            () =>
-              // Read submitted time, find difference between it and the current time, then submit a setInterval function
-              // with the appropriate delay
-              new Notification(
-                s"The ${busTime.toString} bus is arriving in ${headsUpAmount} minutes!",
-                NotificationOptions(
-                  vibrate = js.Array(100d),
-                ),
+          println("1")
+        dom.window.setTimeout(
+          () =>
+            // Read submitted time, find difference between it and the current time, then submit a setInterval function
+            // with the appropriate delay
+            new Notification(
+              s"The ${busTime.toString} bus is arriving in ${headsUpAmount} minutes!",
+              NotificationOptions(
+                vibrate = js.Array(100d),
               ),
-            (localTime
-              .between(busTime)
-              .toMinutes - headsUpAmount) * 60 * 1000,
-          )
+            ),
+          (localTime
+            .between(busTime)
+            .toMinutes - headsUpAmount) * 60 * 1000,
+        )
+        println("2")
       }
       ()
     }

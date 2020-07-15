@@ -77,6 +77,7 @@ object TimeCalculations {
       now         <- clockProper.currentDateTime
       localTime = new BusTime(now.toLocalTime)
     } yield {
+      println("in schedule code")
       UpcomingArrivalComponentData(
         TimeCalculations
           .calculateUpcomingArrivalWithFullScheduleAtAllStops(
