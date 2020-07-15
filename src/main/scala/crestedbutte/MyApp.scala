@@ -164,7 +164,6 @@ object MyApp extends App {
           ),
         )
       } yield ()
-      putStrLn("running anything?!")
     } else {
       println("hiding: " + componentData)
       DomManipulation.hideUpcomingBusSectionInsideElement(

@@ -69,11 +69,9 @@ object DomManipulation {
     ZIO
       .access[Has[Browser.Service]](_.get)
       .map { browser =>
-        println("about to hide element")
         browser
           .querySelector(s"#$elementName") // TODO Handle case where this is missing
           .foreach { routeElementResult =>
-            println("hiding element: " + elementName)
             routeElementResult.setAttribute(
               "style",
               "display:none",
