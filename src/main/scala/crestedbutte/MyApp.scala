@@ -133,18 +133,16 @@ object MyApp extends App {
       )
       _ <- putStrLn("attached to menu")
       _ <- loopLogic(pageMode, components)
-        .provideLayer(
-          environmentDependencies,
-        )
-        .repeat(
-          Schedule.forever
-            .addDelay(_ => Duration.apply(5, TimeUnit.SECONDS)),
-        )
-        //        .compose(Schedule.spaced(Duration.apply(5, TimeUnit.SECONDS)))
-        //        .delay(Duration.apply(5, TimeUnit.SECONDS))
-        //        .repeat(Schedule.spaced(Duration.apply(5, TimeUnit.SECONDS)))
-        //        .repeat(Schedule.spaced(Duration.apply(1, TimeUnit.SECONDS)))
-        .forever
+        .provideLayer(environmentDependencies)
+        .repeat(Schedule.spaced(Duration.apply(5, TimeUnit.SECONDS)))
+//      _ <- putStrLn("did my one loop").delay(
+//        Duration.apply(5, TimeUnit.SECONDS),
+//      )
+      //        .compose(Schedule.spaced(Duration.apply(5, TimeUnit.SECONDS)))
+      //        .delay(Duration.apply(5, TimeUnit.SECONDS))
+      //        .repeat(Schedule.spaced(Duration.apply(5, TimeUnit.SECONDS)))
+      //        .repeat(Schedule.spaced(Duration.apply(1, TimeUnit.SECONDS)))
+//        .forever
     } yield {
       0
     }
