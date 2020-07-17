@@ -133,8 +133,14 @@ object MyApp extends App {
       )
       _ <- putStrLn("attached to menu")
       _ <- loopLogic(pageMode, components)
+        .repeat(
+          //            Schedule.recurs(3),
+          Schedule.linear(Duration.apply(5, TimeUnit.SECONDS)),
+//          Schedule.spaced(Duration.apply(5, TimeUnit.SECONDS)),
+        )
         .provideLayer(environmentDependencies)
-        .repeat(Schedule.spaced(Duration.apply(5, TimeUnit.SECONDS)))
+//        .repeat(Schedule.spaced(Duration.apply(5, TimeUnit.SECONDS)))
+//        .forever
 //      _ <- putStrLn("did my one loop").delay(
 //        Duration.apply(5, TimeUnit.SECONDS),
 //      )
@@ -156,7 +162,7 @@ object MyApp extends App {
     if (componentData == currentlySelectedRoute) {
       println("sanity")
       for {
-        _ <- ZIO.succeed(println("eh??"))
+        _ <- ZIO.succeed(println("eh!!"))
         _ <- putStrLn("matched with backticks")
         arrivalsAtAllRouteStops <- TimeCalculations
           .getUpComingArrivalsWithFullSchedule(
