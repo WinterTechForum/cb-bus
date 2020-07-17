@@ -128,10 +128,10 @@ object MyApp extends App {
       _ <- putStrLn("attached to menu")
       _ <- loopingLogic
       //.forever
-        .repeat(
-          Schedule.recurs(3),
+//        .repeat(
+//          Schedule.recurs(3),
 //          Schedule.spaced(Duration.apply(5, TimeUnit.SECONDS)),
-        )
+//        )
     } yield {
       0
     }
@@ -139,9 +139,7 @@ object MyApp extends App {
   def updateUpcomingArrivalsForRoute(
     componentData: ComponentData,
     currentlySelectedRoute: ComponentData,
-  ): ZIO[Has[Browser.Service] with Has[Clock.Service] with Console,
-         Nothing,
-         Unit] =
+  )  =
     if (componentData == currentlySelectedRoute) {
       println("sanity")
       for {
@@ -169,9 +167,7 @@ object MyApp extends App {
   def updateUpcomingArrivalsOnPage(
     selectedRoute: ComponentData,
     components: Seq[ComponentData],
-  ): ZIO[Has[Browser.Service] with Has[Clock.Service] with Console,
-         Nothing,
-         Unit] =
+  ) =
     for {
       modalIsOpen <- DomMonitoring.modalIsOpen
       _ <- if (modalIsOpen) ZIO.succeed(List())
