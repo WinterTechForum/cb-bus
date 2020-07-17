@@ -22,7 +22,8 @@ object MyApp extends App {
     args: List[String],
   ): ZIO[zio.ZEnv, Nothing, zio.ExitCode] = {
     val myEnvironment =
-      ZLayer.succeed(BrowserLive.browser) ++ Console.live
+      ZLayer.succeed(BrowserLive.browser) ++ Console.live ++ ZLayer
+        .succeed(ColoradoClock.Live)
 
     fullApplicationLogic.provideLayer(myEnvironment).exitCode
   }
@@ -96,8 +97,9 @@ object MyApp extends App {
 
   val fullApplicationLogic =
     for {
-      browser <- ZIO.access[Has[Browser.Service]](_.get)
-      console <- ZIO.access[Has[Console.Service]](_.get)
+      browser    <- ZIO.access[Has[Browser.Service]](_.get)
+      console    <- ZIO.access[Has[Console.Service]](_.get)
+      clockParam <- ZIO.access[Has[Clock.Service]](_.get)
       pageMode <- getOptional("mode", AppMode.fromString)
         .map(
           _.getOrElse(AppMode.Production),
@@ -109,7 +111,7 @@ object MyApp extends App {
             s"2020-02-20T${fixedTime.get.toString}:00.00-07:00",
           ),
         )
-      else ZLayer.succeed(ColoradoClock.Live)
+      else ZLayer.succeed(clockParam)
       environmentDependencies = ZLayer.succeed(browser) ++ ZLayer
         .succeed(console) ++ clock
       _ <- UnsafeCallbacks.attachMenuBehavior
