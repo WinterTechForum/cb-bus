@@ -21,12 +21,8 @@ object MyApp extends App {
   override def run(
     args: List[String],
   ): ZIO[zio.ZEnv, Nothing, zio.ExitCode] = {
-    val console = Console.live
-    val browser =
-      ZLayer.succeed(BrowserLive.browser)
-
     val myEnvironment =
-      browser ++ console
+      ZLayer.succeed(BrowserLive.browser) ++ Console.live
 
     fullApplicationLogic.provideLayer(myEnvironment).exitCode
   }
@@ -100,6 +96,8 @@ object MyApp extends App {
 
   val fullApplicationLogic =
     for {
+      browser <- ZIO.access[Has[Browser.Service]](_.get)
+      console <- ZIO.access[Has[Console.Service]](_.get)
       pageMode <- getOptional("mode", AppMode.fromString)
         .map(
           _.getOrElse(AppMode.Production),
@@ -112,17 +110,8 @@ object MyApp extends App {
           ),
         )
       else ZLayer.succeed(ColoradoClock.Live)
-      environmentDependenciesWithoutClock = if (fixedTime.isDefined)
-        ZLayer.succeed(BrowserLive.browser) ++ Console.live
-      else
-        ZLayer.succeed(
-          BrowserLive.browser,
-        ) ++ Console.live
-      _ <- DomManipulation.createAndApplyPageStructure(
-        pageMode,
-        components,
-      )
-      environmentDependencies = environmentDependenciesWithoutClock ++ clock
+      environmentDependencies = ZLayer.succeed(browser) ++ ZLayer
+        .succeed(console) ++ clock
       _ <- UnsafeCallbacks.attachMenuBehavior
       _ <- registerServiceWorker()
       _ <- NotificationStuff.addNotificationPermissionRequestToButton
