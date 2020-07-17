@@ -105,24 +105,24 @@ object MyApp extends App {
           _.getOrElse(AppMode.Production),
         )
       fixedTime <- getOptional("time", x => Some(BusTime(x)))
-      environmentDependencies: ZLayer[Any, Nothing, Has[Clock.Service] with Has[
-        Browser.Service,
-      ] with Console] = if (fixedTime.isDefined)
+      clock = if (fixedTime.isDefined)
         ZLayer.succeed(
           TurboClock.TurboClock(
             s"2020-02-20T${fixedTime.get.toString}:00.00-07:00",
           ),
-        ) ++ ZLayer.succeed(
-          BrowserLive.browser,
-        ) ++ Console.live
+        )
+      else ZLayer.succeed(ColoradoClock.Live)
+      environmentDependenciesWithoutClock = if (fixedTime.isDefined)
+        ZLayer.succeed(BrowserLive.browser) ++ Console.live
       else
-        ZLayer.succeed(ColoradoClock.Live) ++ ZLayer.succeed(
+        ZLayer.succeed(
           BrowserLive.browser,
         ) ++ Console.live
       _ <- DomManipulation.createAndApplyPageStructure(
         pageMode,
         components,
       )
+      environmentDependencies = environmentDependenciesWithoutClock ++ clock
       _ <- UnsafeCallbacks.attachMenuBehavior
       _ <- registerServiceWorker()
       _ <- NotificationStuff.addNotificationPermissionRequestToButton
