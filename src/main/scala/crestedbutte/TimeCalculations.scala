@@ -57,7 +57,7 @@ object TimeCalculations {
 
   def getUpComingArrivals(
     busRoute: NamedRoute,
-  ): ZIO[Has[Clock.Service], Nothing, Seq[UpcomingArrivalInfo]] =
+  ) =
     for {
       clockProper <- ZIO.access[Has[Clock.Service]](_.get)
       now         <- clockProper.currentDateTime
@@ -71,7 +71,7 @@ object TimeCalculations {
 
   def getUpComingArrivalsWithFullSchedule(
     busRoute: NamedRoute,
-  ): ZIO[Has[Clock.Service], Nothing, UpcomingArrivalComponentData] =
+  ) =
     for {
       clockProper <- ZIO.access[Has[Clock.Service]](_.get)
       now         <- clockProper.currentDateTime

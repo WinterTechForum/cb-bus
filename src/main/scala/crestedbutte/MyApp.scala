@@ -20,7 +20,7 @@ object MyApp extends App {
 
   override def run(
     args: List[String],
-  ): ZIO[zio.ZEnv, Nothing, Int] = {
+  ): ZIO[zio.ZEnv, Nothing, zio.ExitCode] = {
     val console = Console.live
     val clock =
       ZLayer.succeed(ColoradoClock.Live)
@@ -31,7 +31,7 @@ object MyApp extends App {
 //      console ++ clock ++ browser ++ zio.random.Random.live ++ zio.system.System.live
       clock ++ browser ++ console
 
-    fullApplicationLogic.provideLayer(myEnvironment)
+    fullApplicationLogic.provideLayer(myEnvironment).exitCode
   }
 
   def getOptional[T](
@@ -162,6 +162,7 @@ object MyApp extends App {
           .getUpComingArrivalsWithFullSchedule(
             componentData.namedRoute,
           )
+          .catchAll(failure => throw new RuntimeException("ack!"))
         _ <- DomManipulation.updateUpcomingBusSectionInsideElement(
           componentData.componentName,
           TagsOnlyLocal.structuredSetOfUpcomingArrivals(

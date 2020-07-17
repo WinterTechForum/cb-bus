@@ -3,7 +3,8 @@ package crestedbutte.dom
 import crestedbutte.Browser
 import org.scalajs.dom.{Element, Event}
 import org.scalajs.dom.raw.MouseEvent
-import zio.{DefaultRuntime, Has, IO, Task, ZIO}
+import zio.{Has, IO, Task, ZIO}
+import zio.Runtime.default
 
 object BulmaBehaviorLocal {
 
@@ -44,7 +45,7 @@ object BulmaBehaviorLocal {
                     browser
                       .querySelector("#navbarBasicExample")
                       .foreach(_.classList.remove("is-active"))
-                    new DefaultRuntime {}.unsafeRun(input)
+                    default.unsafeRun(input)
                   },
                 )
               }

@@ -10,12 +10,12 @@ resolvers += "jitpack" at "https://jitpack.io"
 resolvers += Resolver.url("typesafe", url("http://repo.typesafe.com/typesafe/ivy-releases/"))(Resolver.ivyStylePatterns)
 resolvers += Resolver.githubPackages("swoogles", "BulmaScala")
 
-val zioVersion = "1.0.0-RC18"
+val zioVersion = "1.0.0-RC21-2"
 
 libraryDependencies ++= Seq(
-  "default" %%% "bulmalibrary" % "0.2.14",
-  "com.billding" %%% "scalajsziolibrary" % "0.0.9",
-  "com.billding" %%% "brieftime" % "0.0.9",
+  "com.billding" %%% "bulmalibrary" % "0.2.17",
+  "com.billding" %%% "scalajsziolibrary" % "0.0.11",
+  "com.billding" %%% "brieftime" % "0.0.11",
   "dev.zio" %%% "zio" % zioVersion,
   "dev.zio" %%% "zio-streams" % zioVersion,
   "com.lihaoyi" %%% "scalatags" % "0.8.6",
@@ -24,8 +24,8 @@ libraryDependencies ++= Seq(
   "dev.zio" %%% "zio-test"     % zioVersion % "test",
   "dev.zio" %%% "zio-test-sbt" % zioVersion % "test",
   "com.lihaoyi" %%% "pprint" % "0.5.9",
-  "com.github.japgolly.scalacss" %%% "core" % "0.6.0",
-  "com.github.japgolly.scalacss" %%% "ext-scalatags" % "0.6.0",
+//  "com.github.japgolly.scalacss" %%% "core" % "0.6.0",
+//  "com.github.japgolly.scalacss" %%% "ext-scalatags" % "0.6.0",
 )
 
 testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
