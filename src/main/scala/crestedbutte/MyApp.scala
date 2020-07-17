@@ -22,14 +22,11 @@ object MyApp extends App {
     args: List[String],
   ): ZIO[zio.ZEnv, Nothing, zio.ExitCode] = {
     val console = Console.live
-    val clock =
-      ZLayer.succeed(ColoradoClock.Live)
     val browser =
       ZLayer.succeed(BrowserLive.browser)
 
     val myEnvironment =
-//      console ++ clock ++ browser ++ zio.random.Random.live ++ zio.system.System.live
-      clock ++ browser ++ console
+      browser ++ console
 
     fullApplicationLogic.provideLayer(myEnvironment).exitCode
   }
@@ -70,8 +67,11 @@ object MyApp extends App {
       _ <- updateUpcomingArrivalsOnPage(selectedComponent, components)
       _ <- putStrLn("got past arrival updates")
       _ <- NotificationStuff.addAlarmBehaviorToTimes
+      _ <- putStrLn("1")
       _ <- ModalBehavior.addModalOpenBehavior
+      _ <- putStrLn("2")
       _ <- ModalBehavior.addModalCloseBehavior
+      _ <- putStrLn("3")
 //      _ <- NotificationStuff.checkSubmittedAlarms
     } yield ()
 
@@ -105,7 +105,9 @@ object MyApp extends App {
           _.getOrElse(AppMode.Production),
         )
       fixedTime <- getOptional("time", x => Some(BusTime(x)))
-      environmentDependencies = if (fixedTime.isDefined)
+      environmentDependencies: ZLayer[Any, Nothing, Has[Clock.Service] with Has[
+        Browser.Service,
+      ] with Console] = if (fixedTime.isDefined)
         ZLayer.succeed(
           TurboClock.TurboClock(
             s"2020-02-20T${fixedTime.get.toString}:00.00-07:00",
@@ -125,30 +127,20 @@ object MyApp extends App {
       _ <- registerServiceWorker()
       _ <- NotificationStuff.addNotificationPermissionRequestToButton
       _ <- NotificationStuff.displayNotificationPermission
+      loopingLogic = loopLogic(pageMode, components)
+        .provideLayer(
+          environmentDependencies,
+        )
       _ <- BulmaBehaviorLocal.addMenuBehavior(
-        loopLogic(pageMode, components)
-          .provideLayer(
-            environmentDependencies,
-          ),
+        loopingLogic,
       )
       _ <- putStrLn("attached to menu")
-      _ <- loopLogic(pageMode, components)
+      _ <- loopingLogic
+      //.forever
         .repeat(
-          //            Schedule.recurs(3),
-          Schedule.linear(Duration.apply(5, TimeUnit.SECONDS)),
+          Schedule.recurs(3),
 //          Schedule.spaced(Duration.apply(5, TimeUnit.SECONDS)),
         )
-        .provideLayer(environmentDependencies)
-//        .repeat(Schedule.spaced(Duration.apply(5, TimeUnit.SECONDS)))
-//        .forever
-//      _ <- putStrLn("did my one loop").delay(
-//        Duration.apply(5, TimeUnit.SECONDS),
-//      )
-      //        .compose(Schedule.spaced(Duration.apply(5, TimeUnit.SECONDS)))
-      //        .delay(Duration.apply(5, TimeUnit.SECONDS))
-      //        .repeat(Schedule.spaced(Duration.apply(5, TimeUnit.SECONDS)))
-      //        .repeat(Schedule.spaced(Duration.apply(1, TimeUnit.SECONDS)))
-//        .forever
     } yield {
       0
     }
