@@ -49,7 +49,6 @@ object MyApp extends App {
     components: Seq[ComponentData],
   ) =
     for {
-      _            <- putStrLn("loopin")
       routeNameOpt <- getOptional("route", x => Some(x))
       selectedComponent: ComponentData = routeNameOpt
         .flatMap(
@@ -62,13 +61,9 @@ object MyApp extends App {
         .getOrElse(components.head)
 
       _ <- updateUpcomingArrivalsOnPage(selectedComponent, components)
-      _ <- putStrLn("got past arrival updates")
       _ <- NotificationStuff.addAlarmBehaviorToTimes
-      _ <- putStrLn("1")
       _ <- ModalBehavior.addModalOpenBehavior
-      _ <- putStrLn("2")
       _ <- ModalBehavior.addModalCloseBehavior
-      _ <- putStrLn("3")
 //      _ <- NotificationStuff.checkSubmittedAlarms
     } yield ()
 
@@ -120,21 +115,21 @@ object MyApp extends App {
       _ <- DomManipulation.createAndApplyPageStructure(pageMode,
                                                        components)
       _ <- UnsafeCallbacks.attachMenuBehavior
-      loopingLogic = loopLogic(pageMode, components)
+      loopingLogic: ZIO[Any, Throwable, Unit] = loopLogic(pageMode,
+                                                          components)
         .provideLayer(
           environmentDependencies,
         )
       _ <- BulmaBehaviorLocal.addMenuBehavior(
         loopingLogic,
       )
-      _ <- putStrLn("attached to menu")
       _ <- loopingLogic
-//        .repeat(Schedule.spaced(Duration.apply(5, TimeUnit.SECONDS)))
+      // This loops immediately and forever
       //.forever
-//        .repeat(
-//          Schedule.recurs(3),
-//          Schedule.spaced(Duration.apply(5, TimeUnit.SECONDS)),
-//        )
+      // This loops immediately 3 times and then stops.
+      // .repeat(Schedule.recurs(3))
+      // This simply doesn't repeat. It executes once and then it's done.
+        .repeat(Schedule.spaced(Duration.apply(5, TimeUnit.SECONDS)))
     } yield {
       0
     }

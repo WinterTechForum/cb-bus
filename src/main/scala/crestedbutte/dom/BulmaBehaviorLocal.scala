@@ -9,7 +9,7 @@ import zio.Runtime.default
 object BulmaBehaviorLocal {
 
   def addMenuBehavior(
-    input: IO[Nothing, Unit],
+    input: ZIO[Any, Throwable, Unit],
   ): ZIO[Has[Browser.Service], Nothing, Option[Element]] =
     ZIO
       .access[Has[Browser.Service]](_.get)
