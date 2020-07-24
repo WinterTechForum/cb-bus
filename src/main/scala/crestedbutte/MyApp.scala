@@ -114,12 +114,12 @@ object MyApp extends App {
       else ZLayer.succeed(clockParam)
       environmentDependencies = ZLayer.succeed(browser) ++ ZLayer
         .succeed(console) ++ clock
-      _ <- UnsafeCallbacks.attachMenuBehavior
       _ <- registerServiceWorker()
       _ <- NotificationStuff.addNotificationPermissionRequestToButton
       _ <- NotificationStuff.displayNotificationPermission
       _ <- DomManipulation.createAndApplyPageStructure(pageMode,
                                                        components)
+      _ <- UnsafeCallbacks.attachMenuBehavior
       loopingLogic = loopLogic(pageMode, components)
         .provideLayer(
           environmentDependencies,

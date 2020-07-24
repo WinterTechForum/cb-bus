@@ -19,6 +19,7 @@ object BulmaBehaviorLocal {
             "#main-menu",
           )
           .map { element =>
+            println("selected main menu")
 //            new DefaultRuntime {}
 //              .unsafeRun(hideOnClickOutside(element, browser))
 
@@ -45,6 +46,7 @@ object BulmaBehaviorLocal {
                     browser
                       .querySelector("#navbarBasicExample")
                       .foreach(_.classList.remove("is-active"))
+                    println("should do menu stuff now...")
                     default.unsafeRun(input)
                   },
                 )

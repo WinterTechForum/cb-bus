@@ -12,7 +12,7 @@ resolvers += Resolver.githubPackages("swoogles", "BulmaScala")
 val zioVersion = "1.0.0-RC21-2"
 
 libraryDependencies ++= Seq(
-  "com.billding" %%% "bulmalibrary" % "0.2.17",
+  "com.billding" %%% "bulmalibrary" % "0.2.19",
   "com.billding" %%% "scalajsziolibrary" % "0.0.11",
   "com.billding" %%% "brieftime" % "0.0.12",
   "dev.zio" %%% "zio" % zioVersion,

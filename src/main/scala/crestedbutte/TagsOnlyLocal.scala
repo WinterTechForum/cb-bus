@@ -44,12 +44,14 @@ object TagsOnlyLocal {
     div(id := "container")(
       Bulma.menu(
         allComponentData.map { componentData =>
+          println("should be creating a route menu entry")
           a(
-            cls := "navbar-item route using-library",
+            cls := "navbar-item",
             data("route") := componentData.componentName,
           )(componentData.namedRoute.routeName.userFriendlyName)
         },
         "Routes",
+        "route  using-library",
       ),
       allComponentData.map(
         singleComponentData =>
