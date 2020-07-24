@@ -118,6 +118,8 @@ object MyApp extends App {
       _ <- registerServiceWorker()
       _ <- NotificationStuff.addNotificationPermissionRequestToButton
       _ <- NotificationStuff.displayNotificationPermission
+      _ <- DomManipulation.createAndApplyPageStructure(pageMode,
+                                                       components)
       loopingLogic = loopLogic(pageMode, components)
         .provideLayer(
           environmentDependencies,
@@ -127,6 +129,7 @@ object MyApp extends App {
       )
       _ <- putStrLn("attached to menu")
       _ <- loopingLogic
+//        .repeat(Schedule.spaced(Duration.apply(5, TimeUnit.SECONDS)))
       //.forever
 //        .repeat(
 //          Schedule.recurs(3),
@@ -139,12 +142,9 @@ object MyApp extends App {
   def updateUpcomingArrivalsForRoute(
     componentData: ComponentData,
     currentlySelectedRoute: ComponentData,
-  )  =
+  ) =
     if (componentData == currentlySelectedRoute) {
-      println("sanity")
       for {
-        _ <- ZIO.succeed(println("eh!!"))
-        _ <- putStrLn("matched with backticks")
         arrivalsAtAllRouteStops <- TimeCalculations
           .getUpComingArrivalsWithFullSchedule(
             componentData.namedRoute,

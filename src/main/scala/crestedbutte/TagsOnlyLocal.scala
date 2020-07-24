@@ -186,7 +186,8 @@ object TagsOnlyLocal {
 
   def structuredSetOfUpcomingArrivals(
     upcomingArrivalComponentData: UpcomingArrivalComponentData,
-  ) =
+  ) = {
+    println("doing tag stuffz")
     div(
       div(cls := "route-header")(
         span(cls := "route-header_name")(
@@ -219,6 +220,7 @@ object TagsOnlyLocal {
         }
       },
     )
+  }
 
   def svgIconForAlarm(name: String,
                       classes: String,

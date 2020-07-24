@@ -48,6 +48,11 @@ object DomManipulation {
     ZIO
       .access[Has[Browser.Service]](_.get)
       .map { browser =>
+        println(
+          "Attempt to get " + s"#$elementName: " +
+          browser
+            .querySelector(s"#$elementName"), // TODO Handle case where this is missing
+        )
         browser
           .querySelector(s"#$elementName") // TODO Handle case where this is missing
           .foreach { routeElementResult =>
