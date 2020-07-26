@@ -47,7 +47,7 @@ object BulmaBehaviorLocal {
                       .querySelector("#navbarBasicExample")
                       .foreach(_.classList.remove("is-active"))
                     println("should do menu stuff now...")
-                    default.unsafeRun(input)
+                    default.unsafeRunAsync(input)(_ => ())
                   },
                 )
               }
