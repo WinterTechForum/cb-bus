@@ -22,10 +22,12 @@ object MyApp extends App {
     args: List[String],
   ): ZIO[zio.ZEnv, Nothing, zio.ExitCode] = {
     val myEnvironment =
-      ZLayer.succeed(BrowserLive.browser) ++ Console.live ++ ZLayer
-        .succeed(ColoradoClock.Live)
+      ZLayer.succeed(BrowserLive.browser) ++ Console.live ++
+      ZLayer.succeed(ColoradoClock.live)
+//      Clock.live
 
     fullApplicationLogic.provideLayer(myEnvironment).exitCode
+//    strippedApplicationLogic.provideLayer(myEnvironment).exitCode
   }
 
   def getOptional[T](
@@ -89,6 +91,19 @@ object MyApp extends App {
         RtaSouthbound.fullSchedule,
       ),
     )
+
+  val strippedApplicationLogic =
+    for {
+      browser     <- ZIO.access[Has[Browser.Service]](_.get)
+      console     <- ZIO.access[Has[Console.Service]](_.get)
+      clockParam  <- ZIO.access[Has[Clock.Service]](_.get)
+      currentTime <- clockParam.currentDateTime
+      _ <- putStrLn("looping currentTime: " + currentTime)
+      //        .forever
+        .repeat(Schedule.spaced(Duration.apply(5, TimeUnit.SECONDS)))
+    } yield {
+      0
+    }
 
   val fullApplicationLogic =
     for {
