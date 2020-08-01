@@ -4,15 +4,19 @@ import scala.scalajs.js
 
 object UrlParsingLocal {
 
-  def parseRawUrl(rawUrl: String) =
+  def parseRawUrl(
+    rawUrl: String,
+  ) =
     java.net.URI
       .create(rawUrl)
 
   // TODO HTML encoding
   // Note: Only works for single values
-  def replaceParamInUrl(url: String,
-                        paramName: String,
-                        paramValue: String): String =
+  def replaceParamInUrl(
+    url: String,
+    paramName: String,
+    paramValue: String,
+  ): String =
     getPath(url) + "?" + (if (getUrlParameter(url, paramName).isDefined)
                             getUrlParameters(url)
                               .map {
@@ -36,12 +40,16 @@ object UrlParsingLocal {
                               }
                               .mkString("&"))
 
-  def getPath(url: String) =
+  def getPath(
+    url: String,
+  ) =
     java.net.URI
       .create(url)
       .getPath
 
-  def getUrlParameters(url: String): Map[String, Array[String]] =
+  def getUrlParameters(
+    url: String,
+  ): Map[String, Array[String]] =
     if (url.contains('?'))
       java.net.URI
         .create(url)
@@ -57,7 +65,9 @@ object UrlParsingLocal {
         .map(m => m._1 -> m._2.map(_._2))
     else Map()
 
-  def getUrlParameter(url: String,
-                      parameter: String): Option[String] =
+  def getUrlParameter(
+    url: String,
+    parameter: String,
+  ): Option[String] =
     getUrlParameters(url).get(parameter).flatMap(_.headOption)
 }

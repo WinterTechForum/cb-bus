@@ -63,8 +63,10 @@ object BulmaBehaviorLocal {
       }
 
   // This isn't really Bulma specific, rather than the .is-active class
-  def hideOnClickOutside(element: Element,
-                         browser: Browser.Service): Task[Unit] =
+  def hideOnClickOutside(
+    element: Element,
+    browser: Browser.Service,
+  ): Task[Unit] =
     ZIO {
       println("setting up click-outside-menu behavior")
       def outsideClickListener(): MouseEvent => Unit =

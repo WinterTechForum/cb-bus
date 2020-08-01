@@ -6,8 +6,10 @@ import zio.clock.Clock
 
 object TimeCalculations {
 
-  def nextBusArrivalTime(timesAtStop: Seq[BusTime],
-                         now: BusTime): Option[BusTime] =
+  def nextBusArrivalTime(
+    timesAtStop: Seq[BusTime],
+    now: BusTime,
+  ): Option[BusTime] =
     timesAtStop
       .find(stopTime => BusTime.catchableBus(now, stopTime))
       .filter(_ => now.isLikelyEarlyMorningRatherThanLateNight)

@@ -173,8 +173,8 @@ object MyApp extends App {
       }
     } yield ()
 
-  def registerServiceWorker()
-    : ZIO[Has[Browser.Service], Nothing, Unit] =
+  def registerServiceWorker(
+  ): ZIO[Has[Browser.Service], Nothing, Unit] =
     ZIO
       .access[Has[Browser.Service]](_.get)
       .map {

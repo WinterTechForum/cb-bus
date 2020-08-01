@@ -2,9 +2,12 @@ package crestedbutte
 
 import com.billding.time.{BusDuration, BusTime}
 
-case class BusSchedule(stopTimes: List[BusTime]) {
+case class BusSchedule(
+  stopTimes: List[BusTime]) {
 
-  def nextBusArrivalTime(now: BusTime): Option[BusTime] =
+  def nextBusArrivalTime(
+    now: BusTime,
+  ): Option[BusTime] =
     if (now.isLikelyEarlyMorningRatherThanLateNight)
       stopTimes
         .find(stopTime => BusTime.catchableBus(now, stopTime))
@@ -13,9 +16,11 @@ case class BusSchedule(stopTimes: List[BusTime]) {
 
 object BusSchedule {
 
-  def apply(firstBus: String,
-            lastBus: String,
-            timeBetweenBuses: BusDuration) =
+  def apply(
+    firstBus: String,
+    lastBus: String,
+    timeBetweenBuses: BusDuration,
+  ) =
     new BusSchedule(
       List
         .range(
@@ -32,7 +37,9 @@ object BusSchedule {
     )
 
   // Useful for irregular stoptimes
-  def apply(stopTimeStrings: String*) =
+  def apply(
+    stopTimeStrings: String*,
+  ) =
     new BusSchedule(
       List(stopTimeStrings: _*)
         .map(BusTime(_)),

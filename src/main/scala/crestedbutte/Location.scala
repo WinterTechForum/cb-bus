@@ -2,10 +2,10 @@ package crestedbutte
 
 object Location extends Enumeration {
 
-  protected case class Val(name: String,
-                           altName: String = "",
-                           gpsCoordinates: GpsCoordinates =
-                             GpsCoordinates(0, 0))
+  protected case class Val(
+    name: String,
+    altName: String = "",
+    gpsCoordinates: GpsCoordinates = GpsCoordinates(0, 0))
       extends super.Val(name) {
 
     val elementName: String =
@@ -18,7 +18,9 @@ object Location extends Enumeration {
   }
   import scala.language.implicitConversions
 
-  implicit def valueToStopLocationVal(x: Value): Val =
+  implicit def valueToStopLocationVal(
+    x: Value,
+  ): Val =
     x.asInstanceOf[Val]
 
   type StopLocation = Value

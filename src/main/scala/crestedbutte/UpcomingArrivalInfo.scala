@@ -4,8 +4,7 @@ package crestedbutte
 case class UpcomingArrivalInfo(
   location: Location.Value,
   content: Either[StopTimeInfo, LateNightRecommendation],
-  /* TODO: waitDuration: Duration*/
-)
+  /* TODO: waitDuration: Duration*/)
 
 object UpcomingArrivalInfo {
 

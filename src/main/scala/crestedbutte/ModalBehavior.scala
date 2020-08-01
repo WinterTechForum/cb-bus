@@ -5,7 +5,9 @@ import zio.{Has, ZIO}
 
 object ModalBehavior {
 
-  def id(value: String) =
+  def id(
+    value: String,
+  ) =
     "#" + value
 
   val addModalOpenBehavior =
@@ -13,7 +15,9 @@ object ModalBehavior {
       .access[Has[Browser.Service]](_.get)
       .map {
         browser =>
-          def activateModal(targetName: String): Unit =
+          def activateModal(
+            targetName: String,
+          ): Unit =
             browser
               .querySelector(targetName)
               .foreach(
@@ -67,7 +71,9 @@ object ModalBehavior {
             }
       }
 
-  def removeClippedHtml(browser: Browser.Service) =
+  def removeClippedHtml(
+    browser: Browser.Service,
+  ) =
     browser.workOnFullHtmlElement(
       _.classList
         .remove("is-clipped"),

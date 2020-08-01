@@ -7,7 +7,9 @@ class RouteWithTimes(
   val allStops: Seq[BusScheduleAtStop],
 ) {
 
-  def combinedWith(routeWithTimes: RouteWithTimes): RouteWithTimes =
+  def combinedWith(
+    routeWithTimes: RouteWithTimes,
+  ): RouteWithTimes =
     new RouteWithTimes(
       (allStops ++: routeWithTimes.allStops)
         .foldLeft(Seq[BusScheduleAtStop]()) {

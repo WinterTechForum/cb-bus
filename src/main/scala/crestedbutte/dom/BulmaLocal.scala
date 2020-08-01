@@ -5,7 +5,10 @@ import crestedbutte.BusScheduleAtStop
 object BulmaLocal {
   import scalatags.JsDom.all._
 
-  def bulmaModal(scheduleAtStop: BusScheduleAtStop, idValue: String) =
+  def bulmaModal(
+    scheduleAtStop: BusScheduleAtStop,
+    idValue: String,
+  ) =
     Bulma.modal(
       div(
         h4(textAlign := "center")(

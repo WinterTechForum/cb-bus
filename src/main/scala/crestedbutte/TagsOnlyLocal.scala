@@ -10,7 +10,9 @@ import scalatags.JsDom
 object TagsOnlyLocal {
   import scalatags.JsDom.all._
 
-  def createPopupContent(scheduleAtStop: BusScheduleAtStop) =
+  def createPopupContent(
+    scheduleAtStop: BusScheduleAtStop,
+  ) =
     div(
       div(id := s"popup_${scheduleAtStop.location}",
           cls := "overlay light")(
@@ -39,8 +41,10 @@ object TagsOnlyLocal {
       span(aria.hidden := "true"),
     )
 
-  def overallPageLayout(pageMode: AppMode.Value,
-                        allComponentData: Seq[ComponentData]) =
+  def overallPageLayout(
+    pageMode: AppMode.Value,
+    allComponentData: Seq[ComponentData],
+  ) =
     div(id := "container")(
       Bulma.menu(
         allComponentData.map {
@@ -75,7 +79,9 @@ object TagsOnlyLocal {
       else div(),
     )
 
-  def busScheduleDiv(containerName: String) =
+  def busScheduleDiv(
+    containerName: String,
+  ) =
     div(cls := ElementNames.BoxClass, id := containerName)(
       div(cls := "timezone"),
       div(id := ElementNames.contentName),
@@ -107,7 +113,9 @@ object TagsOnlyLocal {
       phoneNumber.name,
     )
 
-  def renderWaitTime(duration: BusDuration) =
+  def renderWaitTime(
+    duration: BusDuration,
+  ) =
     if (duration.toMinutes == 0)
       "Leaving!"
     else
@@ -137,7 +145,9 @@ object TagsOnlyLocal {
       ),
     )
 
-  def geoLinkForStop(stopLocation: StopLocation) =
+  def geoLinkForStop(
+    stopLocation: StopLocation,
+  ) =
     a(
       cls := "link",
       //    <a href="geo:37.786971,-122.399677;u=35">open map</a>
@@ -145,24 +155,32 @@ object TagsOnlyLocal {
       href := s"https://www.google.com/maps/search/?api=1&query=${stopLocation.gpsCoordinates.latitude},${stopLocation.gpsCoordinates.longitude}",
     )(svgIcon("glyphicons-basic-592-map.svg"))
 
-  def activateModal(targetName: String): Unit =
+  def activateModal(
+    targetName: String,
+  ): Unit =
     org.scalajs.dom.document.body
       .querySelector(targetName)
       .classList
       .add("is-active")
 
-  def modalContentElementNameTyped(location: Location.Value,
-                                   routeName: RouteName) =
+  def modalContentElementNameTyped(
+    location: Location.Value,
+    routeName: RouteName,
+  ) =
     data("schedule-modal") := modalContentElementName(location,
                                                       routeName)
 
-  def modalContentElementName(location: Location.Value,
-                              routeName: RouteName) =
+  def modalContentElementName(
+    location: Location.Value,
+    routeName: RouteName,
+  ) =
     "modal_content_" + routeName.name + "_" + location.elementName
 
-  def renderStopTimeInfo(stopTimeInfo: StopTimeInfo,
-                         busScheduleAtStop: BusScheduleAtStop,
-                         routeName: RouteName) =
+  def renderStopTimeInfo(
+    stopTimeInfo: StopTimeInfo,
+    busScheduleAtStop: BusScheduleAtStop,
+    routeName: RouteName,
+  ) =
     div(
       button(
         cls := "arrival-time button open-arrival-time-modal",
@@ -226,9 +244,11 @@ object TagsOnlyLocal {
     )
   }
 
-  def svgIconForAlarm(name: String,
-                      classes: String,
-                      busTime: BusTime) =
+  def svgIconForAlarm(
+    name: String,
+    classes: String,
+    busTime: BusTime,
+  ) =
     img(
       cls := "glyphicon " + classes,
       src := s"/glyphicons/svg/individual-svg/$name",
@@ -237,7 +257,9 @@ object TagsOnlyLocal {
       verticalAlign := "middle",
     )
 
-  def svgIcon(name: String) =
+  def svgIcon(
+    name: String,
+  ) =
     img(
       cls := "glyphicon",
       src := s"/glyphicons/svg/individual-svg/$name",

@@ -15,7 +15,9 @@ object ScheduleSandbox {
     Schedule.recurs(numberOfBussesPerDay) &&
     Schedule.spaced(duration.durationInt(2).seconds)
 
-  def singleBusRoute(number: Int) =
+  def singleBusRoute(
+    number: Int,
+  ) =
     DomManipulation
       .appendMessageToPage(s"Bus #$number is leaving old town hall!")
       .flatMap(_ => ZIO.sleep(duration.durationInt(4).seconds))

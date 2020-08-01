@@ -1,6 +1,7 @@
 package crestedbutte
 
-case class RouteName(userFriendlyName: String) {
+case class RouteName(
+  userFriendlyName: String) {
 
   val name: String =
     userFriendlyName
@@ -10,7 +11,9 @@ case class RouteName(userFriendlyName: String) {
       )
       .mkString
 
-  def elementNameMatches(elementName: String) =
+  def elementNameMatches(
+    elementName: String,
+  ) =
     name == elementName
   // TODO Check ordering of all coordinates
   /*

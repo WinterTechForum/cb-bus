@@ -18,8 +18,10 @@ object UnsafeCallbacks {
               "DOMContentLoaded",
               (_: Any) => {
 
-                def menuCallbackBehavior(node: Node,
-                                         browser: Browser.Service) =
+                def menuCallbackBehavior(
+                  node: Node,
+                  browser: Browser.Service,
+                ) =
                   (_: MouseEvent) =>
                     // Get the target from the "data-target" attribute
                     // POTENTIALLY VERY EXPENSIVE. It's jumping back to the root of the document with this search.
