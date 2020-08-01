@@ -13,47 +13,53 @@ object BulmaBehaviorLocal {
   ): ZIO[Has[Browser.Service], Nothing, Option[Element]] =
     ZIO
       .access[Has[Browser.Service]](_.get)
-      .map { browser =>
-        browser
-          .querySelector(
-            "#main-menu",
-          )
-          .map { element =>
-            println("selected main menu")
+      .map {
+        browser =>
+          browser
+            .querySelector(
+              "#main-menu",
+            )
+            .map {
+              element =>
+                println("selected main menu")
 //            new DefaultRuntime {}
 //              .unsafeRun(hideOnClickOutside(element, browser))
 
-            browser
-              .convertNodesToList(
-                element.querySelectorAll(".navbar-item .route"),
-              )
-              .foreach { node =>
-                node.addEventListener(
-                  "click",
-                  (_: MouseEvent) => {
-                    val targetRoute =
-                      node.attributes.getNamedItem("data-route").value
-                    if (browser
-                          .url()
-                          .getPath
-                          .contains("index_dev"))
-                      browser.rewriteCurrentUrl("route", targetRoute)
-                    else
-                      browser
-                        .alterUrlWithNewValue("/index.html",
-                                              "route",
-                                              targetRoute)
-                    browser
-                      .querySelector("#navbarBasicExample")
-                      .foreach(_.classList.remove("is-active"))
-                    println("should do menu stuff now...")
-                    default.unsafeRunAsync(input)(_ => ())
-                  },
-                )
-              }
+                browser
+                  .convertNodesToList(
+                    element.querySelectorAll(".navbar-item .route"),
+                  )
+                  .foreach {
+                    node =>
+                      node.addEventListener(
+                        "click",
+                        (_: MouseEvent) => {
+                          val targetRoute =
+                            node.attributes
+                              .getNamedItem("data-route")
+                              .value
+                          if (browser
+                                .url()
+                                .getPath
+                                .contains("index_dev"))
+                            browser.rewriteCurrentUrl("route",
+                                                      targetRoute)
+                          else
+                            browser
+                              .alterUrlWithNewValue("/index.html",
+                                                    "route",
+                                                    targetRoute)
+                          browser
+                            .querySelector("#navbarBasicExample")
+                            .foreach(_.classList.remove("is-active"))
+                          println("should do menu stuff now...")
+                          default.unsafeRunAsync(input)(_ => ())
+                        },
+                      )
+                  }
 
-            element
-          }
+                element
+            }
       }
 
   // This isn't really Bulma specific, rather than the .is-active class

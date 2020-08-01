@@ -6,8 +6,6 @@ import com.billding.time.{BusTime, ColoradoClock, TurboClock}
 import crestedbutte.dom.BulmaBehaviorLocal
 import crestedbutte.routes._
 import org.scalajs.dom.experimental.serviceworkers._
-import org.scalajs.dom.raw.MouseEvent
-import zio.ZLayer.NoDeps
 import zio.clock._
 import zio.console.Console
 import zio.duration.Duration
@@ -27,7 +25,6 @@ object MyApp extends App {
 //      Clock.live
 
     fullApplicationLogic.provideLayer(myEnvironment).exitCode
-//    strippedApplicationLogic.provideLayer(myEnvironment).exitCode
   }
 
   def getOptional[T](
@@ -92,19 +89,6 @@ object MyApp extends App {
       ),
     )
 
-  val strippedApplicationLogic =
-    for {
-      browser     <- ZIO.access[Has[Browser.Service]](_.get)
-      console     <- ZIO.access[Has[Console.Service]](_.get)
-      clockParam  <- ZIO.access[Has[Clock.Service]](_.get)
-      currentTime <- clockParam.currentDateTime
-      _ <- putStrLn("looping currentTime: " + currentTime)
-      //        .forever
-        .repeat(Schedule.spaced(Duration.apply(5, TimeUnit.SECONDS)))
-    } yield {
-      0
-    }
-
   val fullApplicationLogic =
     for {
       browser    <- ZIO.access[Has[Browser.Service]](_.get)
@@ -139,11 +123,6 @@ object MyApp extends App {
         loopingLogic,
       )
       _ <- loopingLogic
-      // This loops immediately and forever
-      //.forever
-      // This loops immediately 3 times and then stops.
-      // .repeat(Schedule.recurs(3))
-      // This simply doesn't repeat. It executes once and then it's done.
         .repeat(Schedule.spaced(Duration.apply(5, TimeUnit.SECONDS)))
     } yield {
       0
@@ -167,7 +146,8 @@ object MyApp extends App {
           ),
         )
       } yield ()
-    } else {
+    }
+    else {
       println("hiding: " + componentData)
       DomManipulation.hideUpcomingBusSectionInsideElement(
         componentData.componentName,
@@ -197,15 +177,16 @@ object MyApp extends App {
     : ZIO[Has[Browser.Service], Nothing, Unit] =
     ZIO
       .access[Has[Browser.Service]](_.get)
-      .map { browser =>
-        // TODO Ew. Try to get this removed after first version of PWA is working
-        import scala.concurrent.ExecutionContext.Implicits.global
+      .map {
+        browser =>
+          // TODO Ew. Try to get this removed after first version of PWA is working
+          import scala.concurrent.ExecutionContext.Implicits.global
 
-        toServiceWorkerNavigator(browser.window().navigator).serviceWorker
-          .register("./sw-opt.js")
-          .toFuture
-          .onComplete {
-            case Success(registration) =>
+          toServiceWorkerNavigator(browser.window().navigator).serviceWorker
+            .register("./sw-opt.js")
+            .toFuture
+            .onComplete {
+              case Success(registration) =>
 //              browser
 //                .querySelector(
 //                  "#" + ElementNames.Notifications.submitMessageToServiceWorker,
@@ -223,11 +204,11 @@ object MyApp extends App {
 //                    },
 //                  ),
 //                )
-              registration.update()
-            case Failure(error) =>
-              println(
-                s"registerServiceWorker: service worker registration failed > ${error.printStackTrace()}",
-              )
-          }
+                registration.update()
+              case Failure(error) =>
+                println(
+                  s"registerServiceWorker: service worker registration failed > ${error.printStackTrace()}",
+                )
+            }
       }
 }

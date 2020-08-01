@@ -11,58 +11,60 @@ object ModalBehavior {
   val addModalOpenBehavior =
     ZIO
       .access[Has[Browser.Service]](_.get)
-      .map { browser =>
-        def activateModal(targetName: String): Unit =
+      .map {
+        browser =>
+          def activateModal(targetName: String): Unit =
+            browser
+              .querySelector(targetName)
+              .foreach(
+                _.classList
+                  .add("is-active"),
+              )
+
           browser
-            .querySelector(targetName)
-            .foreach(
-              _.classList
-                .add("is-active"),
-            )
+            .querySelectorAll(".open-arrival-time-modal")
+            .foreach {
+              modalOpenButton =>
+                modalOpenButton
+                  .addEventListener(
+                    "click",
+                    (clickEvent: MouseEvent) => {
+                      val modalContentId =
+                        modalOpenButton.attributes
+                          .getNamedItem("data-schedule-modal")
+                          .value
 
-        browser
-          .querySelectorAll(".open-arrival-time-modal")
-          .foreach { modalOpenButton =>
-            modalOpenButton
-              .addEventListener(
-                "click",
-                (clickEvent: MouseEvent) => {
-                  val modalContentId =
-                    modalOpenButton.attributes
-                      .getNamedItem("data-schedule-modal")
-                      .value
+                      clickEvent.preventDefault();
 
-                  clickEvent.preventDefault();
-
-                  browser
-                    .querySelector(
-                      id(modalContentId),
-                    )
-                    .map {
-                      modal =>
-                        browser
-                          .workOnFullHtmlElement(
-                            _.classList.add("is-clipped"),
-                          )
-
-                        modal
-                          .querySelector(".modal-background")
-                          .addEventListener(
-                            "click",
-                            (e: MouseEvent) => {
-                              e.preventDefault();
-                              removeClippedHtml(browser)
-                              modal.classList.remove("is-active");
-                            },
-                          )
-
-                        activateModal(
+                      browser
+                        .querySelector(
                           id(modalContentId),
                         )
-                    }
-                },
-              )
-          }
+                        .map {
+                          modal =>
+                            browser
+                              .workOnFullHtmlElement(
+                                _.classList.add("is-clipped"),
+                              )
+
+                            modal
+                              .querySelector(".modal-background")
+                              .addEventListener(
+                                "click",
+                                (e: MouseEvent) => {
+                                  e.preventDefault();
+                                  removeClippedHtml(browser)
+                                  modal.classList.remove("is-active");
+                                },
+                              )
+
+                            activateModal(
+                              id(modalContentId),
+                            )
+                        }
+                    },
+                  )
+            }
       }
 
   def removeClippedHtml(browser: Browser.Service) =

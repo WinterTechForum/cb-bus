@@ -43,12 +43,13 @@ object TagsOnlyLocal {
                         allComponentData: Seq[ComponentData]) =
     div(id := "container")(
       Bulma.menu(
-        allComponentData.map { componentData =>
-          println("should be creating a route menu entry")
-          a(
-            cls := "navbar-item",
-            data("route") := componentData.componentName,
-          )(componentData.namedRoute.routeName.userFriendlyName)
+        allComponentData.map {
+          componentData =>
+            println("should be creating a route menu entry")
+            a(
+              cls := "navbar-item",
+              data("route") := componentData.componentName,
+            )(componentData.namedRoute.routeName.userFriendlyName)
         },
         "Routes",
         "route  using-library",
@@ -70,7 +71,8 @@ object TagsOnlyLocal {
             "SubmitMessage to SW",
           ),
         )
-      } else div(),
+      }
+      else div(),
     )
 
   def busScheduleDiv(containerName: String) =

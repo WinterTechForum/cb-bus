@@ -48,9 +48,10 @@ object UrlParsingLocal {
         .getQuery
         .split('&')
         .map(js.URIUtils.decodeURIComponent)
-        .map { p =>
-          val split = p.split('=')
-          (split.head, split.tail.mkString("="))
+        .map {
+          p =>
+            val split = p.split('=')
+            (split.head, split.tail.mkString("="))
         }
         .groupBy(_._1)
         .map(m => m._1 -> m._2.map(_._2))

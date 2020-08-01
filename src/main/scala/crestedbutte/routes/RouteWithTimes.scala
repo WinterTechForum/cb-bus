@@ -25,7 +25,8 @@ class RouteWithTimes(
                   ),
                 )
               beforeStop :+ combinedStop.get :++ afterStop
-            } else {
+            }
+            else {
               stopsAcc :+ nextStop
             }
 
