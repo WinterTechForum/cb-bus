@@ -1,10 +1,10 @@
 package crestedbutte.dom
 
 import crestedbutte.Browser
-import org.scalajs.dom.{Element, Event}
+import org.scalajs.dom.Element
 import org.scalajs.dom.raw.MouseEvent
-import zio.{Has, IO, Task, ZIO}
 import zio.Runtime.default
+import zio.{Has, Task, ZIO}
 
 object BulmaBehaviorLocal {
 
@@ -38,21 +38,11 @@ object BulmaBehaviorLocal {
                             node.attributes
                               .getNamedItem("data-route")
                               .value
-                          if (browser
-                                .url()
-                                .getPath
-                                .contains("index_dev"))
-                            browser.rewriteCurrentUrl("route",
-                                                      targetRoute)
-                          else
-                            browser
-                              .alterUrlWithNewValue("/index.html",
-                                                    "route",
+                          browser.rewriteCurrentUrl("route",
                                                     targetRoute)
                           browser
                             .querySelector("#navbarBasicExample")
                             .foreach(_.classList.remove("is-active"))
-                          println("should do menu stuff now...")
                           default.unsafeRunAsync(input)(_ => ())
                         },
                       )
@@ -70,7 +60,7 @@ object BulmaBehaviorLocal {
     ZIO {
       println("setting up click-outside-menu behavior")
       def outsideClickListener(): MouseEvent => Unit =
-        (event: MouseEvent) => {
+        (_: MouseEvent) => {
           println(
             "you might have clicked outside of the main-menu!",
           )
