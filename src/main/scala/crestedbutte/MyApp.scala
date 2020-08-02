@@ -145,6 +145,7 @@ object MyApp extends App {
           TagsOnlyLocal.structuredSetOfUpcomingArrivals(
             arrivalsAtAllRouteStops,
           ),
+          "upcoming-buses",
         )
       } yield ()
     }

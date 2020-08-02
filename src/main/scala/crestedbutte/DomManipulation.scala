@@ -46,22 +46,18 @@ object DomManipulation {
   def updateUpcomingBusSectionInsideElement(
     elementName: String,
     newContent: JsDom.TypedTag[Div],
+    contentContainerId: String,
   ): ZIO[Browser, Nothing, Unit] =
     ZIO
       .access[Browser](_.get)
       .map {
         browser =>
-          println(
-            "Attempt to get " + s"#$elementName: " +
-            browser
-              .querySelector(s"#$elementName"), // TODO Handle case where this is missing
-          )
           browser
             .querySelector(s"#$elementName") // TODO Handle case where this is missing
             .foreach {
               routeElementResult =>
                 routeElementResult
-                  .querySelector("#upcoming-buses")
+                  .querySelector("#" + contentContainerId)
                   .innerHTML = ""
 
                 routeElementResult.setAttribute(
@@ -70,7 +66,7 @@ object DomManipulation {
                 ) // TODO or grid?
 
                 routeElementResult
-                  .querySelector("#upcoming-buses")
+                  .querySelector("#" + contentContainerId)
                   .appendChild(newContent.render)
             }
       }
