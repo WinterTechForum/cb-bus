@@ -3,20 +3,29 @@ package crestedbutte
 import com.billding.time.BusTime
 import com.billding.time.BusDuration
 
-case class BusScheduleAtStop(location: Location.Value,
-                             times: Seq[BusTime]) {
+case class BusScheduleAtStop(
+  location: Location.Value,
+  times: Seq[BusTime]) {
 
-  def timesDelayedBy(busDuration: BusDuration,
-                     locationIn: Location.Value) =
+  def timesDelayedBy(
+    busDuration: BusDuration,
+    locationIn: Location.Value,
+  ) =
     BusScheduleAtStop(locationIn, times.map(_.plus(busDuration)))
 
-  def delayedBy(busDuration: BusDuration) =
+  def delayedBy(
+    busDuration: BusDuration,
+  ) =
     BusScheduleAtStop(location, times.map(_.plus(busDuration)))
 
-  def at(locationIn: Location.Value) =
+  def at(
+    locationIn: Location.Value,
+  ) =
     BusScheduleAtStop(locationIn, times)
 
-  def scheduleAfter(busTime: BusTime) =
+  def scheduleAfter(
+    busTime: BusTime,
+  ) =
     BusScheduleAtStop(
       location,
       times.dropWhile(!BusTime.catchableBus(busTime, _)),
@@ -25,12 +34,16 @@ case class BusScheduleAtStop(location: Location.Value,
 
 object BusScheduleAtStop {
 
-  def apply(location: Location.Value,
-            scheduleAtStop: BusSchedule): BusScheduleAtStop =
+  def apply(
+    location: Location.Value,
+    scheduleAtStop: BusSchedule,
+  ): BusScheduleAtStop =
     BusScheduleAtStop(location, scheduleAtStop.stopTimes)
 
-  def combine(schedule1: BusScheduleAtStop,
-              schedule2: BusScheduleAtStop): BusScheduleAtStop =
+  def combine(
+    schedule1: BusScheduleAtStop,
+    schedule2: BusScheduleAtStop,
+  ): BusScheduleAtStop =
     if (schedule1.location != schedule2.location)
       throw new RuntimeException("Blah")
     else

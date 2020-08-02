@@ -11,6 +11,7 @@ import zio.console.Console
 import zio.duration.Duration
 import zio.{App, Has, Schedule, ZIO, ZLayer}
 import zio.console._
+import crestedbutte.Browser.Browser
 
 import scala.util.{Failure, Success}
 
@@ -30,9 +31,9 @@ object MyApp extends App {
   def getOptional[T](
     parameterName: String,
     typer: String => Option[T],
-  ): ZIO[Has[Browser.Service], Nothing, Option[T]] =
+  ): ZIO[Browser, Nothing, Option[T]] =
     ZIO
-      .access[Has[Browser.Service]](_.get)
+      .access[Browser](_.get)
       .map(
         browser =>
           UrlParsing
@@ -91,7 +92,7 @@ object MyApp extends App {
 
   val fullApplicationLogic =
     for {
-      browser    <- ZIO.access[Has[Browser.Service]](_.get)
+      browser    <- ZIO.access[Browser](_.get)
       console    <- ZIO.access[Has[Console.Service]](_.get)
       clockParam <- ZIO.access[Has[Clock.Service]](_.get)
       pageMode <- getOptional("mode", AppMode.fromString)
