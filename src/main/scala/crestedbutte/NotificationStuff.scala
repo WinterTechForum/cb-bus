@@ -13,6 +13,7 @@ import zio.console._
 
 import scala.collection.mutable
 import scala.scalajs.js
+import crestedbutte.Browser.Browser
 
 object NotificationStuff {
 
@@ -20,8 +21,8 @@ object NotificationStuff {
   desiredAlarms.empty
 
   val addNotificationPermissionRequestToButton
-    : ZIO[Has[Browser.Service], Nothing, Unit] =
-    ZIO.access[Has[Browser.Service]](_.get).map {
+    : ZIO[Browser, Nothing, Unit] =
+    ZIO.access[Browser](_.get).map {
       browser =>
         val requestPermissionButton =
           browser
@@ -54,7 +55,7 @@ object NotificationStuff {
     }
 
   val addAlarmBehaviorToTimes =
-    ZIO.access[Has[Browser.Service]](_.get).map {
+    ZIO.access[Browser](_.get).map {
       browser =>
         if (Notification.permission == "granted") {
           browser
@@ -99,7 +100,7 @@ object NotificationStuff {
 
   val checkSubmittedAlarms =
     for {
-      clock <- ZIO.access[Has[Clock.Service]](_.get)
+      clock <- ZIO.access[Clock](_.get)
       now   <- clock.currentDateTime
       localTime = new BusTime(now.toLocalTime)
       _ <- putStrLn("got time")
@@ -136,7 +137,7 @@ object NotificationStuff {
     }
 
   val displayNotificationPermission =
-    ZIO.access[Has[Browser.Service]](_.get).map {
+    ZIO.access[Browser](_.get).map {
       browser =>
         val actionButton =
           browser

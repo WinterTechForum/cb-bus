@@ -1,12 +1,13 @@
 package crestedbutte
 
 import zio.{Has, ZIO}
+import crestedbutte.Browser.Browser
 
 object DomMonitoring {
 
-  val modalIsOpen: ZIO[Has[Browser.Service], Nothing, Boolean] =
+  val modalIsOpen: ZIO[Browser, Nothing, Boolean] =
     ZIO
-      .access[Has[Browser.Service]](_.get)
+      .access[Browser](_.get)
       .map {
         browser =>
           browser

@@ -3,12 +3,13 @@ package crestedbutte
 import org.scalajs.dom.Node
 import org.scalajs.dom.raw.MouseEvent
 import zio.{Has, ZIO}
+import crestedbutte.Browser.Browser
 
 object UnsafeCallbacks {
 
-  val attachMenuBehavior: ZIO[Has[Browser.Service], Nothing, Unit] =
+  val attachMenuBehavior: ZIO[Browser, Nothing, Unit] =
     ZIO
-      .access[Has[Browser.Service]](_.get)
+      .access[Browser](_.get)
       .map(
         browser =>
           browser

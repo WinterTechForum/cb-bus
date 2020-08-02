@@ -93,8 +93,8 @@ object MyApp extends App {
   val fullApplicationLogic =
     for {
       browser    <- ZIO.access[Browser](_.get)
-      console    <- ZIO.access[Has[Console.Service]](_.get)
-      clockParam <- ZIO.access[Has[Clock.Service]](_.get)
+      console    <- ZIO.access[Console](_.get)
+      clockParam <- ZIO.access[Clock](_.get)
       pageMode <- getOptional("mode", AppMode.fromString)
         .map(
           _.getOrElse(AppMode.Production),
@@ -174,10 +174,9 @@ object MyApp extends App {
       }
     } yield ()
 
-  def registerServiceWorker(
-  ): ZIO[Has[Browser.Service], Nothing, Unit] =
+  def registerServiceWorker(): ZIO[Browser, Nothing, Unit] =
     ZIO
-      .access[Has[Browser.Service]](_.get)
+      .access[Browser](_.get)
       .map {
         browser =>
           // TODO Ew. Try to get this removed after first version of PWA is working

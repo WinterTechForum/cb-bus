@@ -4,6 +4,7 @@ import org.scalajs.dom.html.Div
 import org.scalajs.dom.raw.Node
 import scalatags.JsDom
 import zio.{Has, ZIO}
+import crestedbutte.Browser.Browser
 
 object DomManipulation {
   import scalatags.JsDom.all._
@@ -11,9 +12,9 @@ object DomManipulation {
   def createAndApplyPageStructure(
     pageMode: AppMode.Value,
     componentData: Seq[ComponentData],
-  ): ZIO[Has[Browser.Service], Nothing, Node] =
+  ): ZIO[Browser, Nothing, Node] =
     ZIO
-      .access[Has[Browser.Service]](_.get)
+      .access[Browser](_.get)
       .map {
         browser =>
           browser
@@ -30,9 +31,9 @@ object DomManipulation {
 
   def appendMessageToPage(
     message: String,
-  ): ZIO[Has[Browser.Service], Throwable, Unit] =
+  ): ZIO[Browser, Throwable, Unit] =
     ZIO
-      .access[Has[Browser.Service]](_.get)
+      .access[Browser](_.get)
       .map[Unit](
         browser => {
           println("Should show timezones: " + message)
@@ -45,9 +46,9 @@ object DomManipulation {
   def updateUpcomingBusSectionInsideElement(
     elementName: String,
     newContent: JsDom.TypedTag[Div],
-  ): ZIO[Has[Browser.Service], Nothing, Unit] =
+  ): ZIO[Browser, Nothing, Unit] =
     ZIO
-      .access[Has[Browser.Service]](_.get)
+      .access[Browser](_.get)
       .map {
         browser =>
           println(
@@ -76,9 +77,9 @@ object DomManipulation {
 
   def hideUpcomingBusSectionInsideElement(
     elementName: String,
-  ): ZIO[Has[Browser.Service], Nothing, Unit] =
+  ): ZIO[Browser, Nothing, Unit] =
     ZIO
-      .access[Has[Browser.Service]](_.get)
+      .access[Browser](_.get)
       .map {
         browser =>
           browser

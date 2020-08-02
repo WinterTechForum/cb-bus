@@ -61,7 +61,7 @@ object TimeCalculations {
     busRoute: NamedRoute,
   ) =
     for {
-      clockProper <- ZIO.access[Has[Clock.Service]](_.get)
+      clockProper <- ZIO.access[Clock](_.get)
       now         <- clockProper.currentDateTime
       localTime = new BusTime(now.toLocalTime)
     } yield {
@@ -75,7 +75,7 @@ object TimeCalculations {
     busRoute: NamedRoute,
   ) =
     for {
-      clockProper <- ZIO.access[Has[Clock.Service]](_.get)
+      clockProper <- ZIO.access[Clock](_.get)
       now         <- clockProper.currentDateTime
       localTime = new BusTime(now.toLocalTime)
     } yield {

@@ -2,6 +2,7 @@ package crestedbutte
 
 import org.scalajs.dom.raw.MouseEvent
 import zio.{Has, ZIO}
+import crestedbutte.Browser.Browser
 
 object ModalBehavior {
 
@@ -12,7 +13,7 @@ object ModalBehavior {
 
   val addModalOpenBehavior =
     ZIO
-      .access[Has[Browser.Service]](_.get)
+      .access[Browser](_.get)
       .map {
         browser =>
           def activateModal(
@@ -81,7 +82,7 @@ object ModalBehavior {
 
   val addModalCloseBehavior =
     ZIO
-      .access[Has[Browser.Service]](_.get)
+      .access[Browser](_.get)
       .map(
         browser =>
           browser
