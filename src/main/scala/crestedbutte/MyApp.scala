@@ -112,8 +112,11 @@ object MyApp extends App {
       _ <- registerServiceWorker()
       _ <- NotificationStuff.addNotificationPermissionRequestToButton
       _ <- NotificationStuff.displayNotificationPermission
-      _ <- DomManipulation.createAndApplyPageStructure(pageMode,
-                                                       components)
+      _ <- DomManipulation.createAndApplyPageStructure(
+        TagsOnlyLocal
+          .overallPageLayout(pageMode, components)
+          .render,
+      )
       _ <- UnsafeCallbacks.attachMenuBehavior
       loopingLogic: ZIO[Any, Throwable, Unit] = loopLogic(pageMode,
                                                           components)
@@ -140,17 +143,19 @@ object MyApp extends App {
             componentData.namedRoute,
           )
           .catchAll(failure => throw new RuntimeException("ack!"))
-        _ <- DomManipulation.updateUpcomingBusSectionInsideElement(
+        _ <- DomManipulation.updateIdContentInsideElementAndReveal(
           componentData.componentName,
-          TagsOnlyLocal.structuredSetOfUpcomingArrivals(
-            arrivalsAtAllRouteStops,
-          ),
+          TagsOnlyLocal
+            .structuredSetOfUpcomingArrivals(
+              arrivalsAtAllRouteStops,
+            )
+            .render,
           "upcoming-buses",
         )
       } yield ()
     }
     else {
-      DomManipulation.hideUpcomingBusSectionInsideElement(
+      DomManipulation.hideElement(
         componentData.componentName,
       )
     }

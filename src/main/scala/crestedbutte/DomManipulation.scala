@@ -10,8 +10,7 @@ object DomManipulation {
   import scalatags.JsDom.all._
 
   def createAndApplyPageStructure(
-    pageMode: AppMode.Value,
-    componentData: Seq[ComponentData],
+    pageContent: Node,
   ): ZIO[Browser, Nothing, Node] =
     ZIO
       .access[Browser](_.get)
@@ -23,9 +22,7 @@ object DomManipulation {
           browser
             .body()
             .appendChild(
-              TagsOnlyLocal
-                .overallPageLayout(pageMode, componentData)
-                .render,
+              pageContent,
             )
       }
 
@@ -43,21 +40,26 @@ object DomManipulation {
         },
       )
 
-  def updateUpcomingBusSectionInsideElement(
-    elementName: String,
-    newContent: JsDom.TypedTag[Div],
-    contentContainerId: String,
+//  def updateIdContentInsideElementAndReveal(
+//                                             containerId: String,
+//                                             newContent: Node,
+//                                             innerContentId: String,
+//                                           ): ZIO[Browser, Nothing, Unit] =
+  def updateIdContentInsideElementAndReveal(
+    containerId: String,
+    newContent: Node,
+    innerContentId: String,
   ): ZIO[Browser, Nothing, Unit] =
     ZIO
       .access[Browser](_.get)
       .map {
         browser =>
           browser
-            .querySelector(s"#$elementName") // TODO Handle case where this is missing
+            .querySelector(s"#$containerId") // TODO Handle case where this is missing
             .foreach {
               routeElementResult =>
                 routeElementResult
-                  .querySelector("#" + contentContainerId)
+                  .querySelector("#" + innerContentId)
                   .innerHTML = ""
 
                 routeElementResult.setAttribute(
@@ -66,27 +68,26 @@ object DomManipulation {
                 ) // TODO or grid?
 
                 routeElementResult
-                  .querySelector("#" + contentContainerId)
-                  .appendChild(newContent.render)
+                  .querySelector("#" + innerContentId)
+                  .appendChild(newContent)
             }
       }
 
-  def hideUpcomingBusSectionInsideElement(
-    elementName: String,
+  def hideElement(
+    elementId: String,
   ): ZIO[Browser, Nothing, Unit] =
     ZIO
       .access[Browser](_.get)
       .map {
         browser =>
           browser
-            .querySelector(s"#$elementName") // TODO Handle case where this is missing
+            .querySelector(s"#$elementId")
             .foreach {
               routeElementResult =>
                 routeElementResult.setAttribute(
                   "style",
                   "display:none",
                 ) // Come up with way of hiding and collapsing
-//            routeElementResult.innerHTML = ""
             }
       }
 
