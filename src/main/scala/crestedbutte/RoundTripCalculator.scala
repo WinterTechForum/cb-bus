@@ -4,7 +4,21 @@ import com.billding.time.{BusDuration, BusTime}
 import crestedbutte.routes.RouteWithTimes
 
 case class RouteLeg(
-  stops: Seq[LocationWithTime])
+  stops: Seq[LocationWithTime]) {
+
+  def trimToStartAt(
+    location: Location.Value,
+  ): RouteLeg =
+    RouteLeg(stops.dropWhile(_.location != location))
+
+  def trimToEndAt(
+    location: Location.Value,
+  ): RouteLeg = {
+    val indexOf2ndToLastStop =
+      stops.lastIndexWhere(_.location != location)
+    RouteLeg(stops.take(indexOf2ndToLastStop))
+  }
+}
 
 case class LocationWithTime(
   location: Location.Value,
@@ -25,7 +39,10 @@ object RoundTripCalculator {
     returnSchedule: RouteWithTimes,
   ): RoundTrip =
     RoundTrip(
-      findLatestDepartureLeg(arrivalTime, destination, leaveSchedule).stops match {
+      reducedLegStartingAt(startLocation,
+                           arrivalTime,
+                           destination,
+                           leaveSchedule).stops match {
         case (begin :: middleStops) :+ end => ???
         case _                             => throw new RuntimeException("Can we prevent this?")
       },
@@ -44,12 +61,22 @@ object RoundTripCalculator {
     leaveSchedule: RouteWithTimes,
   ): LocationWithTime = ???
 
+  def reducedLegStartingAt(
+    start: Location.Value,
+    arrivalTime: BusTime,
+    destination: Location.Value,
+    leaveSchedule: RouteWithTimes,
+  ): RouteLeg =
+    findLatestDepartureLeg(arrivalTime, destination, leaveSchedule)
+      .trimToStartAt(start)
+      .trimToEndAt(destination)
+
   def findLatestDepartureLeg(
     arrivalTime: BusTime,
     destination: Location.Value,
     leaveSchedule: RouteWithTimes,
   ): RouteLeg = {
-    val targetIndexToAssembleRoute = {
+    val targetIndexToAssembleRoute =
       leaveSchedule.allStops.zipWithIndex
         .find {
           case (busScheduleAtStop: BusScheduleAtStop, idx) =>
@@ -63,13 +90,15 @@ object RoundTripCalculator {
         }
         .getOrElse(throw new RuntimeException("D'oh!"))
 
-    }
+    println("targetIndex: " + targetIndexToAssembleRoute)
     RouteLeg(
       leaveSchedule.allStops
         .map(
           stop =>
-            LocationWithTime(stop.location,
-                             stop.times(targetIndexToAssembleRoute)),
+            LocationWithTime(
+              stop.location,
+              stop.times.toList(targetIndexToAssembleRoute),
+            ),
         ),
     )
   }
