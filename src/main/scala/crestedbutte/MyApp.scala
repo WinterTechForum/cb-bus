@@ -3,7 +3,7 @@ package crestedbutte
 import java.util.concurrent.TimeUnit
 
 import com.billding.time.{BusTime, ColoradoClock, TurboClock}
-import crestedbutte.dom.BulmaBehaviorLocal
+import crestedbutte.dom.{BulmaBehaviorLocal, DomManipulation}
 import crestedbutte.routes._
 import org.scalajs.dom.experimental.serviceworkers._
 import zio.clock._
@@ -23,7 +23,6 @@ object MyApp extends App {
     val myEnvironment =
       ZLayer.succeed(BrowserLive.browser) ++ Console.live ++
       ZLayer.succeed(ColoradoClock.live)
-//      Clock.live
 
     fullApplicationLogic.provideLayer(myEnvironment).exitCode
   }
@@ -143,7 +142,7 @@ object MyApp extends App {
             componentData.namedRoute,
           )
           .catchAll(failure => throw new RuntimeException("ack!"))
-        _ <- DomManipulation.updateIdContentInsideElementAndReveal(
+        _ <- DomManipulation.updateContentInsideElementAndReveal(
           componentData.componentName,
           TagsOnlyLocal
             .structuredSetOfUpcomingArrivals(
@@ -192,23 +191,6 @@ object MyApp extends App {
             .toFuture
             .onComplete {
               case Success(registration) =>
-//              browser
-//                .querySelector(
-//                  "#" + ElementNames.Notifications.submitMessageToServiceWorker,
-//                )
-//                .foreach(
-//                  _.addEventListener(
-//                    "click",
-//                    (_: MouseEvent) => {
-//                      println(
-//                        "submitting message to service worker",
-//                      )
-//                      registration.active.postMessage(
-//                        "Submitting a message to the serviceWorker!",
-//                      )
-//                    },
-//                  ),
-//                )
                 registration.update()
               case Failure(error) =>
                 println(

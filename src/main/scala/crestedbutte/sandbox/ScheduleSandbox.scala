@@ -1,10 +1,11 @@
 package crestedbutte.sandbox
 
-import crestedbutte.DomManipulation
+import crestedbutte.dom.DomManipulation
 import zio.clock.Clock
 import zio.{duration, Schedule, ZIO}
 
 object ScheduleSandbox {
+  import scalatags.JsDom.all._
 
   val driveFromMountaineerToTeocalli =
     Schedule.once && Schedule.spaced(duration.durationInt(2).seconds)
@@ -19,33 +20,37 @@ object ScheduleSandbox {
     number: Int,
   ) =
     DomManipulation
-      .appendMessageToPage(s"Bus #$number is leaving old town hall!")
+      .appendMessageToPage(
+        div(s"Bus #$number is leaving old town hall!").render,
+      )
       .flatMap(_ => ZIO.sleep(duration.durationInt(4).seconds))
       .flatMap(
         _ =>
           DomManipulation.appendMessageToPage(
-            s"Bus #$number arrived at clarks!",
+            div(s"Bus #$number arrived at clarks!").render,
           ),
       )
       .flatMap(_ => ZIO.sleep(duration.durationInt(1).seconds))
       .flatMap(
         _ =>
           DomManipulation
-            .appendMessageToPage(s"Bus #$number arrived at 4 way!"),
+            .appendMessageToPage(
+              div(s"Bus #$number arrived at 4 way!").render,
+            ),
       )
       .flatMap(_ => ZIO.sleep(duration.durationInt(1).seconds))
       .flatMap(
         _ =>
           DomManipulation
             .appendMessageToPage(
-              s"Bus #$number arrived at Teocalli!",
+              div(s"Bus #$number arrived at Teocalli!").render,
             ),
       )
       .flatMap(_ => ZIO.sleep(duration.durationInt(5).seconds)) // TODO Proper amount here
       .flatMap(
         _ =>
           DomManipulation.appendMessageToPage(
-            s"Bus #$number arrived at Mountaineer Square!",
+            div(s"Bus #$number arrived at Mountaineer Square!").render,
           ),
       )
 
