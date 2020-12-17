@@ -13,7 +13,7 @@ val zioVersion = "1.0.0-RC21-2"
 
 libraryDependencies ++= Seq(
   "com.billding" %%% "bulmalibrary" % "0.2.19",
-  "com.billding" %%% "scalajsziolibrary" % "0.0.12",
+  "com.billding" %%% "scalajsziolibrary" % "0.0.13",
   "com.billding" %%% "brieftime" % "0.0.16",
   "dev.zio" %%% "zio" % zioVersion,
   "dev.zio" %%% "zio-streams" % zioVersion,
@@ -26,6 +26,11 @@ libraryDependencies ++= Seq(
 //  "com.github.japgolly.scalacss" %%% "core" % "0.6.0",
 //  "com.github.japgolly.scalacss" %%% "ext-scalatags" % "0.6.0",
 )
+
+libraryDependencies += "com.lihaoyi" %%% "utest" % "0.7.5" % "test"
+
+testFrameworks += new TestFramework("utest.runner.Framework")
+
 
 testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
 

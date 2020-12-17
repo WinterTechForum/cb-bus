@@ -31,7 +31,6 @@ class RouteWithTimes(
             else {
               stopsAcc :+ nextStop
             }
-
         },
     )
 }

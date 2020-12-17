@@ -5,6 +5,7 @@ import com.billding.time.BusTime
 import zio.test.Assertion._
 import zio.test.{DefaultRunnableSpec, test, _} // Enables Int.minutes syntax
 
+/*
 object BusTimeSpec
     extends DefaultRunnableSpec(
       suite("HelloWorldSpec")(
@@ -38,3 +39,6 @@ object BusTimeSpec
         )
       )
     ) {}
+
+
+ */
