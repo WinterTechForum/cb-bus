@@ -1,11 +1,30 @@
 package crestedbutte.routes
 
-import crestedbutte.{BusScheduleAtStop, Location}
+import crestedbutte.{
+  BusScheduleAtStop,
+  Location,
+  LocationWithTime,
+  RouteLeg,
+}
 import com.billding.time.BusDuration
 
-class RouteWithTimes(
-  val allStops: Seq[BusScheduleAtStop],
+case class RouteWithTimes(
+  allStops: Seq[BusScheduleAtStop],
 ) {
+
+  def routeLeg(
+    index: Int,
+  ): RouteLeg =
+    RouteLeg(
+      allStops
+        .map(
+          stop =>
+            LocationWithTime(
+              stop.location,
+              stop.times.toList(index),
+            ),
+        ),
+    )
 
   def combinedWith(
     routeWithTimes: RouteWithTimes,

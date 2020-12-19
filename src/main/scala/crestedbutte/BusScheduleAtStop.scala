@@ -49,7 +49,8 @@ object BusScheduleAtStop {
     else
       BusScheduleAtStop(
         schedule1.location,
-        (schedule1.times ++ schedule2.times).sortBy(_.toString),
+//        (schedule1.times ++ schedule2.times).sortBy(_.toString),
+        (schedule1.times ++ schedule2.times).sorted,
       ) // TODO Ensure sorted times
 
 }

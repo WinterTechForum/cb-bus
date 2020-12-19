@@ -85,22 +85,13 @@ object RoundTripCalculator {
         .map {
           case (busScheduleAtStop: BusScheduleAtStop, idx) =>
             busScheduleAtStop.times.lastIndexWhere(
-              _.isBeforeOrEqualTo(arrivalTime),
+              BusTime.busTimeOrdering.compare(_, arrivalTime) <= 0,
             )
         }
         .getOrElse(throw new RuntimeException("D'oh!"))
 
     println("targetIndex: " + targetIndexToAssembleRoute)
-    RouteLeg(
-      leaveSchedule.allStops
-        .map(
-          stop =>
-            LocationWithTime(
-              stop.location,
-              stop.times.toList(targetIndexToAssembleRoute),
-            ),
-        ),
-    )
+    leaveSchedule.routeLeg(targetIndexToAssembleRoute)
   }
 
   def whenYouWouldArrive(
