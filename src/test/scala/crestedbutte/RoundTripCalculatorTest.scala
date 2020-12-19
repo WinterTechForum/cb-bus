@@ -1,7 +1,7 @@
 package crestedbutte
 
 import com.billding.time.BusTime
-import crestedbutte.routes.{RouteWithTimes, RtaSouthbound}
+import crestedbutte.routes.{RouteWithTimes, RtaNorthbound, RtaSouthbound}
 import utest.{TestSuite, Tests}
 import utest._
 
@@ -26,6 +26,19 @@ object RoundTripCalculatorTest extends TestSuite {
       val results =
         RoundTripCalculator.reducedLegStartingAt(start, arrivalTime, destination, leaveSchedule)
       assert( results.stops.head.busTime == BusTime("18:35"))
+      pprint.pprintln(results)
+    }
+
+    test("Northbound to CB South in the morning, honoring the huge express bus void") {
+
+      val start: Location.Value = Location.GunnisonCommunitySchools
+      val arrivalTime: BusTime = BusTime("09:00")
+      val destination: Location.Value = Location.CBSouth
+      val leaveSchedule: RouteWithTimes = RtaNorthbound.fullSchedule.routeWithTimes
+      val results =
+        RoundTripCalculator.reducedLegStartingAt(start, arrivalTime, destination, leaveSchedule)
+      assert( results.stops.head.busTime == BusTime("06:00"))
+      pprint.pprintln(results)
     }
   }
 }
