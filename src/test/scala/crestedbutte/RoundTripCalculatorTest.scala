@@ -1,6 +1,6 @@
 package crestedbutte
 
-import com.billding.time.BusTime
+import com.billding.time.{BusDuration, BusTime}
 import crestedbutte.routes.{RouteWithTimes, RtaNorthbound, RtaSouthbound}
 import utest.{TestSuite, Tests}
 import utest._
@@ -27,7 +27,6 @@ object RoundTripCalculatorTest extends TestSuite {
         val results =
           RoundTripCalculator.reducedLegStartingAt(start, arrivalTime, destination, leaveSchedule)
         assert(results.stops.head.busTime == BusTime("18:35"))
-        pprint.pprintln(results)
       }
 
       test("Northbound to CB South in the morning, honoring the huge express bus void") {
@@ -38,7 +37,6 @@ object RoundTripCalculatorTest extends TestSuite {
         val results =
           RoundTripCalculator.reducedLegStartingAt(start, arrivalTime, destination, leaveSchedule)
         assert(results.stops.head.busTime == BusTime("06:00"))
-        pprint.pprintln(results)
       }
     }
 
@@ -64,7 +62,6 @@ object RoundTripCalculatorTest extends TestSuite {
           RoundTripCalculator.reducedReturnLeg(LocationWithTime(start, earliestDepartureTime), leaveSchedule, destination)
         assert(results.stops.head.busTime == BusTime("15:28"))
         assert(results.stops.last.busTime == BusTime("15:42"))
-        pprint.pprintln(results)
       }
 
       test("Northbound from CB South in the morning, honoring the huge express bus void") {
@@ -75,8 +72,17 @@ object RoundTripCalculatorTest extends TestSuite {
         val results =
           RoundTripCalculator.reducedReturnLeg(LocationWithTime(start, earliestDepartureTime), leaveSchedule, destination)
         assert(results.stops.head.busTime == BusTime("09:42"))
-        pprint.pprintln(results)
       }
+    }
+    test("Full Round Trip" ) {
+      RoundTripCalculator.calculate(
+        Location.BrushCreek,
+        Location.RecCenter,
+        BusTime("18:30"), // When I need to arrive
+        RtaSouthbound.fullSchedule.routeWithTimes,
+        BusDuration.ofMinutes(60),  // How long I need to be there
+        Location.SpencerAndHighwayOneThirtyFive,
+        RtaNorthbound.fullSchedule.routeWithTimes)
     }
   }
 }

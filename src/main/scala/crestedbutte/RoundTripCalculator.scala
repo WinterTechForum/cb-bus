@@ -44,8 +44,9 @@ object RoundTripCalculator {
     startLocation: Location.Value,
     destination: Location.Value,
     arrivalTime: BusTime,
-    timeRequiredAtDestination: BusDuration,
     leaveSchedule: RouteWithTimes,
+    timeRequiredAtDestination: BusDuration,
+    returningLaunchPoint: Location.Value,
     returnSchedule: RouteWithTimes,
   ): RoundTrip =
     RoundTrip(
@@ -54,7 +55,7 @@ object RoundTripCalculator {
                            destination,
                            leaveSchedule),
       reducedReturnLeg(
-        LocationWithTime(destination,
+        LocationWithTime(returningLaunchPoint,
                          arrivalTime.plus(timeRequiredAtDestination)),
         returnSchedule,
         startLocation,
