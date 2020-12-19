@@ -117,6 +117,9 @@ object MyApp extends App {
           .render,
       )
       _ <- UnsafeCallbacks.attachMenuBehavior
+      _ <- ZIO {
+        LaminarRoundTripCalculator.app("laminar-app")
+      }
       loopingLogic: ZIO[Any, Throwable, Unit] = loopLogic(pageMode,
                                                           components)
         .provideLayer(
@@ -198,4 +201,42 @@ object MyApp extends App {
                 )
             }
       }
+
+  object LaminarRoundTripCalculator {
+    import com.raquo.laminar.api.L._
+    val actionVar = Var("Do the thing")
+
+    val allowedIcons = {
+      List(RtaNorthbound.fullSchedule, RtaSouthbound.fullSchedule)
+    }
+
+    val iconVar: Var[String] = Var(
+      initial = allowedIcons.head.routeName.name,
+    )
+
+    def app(
+      containerId: String,
+    ) = {
+      import org.scalajs.dom
+      val app = div(
+        LaminarRoundTripCalculator.controlPanel(),
+      )
+      render(dom.document.getElementById(containerId), app)
+    }
+
+    def controlPanel() =
+      select(
+        inContext {
+          thisNode =>
+            onChange.mapTo(thisNode.ref.value) --> iconVar.writer
+        },
+        value <-- iconVar.signal,
+        allowedIcons.map(
+          route =>
+            option(value(route.routeName.name),
+                   route.routeName.userFriendlyName),
+        ),
+      )
+
+  }
 }

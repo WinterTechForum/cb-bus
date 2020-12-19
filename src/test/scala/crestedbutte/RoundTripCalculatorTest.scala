@@ -76,13 +76,13 @@ object RoundTripCalculatorTest extends TestSuite {
     }
     test("Full Round Trip" ) {
       RoundTripCalculator.calculate(
-        Location.BrushCreek,
-        Location.RecCenter,
-        BusTime("18:30"), // When I need to arrive
-        RtaSouthbound.fullSchedule.routeWithTimes,
-        BusDuration.ofMinutes(60),  // How long I need to be there
-        Location.SpencerAndHighwayOneThirtyFive,
-        RtaNorthbound.fullSchedule.routeWithTimes)
+        startLocation = Location.BrushCreek,
+        destination = Location.RecCenter,
+        arrivalTime = BusTime("18:30"),
+        leaveSchedule = RtaSouthbound.fullSchedule.routeWithTimes,
+        timeRequiredAtDestination = BusDuration.ofMinutes(60),  // How long I need to be there
+        returningLaunchPoint = Location.SpencerAndHighwayOneThirtyFive, // Where I'll be catching the bus home
+        returnSchedule = RtaNorthbound.fullSchedule.routeWithTimes)
     }
   }
 }

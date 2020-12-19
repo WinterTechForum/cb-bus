@@ -16,7 +16,7 @@ case class RouteLeg(
   ): RouteLeg = {
     val indexOfLastStop =
       stops.indexWhere(_.location == location)
-    RouteLeg(stops.take(indexOfLastStop+1))
+    RouteLeg(stops.take(indexOfLastStop + 1))
   }
 
   // Assumes non-empty
