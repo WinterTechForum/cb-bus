@@ -6,7 +6,7 @@ import crestedbutte.{
   LocationWithTime,
   RouteLeg,
 }
-import com.billding.time.BusDuration
+import com.billding.time.{BusDuration, BusTime}
 
 // todo I need to start building this out of RouteLegs.
 //    If I correctly construct those, the express issue should go away.
@@ -80,6 +80,20 @@ object RouteWithTimes {
             }
           }
       },
+    )
+
+  def sched(
+    location: Location.Value,
+    routeConstructor: RouteLeg => RouteLeg,
+    stopTimes: String*,
+  ): RouteWithTimes =
+    RouteWithTimes.applyNew(
+      stopTimes
+        .map(
+          time =>
+            RouteLeg(Seq(LocationWithTime(location, BusTime(time)))),
+        )
+        .map(routeConstructor),
     )
 
   def apply(

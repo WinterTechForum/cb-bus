@@ -18,6 +18,16 @@ case class RouteLeg(
       stops.lastIndexWhere(_.location != location)
     RouteLeg(stops.take(indexOf2ndToLastStop))
   }
+
+  // Assumes non-empty
+  def plus(
+    location: Location.Value,
+    busDuration: BusDuration,
+  ) =
+    RouteLeg(
+      stops :+ LocationWithTime(location,
+                                stops.last.busTime.plus(busDuration)),
+    )
 }
 
 case class LocationWithTime(
