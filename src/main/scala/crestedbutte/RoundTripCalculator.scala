@@ -14,9 +14,9 @@ case class RouteLeg(
   def trimToEndAt(
     location: Location.Value,
   ): RouteLeg = {
-    val indexOf2ndToLastStop =
-      stops.lastIndexWhere(_.location != location)
-    RouteLeg(stops.take(indexOf2ndToLastStop))
+    val indexOfLastStop =
+      stops.indexWhere(_.location == location)
+    RouteLeg(stops.take(indexOfLastStop+1))
   }
 
   // Assumes non-empty
@@ -52,18 +52,13 @@ object RoundTripCalculator {
       reducedLegStartingAt(startLocation,
                            arrivalTime,
                            destination,
-                           leaveSchedule).stops match {
-        case (begin :: middleStops) :+ end => ???
-        case _                             => throw new RuntimeException("Can we prevent this?")
-      },
-      earliestReturnLeg(
+                           leaveSchedule),
+      reducedReturnLeg(
         LocationWithTime(destination,
                          arrivalTime.plus(timeRequiredAtDestination)),
         returnSchedule,
-      ).stops match {
-        case (begin :: middleStops) :+ end => ???
-        case _                             => throw new RuntimeException("Can we prevent this?")
-      },
+        startLocation,
+      ),
     )
 
   def findLatestDepartureTime(
@@ -103,15 +98,29 @@ object RoundTripCalculator {
     destination: Location.Value,
   ): BusTime = ???
 
+  def reducedReturnLeg(
+    target: LocationWithTime,
+    routeWithTimes: RouteWithTimes,
+    destination: Location.Value,
+  ) =
+    earliestReturnLeg(target, routeWithTimes)
+      .trimToStartAt(target.location)
+      .trimToEndAt(destination)
+
   def earliestReturnLeg(
     target: LocationWithTime,
     routeWithTimes: RouteWithTimes,
-  ): RouteLeg = ???
-
-  def legOfJourneyThatContains(
-    target: LocationWithTime,
-    routeWithTimes: RouteWithTimes,
-  ): RouteLeg = ???
+  ): RouteLeg =
+    routeWithTimes.legs
+      .find(
+        leg =>
+          leg.stops.exists(
+            stop =>
+              stop.location == target.location && BusTime.busTimeOrdering
+                .compare(stop.busTime, target.busTime) >= 0, // todo ugh. bad int math.
+          ),
+      )
+      .getOrElse(throw new RuntimeException("D'oh!"))
 
   def findEarliestReturnTime(
     arrivalTime: BusTime,
