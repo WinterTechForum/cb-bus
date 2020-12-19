@@ -26,7 +26,7 @@ object RouteWithTimesTest extends TestSuite {
 //      )
 
       pprint.pprintln(
-        RouteWithTimes.applyNew(
+        RouteWithTimes(
           Seq(
             RouteLeg(
               Seq(

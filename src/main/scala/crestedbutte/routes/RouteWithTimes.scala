@@ -1,6 +1,7 @@
 package crestedbutte.routes
 
 import crestedbutte.{
+  BusSchedule,
   BusScheduleAtStop,
   Location,
   LocationWithTime,
@@ -11,8 +12,26 @@ import com.billding.time.{BusDuration, BusTime}
 // todo I need to start building this out of RouteLegs.
 //    If I correctly construct those, the express issue should go away.
 case class RouteWithTimes(
-  allStops: Seq[BusScheduleAtStop],
-) {
+  legs: Seq[RouteLeg]) {
+
+  val allStops: Seq[BusScheduleAtStop] =
+    legs.foldLeft(Seq[BusScheduleAtStop]()) {
+      case (acc, leg) =>
+        leg.stops.foldLeft(acc) {
+          case (innerAcc, stop) => {
+            if (innerAcc.exists(_.location == stop.location))
+              innerAcc.map {
+                case BusScheduleAtStop(location, times)
+                    if (location == stop.location) =>
+                  BusScheduleAtStop(location, times :+ stop.busTime)
+                case other => other
+              }
+            else
+              innerAcc :+ BusScheduleAtStop(stop.location,
+                                            Seq(stop.busTime))
+          }
+        }
+    }
 
   def routeLeg(
     index: Int,
@@ -31,83 +50,41 @@ case class RouteWithTimes(
   def combinedWith(
     routeWithTimes: RouteWithTimes,
   ): RouteWithTimes =
-    new RouteWithTimes(
-      (allStops ++: routeWithTimes.allStops)
-        .foldLeft(Seq[BusScheduleAtStop]()) {
-          case (stopsAcc: Seq[BusScheduleAtStop], nextStop) =>
-            val combinedStop =
-              stopsAcc.find(_.location == nextStop.location).map {
-                existingStop =>
-                  BusScheduleAtStop.combine(existingStop, nextStop)
-              }
-            if (combinedStop.isDefined) {
-              val (beforeStop, replacedStop :: afterStop) =
-                stopsAcc.splitAt(
-                  stopsAcc.indexWhere(
-                    _.location == nextStop.location,
-                  ),
-                )
-              beforeStop :+ combinedStop.get :++ afterStop
-            }
-            else {
-              stopsAcc :+ nextStop
-            }
-        },
+    RouteWithTimes(
+      (this.legs ++ routeWithTimes.legs)
+        .sortBy(_.stops.head.busTime), // TODO Is this a good place to handle the sorting?
     )
 }
 
 object RouteWithTimes {
 
-  // TODO transition to this
-  def applyNew(
-    legs: Seq[RouteLeg],
+  def schedTyped(
+    location: Location.Value,
+    routeConstructor: RouteLeg => RouteLeg,
+    stopTimes: BusTime*,
   ): RouteWithTimes =
     RouteWithTimes(
-      legs.foldLeft(Seq[BusScheduleAtStop]()) {
-        case (acc, leg) =>
-          leg.stops.foldLeft(acc) {
-            case (innerAcc, stop) => {
-              if (innerAcc.exists(_.location == stop.location))
-                innerAcc.map {
-                  case BusScheduleAtStop(location, times)
-                      if (location == stop.location) =>
-                    BusScheduleAtStop(location, times :+ stop.busTime)
-                  case other => other
-                }
-              else
-                innerAcc :+ BusScheduleAtStop(stop.location,
-                                              Seq(stop.busTime))
-            }
-          }
-      },
+      stopTimes
+        .map(
+          time => RouteLeg(Seq(LocationWithTime(location, time))),
+        )
+        .map(routeConstructor),
     )
+
+  def schedTyped(
+    location: Location.Value,
+    routeConstructor: RouteLeg => RouteLeg,
+    busSchedule: BusSchedule,
+  ): RouteWithTimes =
+    schedTyped(location, routeConstructor, busSchedule.stopTimes: _*)
 
   def sched(
     location: Location.Value,
     routeConstructor: RouteLeg => RouteLeg,
     stopTimes: String*,
   ): RouteWithTimes =
-    RouteWithTimes.applyNew(
-      stopTimes
-        .map(
-          time =>
-            RouteLeg(Seq(LocationWithTime(location, BusTime(time)))),
-        )
-        .map(routeConstructor),
-    )
-
-  def apply(
-    originStops: BusScheduleAtStop,
-    locationsWithDelays: Seq[(Location.Value, BusDuration)],
-  ) =
-    new RouteWithTimes(
-      locationsWithDelays
-        .foldLeft(Seq(originStops)) {
-          case (stopsSoFar, currentStop) =>
-            stopsSoFar :+ stopsSoFar.last
-              .delayedBy(currentStop._2)
-              .at(currentStop._1)
-        },
-    )
+    schedTyped(location,
+               routeConstructor,
+               stopTimes.toList.map(BusTime(_)): _*) // ugh
 
 }

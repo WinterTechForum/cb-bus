@@ -26,18 +26,15 @@ Mountaineer Square to a designated stop on a condo route, on demand only.
 object SnodgrassShuttle
     extends NamedRoute(
       RouteName("Snodgrass Shuttle"),
-      RouteWithTimes(
-        BusScheduleAtStop(
-          Location.MountaineerSquare,
-          BusSchedule("07:55", "21:55", 60.minutes),
-        ),
-        Seq(
-          (Location.CinnamonMtnGothicToSnodgrass, 1.minutes),
-          (Location.GothicWintersetTosnodgrass, 2.minutes),
-          (Location.SnodgrassTrailhead, 2.minutes),
-          (Location.GothicWintersetToMountaineerSquare, 2.minutes),
-          (Location.MtCBTownHallToMountaineerSquare, 1.minutes),
-          (Location.ParadiseRoad, 1.minutes),
-        ),
+      RouteWithTimes.schedTyped(
+        Location.MountaineerSquare,
+        _.plus(Location.CinnamonMtnGothicToSnodgrass, 1.minutes)
+          .plus(Location.GothicWintersetTosnodgrass, 2.minutes)
+          .plus(Location.SnodgrassTrailhead, 2.minutes)
+          .plus(Location.GothicWintersetToMountaineerSquare,
+                2.minutes)
+          .plus(Location.MtCBTownHallToMountaineerSquare, 1.minutes)
+          .plus(Location.ParadiseRoad, 1.minutes),
+        BusSchedule("07:55", "21:55", 60.minutes),
       ),
     )

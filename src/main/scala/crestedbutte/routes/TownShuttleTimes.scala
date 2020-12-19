@@ -24,19 +24,14 @@ import com.billding.time.BusDuration.toBusDuration
 object TownShuttleTimes
     extends NamedRoute(
       RouteName("Town Loop"),
-      RouteWithTimes(
-        BusScheduleAtStop(
-          Location.OldTownHall,
-          BusSchedule("07:10", "23:40", 15.minutes),
-        ),
-        Seq(
-          (Location.Clarks, 4.minutes),
-          (Location.FourWayUphill, 1.minutes),
-          (Location.TeocalliUphill, 1.minutes),
-          (Location.MountaineerSquare, 14.minutes),
-          (Location.TeocalliDownhill, 6.minutes),
-          (Location.FourwayDownhill, 1.minutes),
-        ),
+      RouteWithTimes.schedTyped(
+        Location.OldTownHall,
+        _.plus(Location.Clarks, 4.minutes)
+          .plus(Location.FourWayUphill, 1.minutes)
+          .plus(Location.TeocalliUphill, 1.minutes)
+          .plus(Location.MountaineerSquare, 14.minutes)
+          .plus(Location.TeocalliDownhill, 6.minutes)
+          .plus(Location.FourwayDownhill, 1.minutes),
+        BusSchedule("07:10", "23:40", 15.minutes),
       ),
-      // Berp
     )

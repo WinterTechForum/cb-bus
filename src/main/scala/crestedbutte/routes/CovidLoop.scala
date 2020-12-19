@@ -12,22 +12,18 @@ import crestedbutte.{
 object CovidLoop
     extends NamedRoute(
       RouteName("Covid Loop"),
-      RouteWithTimes(
-        BusScheduleAtStop(
-          Location.OldTownHall,
-          BusSchedule("07:35", "23:35", 20.minutes),
-        ),
-        Seq(
-          (Location.Clarks, 5.minutes),
-          (Location.FourWayUphill, 1.minutes),
-          (Location.TeocalliUphill, 1.minutes),
-          (Location.WoodCreekMountainEdge, 4.minutes),
-          (Location.ThePlaza, 1.minutes),
-          (Location.MountaineerSquare, 13.minutes),
-          (Location.ThreeSeasons, 1.minutes),
-          (Location.MountainSunrise, 0.minutes), // TODO Confirm
-          (Location.Pitchfork, 5.minutes),
-        ),
+      RouteWithTimes.schedTyped(
+        Location.OldTownHall,
+        _.plus(Location.Clarks, 5.minutes)
+          .plus(Location.FourWayUphill, 1.minutes)
+          .plus(Location.TeocalliUphill, 1.minutes)
+          .plus(Location.WoodCreekMountainEdge, 4.minutes)
+          .plus(Location.ThePlaza, 1.minutes)
+          .plus(Location.MountaineerSquare, 13.minutes)
+          .plus(Location.ThreeSeasons, 1.minutes)
+          .plus(Location.MountainSunrise, 0.minutes) // confirm
+          .plus(Location.Pitchfork, 5.minutes),
+        BusSchedule("07:35", "23:35", 20.minutes),
       ),
     )
 /*

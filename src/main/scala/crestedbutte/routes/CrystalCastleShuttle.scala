@@ -26,17 +26,13 @@ Every 30 minutes from 8:10 AM to 10:40 PM
 object CrystalCastleShuttle
     extends NamedRoute(
       RouteName("Crystal/Castle"),
-      RouteWithTimes(
-        BusScheduleAtStop(
-          Location.MountaineerSquare,
-          BusSchedule("08:10", "22:40", 30.minutes),
-        ),
-        Seq(
-          (Location.Pitchfork, 2.minutes),
-          (Location.CrystalRoad, 1.minutes),
-          (Location.CastleRoad, 2.minutes),
-          (Location.WoodCreekMountainEdge, 1.minutes),
-          (Location.HunterHillTimberline, 2.minutes),
-        ),
+      RouteWithTimes.schedTyped(
+        Location.MountaineerSquare,
+        _.plus(Location.Pitchfork, 2.minutes)
+          .plus(Location.CrystalRoad, 1.minutes)
+          .plus(Location.CastleRoad, 2.minutes)
+          .plus(Location.WoodCreekMountainEdge, 1.minutes)
+          .plus(Location.HunterHillTimberline, 2.minutes),
+        BusSchedule("08:10", "22:40", 30.minutes),
       ),
     ) {}

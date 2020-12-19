@@ -27,19 +27,15 @@ import com.billding.time.BusDuration.toBusDuration
 object ColumbineLoop
     extends NamedRoute(
       RouteName("Columbine Loop"),
-      RouteWithTimes(
-        BusScheduleAtStop(
-          Location.MountaineerSquare,
-          BusSchedule("08:25", "22:25", 60.minutes),
-        ),
-        Seq(
-          (Location.Whetstone, 1.minutes),
-          (Location.ColumbineCondo, 2.minutes),
-          (Location.CinnamonMtn, 2.minutes),
-          (Location.MtCbTownHall, 0.minutes),
-          (Location.UpperParadiseRoad, 1.minutes),
-          (Location.LowerParadiseRoad, 1.minutes),
-          (Location.EaglesNestCondos, 3.minutes),
-        ),
+      RouteWithTimes.schedTyped(
+        Location.MountaineerSquare,
+        _.plus(Location.Whetstone, 1.minutes)
+          .plus(Location.ColumbineCondo, 2.minutes)
+          .plus(Location.CinnamonMtn, 2.minutes)
+          .plus(Location.MtCbTownHall, 0.minutes)
+          .plus(Location.UpperParadiseRoad, 1.minutes)
+          .plus(Location.LowerParadiseRoad, 1.minutes)
+          .plus(Location.EaglesNestCondos, 3.minutes),
+        BusSchedule("08:25", "22:25", 60.minutes),
       ),
     )
