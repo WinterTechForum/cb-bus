@@ -257,31 +257,49 @@ object MyApp extends App {
     def Selector(
       route: Seq[SelectValue],
       eventStream: WriteBus[SelectValue],
-    ) = {
-      val $curValue = Var(route.head)
-      div(
-        select(
-          inContext {
-            thisNode =>
-              onChange
-                .mapTo(thisNode.ref.value)
-                .map(
-                  uniqueValue =>
-                    route.find(_.uniqueValue == uniqueValue).get,
-                ) --> eventStream
-          },
-          value <-- $curValue.signal.map(_.uniqueValue),
-          route.map(
-            stop =>
-              option(value(stop.uniqueValue), stop.humanFriendlyName),
-          ),
+    ) =
+      select(
+        inContext {
+          thisNode =>
+            onChange
+              .mapTo(thisNode.ref.value)
+              .map(
+                uniqueValue =>
+                  route.find(_.uniqueValue == uniqueValue).get,
+              ) --> eventStream
+        },
+        route.map(
+          stop =>
+            option(value(stop.uniqueValue), stop.humanFriendlyName),
         ),
       )
-    }
+
+    def TimePicker(
+      timeStream: WriteBus[BusTime],
+      valueName: String,
+    ) =
+      span(
+        input(`type` := "text",
+              defaultValue := "08:00",
+              name := (valueName + "_time")),
+        input(`type` := "radio",
+              value := "AM",
+              name := (valueName + "_AM-OR-PM"),
+              idAttr := "AM",
+              "AM"),
+        label(forId := "AM", "AM"),
+        input(`type` := "radio",
+              value := "PM",
+              name := (valueName + "_AM-OR-PM"),
+              idAttr := "PM",
+              "PM"),
+        label(forId := "PM", "PM"),
+      )
 
     def RoundTripCalculator() = {
 
       val startingPoint = new EventBus[SelectValue]
+      val arrivalTime = new EventBus[BusTime]
       div(
         select(
           inContext {
@@ -309,6 +327,7 @@ object MyApp extends App {
               startingPoint.writer,
             ),
         ),
+        TimePicker(arrivalTime.writer, "arrivalTime"),
       )
     }
 

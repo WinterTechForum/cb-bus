@@ -126,3 +126,7 @@ body {
 .navbar-link {
     color: white;
 }
+
+#laminar-app {
+    background-color: white;
+}
