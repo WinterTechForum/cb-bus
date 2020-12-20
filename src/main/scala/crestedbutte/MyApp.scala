@@ -204,39 +204,113 @@ object MyApp extends App {
 
   object LaminarRoundTripCalculator {
     import com.raquo.laminar.api.L._
-    val actionVar = Var("Do the thing")
-
-    val allowedIcons = {
-      List(RtaNorthbound.fullSchedule, RtaSouthbound.fullSchedule)
-    }
-
-    val iconVar: Var[String] = Var(
-      initial = allowedIcons.head.routeName.name,
-    )
 
     def app(
       containerId: String,
     ) = {
       import org.scalajs.dom
       val app = div(
-        LaminarRoundTripCalculator.controlPanel(),
+        LaminarRoundTripCalculator.RoundTripCalculator(),
       )
       render(dom.document.getElementById(containerId), app)
     }
 
-    def controlPanel() =
-      select(
-        inContext {
-          thisNode =>
-            onChange.mapTo(thisNode.ref.value) --> iconVar.writer
-        },
-        value <-- iconVar.signal,
-        allowedIcons.map(
-          route =>
-            option(value(route.routeName.name),
-                   route.routeName.userFriendlyName),
+    val actionVar = Var("Do the thing")
+
+    val routes =
+      List(RtaNorthbound.fullSchedule, RtaSouthbound.fullSchedule)
+
+    val startingLocationChoices =
+      routes
+        .map(
+          namedRoute =>
+            (namedRoute.routeName.name,
+             namedRoute.routeWithTimes.allInvolvedStops),
+        )
+        .toMap
+
+    val startingRouteSelections = new EventBus[String]
+
+    val $startRouteVar: Var[NamedRoute] = Var(routes.head)
+
+    val rawNamesToTypes: EventStream[NamedRoute] =
+      startingRouteSelections.events.map {
+        case newVal =>
+          routes
+            .find(_.routeName.name == newVal)
+            .getOrElse(
+              throw new RuntimeException(
+                "Unexpected RouteName " + newVal,
+              ),
+            )
+      }
+
+    val $route: Var[String] =
+      Var(
+        initial = routes.head.routeName.name,
+      )
+
+    case class SelectValue(
+      uniqueValue: String,
+      humanFriendlyName: String)
+
+    def Selector(
+      route: Seq[SelectValue],
+      eventStream: WriteBus[SelectValue],
+    ) = {
+      val $curValue = Var(route.head)
+      div(
+        select(
+          inContext {
+            thisNode =>
+              onChange
+                .mapTo(thisNode.ref.value)
+                .map(
+                  uniqueValue =>
+                    route.find(_.uniqueValue == uniqueValue).get,
+                ) --> eventStream
+          },
+          value <-- $curValue.signal.map(_.uniqueValue),
+          route.map(
+            stop =>
+              option(value(stop.uniqueValue), stop.humanFriendlyName),
+          ),
         ),
       )
+    }
+
+    def RoundTripCalculator() = {
+
+      val startingPoint = new EventBus[SelectValue]
+      div(
+        select(
+          inContext {
+            thisNode =>
+              onChange
+                .mapTo(thisNode.ref.value) --> startingRouteSelections
+          },
+          rawNamesToTypes --> $startRouteVar.writer,
+          value <-- $startRouteVar.signal
+            .map(_.routeName.name),
+          routes.map(
+            route =>
+              option(value(route.routeName.name),
+                     route.routeName.userFriendlyName),
+          ),
+        ),
+        child <-- $startRouteVar.signal.map(
+          namedRoute =>
+            Selector(
+              namedRoute.routeWithTimes.legs.head.stops.map(
+                locationWithTime =>
+                  SelectValue(locationWithTime.location.name,
+                              locationWithTime.location.name),
+              ),
+              startingPoint.writer,
+            ),
+        ),
+      )
+    }
 
   }
 }

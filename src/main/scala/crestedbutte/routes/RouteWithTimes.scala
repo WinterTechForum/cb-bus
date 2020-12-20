@@ -54,6 +54,9 @@ case class RouteWithTimes(
       (this.legs ++ routeWithTimes.legs)
         .sortBy(_.stops.head.busTime), // TODO Is this a good place to handle the sorting?
     )
+
+  val allInvolvedStops: Seq[Location.Value] =
+    legs.head.stops.map(_.location)
 }
 
 object RouteWithTimes {
