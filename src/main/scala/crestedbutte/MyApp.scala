@@ -1,7 +1,12 @@
 package crestedbutte
 
 import java.util.concurrent.TimeUnit
-import com.billding.time.{BusTime, ColoradoClock, TurboClock}
+import com.billding.time.{
+  BusDuration,
+  BusTime,
+  ColoradoClock,
+  TurboClock,
+}
 import crestedbutte.dom.{BulmaBehaviorLocal, DomManipulation}
 import crestedbutte.routes._
 import org.scalajs.dom.experimental.serviceworkers._
@@ -209,7 +214,7 @@ object MyApp extends App {
     ) = {
       import org.scalajs.dom
       val app = div(
-        LaminarRoundTripCalculator.RoundTripCalculator(),
+        LaminarRoundTripCalculator.RoundTripCalculatorLaminar(),
       )
       render(dom.document.getElementById(containerId), app)
     }
@@ -220,9 +225,17 @@ object MyApp extends App {
 
     def Selector[T](
       route: Seq[T],
-      eventStream: WriteBus[SelectValue],
+      eventStream: WriteBus[T],
       converterThatCouldBeATypeClass: T => SelectValue,
     ) = {
+      val valueMap: Map[SelectValue, T] =
+        route
+          .map(
+            selectValue =>
+              (converterThatCouldBeATypeClass(selectValue),
+               selectValue),
+          )
+          .toMap
       val selectValues = route.map(converterThatCouldBeATypeClass)
       select(
         inContext {
@@ -232,6 +245,15 @@ object MyApp extends App {
               .map(
                 uniqueValue =>
                   selectValues.find(_.uniqueValue == uniqueValue).get,
+              )
+              .map(
+                valueMap
+                  .get(_)
+                  .getOrElse(
+                    throw new RuntimeException(
+                      "can't find the value!",
+                    ),
+                  ),
               ) --> eventStream
         },
         selectValues.map(
@@ -241,29 +263,69 @@ object MyApp extends App {
       )
     }
 
+    sealed trait DayTime
+    case object AM extends DayTime
+    case object PM extends DayTime
+
     def TimePicker(
-      timeStream: WriteBus[BusTime],
+      timeStream: Observer[Option[BusTime]],
       valueName: String,
-    ) =
+    ) = {
+      val timeString = Var("08:00")
+      val daytime: Var[DayTime] = Var(AM)
+
+      val typedTime
+        : Signal[Option[BusTime]] = // new EventBus[Option[BusTime]]
+        timeString.signal.map(rawTime => {
+          try {
+            Some(BusTime(rawTime))
+          } catch {
+            case ex: Exception => None
+          }
+        })
+
       span(
         input(`type` := "text",
-              defaultValue := "08:00",
+              defaultValue := timeString.now(),
+              inContext {
+                thisNode =>
+                  onInput.map(_ => thisNode.ref.value) --> timeString
+              },
               name := (valueName + "_time")),
         input(`type` := "radio",
-              value := "AM",
+              value := AM.toString,
               name := (valueName + "_AM-OR-PM"),
               idAttr := "AM",
-              "AM"),
+              checked := true,
+              onClick.map {
+                _ =>
+                  AM
+              } --> daytime,
+              AM.toString),
         label(forId := "AM", "AM"),
         input(`type` := "radio",
-              value := "PM",
+              value := PM.toString,
               name := (valueName + "_AM-OR-PM"),
               idAttr := "PM",
-              "PM"),
+              onClick.map {
+                _ =>
+                  PM
+              } --> daytime,
+              PM.toString),
         label(forId := "PM", "PM"),
+        typedTime.signal.combineWith(daytime.signal).map {
+          case (maybeTime, dayTime) =>
+            maybeTime match {
+              case Some(busTime) =>
+                if (dayTime == AM) Some(busTime)
+                else Some(busTime.plus(BusDuration.ofMinutes(720)))
+              case None => None
+            }
+        } --> timeStream,
       )
+    }
 
-    def RoundTripCalculator() = {
+    def RoundTripCalculatorLaminar() = {
       val routes =
         List(RtaNorthbound.fullSchedule, RtaSouthbound.fullSchedule)
 
@@ -280,10 +342,12 @@ object MyApp extends App {
 
       val $startRouteVar: Var[NamedRoute] = Var(routes.head)
 
-      val $returnRoute: Signal[NamedRoute] =
+      val returnRoute: Signal[NamedRoute] =
         $startRouteVar.signal.map(
           startRoute => routes.find(_ != startRoute).get,
         )
+
+      val $returnRouteVar = Var(routes.last)
 
       val rawNamesToTypes: EventStream[NamedRoute] =
         startingRouteSelections.events.map {
@@ -307,10 +371,30 @@ object MyApp extends App {
       ): SelectValue =
         SelectValue(location.name, location.name)
 
-      val startingPoint = new EventBus[SelectValue]
-      val returnStartPoint = new EventBus[SelectValue]
-      val arrivalTime = new EventBus[BusTime]
-      val departureTime = new EventBus[BusTime]
+      val startingPoint = new EventBus[LocationWithTime]
+      val $startingPoint: Var[Option[LocationWithTime]] = Var(None)
+      val destination = new EventBus[Location.Value]
+      val $destination: Var[Option[Location.Value]] = Var(None)
+      val returnStartPoint = new EventBus[LocationWithTime]
+      val $returnStartPoint: Var[Option[LocationWithTime]] = Var(None)
+      val arrivalTime: Var[Option[BusTime]] = Var(None)
+      val departureTime: Var[Option[BusTime]] = Var(None)
+      val submissions = new EventBus[RoundTripParams]
+      val roundTripResults: EventStream[RoundTrip] =
+        submissions.events
+          .map(
+            roundTripParams =>
+              RoundTripCalculator.calculate(roundTripParams),
+          )
+
+      val submissionActions: EventStream[Unit] =
+        submissions.events.map {
+          submission =>
+            println("arrivalTime: " + arrivalTime.now())
+            println("departureTime: " + departureTime.now())
+        }
+
+      val theVoid = new EventBus[Unit]
       div(
         div(
           "On this line:",
@@ -342,9 +426,10 @@ object MyApp extends App {
                   locationWithTime2selectorValue,
                 ),
             ),
+          startingPoint.events.map(Some(_)) --> $startingPoint.writer,
         ),
         div(
-          "and ending: ",
+          "and reaching: ",
           child <--
           startingPoint.events
             .map(
@@ -355,33 +440,25 @@ object MyApp extends App {
                   startRouteNow.routeWithTimes.allInvolvedStops.drop(
                     startRouteNow.routeWithTimes.allInvolvedStops
                       .indexWhere(
-                        involvedStop => {
-                          println(
-                            "involved stop.name: " + involvedStop.name,
-                          )
-                          println(
-                            "startPoint.uniqueValue: " + startPoint.uniqueValue,
-                          )
-                          involvedStop.name == startPoint.uniqueValue
-                        },
+                        involvedStop =>
+                          involvedStop.name == startPoint.location.name,
                       ) + 1, // Only include stops beyond the current stop
                   )
 
-                println("remaining stops:")
-                pprint.pprintln(remainingStops)
-
                 Selector(
                   remainingStops,
-                  returnStartPoint.writer,
+                  destination.writer,
                   location2selectorValue,
                 )
               },
             ),
+          destination.events.map(Some(_)) --> $destination.writer,
         ),
         div("At: ", TimePicker(arrivalTime.writer, "arrivalTime")),
         div(
           "And returning from: ",
-          child <-- $returnRoute.map(_.routeWithTimes.legs.head.stops)
+          child <-- returnRoute
+            .map(_.routeWithTimes.legs.head.stops)
             .map(
               stops =>
                 Selector(
@@ -390,9 +467,51 @@ object MyApp extends App {
                   locationWithTime2selectorValue,
                 ),
             ),
+          returnStartPoint.events
+            .map(Some(_)) --> $returnStartPoint.writer,
         ),
-        div("At: ",
+        div("after: ",
             TimePicker(departureTime.writer, "departureTime"),
+        ),
+        div(
+          button(
+            "Plan Trip",
+            onClick.map {
+              _ =>
+                println("Clicked!")
+                println("startingPoint: " + $startingPoint.now())
+                println("arrivalTime: " + arrivalTime.now())
+                println("destination: " + $destination.now())
+                println("departureTime: " + departureTime.now())
+                println(
+                  "returnStartPoint: " + $returnStartPoint.now(),
+                )
+//                "click!"
+
+                RoundTripParams(
+                  $startingPoint.now().get.location, // startLocation: Location.Value,
+                  $destination.now().get, // destination: Location.Value,
+                  arrivalTime.now().get,
+                  $startRouteVar.now().routeWithTimes,
+                  arrivalTime
+                    .now()
+                    .get
+                    .between(departureTime.now().get),
+                  $returnStartPoint.now().get.location, // returningLaunchPoint: Location.Value,
+                  $returnRouteVar.now().routeWithTimes,
+                )
+
+            } --> submissions,
+          ),
+        ),
+        submissionActions --> theVoid,
+        returnRoute --> $returnRouteVar.writer,
+        div(
+          h1("Results"),
+          child <-- roundTripResults.map(
+            (roundTripResult: RoundTrip) =>
+              div(roundTripResult.toString),
+          ),
         ),
       )
     }

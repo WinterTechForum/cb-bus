@@ -34,11 +34,34 @@ case class LocationWithTime(
   location: Location.Value,
   busTime: BusTime)
 
+case class RoundTripParams(
+  startLocation: Location.Value,
+  destination: Location.Value,
+  arrivalTime: BusTime,
+  leaveSchedule: RouteWithTimes,
+  timeRequiredAtDestination: BusDuration,
+  returningLaunchPoint: Location.Value,
+  returnSchedule: RouteWithTimes,
+)
+
 case class RoundTrip(
   leave: RouteLeg,
   returnLeg: RouteLeg)
 
 object RoundTripCalculator {
+
+  def calculate(
+    roundTripParams: RoundTripParams,
+  ): RoundTrip =
+    calculate(
+      roundTripParams.startLocation,
+      roundTripParams.destination,
+      roundTripParams.arrivalTime,
+      roundTripParams.leaveSchedule,
+      roundTripParams.timeRequiredAtDestination,
+      roundTripParams.returningLaunchPoint,
+      roundTripParams.returnSchedule,
+    )
 
   def calculate(
     startLocation: Location.Value,
