@@ -1,7 +1,6 @@
 package crestedbutte
 
 import java.util.concurrent.TimeUnit
-
 import com.billding.time.{BusTime, ColoradoClock, TurboClock}
 import crestedbutte.dom.{BulmaBehaviorLocal, DomManipulation}
 import crestedbutte.routes._
@@ -215,49 +214,16 @@ object MyApp extends App {
       render(dom.document.getElementById(containerId), app)
     }
 
-    val actionVar = Var("Do the thing")
-
-    val routes =
-      List(RtaNorthbound.fullSchedule, RtaSouthbound.fullSchedule)
-
-    val startingLocationChoices =
-      routes
-        .map(
-          namedRoute =>
-            (namedRoute.routeName.name,
-             namedRoute.routeWithTimes.allInvolvedStops),
-        )
-        .toMap
-
-    val startingRouteSelections = new EventBus[String]
-
-    val $startRouteVar: Var[NamedRoute] = Var(routes.head)
-
-    val rawNamesToTypes: EventStream[NamedRoute] =
-      startingRouteSelections.events.map {
-        case newVal =>
-          routes
-            .find(_.routeName.name == newVal)
-            .getOrElse(
-              throw new RuntimeException(
-                "Unexpected RouteName " + newVal,
-              ),
-            )
-      }
-
-    val $route: Var[String] =
-      Var(
-        initial = routes.head.routeName.name,
-      )
-
     case class SelectValue(
       uniqueValue: String,
       humanFriendlyName: String)
 
-    def Selector(
-      route: Seq[SelectValue],
+    def Selector[T](
+      route: Seq[T],
       eventStream: WriteBus[SelectValue],
-    ) =
+      converterThatCouldBeATypeClass: T => SelectValue,
+    ) = {
+      val selectValues = route.map(converterThatCouldBeATypeClass)
       select(
         inContext {
           thisNode =>
@@ -265,14 +231,15 @@ object MyApp extends App {
               .mapTo(thisNode.ref.value)
               .map(
                 uniqueValue =>
-                  route.find(_.uniqueValue == uniqueValue).get,
+                  selectValues.find(_.uniqueValue == uniqueValue).get,
               ) --> eventStream
         },
-        route.map(
+        selectValues.map(
           stop =>
             option(value(stop.uniqueValue), stop.humanFriendlyName),
         ),
       )
+    }
 
     def TimePicker(
       timeStream: WriteBus[BusTime],
@@ -297,37 +264,136 @@ object MyApp extends App {
       )
 
     def RoundTripCalculator() = {
+      val routes =
+        List(RtaNorthbound.fullSchedule, RtaSouthbound.fullSchedule)
+
+      val startingLocationChoices =
+        routes
+          .map(
+            namedRoute =>
+              (namedRoute.routeName.name,
+               namedRoute.routeWithTimes.allInvolvedStops),
+          )
+          .toMap
+
+      val startingRouteSelections = new EventBus[String]
+
+      val $startRouteVar: Var[NamedRoute] = Var(routes.head)
+
+      val $returnRoute: Signal[NamedRoute] =
+        $startRouteVar.signal.map(
+          startRoute => routes.find(_ != startRoute).get,
+        )
+
+      val rawNamesToTypes: EventStream[NamedRoute] =
+        startingRouteSelections.events.map {
+          case newVal =>
+            routes
+              .find(_.routeName.name == newVal)
+              .getOrElse(
+                throw new RuntimeException(
+                  "Unexpected RouteName " + newVal,
+                ),
+              )
+        }
+
+      def locationWithTime2selectorValue(
+        locationWithTime: LocationWithTime,
+      ): SelectValue =
+        location2selectorValue(locationWithTime.location)
+
+      def location2selectorValue(
+        location: Location.Value,
+      ): SelectValue =
+        SelectValue(location.name, location.name)
 
       val startingPoint = new EventBus[SelectValue]
+      val returnStartPoint = new EventBus[SelectValue]
       val arrivalTime = new EventBus[BusTime]
+      val departureTime = new EventBus[BusTime]
       div(
-        select(
-          inContext {
-            thisNode =>
-              onChange
-                .mapTo(thisNode.ref.value) --> startingRouteSelections
-          },
-          rawNamesToTypes --> $startRouteVar.writer,
-          value <-- $startRouteVar.signal
-            .map(_.routeName.name),
-          routes.map(
-            route =>
-              option(value(route.routeName.name),
-                     route.routeName.userFriendlyName),
+        div(
+          "On this line:",
+          select(
+            inContext {
+              thisNode =>
+                onChange
+                  .mapTo(thisNode.ref.value) --> startingRouteSelections
+            },
+            rawNamesToTypes --> $startRouteVar.writer,
+            value <-- $startRouteVar.signal
+              .map(_.routeName.name),
+            routes.map(
+              route =>
+                option(value(route.routeName.name),
+                       route.routeName.userFriendlyName),
+            ),
           ),
         ),
-        child <-- $startRouteVar.signal.map(
-          namedRoute =>
-            Selector(
-              namedRoute.routeWithTimes.legs.head.stops.map(
-                locationWithTime =>
-                  SelectValue(locationWithTime.location.name,
-                              locationWithTime.location.name),
-              ),
-              startingPoint.writer,
+        div(
+          "Starting from: ",
+          child <-- $startRouteVar.signal
+            .map(_.routeWithTimes.legs.head.stops)
+            .map(
+              stops =>
+                Selector(
+                  stops,
+                  startingPoint.writer,
+                  locationWithTime2selectorValue,
+                ),
             ),
         ),
-        TimePicker(arrivalTime.writer, "arrivalTime"),
+        div(
+          "and ending: ",
+          child <--
+          startingPoint.events
+            .map(
+              startPoint => {
+                val startRouteNow = $startRouteVar.now()
+
+                val remainingStops: Seq[Location.Value] =
+                  startRouteNow.routeWithTimes.allInvolvedStops.drop(
+                    startRouteNow.routeWithTimes.allInvolvedStops
+                      .indexWhere(
+                        involvedStop => {
+                          println(
+                            "involved stop.name: " + involvedStop.name,
+                          )
+                          println(
+                            "startPoint.uniqueValue: " + startPoint.uniqueValue,
+                          )
+                          involvedStop.name == startPoint.uniqueValue
+                        },
+                      ) + 1, // Only include stops beyond the current stop
+                  )
+
+                println("remaining stops:")
+                pprint.pprintln(remainingStops)
+
+                Selector(
+                  remainingStops,
+                  returnStartPoint.writer,
+                  location2selectorValue,
+                )
+              },
+            ),
+        ),
+        div("At: ", TimePicker(arrivalTime.writer, "arrivalTime")),
+        div(
+          "And returning from: ",
+          child <-- $returnRoute.map(_.routeWithTimes.legs.head.stops)
+            .map(
+              stops =>
+                Selector(
+                  stops,
+                  returnStartPoint.writer,
+                  locationWithTime2selectorValue,
+                ),
+            ),
+        ),
+        div("At: ",
+            TimePicker(departureTime.writer, "departureTime"),
+        ),
       )
     }
 
