@@ -507,14 +507,34 @@ object MyApp extends App {
         submissionActions --> theVoid,
         returnRoute --> $returnRouteVar.writer,
         div(
-          h1("Results"),
           child <-- roundTripResults.map(
             (roundTripResult: RoundTrip) =>
-              div(roundTripResult.toString),
+              renderRoundTrip(roundTripResult),
           ),
         ),
       )
     }
+
+    def renderLeg(
+      routeLeg: RouteLeg,
+    ) =
+      routeLeg.stops match {
+        case (head :: rest) :+ last =>
+          span(
+            head.location + " @ " + head.busTime.toDumbAmericanString + " => " + last.location + " @ " + last.busTime.toDumbAmericanString,
+          )
+      }
+
+    def renderRoundTrip(
+      roundTrip: RoundTrip,
+    ) =
+      div(
+        h2(cls := "h2", "Your trip:"),
+        h3(cls := "h3", "Outward"),
+        div(renderLeg(roundTrip.leave)),
+        h3(cls := "h3", "Homeward"),
+        div(renderLeg(roundTrip.returnLeg)),
+      )
 
   }
 }
