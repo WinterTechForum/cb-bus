@@ -122,9 +122,10 @@ object MyApp extends App {
       )
       _ <- UnsafeCallbacks.attachMenuBehavior
       // todo restore for laminar stuff
-//      _ <- ZIO {
-//        LaminarRoundTripCalculator.app("laminar-app")
-//      }
+      _ <- ZIO {
+        if (org.scalajs.dom.document.getElementById("laminar-app") != null)
+          LaminarRoundTripCalculator.app("laminar-app")
+      }
       loopingLogic: ZIO[Any, Throwable, Unit] = loopLogic(pageMode,
                                                           components)
         .provideLayer(
