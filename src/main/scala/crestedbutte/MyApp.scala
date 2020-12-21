@@ -121,9 +121,10 @@ object MyApp extends App {
           .render,
       )
       _ <- UnsafeCallbacks.attachMenuBehavior
-      _ <- ZIO {
-        LaminarRoundTripCalculator.app("laminar-app")
-      }
+      // todo restore for laminar stuff
+//      _ <- ZIO {
+//        LaminarRoundTripCalculator.app("laminar-app")
+//      }
       loopingLogic: ZIO[Any, Throwable, Unit] = loopLogic(pageMode,
                                                           components)
         .provideLayer(
