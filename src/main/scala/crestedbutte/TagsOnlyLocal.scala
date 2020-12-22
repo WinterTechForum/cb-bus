@@ -64,7 +64,7 @@ object TagsOnlyLocal {
       ),
       if (pageMode == AppMode.Development) {
         div(
-          div(id := "laminar-app"),
+          div(id := "laminar-app", cls := "bill-box"),
           button(id := ElementNames.Notifications.requestPermission,
                  cls := "button")(
             "Request Notifications Permission",

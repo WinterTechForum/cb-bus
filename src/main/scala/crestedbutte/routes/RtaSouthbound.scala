@@ -1,23 +1,38 @@
 package crestedbutte.routes
 
 import com.billding.time.BusDuration.toBusDuration
+import com.billding.time.BusTime
 import crestedbutte._
 
 object RtaSouthbound {
 
   def constructExpressRoute(
     routeLeg: RouteLeg,
-  ): RouteLeg =
-    routeLeg
-      .plus(Location.FourwayGunnison, 8.minutes)
-      .plus(Location.Riverbend, 3.minutes)
-      .plus(Location.BrushCreek, 1.minutes)
-      .plus(Location.Riverland, 1.minutes)
-      .plus(Location.Almont, 14.minutes)
-      .plus(Location.OhioCreek, 8.minutes)
-      .plus(Location.TallTexan, 1.minutes)
-      .plus(Location.RecCenter, 3.minutes)
-      .plus(Location.GunnisonCommunitySchools, 4.minutes)
+  ): RouteLeg = {
+    val basicRoute =
+      routeLeg
+        .plus(Location.FourwayGunnison, 8.minutes)
+        .plus(Location.Riverbend, 3.minutes)
+        .plus(Location.BrushCreek, 1.minutes)
+        .plus(Location.Riverland, 1.minutes)
+        .plus(Location.Almont, 14.minutes)
+        .plus(Location.OhioCreek, 8.minutes)
+        .plus(Location.TallTexan, 1.minutes)
+        .plus(Location.RecCenter, 3.minutes)
+        .plus(Location.GunnisonCommunitySchools, 4.minutes)
+
+    // late buses actually terminate at the community school. The others loop through Gunni
+    if (routeLeg.stops.head.busTime.isBefore(BusTime("22:00")))
+      // Deviating from the PDFs, for usability's sake!
+      basicRoute
+        .plus(Location.EleventhAndVirginia, 2.minutes)
+        .plus(Location.Safeway, 4.minutes)
+        .plus(Location.TellerAndHighwayFifty, 2.minutes)
+        .plus(Location.Western, 2.minutes)
+        .plus(Location.DenverAndHighwayOneThirtyFive, 3.minutes)
+    else
+      basicRoute
+  }
 
   val expressRouteWithTimes =
     RouteWithTimes.sched(
@@ -61,18 +76,32 @@ object RtaSouthbound {
 
   def constructNormalRoute(
     routeLeg: RouteLeg,
-  ): RouteLeg =
-    routeLeg
-      .plus(Location.FourwayGunnison, 8.minutes)
-      .plus(Location.Riverbend, 3.minutes)
-      .plus(Location.BrushCreek, 1.minutes)
-      .plus(Location.Riverland, 1.minutes)
-      .plus(Location.CBSouth, 7.minutes)
-      .plus(Location.Almont, 14.minutes)
-      .plus(Location.OhioCreek, 8.minutes)
-      .plus(Location.TallTexan, 1.minutes)
-      .plus(Location.RecCenter, 3.minutes)
-      .plus(Location.GunnisonCommunitySchools, 4.minutes)
+  ): RouteLeg = {
+    val basicRoute =
+      routeLeg
+        .plus(Location.FourwayGunnison, 8.minutes)
+        .plus(Location.Riverbend, 3.minutes)
+        .plus(Location.BrushCreek, 1.minutes)
+        .plus(Location.Riverland, 1.minutes)
+        .plus(Location.CBSouth, 7.minutes)
+        .plus(Location.Almont, 14.minutes)
+        .plus(Location.OhioCreek, 8.minutes)
+        .plus(Location.TallTexan, 1.minutes)
+        .plus(Location.RecCenter, 3.minutes)
+        .plus(Location.GunnisonCommunitySchools, 4.minutes)
+
+    // late buses actually terminate at the community school. The others loop through Gunni
+    if (routeLeg.stops.head.busTime.isBefore(BusTime("22:00")))
+      // Deviating from the PDFs, for usability's sake!
+      basicRoute
+        .plus(Location.EleventhAndVirginia, 2.minutes)
+        .plus(Location.Safeway, 4.minutes)
+        .plus(Location.TellerAndHighwayFifty, 2.minutes)
+        .plus(Location.Western, 2.minutes)
+        .plus(Location.DenverAndHighwayOneThirtyFive, 3.minutes)
+    else
+      basicRoute
+  }
 
   val fullSchedule = NamedRoute(
     RouteName("Rta Southbound"),

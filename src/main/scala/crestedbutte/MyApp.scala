@@ -249,13 +249,10 @@ object MyApp extends App {
                   selectValues.find(_.uniqueValue == uniqueValue).get,
               )
               .map(
-                valueMap
-                  .get(_)
-                  .getOrElse(
-                    throw new RuntimeException(
-                      "can't find the value!",
-                    ),
-                  ),
+                valueMap.getOrElse(_,
+                                   throw new RuntimeException(
+                                     "can't find the value!",
+                                   )),
               ) --> eventStream
         },
         selectValues.map(
@@ -400,19 +397,22 @@ object MyApp extends App {
       div(
         div(
           "On this line:",
-          select(
-            inContext {
-              thisNode =>
-                onChange
-                  .mapTo(thisNode.ref.value) --> startingRouteSelections
-            },
-            rawNamesToTypes --> $startRouteVar.writer,
-            value <-- $startRouteVar.signal
-              .map(_.routeName.name),
-            routes.map(
-              route =>
-                option(value(route.routeName.name),
-                       route.routeName.userFriendlyName),
+          span(
+            cls := "select is-rounded",
+            select(
+              inContext {
+                thisNode =>
+                  onChange
+                    .mapTo(thisNode.ref.value) --> startingRouteSelections
+              },
+              rawNamesToTypes --> $startRouteVar.writer,
+              value <-- $startRouteVar.signal
+                .map(_.routeName.name),
+              routes.map(
+                route =>
+                  option(value(route.routeName.name),
+                         route.routeName.userFriendlyName),
+              ),
             ),
           ),
         ),
@@ -525,16 +525,18 @@ object MyApp extends App {
           span(
             head.location + " @ " + head.busTime.toDumbAmericanString + " => " + last.location + " @ " + last.busTime.toDumbAmericanString,
           )
+        case unhandled =>
+          throw new RuntimeException("shit: " + unhandled)
       }
 
     def renderRoundTrip(
       roundTrip: RoundTrip,
     ) =
       div(
-        h2(cls := "h2", "Your trip:"),
-        h3(cls := "h3", "Outward"),
+        h2(cls := "title is-2", "Your trip:"),
+        h3(cls := "title is-3", "Outward"),
         div(renderLeg(roundTrip.leave)),
-        h3(cls := "h3", "Homeward"),
+        h3(cls := "title is-3", "Homeward"),
         div(renderLeg(roundTrip.returnLeg)),
       )
 

@@ -128,5 +128,8 @@ body {
 }
 
 #laminar-app {
-    background-color: white;
+}
+
+.title {
+    color: white;
 }

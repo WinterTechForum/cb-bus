@@ -5,6 +5,7 @@ import crestedbutte.routes.RouteWithTimes
 
 case class RouteLeg(
   stops: Seq[LocationWithTime]) {
+  assert(stops.nonEmpty, "Empty Route")
 
   def trimToStartAt(
     location: Location.Value,
@@ -126,10 +127,18 @@ object RoundTripCalculator {
     target: LocationWithTime,
     routeWithTimes: RouteWithTimes,
     destination: Location.Value,
-  ) =
-    earliestReturnLeg(target, routeWithTimes)
-      .trimToStartAt(target.location)
+  ) = {
+    val returnLeg =
+      earliestReturnLeg(target, routeWithTimes)
+    pprint.pprintln(returnLeg)
+
+    val reducedStart =
+      returnLeg
+        .trimToStartAt(target.location)
+    pprint.pprintln(returnLeg)
+    reducedStart
       .trimToEndAt(destination)
+  }
 
   def earliestReturnLeg(
     target: LocationWithTime,
