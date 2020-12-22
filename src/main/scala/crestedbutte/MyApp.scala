@@ -280,25 +280,30 @@ object MyApp extends App {
           )
           .toMap
       val selectValues = route.map(converterThatCouldBeATypeClass)
-      select(
-        inContext {
-          thisNode =>
-            onChange
-              .mapTo(thisNode.ref.value)
-              .map(
-                uniqueValue =>
-                  selectValues.find(_.uniqueValue == uniqueValue).get,
-              )
-              .map(
-                valueMap.getOrElse(_,
-                                   throw new RuntimeException(
-                                     "can't find the value!",
-                                   )),
-              ) --> eventStream
-        },
-        selectValues.map(
-          stop =>
-            option(value(stop.uniqueValue), stop.humanFriendlyName),
+      span(
+        cls := "select is-rounded",
+        select(
+          inContext {
+            thisNode =>
+              onChange
+                .mapTo(thisNode.ref.value)
+                .map(
+                  uniqueValue =>
+                    selectValues
+                      .find(_.uniqueValue == uniqueValue)
+                      .get,
+                )
+                .map(
+                  valueMap.getOrElse(_,
+                                     throw new RuntimeException(
+                                       "can't find the value!",
+                                     )),
+                ) --> eventStream
+          },
+          selectValues.map(
+            stop =>
+              option(value(stop.uniqueValue), stop.humanFriendlyName),
+          ),
         ),
       )
     }
