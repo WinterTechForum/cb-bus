@@ -16,6 +16,8 @@ import zio.duration.Duration
 import zio.{App, Has, Schedule, ZIO, ZLayer}
 import zio.console._
 import crestedbutte.Browser.Browser
+import org.scalajs.dom.document
+import org.scalajs.dom.raw.HTMLElement
 
 import scala.util.{Failure, Success}
 
@@ -57,7 +59,7 @@ object MyApp extends App {
         .flatMap(
           routeNameStringParam =>
             components.find(
-              _.namedRoute.routeName
+              _.componentName
                 .elementNameMatches(routeNameStringParam),
             ),
         )
@@ -83,13 +85,17 @@ object MyApp extends App {
 
   private val components: Seq[ComponentData] =
     mtnExpressRoutes.routesWithTimes
-      .map(ComponentData) ++:
+      .map(ComponentDataRoute) ++:
     Seq(
-      ComponentData(
+      ComponentDataRoute(
         RtaNorthbound.fullSchedule,
       ),
-      ComponentData(
+      ComponentDataRoute(
         RtaSouthbound.fullSchedule,
+      ),
+      ComponentDataTyped(
+        "RoundTripCalculator",
+        LaminarRoundTripCalculator.calculatorComponentName,
       ),
     )
 
@@ -123,8 +129,10 @@ object MyApp extends App {
       _ <- UnsafeCallbacks.attachMenuBehavior
       // todo restore for laminar stuff
       _ <- ZIO {
-        if (org.scalajs.dom.document.getElementById("laminar-app") != null)
-          LaminarRoundTripCalculator.app("laminar-app")
+        if (org.scalajs.dom.document.getElementById(
+              LaminarRoundTripCalculator.calculatorComponentName.name,
+            ) != null)
+          LaminarRoundTripCalculator.app()
       }
       loopingLogic: ZIO[Any, Throwable, Unit] = loopLogic(pageMode,
                                                           components)
@@ -140,36 +148,66 @@ object MyApp extends App {
       0
     }
 
-  def updateUpcomingArrivalsForRoute(
+  def updateComponents(
     componentData: ComponentData,
     currentlySelectedRoute: ComponentData,
   ) =
     if (componentData == currentlySelectedRoute) {
-      for {
-        arrivalsAtAllRouteStops <- TimeCalculations
-          .getUpComingArrivalsWithFullSchedule(
-            componentData.namedRoute,
-          )
-          .catchAll(failure => throw new RuntimeException("ack!"))
-        _ <- DomManipulation.updateContentInsideElementAndReveal(
-          componentData.componentName,
-          TagsOnlyLocal
-            .structuredSetOfUpcomingArrivals(
-              arrivalsAtAllRouteStops,
+      currentlySelectedRoute match {
+        case ComponentDataRoute(namedRoute) =>
+          for {
+            arrivalsAtAllRouteStops <- TimeCalculations
+              .getUpComingArrivalsWithFullSchedule(
+                namedRoute,
+              )
+              .catchAll(failure => throw new RuntimeException("ack!"))
+            _ <- DomManipulation.updateContentInsideElementAndReveal(
+              componentData.componentName.name,
+              TagsOnlyLocal
+                .structuredSetOfUpcomingArrivals(
+                  arrivalsAtAllRouteStops,
+                )
+                .render,
+              "upcoming-buses",
             )
-            .render,
-          "upcoming-buses",
-        )
-      } yield ()
+          } yield ()
+        case ComponentDataTyped(value, componentName) => {
+          println("huh?")
+          for {
+            _ <- ZIO {
+              show(componentName.name)
+            }
+          } yield ()
+        }
+      }
     }
     else {
+      println("hiding: " + componentData.componentName.name)
       DomManipulation.hideElement(
-        componentData.componentName,
+        componentData.componentName.name,
       )
     }
 
+  // a decent library would also have this function
+  private def show(
+    elementId: String,
+  ) = {
+    println("!trying to show " + s"#$elementId")
+
+    val result =
+      document.body
+        .querySelector(s"#$elementId")
+    println(result.getAttribute("class"))
+    result.removeAttribute("style")
+//      result
+//        .setAttribute(
+//          "style",
+//          "",
+//        )
+  }
+
   def updateUpcomingArrivalsOnPage(
-    selectedRoute: ComponentData,
+    selectedComponent: ComponentData,
     components: Seq[ComponentData],
   ) =
     for {
@@ -178,9 +216,9 @@ object MyApp extends App {
       else {
         ZIO.collectAll(
           components.map(
-            updateUpcomingArrivalsForRoute(
+            updateComponents(
               _,
-              selectedRoute,
+              selectedComponent,
             ),
           ),
         )
@@ -211,14 +249,17 @@ object MyApp extends App {
   object LaminarRoundTripCalculator {
     import com.raquo.laminar.api.L._
 
-    def app(
-      containerId: String,
-    ) = {
+    val calculatorComponentName = RouteName("RoundTripCalculator")
+
+    def app() = {
       import org.scalajs.dom
       val app = div(
         LaminarRoundTripCalculator.RoundTripCalculatorLaminar(),
       )
-      render(dom.document.getElementById(containerId), app)
+      render(
+        dom.document.getElementById(calculatorComponentName.name),
+        app,
+      )
     }
 
     case class SelectValue(

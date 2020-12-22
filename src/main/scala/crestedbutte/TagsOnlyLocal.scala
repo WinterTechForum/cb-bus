@@ -4,6 +4,7 @@ import crestedbutte.Location.StopLocation
 import crestedbutte.dom.{Bulma, BulmaLocal}
 import com.billding.time.BusTime
 import com.billding.time.BusDuration
+import crestedbutte.MyApp.LaminarRoundTripCalculator
 import org.scalajs.dom.html.{Anchor, Div}
 import scalatags.JsDom
 
@@ -52,19 +53,19 @@ object TagsOnlyLocal {
             println("should be creating a route menu entry")
             a(
               cls := "navbar-item",
-              data("route") := componentData.componentName,
-            )(componentData.namedRoute.routeName.userFriendlyName)
+              data("route") := componentData.componentName.name,
+            )(componentData.componentName.userFriendlyName)
         },
         "Routes",
         "route  using-library",
       ),
       allComponentData.map(
         singleComponentData =>
-          busScheduleDiv(singleComponentData.componentName),
+          busScheduleDiv(singleComponentData.componentName.name),
       ),
+//      div(id := LaminarRoundTripCalculator.calculatorComponentName.name, cls := "bill-box"),
       if (pageMode == AppMode.Development) {
         div(
-          div(id := "laminar-app", cls := "bill-box"),
           button(id := ElementNames.Notifications.requestPermission,
                  cls := "button")(
             "Request Notifications Permission",
@@ -82,11 +83,13 @@ object TagsOnlyLocal {
 
   def busScheduleDiv(
     containerName: String,
-  ) =
+  ) = {
+    println("Making container : " + containerName)
     div(cls := ElementNames.BoxClass, id := containerName)(
       div(cls := "timezone"),
       div(id := ElementNames.contentName),
     )
+  }
 
   //  <a href="tel:123-456-7890">123-456-7890</a>
   def safeRideLink(

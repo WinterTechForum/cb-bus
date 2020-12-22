@@ -1,5 +1,6 @@
 package crestedbutte
 
+// TODO General name
 case class RouteName(
   userFriendlyName: String) {
 
