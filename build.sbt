@@ -5,11 +5,23 @@ enablePlugins(ScalaJSPlugin)
 
 enablePlugins(TzdbPlugin)
 
+enablePlugins(ScalablyTypedConverterPlugin)
+
 resolvers += "jitpack" at "https://jitpack.io"
-resolvers += Resolver.url("typesafe", url("http://repo.typesafe.com/typesafe/ivy-releases/"))(Resolver.ivyStylePatterns)
+resolvers += Resolver.url("typesafe", url("https://repo.typesafe.com/typesafe/ivy-releases/"))(Resolver.ivyStylePatterns)
 resolvers += Resolver.githubPackages("swoogles", "BulmaScala")
 
 val zioVersion = "1.0.0-RC21-2"
+
+Compile / npmDependencies ++= Seq(
+//  "react-router-dom" -> "5.1.2",
+//  "@types/react-router-dom" -> "5.1.2",
+  "@material-ui/core" -> "4.11.1",
+  "@material-ui/pickers" -> "3.2.10",
+//  "@material-ui/pickers" -> "v4.0.0-alpha.12",
+
+  "react" -> "17.0.1"
+)
 
 libraryDependencies ++= Seq(
   "com.billding" %%% "bulmalibrary" % "0.2.19",
