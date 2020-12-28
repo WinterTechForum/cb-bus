@@ -9,3 +9,8 @@ To setup npm peer dependencies
 
     npm install react@^17.0.1
     npm install react-dom@^17.0.1
+
+To view source maps:
+
+    npm install source-map-support
+

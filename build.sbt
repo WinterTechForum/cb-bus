@@ -6,6 +6,9 @@ enablePlugins(ScalaJSPlugin)
 enablePlugins(TzdbPlugin)
 
 enablePlugins(ScalablyTypedConverterPlugin)
+enablePlugins(ScalaJSBundlerPlugin)
+
+scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.CommonJSModule) }
 
 resolvers += "jitpack" at "https://jitpack.io"
 resolvers += Resolver.url("typesafe", url("https://repo.typesafe.com/typesafe/ivy-releases/"))(Resolver.ivyStylePatterns)
@@ -59,12 +62,12 @@ cbBuild := {
   (Compile/scalafmt).value
   import scala.sys.process._
 //  "ls ./target/scala-2.13" !
-  (Process("mkdir ./src/main/resources/compiledJavascript") #||
-    Process("cp ./target/scala-2.13/busriderapp-fastopt.js src/main/resources/compiledJavascript/") #&&
-    Process("cp ./target/scala-2.13/busriderapp-fastopt.js.map src/main/resources/compiledJavascript/") #&&
-    Process("cp sw/target/scala-2.13/sw-opt.js src/main/resources/") #&&
-    Process("cp sw/target/scala-2.13/sw-opt.js.map src/main/resources/") #&&
-    Process("cp ./target/scala-2.13/busriderapp-jsdeps.js src/main/resources/compiledJavascript/"))!
+  (Process("mkdir ./src/main/resources/compiledJavascript") #|| Process("mkdir ./src/main/resources/compiledJavascript/busriderapp") #||
+    Process("cp ./target/scala-2.13/busriderapp-fastopt/main.js ./src/main/resources/compiledJavascript/busriderapp") #&&
+//    Process("cp ./target/scala-2.13/busriderapp-fastopt.js.map ./src/main/resources/compiledJavascript/") #&&
+    Process("cp sw/target/scala-2.13/sw-opt.js ./src/main/resources/") #&&
+    Process("cp sw/target/scala-2.13/sw-opt.js.map ./src/main/resources/") #&&
+    Process("cp ./target/scala-2.13/busriderapp-jsdeps.js ./src/main/resources/compiledJavascript/"))!
 }
 
 lazy val cbPublish = taskKey[Unit]("Build the files for a real deploment")

@@ -17,7 +17,17 @@ import zio.{App, Has, Schedule, ZIO, ZLayer}
 import zio.console._
 import crestedbutte.Browser.Browser
 import org.scalajs.dom.document
+import org.scalajs.dom.window
 import org.scalajs.dom.raw.HTMLElement
+import typings.materialUiCore.mod.TextField
+import typings.materialUiPickers.anon.{
+  Format,
+  OnChange,
+  OpenPicker,
+  PickPropsWithChildrenCloc,
+  PickerProps,
+}
+//import website.webcomponents.material.Button
 
 import scala.util.{Failure, Success}
 
@@ -312,6 +322,45 @@ object MyApp extends App {
     case object AM extends DayTime
     case object PM extends DayTime
 
+//    TextFieldProps("blah", "dah")
+
+    import typings.materialUiPickers.pickerMod.Picker
+    PickerProps
+//    def apply(inputProps: OpenPicker, pickerProps: OnChange, wrapperProps: Format): PickerProps = {
+
+//    def materialsButton() =
+//      Button(
+//        _.id := "myButton",
+//        _.label <-- Var("some label").signal,
+//        _.raised := true,
+//        _.styles.mdcThemePrimary := "#6200ed",
+//        _ =>
+//          onClick --> (
+//            _ =>
+//              org.scalajs.dom.window.window.alert("Click"),
+//            ), // standard event
+//        _.onMouseOver --> (_ => println("MouseOver")), // "custom" event
+//      )
+
+//      Picker(
+//        PickPropsWithChildrenCloc.apply()
+//      )
+
+//    TextField(
+//        typings.materialUiCore.textFieldTextFieldMod.TextFieldProps
+//          .StandardTextFieldProps()
+//                    _.idAttr :="datetime-local",
+//            idAttr,"datetime-local",
+//        _.idAttr :="datetime-local",
+//      label:="Next appointment",
+//      `type`:="datetime-local",
+//      defaultValue:="2017-05-24T10:30",
+//      className:={classes.textField},
+//      InputLabelProps:={{
+//        shrink: true,
+//        }}
+//      )
+
     def TimePicker(
       timeStream: Observer[Option[BusTime]],
       valueName: String,
@@ -440,11 +489,10 @@ object MyApp extends App {
         }
 
 //      import website.webcomponents.material.Button
-      import typings.materialUiPickers.pickerMod.Picker
       val theVoid = new EventBus[Unit]
       div(
         div(
-          "On this line:",
+          "On this line::",
           span(
             cls := "select is-rounded",
             select(
@@ -504,7 +552,11 @@ object MyApp extends App {
             ),
           destination.events.map(Some(_)) --> $destination.writer,
         ),
-        div("At: ", TimePicker(arrivalTime.writer, "arrivalTime")),
+        div("At: ",
+            TimePicker(arrivalTime.writer, "arrivalTime"),
+            div("bap"),
+        ),
+//            materialsButton()),
         div(
           "And returning from: ",
           child <-- returnRoute
