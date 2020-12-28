@@ -3,6 +3,9 @@ package crestedbutte
 import com.billding.time.{BusDuration, BusTime}
 import crestedbutte.routes.RouteWithTimes
 
+case class TripPlannerError(
+  msg: String)
+
 case class RouteLeg(
   stops: Seq[LocationWithTime]) {
   assert(stops.nonEmpty, "Empty Route")
@@ -53,7 +56,7 @@ object RoundTripCalculator {
 
   def calculate(
     roundTripParams: RoundTripParams,
-  ): RoundTrip =
+  ): Either[TripPlannerError, RoundTrip] =
     calculate(
       roundTripParams.startLocation,
       roundTripParams.destination,
@@ -72,19 +75,35 @@ object RoundTripCalculator {
     timeRequiredAtDestination: BusDuration,
     returningLaunchPoint: Location.Value,
     returnSchedule: RouteWithTimes,
-  ): RoundTrip =
-    RoundTrip(
-      reducedLegStartingAt(startLocation,
-                           arrivalTime,
-                           destination,
-                           leaveSchedule),
-      reducedReturnLeg(
-        LocationWithTime(returningLaunchPoint,
-                         arrivalTime.plus(timeRequiredAtDestination)),
-        returnSchedule,
-        startLocation,
-      ),
-    )
+  ): Either[TripPlannerError, RoundTrip] =
+    (reducedLegStartingAt(startLocation,
+                          arrivalTime,
+                          destination,
+                          leaveSchedule),
+     reducedReturnLeg(
+       LocationWithTime(returningLaunchPoint,
+                        arrivalTime.plus(timeRequiredAtDestination)),
+       returnSchedule,
+       startLocation,
+     )) match {
+      case (Right(startLeg), Right(returnLeg)) =>
+        Right(
+          RoundTrip(
+            startLeg,
+            returnLeg,
+          ),
+        )
+      case (Left(startLegError), Left(returnLegError)) =>
+        Left(
+          TripPlannerError(
+            startLegError.msg + ", " + returnLegError.msg,
+          ),
+        )
+      case (Left(startLegError), successfulIgnoredRoute) =>
+        Left(startLegError)
+      case (successfulIgnoredRoute, Left(returnLegError)) =>
+        Left(returnLegError)
+    }
 
   def findLatestDepartureTime(
     arrivalTime: BusTime,
@@ -96,16 +115,20 @@ object RoundTripCalculator {
     arrivalTime: BusTime,
     destination: Location.Value,
     leaveSchedule: RouteWithTimes,
-  ): RouteLeg =
+  ): Either[TripPlannerError, RouteLeg] =
     findLatestDepartureLeg(arrivalTime, destination, leaveSchedule)
-      .trimToStartAt(start)
-      .trimToEndAt(destination)
+      .map(
+        routeLeg =>
+          routeLeg
+            .trimToStartAt(start)
+            .trimToEndAt(destination),
+      )
 
   def findLatestDepartureLeg(
     arrivalTime: BusTime,
     destination: Location.Value,
     leaveSchedule: RouteWithTimes,
-  ): RouteLeg =
+  ): Either[TripPlannerError, RouteLeg] =
     leaveSchedule.legs
       .findLast(
         leg =>
@@ -115,7 +138,14 @@ object RoundTripCalculator {
                 .compare(stop.busTime, arrivalTime) <= 0, // todo ugh. bad int math.
           ),
       )
-      .getOrElse(throw new RuntimeException("D'oh!"))
+      .map(Right(_))
+      .getOrElse(
+        Left(
+          TripPlannerError(
+            "Could not find a departing leg arriving by " + arrivalTime.toDumbAmericanString,
+          ),
+        ),
+      )
 
   def whenYouWouldArrive(
     start: LocationWithTime,
@@ -127,23 +157,26 @@ object RoundTripCalculator {
     target: LocationWithTime,
     routeWithTimes: RouteWithTimes,
     destination: Location.Value,
-  ) = {
-    val returnLeg =
+  ): Either[TripPlannerError, RouteLeg] = {
+    val returnLeg: Either[TripPlannerError, RouteLeg] =
       earliestReturnLeg(target, routeWithTimes)
     pprint.pprintln(returnLeg)
 
-    val reducedStart =
-      returnLeg
-        .trimToStartAt(target.location)
-    pprint.pprintln(returnLeg)
-    reducedStart
-      .trimToEndAt(destination)
+    returnLeg.map {
+      routeLeg =>
+        val reducedStart =
+          routeLeg
+            .trimToStartAt(target.location)
+        pprint.pprintln(returnLeg)
+        routeLeg
+          .trimToEndAt(destination)
+    }
   }
 
   def earliestReturnLeg(
     target: LocationWithTime,
     routeWithTimes: RouteWithTimes,
-  ): RouteLeg =
+  ): Either[TripPlannerError, RouteLeg] =
     routeWithTimes.legs
       .find(
         leg =>
@@ -153,7 +186,14 @@ object RoundTripCalculator {
                 .compare(stop.busTime, target.busTime) >= 0, // todo ugh. bad int math.
           ),
       )
-      .getOrElse(throw new RuntimeException("D'oh!"))
+      .map(Right(_))
+      .getOrElse(
+        Left(
+          TripPlannerError(
+            "Could not find a return leg after: " + target.busTime.toDumbAmericanString,
+          ),
+        ),
+      )
 
   def findEarliestReturnTime(
     arrivalTime: BusTime,

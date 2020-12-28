@@ -474,7 +474,8 @@ object MyApp extends App {
       val arrivalTime: Var[Option[BusTime]] = Var(None)
       val departureTime: Var[Option[BusTime]] = Var(None)
       val submissions = new EventBus[RoundTripParams]
-      val roundTripResults: EventStream[RoundTrip] =
+      val roundTripResults
+        : EventStream[Either[TripPlannerError, RoundTrip]] =
         submissions.events
           .map(
             roundTripParams =>
@@ -609,10 +610,14 @@ object MyApp extends App {
         submissionActions --> theVoid,
         returnRoute --> $returnRouteVar.writer,
         div(
-          child <-- roundTripResults.map(
-            (roundTripResult: RoundTrip) =>
-              renderRoundTrip(roundTripResult),
-          ),
+          child <-- roundTripResults.map {
+            case Left(tripPlannerError: TripPlannerError) =>
+              div(
+                "Could not plan a route: " + tripPlannerError.msg,
+              )
+            case Right(roundTripResult) =>
+              renderRoundTrip(roundTripResult)
+          },
         ),
       )
     }

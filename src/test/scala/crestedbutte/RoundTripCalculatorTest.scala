@@ -15,7 +15,7 @@ object RoundTripCalculatorTest extends TestSuite {
         val destination: Location.Value = Location.RecCenter
         val leaveSchedule: RouteWithTimes = RtaSouthbound.fullSchedule.routeWithTimes
         val results =
-          RoundTripCalculator.reducedLegStartingAt(start, arrivalTime, destination, leaveSchedule)
+          RoundTripCalculator.reducedLegStartingAt(start, arrivalTime, destination, leaveSchedule).right.get
         assert(results.stops.head.busTime == BusTime("06:52"))
       }
       test("departure leg tests 2") {
@@ -25,7 +25,7 @@ object RoundTripCalculatorTest extends TestSuite {
         val destination: Location.Value = Location.RecCenter
         val leaveSchedule: RouteWithTimes = RtaSouthbound.fullSchedule.routeWithTimes
         val results =
-          RoundTripCalculator.reducedLegStartingAt(start, arrivalTime, destination, leaveSchedule)
+          RoundTripCalculator.reducedLegStartingAt(start, arrivalTime, destination, leaveSchedule).right.get
         assert(results.stops.head.busTime == BusTime("18:35"))
       }
 
@@ -35,7 +35,7 @@ object RoundTripCalculatorTest extends TestSuite {
         val destination: Location.Value = Location.CBSouth
         val leaveSchedule: RouteWithTimes = RtaNorthbound.fullSchedule.routeWithTimes
         val results =
-          RoundTripCalculator.reducedLegStartingAt(start, arrivalTime, destination, leaveSchedule)
+          RoundTripCalculator.reducedLegStartingAt(start, arrivalTime, destination, leaveSchedule).right.get
         assert(results.stops.head.busTime == BusTime("06:00"))
       }
     }
@@ -59,7 +59,7 @@ object RoundTripCalculatorTest extends TestSuite {
         val destination: Location.Value = Location.Almont
         val leaveSchedule: RouteWithTimes = RtaSouthbound.fullSchedule.routeWithTimes
         val results =
-          RoundTripCalculator.reducedReturnLeg(LocationWithTime(start, earliestDepartureTime), leaveSchedule, destination)
+          RoundTripCalculator.reducedReturnLeg(LocationWithTime(start, earliestDepartureTime), leaveSchedule, destination).right.get
         assert(results.stops.head.busTime == BusTime("15:28"))
         assert(results.stops.last.busTime == BusTime("15:42"))
       }
@@ -70,7 +70,7 @@ object RoundTripCalculatorTest extends TestSuite {
         val destination: Location.Value = Location.Riverland
         val leaveSchedule: RouteWithTimes = RtaNorthbound.fullSchedule.routeWithTimes
         val results =
-          RoundTripCalculator.reducedReturnLeg(LocationWithTime(start, earliestDepartureTime), leaveSchedule, destination)
+          RoundTripCalculator.reducedReturnLeg(LocationWithTime(start, earliestDepartureTime), leaveSchedule, destination).right.get
         assert(results.stops.head.busTime == BusTime("09:42"))
       }
     }
