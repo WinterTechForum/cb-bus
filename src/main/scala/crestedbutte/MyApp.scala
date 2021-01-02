@@ -1,12 +1,7 @@
 package crestedbutte
 
 import java.util.concurrent.TimeUnit
-import com.billding.time.{
-  BusDuration,
-  BusTime,
-  ColoradoClock,
-  TurboClock,
-}
+import com.billding.time.{BusDuration, BusTime, ColoradoClock, TurboClock}
 import crestedbutte.dom.{BulmaBehaviorLocal, DomManipulation}
 import crestedbutte.routes._
 import org.scalajs.dom.experimental.serviceworkers._
@@ -20,14 +15,11 @@ import org.scalajs.dom.document
 import org.scalajs.dom.window
 import org.scalajs.dom.raw.HTMLElement
 import typings.materialUiCore.mod.TextField
-import typings.materialUiPickers.anon.{
-  Format,
-  OnChange,
-  OpenPicker,
-  PickPropsWithChildrenCloc,
-  PickerProps,
-}
-import website.webcomponents.material.{Button, TimePicker}
+import typings.materialUiPickers.anon.{Format, OnChange, OpenPicker, PickPropsWithChildrenCloc, PickerProps}
+import typings.materialUiPickers.dateMod.MaterialUiPickersDate
+import typings.materialUiPickers.mod.TimePicker
+import typings.materialUiPickers.timePickerTimePickerMod.TimePickerProps
+import website.webcomponents.material.Button
 
 import scala.util.{Failure, Success}
 
@@ -512,11 +504,8 @@ object MyApp extends App {
           _.id := "myButton",
           _.label := "My butto!",
         ),
-//        TimePicker(
-//          _.id := "myPicker",
-//          _.label := "My picker!",
-//        ),
-        manualMaterialPicker(),
+        TimePicker(TimePickerProps(materialUiPickersDate => println("hi"))),
+//        manualMaterialPicker(),
         div(
           "On this line::",
           span(
