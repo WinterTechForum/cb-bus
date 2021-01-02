@@ -27,7 +27,7 @@ import typings.materialUiPickers.anon.{
   PickPropsWithChildrenCloc,
   PickerProps,
 }
-import website.webcomponents.material.Button
+import website.webcomponents.material.{Button, TimePicker}
 
 import scala.util.{Failure, Success}
 
@@ -361,7 +361,23 @@ object MyApp extends App {
 //        }}
 //      )
 
-    def TimePicker(
+    def manualMaterialPicker() =
+      div(
+        cls := "MuiFormControl-root MuiTextField-root"
+//          format := "hh:mm a"
+        ,
+        div(
+          cls := "MuiInputBase-root MuiInput-root MuiInput-underline MuiInputBase-formControl MuiInput-formControl",
+          input( // aria - invalid := "false",
+                // readonly := "",
+                `type` := "text",
+                cls := "MuiInputBase-input MuiInput-input",
+                value := "11:03 PM"),
+        ),
+        "Time?"
+      )
+
+    def TimePickerLocal(
       timeStream: Observer[Option[BusTime]],
       valueName: String,
     ) = {
@@ -494,8 +510,13 @@ object MyApp extends App {
       div(
         Button(
           _.id := "myButton",
-          _.label := "My button!"
+          _.label := "My butto!",
         ),
+//        TimePicker(
+//          _.id := "myPicker",
+//          _.label := "My picker!",
+//        ),
+        manualMaterialPicker(),
         div(
           "On this line::",
           span(
@@ -558,7 +579,7 @@ object MyApp extends App {
           destination.events.map(Some(_)) --> $destination.writer,
         ),
         div("At: ",
-            TimePicker(arrivalTime.writer, "arrivalTime"),
+            TimePickerLocal(arrivalTime.writer, "arrivalTime"),
             div("bap"),
         ),
 //            materialsButton()),
@@ -578,7 +599,7 @@ object MyApp extends App {
             .map(Some(_)) --> $returnStartPoint.writer,
         ),
         div("after: ",
-            TimePicker(departureTime.writer, "departureTime"),
+            TimePickerLocal(departureTime.writer, "departureTime"),
         ),
         div(
           button(

@@ -30,7 +30,7 @@ Compile / npmDependencies ++= Seq(
   "@material-ui/pickers" -> "3.2.10",
 //  "@material-ui/mwc-button" -> "0.20.0",
   "@material/mwc-button" -> "0.18.0",
-//  "@material-ui/pickers" -> "v4.0.0-alpha.12",
+  "@material-ui/pickers" -> "3.2.10",
 
   "react" -> "17.0.1"
 )
