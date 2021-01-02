@@ -6,7 +6,14 @@ enablePlugins(ScalaJSPlugin)
 enablePlugins(TzdbPlugin)
 
 enablePlugins(ScalablyTypedConverterPlugin)
-enablePlugins(ScalaJSBundlerPlugin)
+//enablePlugins(ScalaJSBundlerPlugin)
+enablePlugins(WebScalaJSBundlerPlugin)
+
+pipelineStages in Assets := Seq(scalaJSPipeline)
+//  .settings(
+//    scalaJSProjects := Seq(client),
+//  )
+//  .enablePlugins(WebScalaJSBundlerPlugin)
 
 scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.CommonJSModule) }
 
@@ -21,10 +28,21 @@ Compile / npmDependencies ++= Seq(
 //  "@types/react-router-dom" -> "5.1.2",
   "@material-ui/core" -> "4.11.1",
   "@material-ui/pickers" -> "3.2.10",
+//  "@material-ui/mwc-button" -> "0.20.0",
+  "@material/mwc-button" -> "0.18.0",
 //  "@material-ui/pickers" -> "v4.0.0-alpha.12",
 
   "react" -> "17.0.1"
 )
+
+/*
+[error] npm WARN @material-ui/core@4.11.1 requires a peer of react@^16.8.0 but none is installed. You must install peer dependencies yourself.
+[error] npm WARN @material-ui/core@4.11.1 requires a peer of react-dom@^16.8.0 but none is installed. You must install peer dependencies yourself.                                             [error] npm WARN @material-ui/pickers@3.2.10 requires a peer of react@^16.8.4 but none is installed. You must install peer dependencies yourself.
+[error] npm WARN @material-ui/pickers@3.2.10 requires a peer of react-dom@^16.8.4 but none is installed. You must install peer dependencies yourself.
+[error] npm WARN @material-ui/styles@4.11.2 requires a peer of react-dom@^16.8.0 || ^17.0.0 but none is installed. You must install peer dependencies yourself.                                [error] npm WARN @material-ui/system@4.11.2 requires a peer of react-dom@^16.8.0 || ^17.0.0 but none is installed. You must install peer dependencies yourself.
+[error] npm WARN @material-ui/utils@4.11.2 requires a peer of react-dom@^16.8.0 || ^17.0.0 but none is installed. You must install peer dependencies yourself.
+[error] npm WARN react-transition-group@4.4.1 requires a peer of react-dom@>=16.6.0 but none is installed. You must install peer dependencies yourself.
+ */
 
 libraryDependencies ++= Seq(
   "com.billding" %%% "bulmalibrary" % "0.2.19",

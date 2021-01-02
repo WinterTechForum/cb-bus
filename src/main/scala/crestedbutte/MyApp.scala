@@ -27,7 +27,7 @@ import typings.materialUiPickers.anon.{
   PickPropsWithChildrenCloc,
   PickerProps,
 }
-//import website.webcomponents.material.Button
+import website.webcomponents.material.Button
 
 import scala.util.{Failure, Success}
 
@@ -492,6 +492,10 @@ object MyApp extends App {
 //      import website.webcomponents.material.Button
       val theVoid = new EventBus[Unit]
       div(
+        Button(
+          _.id := "myButton",
+          _.label := "My button!"
+        ),
         div(
           "On this line::",
           span(
