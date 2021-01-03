@@ -19,7 +19,8 @@ import typings.materialUiPickers.anon.{Format, OnChange, OpenPicker, PickPropsWi
 import typings.materialUiPickers.dateMod.MaterialUiPickersDate
 import typings.materialUiPickers.mod.TimePicker
 import typings.materialUiPickers.timePickerTimePickerMod.TimePickerProps
-import website.webcomponents.material.Button
+import typings.react.mod.PropsWithChildren
+import website.webcomponents.material.{Button, SmartTimePicker}
 
 import scala.util.{Failure, Success}
 
@@ -498,14 +499,17 @@ object MyApp extends App {
         }
 
 //      import website.webcomponents.material.Button
+//      val blah: typings.react.mod.PropsWithChildren[typings.materialUiPickers.timePickerTimePickerMod.TimePickerProps] = ???
+//      TimePickerProps(materialUiPickersDate => println("hi"))
       val theVoid = new EventBus[Unit]
       div(
         Button(
           _.id := "myButton",
           _.label := "My butto!",
         ),
-        TimePicker(TimePickerProps(materialUiPickersDate => println("hi"))),
+//        TimePicker(blah),
 //        manualMaterialPicker(),
+        SmartTimePicker(),
         div(
           "On this line::",
           span(

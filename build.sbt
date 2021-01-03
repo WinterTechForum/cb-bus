@@ -31,7 +31,7 @@ Compile / npmDependencies ++= Seq(
 //  "@material-ui/mwc-button" -> "0.20.0",
   "@material/mwc-button" -> "0.18.0",
   "@material-ui/pickers" -> "3.2.10",
-
+  "smart-webcomponents" -> "9.0.0",
   "react" -> "17.0.1"
 )
 
