@@ -39,11 +39,14 @@ object SmartTimePicker {
   RawImport
 
   type Ref = dom.html.Element with RawElement
-  type ModFunction = SmartTimePicker.type => Mod[ReactiveHtmlElement[Ref]]
+
+  type ModFunction =
+    SmartTimePicker.type => Mod[ReactiveHtmlElement[Ref]]
 
   private val junk = "blah"
 
-  private val tag = new HtmlTag[Ref]("smart-time-picker", void = false)
+  private val tag =
+    new HtmlTag[Ref]("smart-time-picker", void = false)
 
   val id: ReactiveProp[String, String] = idAttr
 
