@@ -32,6 +32,8 @@ Compile / npmDependencies ++= Seq(
   "@material/mwc-button" -> "0.18.0",
   "@material-ui/pickers" -> "3.2.10",
   "smart-webcomponents" -> "9.0.0",
+//  "timepicker-ui" -> "1.2.0",
+//  "@types/timepicker-ui" -> "1.2.0",
   "react" -> "17.0.1"
 )
 
