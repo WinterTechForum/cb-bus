@@ -38,8 +38,9 @@ object LaminarRoundTripCalculator {
   def Selector[T](
     route: Seq[T],
     eventStream: Observer[T],
-    converterThatCouldBeATypeClass: T => SelectValue,
+  )(implicit converterThatCouldBeATypeClass: T => SelectValue,
   ) = {
+
     val valueMap: Map[SelectValue, T] =
       route
         .map(
@@ -152,7 +153,6 @@ object LaminarRoundTripCalculator {
     val startingRouteSelections = new EventBus[String]
 
     val $startRouteVar: Var[NamedRoute] = Var(routes.head)
-//    $startRouteVar.update(_ => routes.head) // todo this is clanky
 
     val returnRoute: Signal[NamedRoute] =
       $startRouteVar.signal.map(
@@ -173,31 +173,20 @@ object LaminarRoundTripCalculator {
             )
       }
 
-    def locationWithTime2selectorValue(
-      locationWithTime: LocationWithTime,
-    ): SelectValue =
-      location2selectorValue(locationWithTime.location)
-
-    def location2selectorValue(
-      location: Location.Value,
-    ): SelectValue =
+    implicit val location2selectorValue
+      : Location.Value => SelectValue = (location: Location.Value) =>
       SelectValue(location.name, location.name)
 
-    val $startingPoint: Var[LocationWithTime] = Var(
-      $startRouteVar.now().routeWithTimes
-        .routeLeg(0)
-        .stops
-        .head, // todo unsafe
-    ) // todo yikes this is bad.
-    val initialDestination =
-      $startRouteVar.now().routeWithTimes
-        .routeLeg(0)
-        .stops
-        .last
-    val $destination: Var[Location.Value] = Var(
-      initialDestination.location,
+    val $startingPoint: Var[Location.Value] = Var(
+      $startRouteVar.now().firstStopOnRoute,
     )
-    val $returnStartPoint: Var[LocationWithTime] = Var(
+    val initialDestination =
+      $startRouteVar.now().lastStopOnRoute
+
+    val $destination: Var[Location.Value] = Var(
+      initialDestination,
+    )
+    val $returnStartPoint: Var[Location.Value] = Var(
       initialDestination,
     )
     val arrivalTime: Var[BusTime] = Var(BusTime("07:00"))
@@ -213,9 +202,31 @@ object LaminarRoundTripCalculator {
             RoundTripCalculator.calculate(roundTripParams),
         )
 
+    val startingPointOptions =
+      $startRouteVar.signal
+        .map(_.routeWithTimes.legs.head.stops.map(_.location))
+        .map(
+          stops =>
+            Selector(
+              stops,
+              $startingPoint.writer,
+            ),
+        )
+
+    val destinationOptions =
+      $startingPoint.signal
+        .map(
+          (startPoint: Location.Value) => {
+            Selector(
+              $startRouteVar.now().stopsRemainingAfter(startPoint),
+              $destination.writer,
+            )
+          },
+        )
+
     div(
       div(
-        "On this line::",
+        "On this line:",
         span(
           cls := "select is-rounded",
           select(
@@ -237,41 +248,12 @@ object LaminarRoundTripCalculator {
       ),
       div(
         "Starting from: ",
-        child <-- $startRouteVar.signal
-          .map(_.routeWithTimes.legs.head.stops)
-          .map(
-            stops =>
-              Selector(
-                stops,
-                $startingPoint.writer,
-                locationWithTime2selectorValue,
-              ),
-          ),
+        child <-- startingPointOptions,
       ),
       div(
         "and reaching: ",
         child <--
-        $startingPoint.signal
-          .map(
-            startPoint => {
-              val startRouteNow = $startRouteVar.now()
-
-              val remainingStops: Seq[Location.Value] =
-                startRouteNow.routeWithTimes.allInvolvedStops.drop(
-                  startRouteNow.routeWithTimes.allInvolvedStops
-                    .indexWhere(
-                      involvedStop =>
-                        involvedStop.name == startPoint.location.name,
-                    ) + 1, // Only include stops beyond the current stop
-                )
-
-              Selector(
-                remainingStops,
-                $destination.writer,
-                location2selectorValue,
-              )
-            },
-          ),
+        destinationOptions,
       ),
       div(
         "At: ",
@@ -284,13 +266,12 @@ object LaminarRoundTripCalculator {
       div(
         "And returning from: ",
         child <-- returnRoute
-          .map(_.routeWithTimes.legs.head.stops)
+          .map(_.routeWithTimes.legs.head.stops.map(_.location)) // todo turn into a function
           .map(
             stops =>
               Selector(
                 stops,
                 $returnStartPoint.writer,
-                locationWithTime2selectorValue,
               ),
           ),
       ),
@@ -302,30 +283,20 @@ object LaminarRoundTripCalculator {
       div(
         button(
           "Plan Trip",
-          onClick.map {
+          onClick.map(
             _ =>
-              println("Clicked!")
-              println("startingPoint: " + $startingPoint.now())
-              println("arrivalTime: " + arrivalTime.now())
-              println("destination: " + $destination.now())
-              println("departureTime: " + departureTime.now())
-              println(
-                "returnStartPoint: " + $returnStartPoint.now(),
-              )
-
               RoundTripParams(
-                $startingPoint.now().location,
+                $startingPoint.now(),
                 $destination.now(),
                 arrivalTime.now(),
                 $startRouteVar.now().routeWithTimes,
                 arrivalTime
                   .now()
                   .between(departureTime.now()),
-                $returnStartPoint.now().location,
+                $returnStartPoint.now(),
                 $returnRouteVar.now().routeWithTimes,
-              )
-
-          } --> submissions,
+              ),
+          ) --> submissions,
         ),
       ),
       returnRoute --> $returnRouteVar.writer,
