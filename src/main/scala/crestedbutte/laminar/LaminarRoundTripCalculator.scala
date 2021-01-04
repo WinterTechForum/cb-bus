@@ -37,7 +37,7 @@ object LaminarRoundTripCalculator {
 
   def Selector[T](
     route: Seq[T],
-    eventStream: WriteBus[T],
+    eventStream: Observer[T],
     converterThatCouldBeATypeClass: T => SelectValue,
   ) = {
     val valueMap: Map[SelectValue, T] =
@@ -183,14 +183,12 @@ object LaminarRoundTripCalculator {
     ): SelectValue =
       SelectValue(location.name, location.name)
 
-    val startingPoint = new EventBus[LocationWithTime]
     val $startingPoint: Var[LocationWithTime] = Var(
       $startRouteVar.now().routeWithTimes
         .routeLeg(0)
         .stops
         .head, // todo unsafe
     ) // todo yikes this is bad.
-    val destination = new EventBus[Location.Value]
     val initialDestination =
       $startRouteVar.now().routeWithTimes
         .routeLeg(0)
@@ -199,7 +197,6 @@ object LaminarRoundTripCalculator {
     val $destination: Var[Location.Value] = Var(
       initialDestination.location,
     )
-    val returnStartPoint = new EventBus[LocationWithTime]
     val $returnStartPoint: Var[LocationWithTime] = Var(
       initialDestination,
     )
@@ -216,24 +213,7 @@ object LaminarRoundTripCalculator {
             RoundTripCalculator.calculate(roundTripParams),
         )
 
-    val submissionActions: EventStream[Unit] =
-      submissions.events.map {
-        submission =>
-          println("arrivalTime: " + arrivalTime.now())
-          println("departureTime: " + departureTime.now())
-      }
-
-    //      import website.webcomponents.material.Button
-    //      val blah: typings.react.mod.PropsWithChildren[typings.materialUiPickers.timePickerTimePickerMod.TimePickerProps] = ???
-    //      TimePickerProps(materialUiPickersDate => println("hi"))
-    val theVoid = new EventBus[Unit]
     div(
-//      Button(
-//        _.id := "myButton",
-//        _.label := "My butto!",
-//      ),
-      //        TimePicker(blah),
-//      SmartTimePicker(),
       div(
         "On this line::",
         span(
@@ -263,16 +243,15 @@ object LaminarRoundTripCalculator {
             stops =>
               Selector(
                 stops,
-                startingPoint.writer,
+                $startingPoint.writer,
                 locationWithTime2selectorValue,
               ),
           ),
-        startingPoint.events --> $startingPoint.writer,
       ),
       div(
         "and reaching: ",
         child <--
-        startingPoint.events
+        $startingPoint.signal
           .map(
             startPoint => {
               val startRouteNow = $startRouteVar.now()
@@ -288,12 +267,11 @@ object LaminarRoundTripCalculator {
 
               Selector(
                 remainingStops,
-                destination.writer,
+                $destination.writer,
                 location2selectorValue,
               )
             },
           ),
-        destination.events --> $destination.writer,
       ),
       div(
         "At: ",
@@ -311,12 +289,10 @@ object LaminarRoundTripCalculator {
             stops =>
               Selector(
                 stops,
-                returnStartPoint.writer,
+                $returnStartPoint.writer,
                 locationWithTime2selectorValue,
               ),
           ),
-        returnStartPoint.events
-        --> $returnStartPoint.writer,
       ),
       div("after: ",
           TimePickerLocalSuccessOnly(departureTime.writer,
@@ -336,24 +312,22 @@ object LaminarRoundTripCalculator {
               println(
                 "returnStartPoint: " + $returnStartPoint.now(),
               )
-              //                "click!"
 
               RoundTripParams(
-                $startingPoint.now().location, // startLocation: Location.Value,
-                $destination.now(), // destination: Location.Value,
+                $startingPoint.now().location,
+                $destination.now(),
                 arrivalTime.now(),
                 $startRouteVar.now().routeWithTimes,
                 arrivalTime
                   .now()
                   .between(departureTime.now()),
-                $returnStartPoint.now().location, // returningLaunchPoint: Location.Value,
+                $returnStartPoint.now().location,
                 $returnRouteVar.now().routeWithTimes,
               )
 
           } --> submissions,
         ),
       ),
-      submissionActions --> theVoid,
       returnRoute --> $returnRouteVar.writer,
       div(
         child <-- roundTripResults.map {
