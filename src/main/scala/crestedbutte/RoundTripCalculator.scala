@@ -160,14 +160,12 @@ object RoundTripCalculator {
   ): Either[TripPlannerError, RouteLeg] = {
     val returnLeg: Either[TripPlannerError, RouteLeg] =
       earliestReturnLeg(target, routeWithTimes)
-    pprint.pprintln(returnLeg)
 
     returnLeg.map {
       routeLeg =>
         val reducedStart =
           routeLeg
             .trimToStartAt(target.location)
-        pprint.pprintln(returnLeg)
         routeLeg
           .trimToEndAt(destination)
     }

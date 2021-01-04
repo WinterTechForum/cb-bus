@@ -182,7 +182,6 @@ object MyApp extends App {
             )
           } yield ()
         case ComponentDataTyped(value, componentName) => {
-          println("huh?")
           for {
             _ <- ZIO {
               show(componentName.name)
@@ -192,7 +191,6 @@ object MyApp extends App {
       }
     }
     else {
-      println("hiding: " + componentData.componentName.name)
       DomManipulation.hideElement(
         componentData.componentName.name,
       )
@@ -202,12 +200,10 @@ object MyApp extends App {
   private def show(
     elementId: String,
   ) = {
-    println("!trying to show " + s"#$elementId")
 
     val result =
       document.body
         .querySelector(s"#$elementId")
-    println(result.getAttribute("class"))
     result.removeAttribute("style")
 //      result
 //        .setAttribute(

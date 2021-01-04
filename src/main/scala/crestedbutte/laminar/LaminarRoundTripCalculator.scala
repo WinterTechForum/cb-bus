@@ -81,27 +81,12 @@ object LaminarRoundTripCalculator {
   case object AM extends DayTime
   case object PM extends DayTime
 
-  def manualMaterialPicker() =
-    div(
-      cls := "MuiFormControl-root MuiTextField-root"
-      //          format := "hh:mm a"
-      ,
-      div(
-        cls := "MuiInputBase-root MuiInput-root MuiInput-underline MuiInputBase-formControl MuiInput-formControl",
-        input( // aria - invalid := "false",
-              // readonly := "",
-              `type` := "text",
-              cls := "MuiInputBase-input MuiInput-input",
-              value := "11:03 PM"),
-      ),
-      "Time?",
-    )
-
-  def TimePickerLocal(
-    timeStream: Observer[Option[BusTime]],
+  def TimePickerLocalSuccessOnly(
+    timeStream: Observer[BusTime],
+    initialValue: BusTime,
     valueName: String,
   ) = {
-    val timeString = Var("08:00")
+    val timeString = Var(initialValue.toString)
     val daytime: Var[DayTime] = Var(AM)
 
     val typedTime
@@ -143,30 +128,26 @@ object LaminarRoundTripCalculator {
             } --> daytime,
             PM.toString),
       label(forId := "PM", "PM"),
-      typedTime.signal.combineWith(daytime.signal).map {
-        case (maybeTime, dayTime) =>
-          maybeTime match {
-            case Some(busTime) =>
-              if (dayTime == AM) Some(busTime)
-              else Some(busTime.plus(BusDuration.ofMinutes(720)))
-            case None => None
-          }
-      } --> timeStream,
+      typedTime.signal
+        .combineWith(daytime.signal)
+        .map {
+          case (maybeTime, dayTime) =>
+            maybeTime match {
+              case Some(busTime) =>
+                if (dayTime == AM) Some(busTime)
+                else Some(busTime.plus(BusDuration.ofMinutes(720)))
+              case None => None
+            }
+        }
+        .changes
+        .filter(_.isDefined)
+        .map(_.get) --> timeStream,
     )
   }
 
   def RoundTripCalculatorLaminar() = {
     val routes =
       List(RtaNorthbound.fullSchedule, RtaSouthbound.fullSchedule)
-
-    val startingLocationChoices =
-      routes
-        .map(
-          namedRoute =>
-            (namedRoute.routeName.name,
-             namedRoute.routeWithTimes.allInvolvedStops),
-        )
-        .toMap
 
     val startingRouteSelections = new EventBus[String]
 
@@ -203,27 +184,29 @@ object LaminarRoundTripCalculator {
       SelectValue(location.name, location.name)
 
     val startingPoint = new EventBus[LocationWithTime]
-    val $startingPoint: Var[Option[LocationWithTime]] = Var(
+    val $startingPoint: Var[LocationWithTime] = Var(
       $startRouteVar.now().routeWithTimes
         .routeLeg(0)
         .stops
-        .headOption,
+        .head, // todo unsafe
     ) // todo yikes this is bad.
     val destination = new EventBus[Location.Value]
     val initialDestination =
       $startRouteVar.now().routeWithTimes
         .routeLeg(0)
         .stops
-        .lastOption
-    val $destination: Var[Option[Location.Value]] = Var(
-      initialDestination.map(_.location),
+        .last
+    val $destination: Var[Location.Value] = Var(
+      initialDestination.location,
     )
     val returnStartPoint = new EventBus[LocationWithTime]
-    val $returnStartPoint: Var[Option[LocationWithTime]] = Var(
+    val $returnStartPoint: Var[LocationWithTime] = Var(
       initialDestination,
     )
-    val arrivalTime: Var[Option[BusTime]] = Var(None)
-    val departureTime: Var[Option[BusTime]] = Var(None)
+    val arrivalTime: Var[BusTime] = Var(BusTime("07:00"))
+    val departureTime: Var[BusTime] = Var(
+      arrivalTime.now().plusMinutes(60),
+    )
     val submissions = new EventBus[RoundTripParams]
     val roundTripResults
       : EventStream[Either[TripPlannerError, RoundTrip]] =
@@ -250,7 +233,6 @@ object LaminarRoundTripCalculator {
 //        _.label := "My butto!",
 //      ),
       //        TimePicker(blah),
-      //        manualMaterialPicker(),
 //      SmartTimePicker(),
       div(
         "On this line::",
@@ -285,7 +267,7 @@ object LaminarRoundTripCalculator {
                 locationWithTime2selectorValue,
               ),
           ),
-        startingPoint.events.map(Some(_)) --> $startingPoint.writer,
+        startingPoint.events --> $startingPoint.writer,
       ),
       div(
         "and reaching: ",
@@ -311,11 +293,14 @@ object LaminarRoundTripCalculator {
               )
             },
           ),
-        destination.events.map(Some(_)) --> $destination.writer,
+        destination.events --> $destination.writer,
       ),
-      div("At: ",
-          TimePickerLocal(arrivalTime.writer, "arrivalTime"),
-          div("bap"),
+      div(
+        "At: ",
+        TimePickerLocalSuccessOnly(arrivalTime.writer,
+                                   arrivalTime.now(),
+                                   "arrivalTime"),
+        div("bap"),
       ),
       //            materialsButton()),
       div(
@@ -331,10 +316,12 @@ object LaminarRoundTripCalculator {
               ),
           ),
         returnStartPoint.events
-          .map(Some(_)) --> $returnStartPoint.writer,
+        --> $returnStartPoint.writer,
       ),
       div("after: ",
-          TimePickerLocal(departureTime.writer, "departureTime"),
+          TimePickerLocalSuccessOnly(departureTime.writer,
+                                     departureTime.now(),
+                                     "departureTime"),
       ),
       div(
         button(
@@ -352,15 +339,14 @@ object LaminarRoundTripCalculator {
               //                "click!"
 
               RoundTripParams(
-                $startingPoint.now().get.location, // startLocation: Location.Value,
-                $destination.now().get, // destination: Location.Value,
-                arrivalTime.now().get,
+                $startingPoint.now().location, // startLocation: Location.Value,
+                $destination.now(), // destination: Location.Value,
+                arrivalTime.now(),
                 $startRouteVar.now().routeWithTimes,
                 arrivalTime
                   .now()
-                  .get
-                  .between(departureTime.now().get),
-                $returnStartPoint.now().get.location, // returningLaunchPoint: Location.Value,
+                  .between(departureTime.now()),
+                $returnStartPoint.now().location, // returningLaunchPoint: Location.Value,
                 $returnRouteVar.now().routeWithTimes,
               )
 
