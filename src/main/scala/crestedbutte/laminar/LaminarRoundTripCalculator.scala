@@ -204,13 +204,12 @@ object LaminarRoundTripCalculator {
 
     val startingPointOptions =
       $startRouteVar.signal
-        .map(_.routeWithTimes.legs.head.stops.map(_.location))
+        .map(_.allStops)
         .map(
-          stops =>
-            Selector(
-              stops,
-              $startingPoint.writer,
-            ),
+          Selector(
+            _,
+            $startingPoint.writer,
+          ),
         )
 
     val destinationOptions =

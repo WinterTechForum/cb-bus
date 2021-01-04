@@ -29,6 +29,9 @@ case class NamedRoute(
       .stops
       .last // todo unsafe
       .location
+
+  val allStops: Seq[Location.Value] =
+    routeWithTimes.legs.head.stops.map(_.location)
 }
 
 object NamedRoute {
