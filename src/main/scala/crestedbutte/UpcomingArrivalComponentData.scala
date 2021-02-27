@@ -1,6 +1,8 @@
 package crestedbutte
 
 case class UpcomingArrivalComponentData(
-  upcomingArrivalInfo: Seq[UpcomingArrivalInfoWithFullSchedule],
+  upcomingArrivalInfoForAllRoutes: Seq[
+    UpcomingArrivalInfoWithFullSchedule,
+  ],
   routeName: RouteName,
 )

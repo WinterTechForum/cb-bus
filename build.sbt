@@ -53,7 +53,6 @@ libraryDependencies ++= Seq(
   "dev.zio" %%% "zio" % zioVersion,
   "dev.zio" %%% "zio-streams" % zioVersion,
   "com.lihaoyi" %%% "scalatags" % "0.8.6",
-  "org.scala-js" %%% "scalajs-dom" % "1.0.0",
   "io.github.cquiroz" %%% "scala-java-time" % "2.0.0",
   "dev.zio" %%% "zio-test"     % zioVersion % "test",
   "dev.zio" %%% "zio-test-sbt" % zioVersion % "test",

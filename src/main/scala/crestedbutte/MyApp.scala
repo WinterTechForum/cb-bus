@@ -1,34 +1,25 @@
 package crestedbutte
 
 import java.util.concurrent.TimeUnit
-import com.billding.time.{
-  BusDuration,
-  BusTime,
-  ColoradoClock,
-  TurboClock,
-}
-import crestedbutte.dom.{BulmaBehaviorLocal, DomManipulation}
+import com.billding.time.{BusTime, ColoradoClock, TurboClock}
+import crestedbutte.dom.DomManipulation
 import crestedbutte.routes._
 import org.scalajs.dom.experimental.serviceworkers._
 import zio.clock._
 import zio.console.Console
 import zio.duration.Duration
-import zio.{App, Has, Schedule, ZIO, ZLayer}
-import zio.console._
+import zio.{App, Schedule, ZIO, ZLayer}
 import crestedbutte.Browser.Browser
-import crestedbutte.laminar.LaminarRoundTripCalculator
-import org.scalajs.dom.document
-import org.scalajs.dom.window
-import org.scalajs.dom.raw.HTMLElement
-import typings.materialUiCore.mod.TextField
-import typings.materialUiPickers.anon.{
-  Format,
-  OnChange,
-  OpenPicker,
-  PickPropsWithChildrenCloc,
-  PickerProps,
+import crestedbutte.laminar.{
+  Bulma,
+  LaminarRoundTripCalculator,
+  RepeatingElement,
 }
+import org.scalajs.dom
+import org.scalajs.dom.document
 
+import java.time.{LocalTime, OffsetDateTime, ZoneId}
+import scala.concurrent.duration.FiniteDuration
 import scala.util.{Failure, Success}
 
 object MyApp extends App {
@@ -65,6 +56,8 @@ object MyApp extends App {
   ) =
     for {
       routeNameOpt <- getOptional("route", x => Some(x))
+      // Yeck! This can go away now! I should only consult this query param on initial page load.
+      /*
       selectedComponent: ComponentData = routeNameOpt
         .flatMap(
           routeNameStringParam =>
@@ -75,7 +68,8 @@ object MyApp extends App {
         )
         .getOrElse(components.head)
 
-      _ <- updateUpcomingArrivalsOnPage(selectedComponent, components)
+       */
+
       _ <- NotificationStuff.addAlarmBehaviorToTimes
       _ <- ModalBehavior.addModalOpenBehavior
       _ <- ModalBehavior.addModalCloseBehavior
@@ -109,11 +103,14 @@ object MyApp extends App {
       ),
     )
 
+  import com.raquo.laminar.api.L._
+
   val fullApplicationLogic =
     for {
-      browser    <- ZIO.access[Browser](_.get)
-      console    <- ZIO.access[Console](_.get)
-      clockParam <- ZIO.access[Clock](_.get)
+      browser                   <- ZIO.access[Browser](_.get)
+      console                   <- ZIO.access[Console](_.get)
+      clockParam: Clock.Service <- ZIO.access[Clock](_.get)
+      javaClock = java.time.Clock.system(ZoneId.of("America/Denver"))
       pageMode <- getOptional("mode", AppMode.fromString)
         .map(
           _.getOrElse(AppMode.Production),
@@ -122,36 +119,75 @@ object MyApp extends App {
       clock = if (fixedTime.isDefined)
         ZLayer.succeed(
           TurboClock.TurboClock(
-            s"2020-02-20T${fixedTime.get.toString}:00.00-07:00",
+            s"2020-02-21T${fixedTime.get.toString}:00.00-07:00",
           ),
         )
       else ZLayer.succeed(clockParam)
       environmentDependencies = ZLayer.succeed(browser) ++ ZLayer
         .succeed(console) ++ clock
       _ <- registerServiceWorker()
-      _ <- NotificationStuff.addNotificationPermissionRequestToButton
-      _ <- NotificationStuff.displayNotificationPermission
-      _ <- DomManipulation.createAndApplyPageStructure(
-        TagsOnlyLocal
-          .overallPageLayout(pageMode, components)
-          .render,
-      )
-      _ <- UnsafeCallbacks.attachMenuBehavior
-      // todo restore for laminar stuff
+//      _ <- NotificationStuff.addNotificationPermissionRequestToButton
+//      _ <- NotificationStuff.displayNotificationPermission
+      // TODO Restore setup behavior here: DomManipulation.createAndApplyPageStructure(
       _ <- ZIO {
-        if (org.scalajs.dom.document.getElementById(
-              LaminarRoundTripCalculator.calculatorComponentName.name,
-            ) != null)
-          LaminarRoundTripCalculator.app()
+        val duration =
+          new FiniteDuration(1, scala.concurrent.duration.SECONDS)
+        val clockTicks = new EventBus[Int]
+
+        val $triggerState: Signal[Int] =
+          clockTicks.events.foldLeft[Int](0)(
+            (lastTick, _) => lastTick + 1,
+          )
+
+        val selectedRoute: Var[ComponentData] = Var(
+          ComponentDataRoute(
+            TownShuttleTimes, // TODO This isn't necessarily going to be the starting route
+          ),
+        )
+
+        val timeStamps: Signal[BusTime] = clockTicks.events.foldLeft(
+          new BusTime(
+            OffsetDateTime.now(javaClock).toLocalTime,
+          ),
+        )(
+          (oldTime, _) =>
+            new BusTime(
+              OffsetDateTime.now(javaClock).toLocalTime,
+            ),
+        )
+
+        dom.document.getElementById("landing-message").innerHTML = ""
+        render(
+          dom.document.getElementById("landing-message"),
+          div(
+            Bulma.menu(selectedRoute, components),
+            RepeatingElement().repeatWithInterval(
+              1,
+              duration,
+            ) --> clockTicks,
+            child <-- $triggerState.map(
+              ticks => div("ticks: " + ticks),
+            ),
+            child <-- $triggerState.map(
+              _ =>
+                div("javaTime: " + LocalTime.now(javaClock).toString),
+            ),
+            TagsOnlyLocal
+              .overallPageLayout(javaClock,
+                                 selectedRoute.signal,
+                                 timeStamps,
+                                 pageMode,
+                                 components,
+              ),
+          ),
+        )
       }
+      _ <- UnsafeCallbacks.attachMenuBehavior
       loopingLogic: ZIO[Any, Throwable, Unit] = loopLogic(pageMode,
                                                           components)
         .provideLayer(
           environmentDependencies,
         )
-      _ <- BulmaBehaviorLocal.addMenuBehavior(
-        loopingLogic,
-      )
       _ <- loopingLogic
         .repeat(Schedule.spaced(Duration.apply(5, TimeUnit.SECONDS)))
     } yield {
@@ -166,6 +202,8 @@ object MyApp extends App {
       currentlySelectedRoute match {
         case ComponentDataRoute(namedRoute) =>
           for {
+            // I should make a Signal[UpcomingArrivalComponentData] that goes into
+            // the constructor of the page initially
             arrivalsAtAllRouteStops <- TimeCalculations
               .getUpComingArrivalsWithFullSchedule(
                 namedRoute,
@@ -177,7 +215,7 @@ object MyApp extends App {
                 .structuredSetOfUpcomingArrivals(
                   arrivalsAtAllRouteStops,
                 )
-                .render,
+                .ref,
               "upcoming-buses",
             )
           } yield ()
