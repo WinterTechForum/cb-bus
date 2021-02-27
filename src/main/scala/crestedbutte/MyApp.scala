@@ -17,6 +17,8 @@ import zio.{App, Has, Schedule, ZIO, ZLayer}
 import zio.console._
 import crestedbutte.Browser.Browser
 import crestedbutte.laminar.LaminarRoundTripCalculator
+import crestedbutte.laminar.LaminarRoundTripCalculator.calculatorComponentName
+import org.scalajs.dom
 import org.scalajs.dom.document
 import org.scalajs.dom.window
 import org.scalajs.dom.raw.HTMLElement
@@ -75,6 +77,7 @@ object MyApp extends App {
         )
         .getOrElse(components.head)
 
+      // TODO Figure out proper updates
       _ <- updateUpcomingArrivalsOnPage(selectedComponent, components)
       _ <- NotificationStuff.addAlarmBehaviorToTimes
       _ <- ModalBehavior.addModalOpenBehavior
@@ -109,6 +112,8 @@ object MyApp extends App {
       ),
     )
 
+  import com.raquo.laminar.api.L._
+
   val fullApplicationLogic =
     for {
       browser    <- ZIO.access[Browser](_.get)
@@ -122,20 +127,27 @@ object MyApp extends App {
       clock = if (fixedTime.isDefined)
         ZLayer.succeed(
           TurboClock.TurboClock(
-            s"2020-02-20T${fixedTime.get.toString}:00.00-07:00",
+            s"2020-02-21T${fixedTime.get.toString}:00.00-07:00",
           ),
         )
       else ZLayer.succeed(clockParam)
       environmentDependencies = ZLayer.succeed(browser) ++ ZLayer
         .succeed(console) ++ clock
       _ <- registerServiceWorker()
-      _ <- NotificationStuff.addNotificationPermissionRequestToButton
-      _ <- NotificationStuff.displayNotificationPermission
-      _ <- DomManipulation.createAndApplyPageStructure(
-        TagsOnlyLocal
-          .overallPageLayout(pageMode, components)
-          .render,
-      )
+      _ <- putStrLn("hi")
+//      _ <- NotificationStuff.addNotificationPermissionRequestToButton
+//      _ <- NotificationStuff.displayNotificationPermission
+      // TODO Restore setup behavior here: DomManipulation.createAndApplyPageStructure(
+      _ <- ZIO {
+        render(
+          dom.document.getElementById("landing-message"),
+          div(
+            TagsOnlyLocal
+              .overallPageLayout(pageMode, components),
+          ),
+        )
+      }
+      _ <- putStrLn("hello")
       _ <- UnsafeCallbacks.attachMenuBehavior
       // todo restore for laminar stuff
       _ <- ZIO {
@@ -149,9 +161,10 @@ object MyApp extends App {
         .provideLayer(
           environmentDependencies,
         )
-      _ <- BulmaBehaviorLocal.addMenuBehavior(
-        loopingLogic,
-      )
+      // TODO Restore
+//      _ <- BulmaBehaviorLocal.addMenuBehavior(
+//        loopingLogic,
+//      )
       _ <- loopingLogic
         .repeat(Schedule.spaced(Duration.apply(5, TimeUnit.SECONDS)))
     } yield {
@@ -177,7 +190,7 @@ object MyApp extends App {
                 .structuredSetOfUpcomingArrivals(
                   arrivalsAtAllRouteStops,
                 )
-                .render,
+                .ref,
               "upcoming-buses",
             )
           } yield ()

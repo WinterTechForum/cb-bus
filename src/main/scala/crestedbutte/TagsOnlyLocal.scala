@@ -4,29 +4,31 @@ import crestedbutte.Location.StopLocation
 import crestedbutte.dom.{Bulma, BulmaLocal}
 import com.billding.time.BusTime
 import com.billding.time.BusDuration
-import org.scalajs.dom.html.{Anchor, Div}
-import scalatags.JsDom
+import com.raquo.laminar.nodes.ReactiveHtmlElement
 
 object TagsOnlyLocal {
-  import scalatags.JsDom.all._
+  import com.raquo.laminar.api.L._
 
   def createPopupContent(
     scheduleAtStop: BusScheduleAtStop,
   ) =
     div(
-      div(id := s"popup_${scheduleAtStop.location}",
-          cls := "overlay light")(
-        a(cls := "cancel", href := "#")("x" /*&times*/ ),
-        div(cls := "popup")(
-          h2("Later Arrivals"),
-          div(cls := "content")(
-            scheduleAtStop.times.map(
-              time =>
+      div(
+        idAttr := s"popup_${scheduleAtStop.location}",
+        cls := "overlay light",
+        a(cls := "cancel", href := "#", div("x" /*&times*/ )),
+        div(cls := "popup",
+            h2("Later Arrivals"),
+            div(cls := "content",
                 div(
-                  span(time.toDumbAmericanString),
+                  scheduleAtStop.times.map(
+                    time =>
+                      div(
+                        span(time.toDumbAmericanString),
+                      ),
+                  ),
                 ),
             ),
-          ),
         ),
       ),
     )
@@ -35,29 +37,33 @@ object TagsOnlyLocal {
     a(role := "button",
       cls := "navbar-burger",
       aria.label := "menu",
-      aria.expanded := "false")(
-      span(aria.hidden := "true"),
-      span(aria.hidden := "true"),
-      span(aria.hidden := "true"),
+      aria.expanded := false,
+      span(aria.hidden := true),
+      span(aria.hidden := true),
+      span(aria.hidden := true),
     )
 
   def overallPageLayout(
     pageMode: AppMode.Value,
     allComponentData: Seq[ComponentData],
   ) =
-    div(id := "container")(
+    div(
+      idAttr := "container",
+      /*
+      Restore once I have a Laminar-friendly Bulma
       Bulma.menu(
         allComponentData.map {
           componentData =>
             println("should be creating a route menu entry")
             a(
               cls := "navbar-item",
-              data("route") := componentData.componentName.name,
-            )(componentData.componentName.userFriendlyName)
+              dataAttr("route") := componentData.componentName.name,
+            componentData.componentName.userFriendlyName)
         },
         "Routes",
         "route  using-library",
       ),
+       */
       allComponentData.map(
         singleComponentData =>
           busScheduleDiv(singleComponentData.componentName.name),
@@ -65,14 +71,14 @@ object TagsOnlyLocal {
 //      div(id := LaminarRoundTripCalculator.calculatorComponentName.name, cls := "bill-box"),
       if (pageMode == AppMode.Development) {
         div(
-          button(id := ElementNames.Notifications.requestPermission,
-                 cls := "button")(
+          button(
+            idAttr := ElementNames.Notifications.requestPermission,
+            cls := "button",
             "Request Notifications Permission",
           ),
           button(
-            id := ElementNames.Notifications.submitMessageToServiceWorker,
+            idAttr := ElementNames.Notifications.submitMessageToServiceWorker,
             cls := "button",
-          )(
             "SubmitMessage to SW",
           ),
         )
@@ -84,22 +90,23 @@ object TagsOnlyLocal {
     containerName: String,
   ) = {
     println("Making container : " + containerName)
-    div(cls := ElementNames.BoxClass, id := containerName)(
-      div(cls := "timezone"),
-      div(id := ElementNames.contentName),
+    div(cls := ElementNames.BoxClass,
+        idAttr := containerName,
+        div(cls := "timezone"),
+        div(idAttr := ElementNames.contentName),
     )
   }
 
   //  <a href="tel:123-456-7890">123-456-7890</a>
   def safeRideLink(
     safeRideRecommendation: LateNightRecommendation,
-  ): JsDom.TypedTag[Div] =
-    div(cls := "late-night-call-button")(
+  ) =
+    div(
+      cls := "late-night-call-button",
       button(
-        onclick :=
-          s"window.location.href = 'tel:${safeRideRecommendation.phoneNumber}';",
+        // TODO restore
+//        onClick := s"window.location.href = 'tel:${safeRideRecommendation.phoneNumber}';",
         cls := "button",
-      )(
         img(
           cls := "glyphicon",
           src := "/glyphicons/svg/individual-svg/glyphicons-basic-465-call.svg",
@@ -111,8 +118,9 @@ object TagsOnlyLocal {
 
   def phoneLink(
     phoneNumber: PhoneNumber,
-  ): JsDom.TypedTag[Anchor] =
-    a(href := s"tel:${phoneNumber.number}", cls := "link")(
+  ) =
+    a(href := s"tel:${phoneNumber.number}",
+      cls := "link",
       phoneNumber.name,
     )
 
@@ -126,26 +134,20 @@ object TagsOnlyLocal {
 
   def createBusTimeElement(
     location: Location.Value,
-    content: JsDom.TypedTag[Div],
+    content: ReactiveHtmlElement[_],
     /* TODO: waitDuration: Duration*/
-  ): JsDom.TypedTag[Div] =
+  ) =
     div(
       width := "100%",
       cls := "stop-information",
-    )(
-      div(cls := "map-link")(
+      div(
+        cls := "map-link",
         // TODO Re-enable once maps are more polished
         //  geoLinkForStop(location)
       ),
-      div(cls := "stop-name")(
-        div(location.name),
-      ),
-      div(cls := "stop-alt-name")(
-        div(location.altName),
-      ),
-      div(cls := "upcoming-information")(
-        content,
-      ),
+      div(cls := "stop-name", div(location.name)),
+      div(cls := "stop-alt-name", div(location.altName)),
+      div(cls := "upcoming-information", content),
     )
 
   def geoLinkForStop(
@@ -170,8 +172,8 @@ object TagsOnlyLocal {
     location: Location.Value,
     routeName: RouteName,
   ) =
-    data("schedule-modal") := modalContentElementName(location,
-                                                      routeName)
+    dataAttr("schedule-modal") := modalContentElementName(location,
+                                                          routeName)
 
   def modalContentElementName(
     location: Location.Value,
@@ -195,17 +197,20 @@ object TagsOnlyLocal {
 //            busScheduleAtStop.location,
 //            routeName
 //          ),
-        onclick := {},
+//        onClick := {},
 //          s"activateModal('#popup_${busScheduleAtStop.location}');",
-        data("lossless-value") := stopTimeInfo.time.toString,
-      )(stopTimeInfo.time.toDumbAmericanString),
-      div(cls := "wait-time")(
+        dataAttr("lossless-value") := stopTimeInfo.time.toString,
+        stopTimeInfo.time.toDumbAmericanString,
+      ),
+      div(
+        cls := "wait-time",
         renderWaitTime(stopTimeInfo.waitingDuration),
-        BulmaLocal.bulmaModal(
-          busScheduleAtStop,
-          modalContentElementName(busScheduleAtStop.location,
-                                  routeName),
-        ),
+        // TODO Restore Laminar-friendly modal
+//        BulmaLocal.bulmaModal(
+//          busScheduleAtStop,
+//          modalContentElementName(busScheduleAtStop.location,
+//                                  routeName),
+//        ),
       ),
     )
 
@@ -213,8 +218,10 @@ object TagsOnlyLocal {
     upcomingArrivalComponentData: UpcomingArrivalComponentData,
   ) =
     div(
-      div(cls := "route-header")(
-        span(cls := "route-header_name")(
+      div(
+        cls := "route-header",
+        span(
+          cls := "route-header_name",
           upcomingArrivalComponentData.routeName.userFriendlyName + " Departures",
         ),
         img(
@@ -254,7 +261,7 @@ object TagsOnlyLocal {
       cls := "glyphicon " + classes,
       src := s"/glyphicons/svg/individual-svg/$name",
       alt := "Thanks for riding the bus!",
-      data("lossless-value") := busTime.toString,
+      dataAttr("lossless-value") := busTime.toString,
       verticalAlign := "middle",
     )
 
