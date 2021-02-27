@@ -5,6 +5,9 @@ import crestedbutte.dom.{Bulma, BulmaLocal}
 import com.billding.time.BusTime
 import com.billding.time.BusDuration
 import com.raquo.laminar.nodes.ReactiveHtmlElement
+import crestedbutte.laminar.RepeatingElement
+
+import scala.concurrent.duration.FiniteDuration
 
 object TagsOnlyLocal {
   import com.raquo.laminar.api.L._
@@ -46,8 +49,21 @@ object TagsOnlyLocal {
   def overallPageLayout(
     pageMode: AppMode.Value,
     allComponentData: Seq[ComponentData],
-  ) =
+  ) = {
+    val duration =
+      new FiniteDuration(10, scala.concurrent.duration.SECONDS)
+    val clockTicks = new EventBus[Int]
+
+    val $triggerState: Signal[Int] =
+      clockTicks.events.foldLeft[Int](0)(
+        (lastTick, _) => lastTick + 1,
+      )
     div(
+      RepeatingElement().repeatWithInterval(
+        1,
+        duration,
+      ) --> clockTicks,
+      child <-- $triggerState.map(div(_)),
       idAttr := "container",
       /*
       Restore once I have a Laminar-friendly Bulma
@@ -85,6 +101,7 @@ object TagsOnlyLocal {
       }
       else div(),
     )
+  }
 
   def busScheduleDiv(
     containerName: String,
