@@ -53,22 +53,8 @@ object TagsOnlyLocal {
     upcomingArrivalData: Signal[UpcomingArrivalComponentData],
     pageMode: AppMode.Value,
     allComponentData: Seq[ComponentData],
-  ) = {
-    val duration =
-      new FiniteDuration(1, scala.concurrent.duration.SECONDS)
-    val clockTicks = new EventBus[Int]
-
-    val $triggerState: Signal[Int] =
-      clockTicks.events.foldLeft[Int](0)(
-        (lastTick, _) => lastTick + 1,
-      )
+  ) =
     div(
-      RepeatingElement().repeatWithInterval(
-        1,
-        duration,
-      ) --> clockTicks,
-      child <-- $triggerState.map(div(_)),
-      child <-- $triggerState.map(_ => div(LocalTime.now(clock).toString)),
       idAttr := "container",
       /*
       Restore once I have a Laminar-friendly Bulma
@@ -106,7 +92,6 @@ object TagsOnlyLocal {
       }
       else div(),
     )
-  }
 
   def busScheduleDiv(
     containerName: String,

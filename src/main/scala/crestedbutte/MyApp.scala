@@ -1,7 +1,12 @@
 package crestedbutte
 
 import java.util.concurrent.TimeUnit
-import com.billding.time.{BusDuration, BusTime, ColoradoClock, TurboClock}
+import com.billding.time.{
+  BusDuration,
+  BusTime,
+  ColoradoClock,
+  TurboClock,
+}
 import crestedbutte.dom.{BulmaBehaviorLocal, DomManipulation}
 import crestedbutte.routes._
 import org.scalajs.dom.experimental.serviceworkers._
@@ -11,16 +16,26 @@ import zio.duration.Duration
 import zio.{App, Has, Schedule, ZIO, ZLayer}
 import zio.console._
 import crestedbutte.Browser.Browser
-import crestedbutte.laminar.LaminarRoundTripCalculator
+import crestedbutte.laminar.{
+  LaminarRoundTripCalculator,
+  RepeatingElement,
+}
 import crestedbutte.laminar.LaminarRoundTripCalculator.calculatorComponentName
 import org.scalajs.dom
 import org.scalajs.dom.document
 import org.scalajs.dom.window
 import org.scalajs.dom.raw.HTMLElement
 import typings.materialUiCore.mod.TextField
-import typings.materialUiPickers.anon.{Format, OnChange, OpenPicker, PickPropsWithChildrenCloc, PickerProps}
+import typings.materialUiPickers.anon.{
+  Format,
+  OnChange,
+  OpenPicker,
+  PickPropsWithChildrenCloc,
+  PickerProps,
+}
 
-import java.time.ZoneId
+import java.time.{LocalTime, ZoneId}
+import scala.concurrent.duration.FiniteDuration
 import scala.util.{Failure, Success}
 
 object MyApp extends App {
@@ -106,18 +121,27 @@ object MyApp extends App {
 
   val fullApplicationLogic =
     for {
-      browser    <- ZIO.access[Browser](_.get)
-      console    <- ZIO.access[Console](_.get)
+      browser                   <- ZIO.access[Browser](_.get)
+      console                   <- ZIO.access[Console](_.get)
       clockParam: Clock.Service <- ZIO.access[Clock](_.get)
       clockTicks = new EventBus[Int]
-      arrivalsAtAllRouteStops <- TimeCalculations
-        .getUpComingArrivalsWithFullSchedule(
+      javaClock = java.time.Clock.system(ZoneId.of("America/Denver"))
+      arrivalsAtAllRouteStops = TimeCalculations
+        .getUpComingArrivalsWithFullScheduleNonZio(
+          javaClock,
           TownShuttleTimes,
         )
       upcomingArrivalData: Signal[UpcomingArrivalComponentData] = clockTicks.events
         .foldLeft(
           arrivalsAtAllRouteStops,
-        ) { case (previousTimes, clockTick) => previousTimes }
+        ) {
+          case (previousTimes, clockTick) =>
+            TimeCalculations
+              .getUpComingArrivalsWithFullScheduleNonZio(
+                javaClock,
+                TownShuttleTimes,
+              )
+        }
       pageMode <- getOptional("mode", AppMode.fromString)
         .map(
           _.getOrElse(AppMode.Production),
@@ -138,15 +162,41 @@ object MyApp extends App {
 //      _ <- NotificationStuff.displayNotificationPermission
       // TODO Restore setup behavior here: DomManipulation.createAndApplyPageStructure(
       _ <- ZIO {
+        val duration =
+          new FiniteDuration(1, scala.concurrent.duration.SECONDS)
+        val clockTicks = new EventBus[Int]
+
+        val $triggerState: Signal[Int] =
+          clockTicks.events.foldLeft[Int](0)(
+            (lastTick, _) => lastTick + 1,
+          )
+
+        val arrivalsAtAllRouteStops = TimeCalculations
+          .getUpComingArrivalsWithFullScheduleNonZio(
+            javaClock,
+            TownShuttleTimes,
+          )
         render(
           dom.document.getElementById("landing-message"),
           div(
+            RepeatingElement().repeatWithInterval(
+              1,
+              duration,
+            ) --> clockTicks,
+            child <-- $triggerState.map(
+              ticks => div("ticks: " + ticks),
+            ),
+            child <-- $triggerState.map(
+              _ =>
+                div("javaTime: " + LocalTime.now(javaClock).toString),
+            ),
             TagsOnlyLocal
               .overallPageLayout(
-                java.time.Clock.system(ZoneId.of("America/Denver")),
+                javaClock,
                 upcomingArrivalData,
-                                 pageMode,
-                                 components),
+                pageMode,
+                components,
+              ),
           ),
         )
       }

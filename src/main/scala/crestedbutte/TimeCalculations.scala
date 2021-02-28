@@ -4,7 +4,7 @@ import com.billding.time.BusTime
 import zio.{Has, ZIO}
 import zio.clock.Clock
 
-import java.time.DateTimeException
+import java.time.{DateTimeException, OffsetDateTime}
 
 object TimeCalculations {
 
@@ -91,4 +91,21 @@ object TimeCalculations {
         busRoute.routeName,
       )
     }
+
+  def getUpComingArrivalsWithFullScheduleNonZio(
+    javaClock: java.time.Clock,
+    busRoute: NamedRoute,
+  ): UpcomingArrivalComponentData = {
+    val localTime = new BusTime(
+      OffsetDateTime.now(javaClock).toLocalTime,
+    )
+    UpcomingArrivalComponentData(
+      TimeCalculations
+        .calculateUpcomingArrivalWithFullScheduleAtAllStops(
+          localTime,
+          busRoute,
+        ),
+      busRoute.routeName,
+    )
+  }
 }
