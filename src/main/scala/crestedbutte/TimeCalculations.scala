@@ -4,6 +4,8 @@ import com.billding.time.BusTime
 import zio.{Has, ZIO}
 import zio.clock.Clock
 
+import java.time.DateTimeException
+
 object TimeCalculations {
 
   def nextBusArrivalTime(
@@ -73,7 +75,7 @@ object TimeCalculations {
 
   def getUpComingArrivalsWithFullSchedule(
     busRoute: NamedRoute,
-  ) =
+  ): ZIO[Clock, DateTimeException, UpcomingArrivalComponentData] =
     for {
       clockProper <- ZIO.access[Clock](_.get)
       now         <- clockProper.currentDateTime

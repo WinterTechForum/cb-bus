@@ -7,6 +7,8 @@ import com.billding.time.BusDuration
 import com.raquo.laminar.nodes.ReactiveHtmlElement
 import crestedbutte.laminar.RepeatingElement
 
+import java.time.LocalTime
+import java.time.Clock
 import scala.concurrent.duration.FiniteDuration
 
 object TagsOnlyLocal {
@@ -47,11 +49,13 @@ object TagsOnlyLocal {
     )
 
   def overallPageLayout(
+    clock: Clock,
+    upcomingArrivalData: Signal[UpcomingArrivalComponentData],
     pageMode: AppMode.Value,
     allComponentData: Seq[ComponentData],
   ) = {
     val duration =
-      new FiniteDuration(10, scala.concurrent.duration.SECONDS)
+      new FiniteDuration(1, scala.concurrent.duration.SECONDS)
     val clockTicks = new EventBus[Int]
 
     val $triggerState: Signal[Int] =
@@ -64,6 +68,7 @@ object TagsOnlyLocal {
         duration,
       ) --> clockTicks,
       child <-- $triggerState.map(div(_)),
+      child <-- $triggerState.map(_ => div(LocalTime.now(clock).toString)),
       idAttr := "container",
       /*
       Restore once I have a Laminar-friendly Bulma
@@ -247,26 +252,26 @@ object TagsOnlyLocal {
           alt := "Thanks for riding the bus!",
         ),
       ),
-      upcomingArrivalComponentData.upcomingArrivalInfo.map {
-        case UpcomingArrivalInfoWithFullSchedule(
-            UpcomingArrivalInfo(location, content),
-            fullScheduleAtStop,
-            ) => {
-          TagsOnlyLocal.createBusTimeElement(
-            location,
-            content match {
-              case Left(stopTimeInfo) =>
-                renderStopTimeInfo(
-                  stopTimeInfo,
-                  fullScheduleAtStop,
-                  upcomingArrivalComponentData.routeName,
-                )
-              case Right(safeRideRecommendation) =>
-                safeRideLink(safeRideRecommendation)
-            },
-          )
-        }
-      },
+      upcomingArrivalComponentData.upcomingArrivalInfoForAllRoutes
+        .map {
+          case UpcomingArrivalInfoWithFullSchedule(
+              UpcomingArrivalInfo(location, content),
+              fullScheduleAtStop,
+              ) =>
+            TagsOnlyLocal.createBusTimeElement(
+              location,
+              content match {
+                case Left(stopTimeInfo) =>
+                  renderStopTimeInfo(
+                    stopTimeInfo,
+                    fullScheduleAtStop,
+                    upcomingArrivalComponentData.routeName,
+                  )
+                case Right(safeRideRecommendation) =>
+                  safeRideLink(safeRideRecommendation)
+              },
+            )
+        },
     )
 
   def svgIconForAlarm(

@@ -1,12 +1,7 @@
 package crestedbutte
 
 import java.util.concurrent.TimeUnit
-import com.billding.time.{
-  BusDuration,
-  BusTime,
-  ColoradoClock,
-  TurboClock,
-}
+import com.billding.time.{BusDuration, BusTime, ColoradoClock, TurboClock}
 import crestedbutte.dom.{BulmaBehaviorLocal, DomManipulation}
 import crestedbutte.routes._
 import org.scalajs.dom.experimental.serviceworkers._
@@ -23,14 +18,9 @@ import org.scalajs.dom.document
 import org.scalajs.dom.window
 import org.scalajs.dom.raw.HTMLElement
 import typings.materialUiCore.mod.TextField
-import typings.materialUiPickers.anon.{
-  Format,
-  OnChange,
-  OpenPicker,
-  PickPropsWithChildrenCloc,
-  PickerProps,
-}
+import typings.materialUiPickers.anon.{Format, OnChange, OpenPicker, PickPropsWithChildrenCloc, PickerProps}
 
+import java.time.ZoneId
 import scala.util.{Failure, Success}
 
 object MyApp extends App {
@@ -118,7 +108,16 @@ object MyApp extends App {
     for {
       browser    <- ZIO.access[Browser](_.get)
       console    <- ZIO.access[Console](_.get)
-      clockParam <- ZIO.access[Clock](_.get)
+      clockParam: Clock.Service <- ZIO.access[Clock](_.get)
+      clockTicks = new EventBus[Int]
+      arrivalsAtAllRouteStops <- TimeCalculations
+        .getUpComingArrivalsWithFullSchedule(
+          TownShuttleTimes,
+        )
+      upcomingArrivalData: Signal[UpcomingArrivalComponentData] = clockTicks.events
+        .foldLeft(
+          arrivalsAtAllRouteStops,
+        ) { case (previousTimes, clockTick) => previousTimes }
       pageMode <- getOptional("mode", AppMode.fromString)
         .map(
           _.getOrElse(AppMode.Production),
@@ -143,7 +142,11 @@ object MyApp extends App {
           dom.document.getElementById("landing-message"),
           div(
             TagsOnlyLocal
-              .overallPageLayout(pageMode, components),
+              .overallPageLayout(
+                java.time.Clock.system(ZoneId.of("America/Denver")),
+                upcomingArrivalData,
+                                 pageMode,
+                                 components),
           ),
         )
       }
@@ -179,6 +182,8 @@ object MyApp extends App {
       currentlySelectedRoute match {
         case ComponentDataRoute(namedRoute) =>
           for {
+            // I should make a Signal[UpcomingArrivalComponentData] that goes into
+            // the constructor of the page initially
             arrivalsAtAllRouteStops <- TimeCalculations
               .getUpComingArrivalsWithFullSchedule(
                 namedRoute,
