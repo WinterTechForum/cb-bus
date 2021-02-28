@@ -6,6 +6,7 @@ import com.billding.time.BusTime
 import com.billding.time.BusDuration
 import com.raquo.laminar.nodes.ReactiveHtmlElement
 import crestedbutte.laminar.RepeatingElement
+import crestedbutte.routes.TownShuttleTimes
 
 import java.time.LocalTime
 import java.time.Clock
@@ -51,11 +52,18 @@ object TagsOnlyLocal {
   def overallPageLayout(
     clock: Clock,
     upcomingArrivalData: Signal[UpcomingArrivalComponentData],
+    $selectedComponent: Signal[ComponentData],
     pageMode: AppMode.Value,
     allComponentData: Seq[ComponentData],
   ) =
     div(
       idAttr := "container",
+      child <-- $selectedComponent.map(
+        _.componentName.userFriendlyName,
+      ),
+      child <-- upcomingArrivalData.map(
+        structuredSetOfUpcomingArrivals,
+      ),
       /*
       Restore once I have a Laminar-friendly Bulma
       Bulma.menu(

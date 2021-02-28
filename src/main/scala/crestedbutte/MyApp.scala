@@ -131,17 +131,6 @@ object MyApp extends App {
           javaClock,
           TownShuttleTimes,
         )
-      upcomingArrivalData: Signal[UpcomingArrivalComponentData] = clockTicks.events
-        .foldLeft(
-          arrivalsAtAllRouteStops,
-        ) {
-          case (previousTimes, clockTick) =>
-            TimeCalculations
-              .getUpComingArrivalsWithFullScheduleNonZio(
-                javaClock,
-                TownShuttleTimes,
-              )
-        }
       pageMode <- getOptional("mode", AppMode.fromString)
         .map(
           _.getOrElse(AppMode.Production),
@@ -171,11 +160,31 @@ object MyApp extends App {
             (lastTick, _) => lastTick + 1,
           )
 
+        val selectedRoute = Var(
+          ComponentDataRoute(
+            RtaNorthbound.fullSchedule,
+          ),
+        )
+
         val arrivalsAtAllRouteStops = TimeCalculations
           .getUpComingArrivalsWithFullScheduleNonZio(
             javaClock,
             TownShuttleTimes,
           )
+
+        val upcomingArrivalData
+          : Signal[UpcomingArrivalComponentData] = clockTicks.events
+          .withCurrentValueOf(selectedRoute.signal)
+          .foldLeft(
+            arrivalsAtAllRouteStops,
+          ) {
+            case (previousTimes, (tick, route)) =>
+              TimeCalculations
+                .getUpComingArrivalsWithFullScheduleNonZio(
+                  javaClock,
+                  route.namedRoute,
+                )
+          }
         render(
           dom.document.getElementById("landing-message"),
           div(
@@ -190,12 +199,23 @@ object MyApp extends App {
               _ =>
                 div("javaTime: " + LocalTime.now(javaClock).toString),
             ),
+            $triggerState.map(
+              i =>
+                if (i % 2 == 0)
+                  ComponentDataRoute(
+                    RtaNorthbound.fullSchedule,
+                  )
+                else
+                  ComponentDataRoute(
+                    RtaSouthbound.fullSchedule,
+                  ),
+            ) --> selectedRoute.writer,
             TagsOnlyLocal
-              .overallPageLayout(
-                javaClock,
-                upcomingArrivalData,
-                pageMode,
-                components,
+              .overallPageLayout(javaClock,
+                                 upcomingArrivalData,
+                                 selectedRoute.signal,
+                                 pageMode,
+                                 components,
               ),
           ),
         )
