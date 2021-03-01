@@ -22,8 +22,11 @@ object Bulma {
 
     val activeStyling =
       menuClicks.events.foldLeft("")(
-        (acc, next) =>
-          if (!acc.contains("is-active")) "is-active" else "",
+        (acc, next) => {
+          println("clicked the menu!")
+          println("acc: " + acc)
+          if (!acc.contains("is-active")) "is-active" else ""
+        },
       )
 
     def menuButton(
@@ -43,12 +46,12 @@ object Bulma {
       cls := "navbar",
       role := "navigation",
       aria.label := "main navigation",
+      onClick --> menuClicks,
       div(
         cls := "navbar-brand",
         a(
           role := "button",
           cls := "navbar-burger burger",
-          onClick --> menuClicks,
           aria.label := "menu",
           aria.expanded(false),
           dataAttr("target") := "navbarBasicExample",
@@ -67,9 +70,7 @@ object Bulma {
             hr(cls := "navbar-divider"),
             div(
               cls := "navbar-item has-dropdown is-hoverable",
-              a(onClick --> menuClicks,
-                cls("navbar-link centered is-size-4"),
-                "Routes"),
+              a(cls("navbar-link centered is-size-4"), "Routes"),
               div(cls("navbar-dropdown"), routeButtons),
             ),
           ),
