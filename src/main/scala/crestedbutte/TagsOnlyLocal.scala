@@ -5,7 +5,10 @@ import crestedbutte.dom.{Bulma, BulmaLocal}
 import com.billding.time.BusTime
 import com.billding.time.BusDuration
 import com.raquo.laminar.nodes.ReactiveHtmlElement
-import crestedbutte.laminar.RepeatingElement
+import crestedbutte.laminar.{
+  LaminarRoundTripCalculator,
+  RepeatingElement,
+}
 import crestedbutte.routes.TownShuttleTimes
 
 import java.time.LocalTime
@@ -51,19 +54,48 @@ object TagsOnlyLocal {
 
   def overallPageLayout(
     clock: Clock,
-    upcomingArrivalData: Signal[UpcomingArrivalComponentData],
     $selectedComponent: Signal[ComponentData],
     pageMode: AppMode.Value,
     allComponentData: Seq[ComponentData],
-  ) =
+  ) = {
+
+    val initialArrivalsAtAllRouteStops = TimeCalculations
+      .getUpComingArrivalsWithFullScheduleNonZio(
+        clock,
+        TownShuttleTimes,
+      )
+
+    val upcomingArrivalData =
+      $selectedComponent.signal
+        .foldLeft(
+          _ =>
+            TagsOnlyLocal.structuredSetOfUpcomingArrivals(
+              initialArrivalsAtAllRouteStops,
+            ),
+        ) {
+          case (_, route) =>
+            route match {
+              case ComponentDataTyped(value, componentName) =>
+                LaminarRoundTripCalculator
+                  .RoundTripCalculatorLaminar()
+              case ComponentDataRoute(namedRoute) =>
+                TagsOnlyLocal.structuredSetOfUpcomingArrivals(
+                  TimeCalculations
+                    .getUpComingArrivalsWithFullScheduleNonZio(
+                      clock,
+                      namedRoute,
+                    ),
+                )
+            }
+        }
+
     div(
+      cls := "bill-box",
       idAttr := "container",
       child <-- $selectedComponent.map(
         _.componentName.userFriendlyName,
       ),
-      child <-- upcomingArrivalData.map(
-        structuredSetOfUpcomingArrivals,
-      ),
+      child <-- upcomingArrivalData,
       /*
       Restore once I have a Laminar-friendly Bulma
       Bulma.menu(
@@ -79,11 +111,17 @@ object TagsOnlyLocal {
         "route  using-library",
       ),
        */
-      allComponentData.map(
-        singleComponentData =>
-          busScheduleDiv(singleComponentData.componentName.name),
-      ),
-//      div(id := LaminarRoundTripCalculator.calculatorComponentName.name, cls := "bill-box"),
+
+      // TODO Should this just go away?
+//      allComponentData.map(
+//        (singleComponentData: ComponentData) =>
+//          singleComponentData match {
+//            case ComponentDataTyped(value, componentName) =>
+//              LaminarRoundTripCalculator.RoundTripCalculatorLaminar()
+//            case ComponentDataRoute(namedRoute) =>
+//              busScheduleDiv(singleComponentData.componentName.name)
+//          },
+//      ),
       if (pageMode == AppMode.Development) {
         div(
           button(
@@ -100,6 +138,7 @@ object TagsOnlyLocal {
       }
       else div(),
     )
+  }
 
   def busScheduleDiv(
     containerName: String,

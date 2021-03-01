@@ -2,18 +2,17 @@ package crestedbutte
 
 import java.util.concurrent.TimeUnit
 import com.billding.time.{
-  BusDuration,
   BusTime,
   ColoradoClock,
   TurboClock,
 }
-import crestedbutte.dom.{BulmaBehaviorLocal, DomManipulation}
+import crestedbutte.dom.DomManipulation
 import crestedbutte.routes._
 import org.scalajs.dom.experimental.serviceworkers._
 import zio.clock._
 import zio.console.Console
 import zio.duration.Duration
-import zio.{App, Has, Schedule, ZIO, ZLayer}
+import zio.{App, Schedule, ZIO, ZLayer}
 import zio.console._
 import crestedbutte.Browser.Browser
 import crestedbutte.laminar.{
@@ -21,19 +20,8 @@ import crestedbutte.laminar.{
   LaminarRoundTripCalculator,
   RepeatingElement,
 }
-import crestedbutte.laminar.LaminarRoundTripCalculator.calculatorComponentName
 import org.scalajs.dom
 import org.scalajs.dom.document
-import org.scalajs.dom.window
-import org.scalajs.dom.raw.HTMLElement
-import typings.materialUiCore.mod.TextField
-import typings.materialUiPickers.anon.{
-  Format,
-  OnChange,
-  OpenPicker,
-  PickPropsWithChildrenCloc,
-  PickerProps,
-}
 
 import java.time.{LocalTime, ZoneId}
 import scala.concurrent.duration.FiniteDuration
@@ -73,6 +61,8 @@ object MyApp extends App {
   ) =
     for {
       routeNameOpt <- getOptional("route", x => Some(x))
+      // Yeck! This can go away now! I should only consult this query param on initial page load.
+      /*
       selectedComponent: ComponentData = routeNameOpt
         .flatMap(
           routeNameStringParam =>
@@ -83,8 +73,8 @@ object MyApp extends App {
         )
         .getOrElse(components.head)
 
-      // TODO Figure out proper updates
-      _ <- updateUpcomingArrivalsOnPage(selectedComponent, components)
+       */
+
       _ <- NotificationStuff.addAlarmBehaviorToTimes
       _ <- ModalBehavior.addModalOpenBehavior
       _ <- ModalBehavior.addModalCloseBehavior
@@ -167,31 +157,6 @@ object MyApp extends App {
           ),
         )
 
-        val initialArrivalsAtAllRouteStops = TimeCalculations
-          .getUpComingArrivalsWithFullScheduleNonZio(
-            javaClock,
-            TownShuttleTimes,
-          )
-
-        val upcomingArrivalData
-          : Signal[UpcomingArrivalComponentData] = clockTicks.events
-          .withCurrentValueOf(selectedRoute.signal)
-          .foldLeft(
-            initialArrivalsAtAllRouteStops,
-          ) {
-            case (previousTimes, (tick, route)) =>
-              route match {
-                case ComponentDataTyped(value, componentName) =>
-                  initialArrivalsAtAllRouteStops
-                case ComponentDataRoute(namedRoute) =>
-                  TimeCalculations
-                    .getUpComingArrivalsWithFullScheduleNonZio(
-                      javaClock,
-                      namedRoute,
-                    )
-              }
-          }
-
         render(
           dom.document.getElementById("landing-message"),
           div(
@@ -209,7 +174,6 @@ object MyApp extends App {
             ),
             TagsOnlyLocal
               .overallPageLayout(javaClock,
-                                 upcomingArrivalData,
                                  selectedRoute.signal,
                                  pageMode,
                                  components,
