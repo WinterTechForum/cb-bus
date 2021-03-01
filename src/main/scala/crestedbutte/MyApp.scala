@@ -1,13 +1,10 @@
 package crestedbutte
 
-import java.util.concurrent.TimeUnit
 import com.billding.time.{BusTime, ColoradoClock, TurboClock}
-import crestedbutte.dom.DomManipulation
 import crestedbutte.routes._
 import org.scalajs.dom.experimental.serviceworkers._
 import zio.clock._
 import zio.console.Console
-import zio.duration.Duration
 import zio.{App, Schedule, ZIO, ZLayer}
 import crestedbutte.Browser.Browser
 import crestedbutte.laminar.{
@@ -16,9 +13,9 @@ import crestedbutte.laminar.{
   RepeatingElement,
 }
 import org.scalajs.dom
-import org.scalajs.dom.document
+import zio.duration.durationInt
 
-import java.time.{LocalTime, OffsetDateTime, ZoneId}
+import java.time.{Instant, OffsetDateTime, ZoneId}
 import scala.concurrent.duration.FiniteDuration
 import scala.util.{Failure, Success}
 
@@ -70,9 +67,6 @@ object MyApp extends App {
 
        */
 
-      _ <- NotificationStuff.addAlarmBehaviorToTimes
-      _ <- ModalBehavior.addModalOpenBehavior
-      _ <- ModalBehavior.addModalCloseBehavior
 //      _ <- NotificationStuff.checkSubmittedAlarms
     } yield ()
 
@@ -107,10 +101,7 @@ object MyApp extends App {
 
   val fullApplicationLogic =
     for {
-      browser                   <- ZIO.access[Browser](_.get)
-      console                   <- ZIO.access[Console](_.get)
       clockParam: Clock.Service <- ZIO.access[Clock](_.get)
-      javaClock = java.time.Clock.system(ZoneId.of("America/Denver"))
       pageMode <- getOptional("mode", AppMode.fromString)
         .map(
           _.getOrElse(AppMode.Production),
@@ -123,8 +114,17 @@ object MyApp extends App {
           ),
         )
       else ZLayer.succeed(clockParam)
-      environmentDependencies = ZLayer.succeed(browser) ++ ZLayer
-        .succeed(console) ++ clock
+      javaClock = if (fixedTime.isDefined)
+        java.time.Clock.fixed(
+          OffsetDateTime
+            .parse(
+              s"2020-02-21T${fixedTime.get.toString}:00.00-07:00",
+            )
+            .toInstant,
+          ZoneId.of("America/Denver"),
+        )
+      else
+        java.time.Clock.system(ZoneId.of("America/Denver"))
       _ <- registerServiceWorker()
 //      _ <- NotificationStuff.addNotificationPermissionRequestToButton
 //      _ <- NotificationStuff.displayNotificationPermission
@@ -133,11 +133,6 @@ object MyApp extends App {
         val duration =
           new FiniteDuration(1, scala.concurrent.duration.SECONDS)
         val clockTicks = new EventBus[Int]
-
-        val $triggerState: Signal[Int] =
-          clockTicks.events.foldLeft[Int](0)(
-            (lastTick, _) => lastTick + 1,
-          )
 
         val selectedRoute: Var[ComponentData] = Var(
           ComponentDataRoute(
@@ -165,13 +160,6 @@ object MyApp extends App {
               1,
               duration,
             ) --> clockTicks,
-            child <-- $triggerState.map(
-              ticks => div("ticks: " + ticks),
-            ),
-            child <-- $triggerState.map(
-              _ =>
-                div("javaTime: " + LocalTime.now(javaClock).toString),
-            ),
             TagsOnlyLocal
               .overallPageLayout(javaClock,
                                  selectedRoute.signal,
@@ -182,92 +170,15 @@ object MyApp extends App {
           ),
         )
       }
-      _ <- UnsafeCallbacks.attachMenuBehavior
-      loopingLogic: ZIO[Any, Throwable, Unit] = loopLogic(pageMode,
-                                                          components)
-        .provideLayer(
-          environmentDependencies,
-        )
-      _ <- loopingLogic
-        .repeat(Schedule.spaced(Duration.apply(5, TimeUnit.SECONDS)))
+      _ <- (for {
+        // TODO Get this attached within the normal laminar app
+        _ <- NotificationStuff.addAlarmBehaviorToTimes
+        _ <- ModalBehavior.addModalOpenBehavior
+        _ <- ModalBehavior.addModalCloseBehavior
+      } yield ()).repeat(Schedule.spaced(1.second))
     } yield {
       0
     }
-
-  def updateComponents(
-    componentData: ComponentData,
-    currentlySelectedRoute: ComponentData,
-  ) =
-    if (componentData == currentlySelectedRoute) {
-      currentlySelectedRoute match {
-        case ComponentDataRoute(namedRoute) =>
-          for {
-            // I should make a Signal[UpcomingArrivalComponentData] that goes into
-            // the constructor of the page initially
-            arrivalsAtAllRouteStops <- TimeCalculations
-              .getUpComingArrivalsWithFullSchedule(
-                namedRoute,
-              )
-              .catchAll(failure => throw new RuntimeException("ack!"))
-            _ <- DomManipulation.updateContentInsideElementAndReveal(
-              componentData.componentName.name,
-              TagsOnlyLocal
-                .structuredSetOfUpcomingArrivals(
-                  arrivalsAtAllRouteStops,
-                )
-                .ref,
-              "upcoming-buses",
-            )
-          } yield ()
-        case ComponentDataTyped(value, componentName) => {
-          for {
-            _ <- ZIO {
-              show(componentName.name)
-            }
-          } yield ()
-        }
-      }
-    }
-    else {
-      DomManipulation.hideElement(
-        componentData.componentName.name,
-      )
-    }
-
-  // a decent library would also have this function
-  private def show(
-    elementId: String,
-  ) = {
-
-    val result =
-      document.body
-        .querySelector(s"#$elementId")
-    result.removeAttribute("style")
-//      result
-//        .setAttribute(
-//          "style",
-//          "",
-//        )
-  }
-
-  def updateUpcomingArrivalsOnPage(
-    selectedComponent: ComponentData,
-    components: Seq[ComponentData],
-  ) =
-    for {
-      modalIsOpen <- DomMonitoring.modalIsOpen
-      _ <- if (modalIsOpen) ZIO.succeed(List())
-      else {
-        ZIO.collectAll(
-          components.map(
-            updateComponents(
-              _,
-              selectedComponent,
-            ),
-          ),
-        )
-      }
-    } yield ()
 
   def registerServiceWorker(): ZIO[Browser, Nothing, Unit] =
     ZIO
