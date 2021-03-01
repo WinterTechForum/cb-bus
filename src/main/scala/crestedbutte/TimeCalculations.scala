@@ -99,6 +99,7 @@ object TimeCalculations {
     val localTime = new BusTime(
       OffsetDateTime.now(javaClock).toLocalTime,
     )
+    println("calculating with time: " + localTime)
     UpcomingArrivalComponentData(
       TimeCalculations
         .calculateUpcomingArrivalWithFullScheduleAtAllStops(

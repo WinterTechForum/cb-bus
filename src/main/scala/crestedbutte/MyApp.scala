@@ -1,11 +1,7 @@
 package crestedbutte
 
 import java.util.concurrent.TimeUnit
-import com.billding.time.{
-  BusTime,
-  ColoradoClock,
-  TurboClock,
-}
+import com.billding.time.{BusTime, ColoradoClock, TurboClock}
 import crestedbutte.dom.DomManipulation
 import crestedbutte.routes._
 import org.scalajs.dom.experimental.serviceworkers._
@@ -23,7 +19,7 @@ import crestedbutte.laminar.{
 import org.scalajs.dom
 import org.scalajs.dom.document
 
-import java.time.{LocalTime, ZoneId}
+import java.time.{LocalTime, OffsetDateTime, ZoneId}
 import scala.concurrent.duration.FiniteDuration
 import scala.util.{Failure, Success}
 
@@ -153,8 +149,19 @@ object MyApp extends App {
 
         val selectedRoute: Var[ComponentData] = Var(
           ComponentDataRoute(
-            RtaNorthbound.fullSchedule,
+            TownShuttleTimes, // TODO This isn't necessarily going to be the starting route
           ),
+        )
+
+        val timeStamps: Signal[BusTime] = clockTicks.events.foldLeft(
+          new BusTime(
+            OffsetDateTime.now(javaClock).toLocalTime,
+          ),
+        )(
+          (oldTime, _) =>
+            new BusTime(
+              OffsetDateTime.now(javaClock).toLocalTime,
+            ),
         )
 
         render(
@@ -165,6 +172,16 @@ object MyApp extends App {
               1,
               duration,
             ) --> clockTicks,
+            clockTicks.events
+              .withCurrentValueOf(selectedRoute.signal)
+              .map {
+                case (_, selectedRoute) => {
+                  println(
+                    "updating route with itself, based on clock",
+                  )
+                  selectedRoute
+                }
+              } --> selectedRoute.writer,
             child <-- $triggerState.map(
               ticks => div("ticks: " + ticks),
             ),
@@ -175,6 +192,7 @@ object MyApp extends App {
             TagsOnlyLocal
               .overallPageLayout(javaClock,
                                  selectedRoute.signal,
+                                 timeStamps,
                                  pageMode,
                                  components,
               ),
@@ -183,22 +201,11 @@ object MyApp extends App {
       }
       _ <- putStrLn("hello")
       _ <- UnsafeCallbacks.attachMenuBehavior
-      // todo restore for laminar stuff
-      _ <- ZIO {
-        if (org.scalajs.dom.document.getElementById(
-              LaminarRoundTripCalculator.calculatorComponentName.name,
-            ) != null)
-          LaminarRoundTripCalculator.app()
-      }
       loopingLogic: ZIO[Any, Throwable, Unit] = loopLogic(pageMode,
                                                           components)
         .provideLayer(
           environmentDependencies,
         )
-      // TODO Restore
-//      _ <- BulmaBehaviorLocal.addMenuBehavior(
-//        loopingLogic,
-//      )
       _ <- loopingLogic
         .repeat(Schedule.spaced(Duration.apply(5, TimeUnit.SECONDS)))
     } yield {

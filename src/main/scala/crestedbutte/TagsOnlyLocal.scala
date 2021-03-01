@@ -55,6 +55,7 @@ object TagsOnlyLocal {
   def overallPageLayout(
     clock: Clock,
     $selectedComponent: Signal[ComponentData],
+    timeStamps: Signal[BusTime],
     pageMode: AppMode.Value,
     allComponentData: Seq[ComponentData],
   ) = {
@@ -66,28 +67,29 @@ object TagsOnlyLocal {
       )
 
     val upcomingArrivalData =
-      $selectedComponent.signal
-        .foldLeft(
-          _ =>
-            TagsOnlyLocal.structuredSetOfUpcomingArrivals(
-              initialArrivalsAtAllRouteStops,
-            ),
-        ) {
-          case (_, route) =>
-            route match {
-              case ComponentDataTyped(value, componentName) =>
-                LaminarRoundTripCalculator
-                  .RoundTripCalculatorLaminar()
-              case ComponentDataRoute(namedRoute) =>
-                TagsOnlyLocal.structuredSetOfUpcomingArrivals(
-                  TimeCalculations
-                    .getUpComingArrivalsWithFullScheduleNonZio(
-                      clock,
-                      namedRoute,
-                    ),
-                )
-            }
+      $selectedComponent.combineWith(timeStamps).foldLeft(
+        _ =>
+          TagsOnlyLocal.structuredSetOfUpcomingArrivals(
+            initialArrivalsAtAllRouteStops,
+          ),
+      ) {
+        case (_, (route, timestamp)) => { // TODO Start using timestamp below, to avoid passing clock where it's not needed
+          println("acting on selectedComponent update!")
+          route match {
+            case ComponentDataTyped(value, componentName) =>
+              LaminarRoundTripCalculator
+                .RoundTripCalculatorLaminar()
+            case ComponentDataRoute(namedRoute) =>
+              TagsOnlyLocal.structuredSetOfUpcomingArrivals(
+                TimeCalculations
+                  .getUpComingArrivalsWithFullScheduleNonZio(
+                    clock,
+                    namedRoute,
+                  ),
+              )
+          }
         }
+      }
 
     div(
       cls := "bill-box",
@@ -260,11 +262,11 @@ object TagsOnlyLocal {
         cls := "wait-time",
         renderWaitTime(stopTimeInfo.waitingDuration),
         // TODO Restore Laminar-friendly modal
-//        BulmaLocal.bulmaModal(
-//          busScheduleAtStop,
-//          modalContentElementName(busScheduleAtStop.location,
-//                                  routeName),
-//        ),
+        BulmaLocal.bulmaModal(
+          busScheduleAtStop,
+          modalContentElementName(busScheduleAtStop.location,
+                                  routeName),
+        ),
       ),
     )
 

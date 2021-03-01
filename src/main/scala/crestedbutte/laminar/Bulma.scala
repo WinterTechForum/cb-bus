@@ -63,9 +63,6 @@ object Bulma {
         cls <-- activeStyling,
         div(
           cls := "navbar-start",
-          a(href := "/oauth/login",
-            cls := "button is-link is-rounded medium",
-            "Re-login"),
           div(
             hr(cls := "navbar-divider"),
             div(
