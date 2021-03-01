@@ -9,7 +9,6 @@ import zio.clock._
 import zio.console.Console
 import zio.duration.Duration
 import zio.{App, Schedule, ZIO, ZLayer}
-import zio.console._
 import crestedbutte.Browser.Browser
 import crestedbutte.laminar.{
   Bulma,
@@ -111,13 +110,7 @@ object MyApp extends App {
       browser                   <- ZIO.access[Browser](_.get)
       console                   <- ZIO.access[Console](_.get)
       clockParam: Clock.Service <- ZIO.access[Clock](_.get)
-      clockTicks = new EventBus[Int]
       javaClock = java.time.Clock.system(ZoneId.of("America/Denver"))
-      arrivalsAtAllRouteStops = TimeCalculations
-        .getUpComingArrivalsWithFullScheduleNonZio(
-          javaClock,
-          TownShuttleTimes,
-        )
       pageMode <- getOptional("mode", AppMode.fromString)
         .map(
           _.getOrElse(AppMode.Production),
@@ -133,7 +126,6 @@ object MyApp extends App {
       environmentDependencies = ZLayer.succeed(browser) ++ ZLayer
         .succeed(console) ++ clock
       _ <- registerServiceWorker()
-      _ <- putStrLn("hi")
 //      _ <- NotificationStuff.addNotificationPermissionRequestToButton
 //      _ <- NotificationStuff.displayNotificationPermission
       // TODO Restore setup behavior here: DomManipulation.createAndApplyPageStructure(
@@ -172,16 +164,6 @@ object MyApp extends App {
               1,
               duration,
             ) --> clockTicks,
-            clockTicks.events
-              .withCurrentValueOf(selectedRoute.signal)
-              .map {
-                case (_, selectedRoute) => {
-                  println(
-                    "updating route with itself, based on clock",
-                  )
-                  selectedRoute
-                }
-              } --> selectedRoute.writer,
             child <-- $triggerState.map(
               ticks => div("ticks: " + ticks),
             ),
@@ -199,7 +181,6 @@ object MyApp extends App {
           ),
         )
       }
-      _ <- putStrLn("hello")
       _ <- UnsafeCallbacks.attachMenuBehavior
       loopingLogic: ZIO[Any, Throwable, Unit] = loopLogic(pageMode,
                                                           components)
