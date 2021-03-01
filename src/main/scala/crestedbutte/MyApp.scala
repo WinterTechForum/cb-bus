@@ -73,29 +73,12 @@ object MyApp extends App {
   val mtnExpressRoutes =
     new CompanyRoutes("Mtn Express",
                       Seq(
-                        CovidLoop,
                         TownShuttleTimes,
                         CrystalCastleShuttle,
                         ColumbineLoop,
                         SnodgrassShuttle,
                         ThreeSeasonsTimes,
                       ))
-
-  private val components: Seq[ComponentData] =
-    mtnExpressRoutes.routesWithTimes
-      .map(ComponentDataRoute) ++:
-    Seq(
-      ComponentDataRoute(
-        RtaNorthbound.fullSchedule,
-      ),
-      ComponentDataRoute(
-        RtaSouthbound.fullSchedule,
-      ),
-      ComponentDataTyped(
-        "RoundTripCalculator",
-        LaminarRoundTripCalculator.calculatorComponentName,
-      ),
-    )
 
   import com.raquo.laminar.api.L._
 
@@ -150,6 +133,34 @@ object MyApp extends App {
               OffsetDateTime.now(javaClock).toLocalTime,
             ),
         )
+
+        val components: Seq[ComponentData] =
+          if (pageMode == AppMode.Development)
+            mtnExpressRoutes.routesWithTimes
+              .map(ComponentDataRoute) ++:
+            Seq(
+              ComponentDataRoute(
+                RtaNorthbound.fullSchedule,
+              ),
+              ComponentDataRoute(
+                RtaSouthbound.fullSchedule,
+              ),
+              ComponentDataTyped(
+                "RoundTripCalculator",
+                LaminarRoundTripCalculator.calculatorComponentName,
+              ),
+            )
+          else
+            mtnExpressRoutes.routesWithTimes
+              .map(ComponentDataRoute) ++:
+            Seq(
+              ComponentDataRoute(
+                RtaNorthbound.fullSchedule,
+              ),
+              ComponentDataRoute(
+                RtaSouthbound.fullSchedule,
+              ),
+            )
 
         dom.document.getElementById("landing-message").innerHTML = ""
         render(
