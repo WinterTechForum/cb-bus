@@ -17,6 +17,7 @@ import zio.{App, Has, Schedule, ZIO, ZLayer}
 import zio.console._
 import crestedbutte.Browser.Browser
 import crestedbutte.laminar.{
+  Bulma,
   LaminarRoundTripCalculator,
   RepeatingElement,
 }
@@ -160,13 +161,13 @@ object MyApp extends App {
             (lastTick, _) => lastTick + 1,
           )
 
-        val selectedRoute = Var(
+        val selectedRoute: Var[ComponentData] = Var(
           ComponentDataRoute(
             RtaNorthbound.fullSchedule,
           ),
         )
 
-        val arrivalsAtAllRouteStops = TimeCalculations
+        val initialArrivalsAtAllRouteStops = TimeCalculations
           .getUpComingArrivalsWithFullScheduleNonZio(
             javaClock,
             TownShuttleTimes,
@@ -176,18 +177,25 @@ object MyApp extends App {
           : Signal[UpcomingArrivalComponentData] = clockTicks.events
           .withCurrentValueOf(selectedRoute.signal)
           .foldLeft(
-            arrivalsAtAllRouteStops,
+            initialArrivalsAtAllRouteStops,
           ) {
             case (previousTimes, (tick, route)) =>
-              TimeCalculations
-                .getUpComingArrivalsWithFullScheduleNonZio(
-                  javaClock,
-                  route.namedRoute,
-                )
+              route match {
+                case ComponentDataTyped(value, componentName) =>
+                  initialArrivalsAtAllRouteStops
+                case ComponentDataRoute(namedRoute) =>
+                  TimeCalculations
+                    .getUpComingArrivalsWithFullScheduleNonZio(
+                      javaClock,
+                      namedRoute,
+                    )
+              }
           }
+
         render(
           dom.document.getElementById("landing-message"),
           div(
+            Bulma.menu(selectedRoute, components),
             RepeatingElement().repeatWithInterval(
               1,
               duration,
@@ -199,17 +207,6 @@ object MyApp extends App {
               _ =>
                 div("javaTime: " + LocalTime.now(javaClock).toString),
             ),
-            $triggerState.map(
-              i =>
-                if (i % 2 == 0)
-                  ComponentDataRoute(
-                    RtaNorthbound.fullSchedule,
-                  )
-                else
-                  ComponentDataRoute(
-                    RtaSouthbound.fullSchedule,
-                  ),
-            ) --> selectedRoute.writer,
             TagsOnlyLocal
               .overallPageLayout(javaClock,
                                  upcomingArrivalData,
