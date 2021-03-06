@@ -1,4 +1,6 @@
-package crestedbutte
+package crestedbutte.laminar
+
+import crestedbutte.{NamedRoute, RouteName}
 
 sealed trait ComponentData {
 //  namedRoute: NamedRoute,

@@ -1,19 +1,27 @@
-package crestedbutte
+package crestedbutte.laminar
 
-import crestedbutte.Location.StopLocation
-import crestedbutte.dom.{Bulma, BulmaLocal}
-import com.billding.time.BusTime
-import com.billding.time.BusDuration
+import com.billding.time.{BusDuration, BusTime}
 import com.raquo.laminar.nodes.ReactiveHtmlElement
-import crestedbutte.laminar.{
-  LaminarRoundTripCalculator,
-  RepeatingElement,
+import crestedbutte.{
+  BusScheduleAtStop,
+  ElementNames,
+  LateNightRecommendation,
+  Location,
+  PhoneNumber,
+  RouteName,
+  StopTimeInfo,
+  TimeCalculations,
+  UpcomingArrivalComponentData,
+  UpcomingArrivalInfo,
+  UpcomingArrivalInfoWithFullSchedule,
 }
+import crestedbutte.Location.StopLocation
+import crestedbutte.dom.BulmaLocal
 import crestedbutte.routes.TownShuttleTimes
+import org.scalajs.dom
+import org.scalajs.dom.experimental.Notification
 
-import java.time.LocalTime
 import java.time.Clock
-import scala.concurrent.duration.FiniteDuration
 
 object TagsOnlyLocal {
   import com.raquo.laminar.api.L._
@@ -65,6 +73,28 @@ object TagsOnlyLocal {
         clock,
         TownShuttleTimes,
       )
+
+    val clickObserver = Observer[dom.MouseEvent](
+      onNext = ev => {
+        if (Notification.permission == "default")
+          Notification.requestPermission(
+            response =>
+              println(
+                "Notification requestPermission response: " + response,
+              ),
+          )
+        else if (Notification.permission == "denied")
+          println(
+            "They denied permission to notifications. Give it up.",
+          )
+        else if (Notification.permission == "granted")
+          println("we already have permission.")
+        else
+          println(
+            "Uknown permission state: " + Notification.permission,
+          )
+      },
+    )
 
     val upcomingArrivalData =
       $selectedComponent.combineWith(timeStamps).foldLeft(
@@ -127,6 +157,7 @@ object TagsOnlyLocal {
             idAttr := ElementNames.Notifications.requestPermission,
             cls := "button",
             "Request Notifications Permission",
+            onClick --> clickObserver,
           ),
           button(
             idAttr := ElementNames.Notifications.submitMessageToServiceWorker,

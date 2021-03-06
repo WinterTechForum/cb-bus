@@ -8,9 +8,14 @@ import zio.console.Console
 import zio.{App, Schedule, ZIO, ZLayer}
 import crestedbutte.Browser.Browser
 import crestedbutte.laminar.{
+  AppMode,
   Bulma,
+  ComponentData,
+  ComponentDataRoute,
+  ComponentDataTyped,
   LaminarRoundTripCalculator,
   RepeatingElement,
+  TagsOnlyLocal,
 }
 import org.scalajs.dom
 import zio.duration.durationInt
@@ -139,10 +144,10 @@ object MyApp extends App {
             mtnExpressRoutes.routesWithTimes
               .map(ComponentDataRoute) ++:
             Seq(
-              ComponentDataRoute(
+              laminar.ComponentDataRoute(
                 RtaNorthbound.fullSchedule,
               ),
-              ComponentDataRoute(
+              laminar.ComponentDataRoute(
                 RtaSouthbound.fullSchedule,
               ),
               ComponentDataTyped(
@@ -154,10 +159,10 @@ object MyApp extends App {
             mtnExpressRoutes.routesWithTimes
               .map(ComponentDataRoute) ++:
             Seq(
-              ComponentDataRoute(
+              laminar.ComponentDataRoute(
                 RtaNorthbound.fullSchedule,
               ),
-              ComponentDataRoute(
+              laminar.ComponentDataRoute(
                 RtaSouthbound.fullSchedule,
               ),
             )
