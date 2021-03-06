@@ -5,7 +5,7 @@ object Location extends Enumeration {
   protected case class Val(
     name: String,
     altName: String = "",
-    gpsCoordinates: GpsCoordinates = GpsCoordinates(0, 0))
+    gpsCoordinates: Option[GpsCoordinates] = None)
       extends super.Val(name) {
 
     val elementName: String =
@@ -15,6 +15,17 @@ object Location extends Enumeration {
             if (letter.isLetter) letter.toString else "_",
         )
         .mkString
+  }
+
+  object Val {
+
+    def imp(
+      name: String,
+      altName: String = "",
+      gpsCoordinates: GpsCoordinates,
+    ): Val =
+      Val(name, altName, Some(gpsCoordinates))
+
   }
   import scala.language.implicitConversions
 
@@ -29,33 +40,33 @@ object Location extends Enumeration {
   val OldTownHall: Val =
     Val("Old Town Hall",
         "(Mallardi Theatre)",
-        GpsCoordinates(38.869538, -106.987547))
+        Some(GpsCoordinates(38.869538, -106.987547)))
 
-  val Clarks: Val = Val("6th/Belleview",
-                        "(Clarks Grocery)",
-                        GpsCoordinates(38.866970, -106.981499)) //
+  val Clarks: Val = Val.imp("6th/Belleview",
+                            "(Clarks Grocery)",
+                            GpsCoordinates(38.866970, -106.981499)) //
 
-  val FourWayUphill: Val = Val(
+  val FourWayUphill: Val = Val.imp(
     "4-way",
     "(To Mountain)",
     GpsCoordinates(38.870355, -106.980905),
   ) // gps
-  val TeocalliUphill: Val = Val(
+  val TeocalliUphill: Val = Val.imp(
     "Teocalli",
     "(To Mountain)",
     GpsCoordinates(38.872718, -106.980830),
   ) //
-  val MountaineerSquare: Val = Val(
+  val MountaineerSquare: Val = Val.imp(
     "Mountaineer Square",
     "(CBMR)",
     GpsCoordinates(38.900902, -106.966650),
   ) //  // This is rough. Maps seems to be off...
-  val TeocalliDownhill: Val = Val(
+  val TeocalliDownhill: Val = Val.imp(
     "Teocalli",
     "(To Downtown)",
     GpsCoordinates(38.872726, -106.981037),
   ) //
-  val FourwayDownhill: Val = Val(
+  val FourwayDownhill: Val = Val.imp(
     "4-way",
     "(To Downtown)",
     GpsCoordinates(38.869944, -106.981503),

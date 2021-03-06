@@ -5,6 +5,7 @@ import com.raquo.laminar.nodes.ReactiveHtmlElement
 import crestedbutte.{
   BusScheduleAtStop,
   ElementNames,
+  GpsCoordinates,
   LateNightRecommendation,
   Location,
   NotificationStuff,
@@ -263,10 +264,10 @@ object TagsOnlyLocal {
     div(
       width := "100%",
       cls := "stop-information",
+      // TODO Put behind dev flag. Or maybe I should have a Premium flag?
       div(
         cls := "map-link",
-        // TODO Re-enable once maps are more polished
-        //  geoLinkForStop(location)
+        location.gpsCoordinates.map(geoLinkForStop),
       ),
       div(cls := "stop-name", div(location.name)),
       div(cls := "stop-alt-name", div(location.altName)),
@@ -274,14 +275,15 @@ object TagsOnlyLocal {
     )
 
   def geoLinkForStop(
-    stopLocation: StopLocation,
+    gpsCoordinates: GpsCoordinates,
   ) =
     a(
       cls := "link",
       //    <a href="geo:37.786971,-122.399677;u=35">open map</a>
 //          href := s"geo:${stopLocation.gpsCoordinates.latitude}, ${stopLocation.gpsCoordinates.longitude}"
-      href := s"https://www.google.com/maps/search/?api=1&query=${stopLocation.gpsCoordinates.latitude},${stopLocation.gpsCoordinates.longitude}",
-    )(svgIcon("glyphicons-basic-592-map.svg"))
+      href := s"https://www.google.com/maps/search/?api=1&query=${gpsCoordinates.latitude},${gpsCoordinates.longitude}",
+      svgIcon("glyphicons-basic-592-map.svg"),
+    )
 
   def activateModal(
     targetName: String,
