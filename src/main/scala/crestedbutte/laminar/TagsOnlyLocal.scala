@@ -291,19 +291,22 @@ object TagsOnlyLocal {
   ) =
     div(
       cls := "late-night-call-button",
-      button(
-        // TODO restore
-//        onClick := s"window.location.href = 'tel:${safeRideRecommendation.phoneNumber}';",
-        cls := "button",
-        img(
-          cls := "glyphicon",
-          src := "/glyphicons/svg/individual-svg/glyphicons-basic-465-call.svg",
-          alt := "Call Late Night Shuttle!",
+      a(
+        href := s"tel:${safeRideRecommendation.phoneNumber}",
+        cls := "link",
+        button(
+          cls := "button",
+          img(
+            cls := "glyphicon",
+            src := "/glyphicons/svg/individual-svg/glyphicons-basic-465-call.svg",
+            alt := "Call Late Night Shuttle!",
+          ),
+          safeRideRecommendation.message,
         ),
-        safeRideRecommendation.message,
       ),
     )
 
+  // TODO Redundant with above saferide link?
   def phoneLink(
     phoneNumber: PhoneNumber,
   ) =
