@@ -6,6 +6,7 @@ import crestedbutte.{
   BusScheduleAtStop,
   ElementNames,
   Feature,
+  GpsCalculations,
   GpsCoordinates,
   LateNightRecommendation,
   Location,
@@ -140,12 +141,15 @@ object TagsOnlyLocal {
             currentFeatures.update(featureUpdate)
         }
 
+    val gpsPosition: Var[Option[GpsCoordinates]] = Var(None)
+
     val upcomingArrivalData =
       $selectedComponent.combineWith(timeStamps).foldLeft(
         _ =>
           TagsOnlyLocal.structuredSetOfUpcomingArrivals(
             initialArrivalsAtAllRouteStops,
             $enabledFeatures,
+            gpsPosition,
           ),
       ) {
         case (_, (route, timestamp)) => { // TODO Start using timestamp below, to avoid passing clock where it's not needed
@@ -162,6 +166,7 @@ object TagsOnlyLocal {
                     namedRoute,
                   ),
                 $enabledFeatures,
+                gpsPosition,
               )
           }
         }
@@ -192,15 +197,34 @@ object TagsOnlyLocal {
         "Latitude: " + position.coords.latitude + "  Longitude: " + position.coords.longitude,
       )
 
-    def getLocation() =
+    // TODO Honor permissions
+    def getLocation(): Option[GpsCoordinates] = {
       //    val permissionsLocal: permissions.PermissionsNavigator = org.scalajs.dom.experimental.permissions.toPermissions(navigator)
       //    permissionsLocal.permissions.query(PermissionDescriptor(org.scalajs.dom.experimental.permissions.PermissionName.geolocation))
+      var positionResult: Option[GpsCoordinates] = None
       if (navigator.geolocation != null) {
-        navigator.geolocation.getCurrentPosition(showPosition);
+        // TODO This callback is screwing me up. I think.
+        navigator.geolocation.getCurrentPosition(
+          successCallback = position => {
+            showPosition(position)
+            gpsPosition.set(
+              Some(
+                GpsCoordinates(latitude = position.coords.latitude,
+                               longitude = position.coords.longitude),
+              ),
+            )
+            positionResult = Some(
+              GpsCoordinates(latitude = position.coords.latitude,
+                             longitude = position.coords.longitude),
+            )
+          },
+        );
       }
       else {
         println("Geo Location not supported by browser");
       }
+      positionResult
+    }
 
     div(
       cls := "bill-box",
@@ -239,34 +263,13 @@ object TagsOnlyLocal {
           }
         },
       ),
-      /*
-      Restore once I have a Laminar-friendly Bulma
-      Bulma.menu(
-        allComponentData.map {
-          componentData =>
-            println("should be creating a route menu entry")
-            a(
-              cls := "navbar-item",
-              dataAttr("route") := componentData.componentName.name,
-            componentData.componentName.userFriendlyName)
-        },
-        "Routes",
-        "route  using-library",
-      ),
-       */
-
-      // TODO Should this just go away?
-//      allComponentData.map(
-//        (singleComponentData: ComponentData) =>
-//          singleComponentData match {
-//            case ComponentDataTyped(value, componentName) =>
-//              LaminarRoundTripCalculator.RoundTripCalculatorLaminar()
-//            case ComponentDataRoute(namedRoute) =>
-//              busScheduleDiv(singleComponentData.componentName.name)
-//          },
-//      ),
       if (pageMode == AppMode.Development) {
         div(
+          timeStamps.map {
+            timestamp =>
+              println("Timed Location: " + getLocation())
+              getLocation()
+          } --> gpsPosition.writer,
           featureToggle(Feature.MapLinks),
           featureToggle(Feature.BusAlarms),
           // This just displays $enabledFeatures in a cruddy way.
@@ -278,6 +281,7 @@ object TagsOnlyLocal {
 //          ),
           button(
             idAttr := "Get position",
+//            onClick.map()
             onClick --> Observer[dom.MouseEvent](
               onNext = ev => {
                 getLocation()
@@ -354,6 +358,7 @@ object TagsOnlyLocal {
     location: Location.Value,
     content: ReactiveHtmlElement[_],
     $mapLinksEnabled: Signal[Boolean],
+    $gpsPosition: Var[Option[GpsCoordinates]],
     /* TODO: waitDuration: Duration*/
   ) =
     div(
@@ -365,6 +370,24 @@ object TagsOnlyLocal {
           if (mapLinksEnabled)
             div(
               cls := "map-link",
+              child <-- $gpsPosition.signal.map(
+                gpsCoordsOpt =>
+                  gpsCoordsOpt
+                    .flatMap(
+                      userCords =>
+                        location.gpsCoordinates.map(
+                          stopCoords =>
+                            div(
+                              GpsCalculations
+                                .distanceInKmBetweenEarthCoordinatesT(
+                                  userCords,
+                                  stopCoords,
+                                ),
+                            ),
+                        ),
+                    )
+                    .getOrElse(div()),
+              ),
               location.gpsCoordinates.map(geoLinkForStop),
             )
           else
@@ -448,6 +471,7 @@ object TagsOnlyLocal {
   def structuredSetOfUpcomingArrivals(
     upcomingArrivalComponentData: UpcomingArrivalComponentData,
     $enabledFeatures: Signal[FeatureSets],
+    gpsPosition: Var[Option[GpsCoordinates]],
   ) =
     div(
       div(
@@ -486,6 +510,7 @@ object TagsOnlyLocal {
                 enabledFeatures =>
                   enabledFeatures.isEnabled(Feature.MapLinks),
               ),
+              gpsPosition,
             )
         },
     )

@@ -120,7 +120,7 @@ object MyApp extends App {
 //      _ <- NotificationStuff.displayNotificationPermission
       _ <- ZIO {
         val duration =
-          new FiniteDuration(1, scala.concurrent.duration.SECONDS)
+          new FiniteDuration(10, scala.concurrent.duration.SECONDS)
         val clockTicks = new EventBus[Int]
 
         val selectedRoute: Var[ComponentData] = Var(
