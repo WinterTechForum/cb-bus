@@ -57,8 +57,8 @@ libraryDependencies ++= Seq(
   "dev.zio" %%% "zio-test"     % zioVersion % "test",
   "dev.zio" %%% "zio-test-sbt" % zioVersion % "test",
   "com.lihaoyi" %%% "pprint" % "0.5.9",
-  "com.raquo" %%% "laminar" % "0.11.0",
-  "com.raquo" %%% "airstream" % "0.11.0"
+  "com.raquo" %%% "laminar" % "0.12.1",
+  "com.raquo" %%% "airstream" % "0.12.0"
 
 //  "com.github.japgolly.scalacss" %%% "core" % "0.6.0",
 //  "com.github.japgolly.scalacss" %%% "ext-scalatags" % "0.6.0",

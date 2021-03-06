@@ -48,7 +48,7 @@ object LinearProgressBar {
     import com.raquo.domtypes.generic.keys.Style // Laminar aliases ReactiveStyle as Style, but we want the original underlying type here
 
     val mdcThemePrimary = new ReactiveStyle(
-      new Style("--mdc-theme-primary", "--mdc-theme-primary"),
+      new Style("--mdc-theme-primary"),
     )
   }
 
