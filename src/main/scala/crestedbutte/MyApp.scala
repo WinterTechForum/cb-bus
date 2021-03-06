@@ -199,6 +199,7 @@ object MyApp extends App {
         browser =>
           // TODO Ew. Try to get this removed after first version of PWA is working
           import scala.concurrent.ExecutionContext.Implicits.global
+          println("Attempting to register sw")
 
           toServiceWorkerNavigator(browser.window().navigator).serviceWorker
             .register("./sw-opt.js")

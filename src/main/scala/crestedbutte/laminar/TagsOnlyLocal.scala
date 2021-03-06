@@ -285,7 +285,6 @@ object TagsOnlyLocal {
     )
   }
 
-  //  <a href="tel:123-456-7890">123-456-7890</a>
   def safeRideLink(
     safeRideRecommendation: LateNightRecommendation,
   ) =
@@ -451,6 +450,7 @@ object TagsOnlyLocal {
                     upcomingArrivalComponentData.routeName,
                     $enabledFeatures,
                   )
+                // TODO turn this into a feature?
                 case Right(safeRideRecommendation) =>
                   safeRideLink(safeRideRecommendation)
               },

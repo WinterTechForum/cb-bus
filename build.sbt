@@ -85,8 +85,8 @@ cbBuild := {
   (Process("mkdir ./src/main/resources/compiledJavascript") #|| Process("mkdir ./src/main/resources/compiledJavascript/busriderapp") #||
     Process("cp ./target/scala-2.13/busriderapp-fastopt/main.js ./src/main/resources/compiledJavascript/busriderapp") #&&
 //    Process("cp ./target/scala-2.13/busriderapp-fastopt.js.map ./src/main/resources/compiledJavascript/") #&&
-    Process("cp sw/target/scala-2.13/sw-opt.js ./src/main/resources/") #&&
-    Process("cp sw/target/scala-2.13/sw-opt.js.map ./src/main/resources/") #&&
+    Process("cp sw/target/scala-2.12/sw-opt.js ./src/main/resources/") #&&
+    Process("cp sw/target/scala-2.12/sw-opt.js.map ./src/main/resources/") #&&
     Process("cp ./target/scala-2.13/busriderapp-jsdeps.js ./src/main/resources/compiledJavascript/"))!
 }
 
@@ -100,8 +100,8 @@ cbPublish := {
   (Process("mkdir ./src/main/resources/compiledJavascript") ###
     Process("cp ./target/scala-2.13/busriderapp-opt/main.js ./src/main/resources/compiledJavascript/busriderapp-opt/") #&&
     Process("cp ./target/scala-2.13/busriderapp-opt.js.map src/main/resources/compiledJavascript/") ###
-    Process("cp sw/target/scala-2.13/sw-opt.js src/main/resources/") ###
-    Process("cp sw/target/scala-2.13/sw-opt.js.map src/main/resources/"))!
+    Process("cp sw/target/scala-2.12/sw-opt.js src/main/resources/") ###
+    Process("cp sw/target/scala-2.12/sw-opt.js.map src/main/resources/"))!
 }
 
 zonesFilter := {(z: String) => z == "America/Denver" || z == "America/Mountain"}
