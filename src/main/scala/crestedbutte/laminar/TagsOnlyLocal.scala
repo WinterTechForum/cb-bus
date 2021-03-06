@@ -5,6 +5,7 @@ import com.raquo.laminar.nodes.ReactiveHtmlElement
 import crestedbutte.{
   BusScheduleAtStop,
   ElementNames,
+  Feature,
   GpsCoordinates,
   LateNightRecommendation,
   Location,
@@ -128,6 +129,38 @@ object TagsOnlyLocal {
         }
       }
 
+    case class FeatureStatus(
+      feature: Feature,
+      enabled: Boolean)
+
+    case class FeatureSets(
+      values: Map[Feature, Boolean]) {
+      def isEnabled(
+        feature: Feature,
+      ): Boolean =
+        values(feature) // Unsafe
+      def update(
+        featureStatus: FeatureStatus,
+      ): FeatureSets =
+        copy(
+          values = values + (kv =
+              (featureStatus.feature, featureStatus.enabled)),
+        )
+    }
+
+    val featureUpdates = new EventBus[FeatureStatus]
+
+    val initialFeatureSets = FeatureSets(
+      Feature.values.map((_, false)).toMap,
+    )
+
+    val $enabledFeatures: Signal[FeatureSets] =
+      featureUpdates.events
+        .foldLeft[FeatureSets](initialFeatureSets) {
+          case (currentFeatures, featureUpdate) =>
+            currentFeatures.update(featureUpdate)
+        }
+
     div(
       cls := "bill-box",
       idAttr := "container",
@@ -193,6 +226,26 @@ object TagsOnlyLocal {
 //      ),
       if (pageMode == AppMode.Development) {
         div(
+          label(
+            cls := "checkbox",
+            "Map Links",
+            input(
+              typ := "checkbox",
+              onInput.mapToChecked.map(
+                FeatureStatus(Feature.MapLinks, _),
+              ) --> featureUpdates,
+              onInput.mapToChecked --> Observer[Boolean](
+                onNext =
+                  isChecked => println("isChecked: " + isChecked),
+              ),
+            ),
+          ),
+          div(
+            child <-- $enabledFeatures.map(
+              enabledFeatures =>
+                pprint.apply(enabledFeatures).toString,
+            ),
+          ),
           button(
             idAttr := ElementNames.Notifications.requestPermission,
             cls := "button",

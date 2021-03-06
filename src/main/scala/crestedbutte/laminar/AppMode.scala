@@ -17,6 +17,7 @@ object AppMode extends Enumeration {
 
   val Production: Val = Val("production")
   val Development: Val = Val("dev")
+  val Premium: Val = Val("premium")
 
   def fromString(
     input: String,
