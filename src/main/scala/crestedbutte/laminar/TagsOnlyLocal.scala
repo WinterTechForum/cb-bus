@@ -31,6 +31,27 @@ import org.scalajs.dom.experimental.{
 import java.time.Clock
 import scala.scalajs.js
 
+// TODO Move these classes
+case class FeatureStatus(
+  feature: Feature,
+  enabled: Boolean)
+
+case class FeatureSets(
+  values: Map[Feature, Boolean]) {
+
+  def isEnabled(
+    feature: Feature,
+  ): Boolean =
+    values(feature) // Unsafe
+  def update(
+    featureStatus: FeatureStatus,
+  ): FeatureSets =
+    copy(
+      values = values + (kv =
+          (featureStatus.feature, featureStatus.enabled)),
+    )
+}
+
 object TagsOnlyLocal {
   import com.raquo.laminar.api.L._
 
@@ -104,11 +125,25 @@ object TagsOnlyLocal {
       },
     )
 
+    val featureUpdates = new EventBus[FeatureStatus]
+
+    val initialFeatureSets = FeatureSets(
+      Feature.values.map((_, false)).toMap,
+    )
+
+    val $enabledFeatures: Signal[FeatureSets] =
+      featureUpdates.events
+        .foldLeft[FeatureSets](initialFeatureSets) {
+          case (currentFeatures, featureUpdate) =>
+            currentFeatures.update(featureUpdate)
+        }
+
     val upcomingArrivalData =
       $selectedComponent.combineWith(timeStamps).foldLeft(
         _ =>
           TagsOnlyLocal.structuredSetOfUpcomingArrivals(
             initialArrivalsAtAllRouteStops,
+            $enabledFeatures,
           ),
       ) {
         case (_, (route, timestamp)) => { // TODO Start using timestamp below, to avoid passing clock where it's not needed
@@ -124,42 +159,11 @@ object TagsOnlyLocal {
                     clock,
                     namedRoute,
                   ),
+                $enabledFeatures,
               )
           }
         }
       }
-
-    case class FeatureStatus(
-      feature: Feature,
-      enabled: Boolean)
-
-    case class FeatureSets(
-      values: Map[Feature, Boolean]) {
-      def isEnabled(
-        feature: Feature,
-      ): Boolean =
-        values(feature) // Unsafe
-      def update(
-        featureStatus: FeatureStatus,
-      ): FeatureSets =
-        copy(
-          values = values + (kv =
-              (featureStatus.feature, featureStatus.enabled)),
-        )
-    }
-
-    val featureUpdates = new EventBus[FeatureStatus]
-
-    val initialFeatureSets = FeatureSets(
-      Feature.values.map((_, false)).toMap,
-    )
-
-    val $enabledFeatures: Signal[FeatureSets] =
-      featureUpdates.events
-        .foldLeft[FeatureSets](initialFeatureSets) {
-          case (currentFeatures, featureUpdate) =>
-            currentFeatures.update(featureUpdate)
-        }
 
     div(
       cls := "bill-box",
@@ -312,15 +316,22 @@ object TagsOnlyLocal {
   def createBusTimeElement(
     location: Location.Value,
     content: ReactiveHtmlElement[_],
+    $mapLinksEnabled: Signal[Boolean],
     /* TODO: waitDuration: Duration*/
   ) =
     div(
       width := "100%",
       cls := "stop-information",
       // TODO Put behind dev flag. Or maybe I should have a Premium flag?
-      div(
-        cls := "map-link",
-        location.gpsCoordinates.map(geoLinkForStop),
+      child <-- $mapLinksEnabled.map(
+        mapLinksEnabled =>
+          if (mapLinksEnabled)
+            div(
+              cls := "map-link",
+              location.gpsCoordinates.map(geoLinkForStop),
+            )
+          else
+            div(),
       ),
       div(cls := "stop-name", div(location.name)),
       div(cls := "stop-alt-name", div(location.altName)),
@@ -394,6 +405,7 @@ object TagsOnlyLocal {
 
   def structuredSetOfUpcomingArrivals(
     upcomingArrivalComponentData: UpcomingArrivalComponentData,
+    $enabledFeatures: Signal[FeatureSets],
   ) =
     div(
       div(
@@ -426,6 +438,10 @@ object TagsOnlyLocal {
                 case Right(safeRideRecommendation) =>
                   safeRideLink(safeRideRecommendation)
               },
+              $enabledFeatures.map(
+                enabledFeatures =>
+                  enabledFeatures.isEnabled(Feature.MapLinks),
+              ),
             )
         },
     )
