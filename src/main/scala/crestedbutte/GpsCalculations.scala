@@ -11,10 +11,12 @@ object GpsCalculations {
     position1: GpsCoordinates,
     position2: GpsCoordinates,
   ): Double =
-    distanceInKmBetweenEarthCoordinates(position1.latitude,
-                                        position1.longitude,
-                                        position2.latitude,
-                                        position2.longitude)
+    BigDecimal(
+      distanceInKmBetweenEarthCoordinates(position1.latitude,
+                                          position1.longitude,
+                                          position2.latitude,
+                                          position2.longitude),
+    ).setScale(1, BigDecimal.RoundingMode.HALF_UP).toDouble
 
   def distanceInKmBetweenEarthCoordinates(
     lat1: Double,
