@@ -21,10 +21,10 @@ object ServiceWorker {
   val todoAssets: js.Array[RequestInfo] = List[RequestInfo](
     "/",
     "/index.html",
-    "/sw-opt.js",
+//    "/sw-opt.js",
     "/compiledJavascript/busriderapp-opt/main.js",
     "/styling/style.css",
-    "/compiledJavascript/cb-bus-opt.js",
+//    "/compiledJavascript/cb-bus-opt.js",
     "/glyphicons/svg/individual-svg/glyphicons-basic-32-bus.svg",
     "styling/popup_nojs.css",
     "styling/bulma.min.css",
