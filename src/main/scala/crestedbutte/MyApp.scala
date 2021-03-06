@@ -71,8 +71,6 @@ object MyApp extends App {
         .getOrElse(components.head)
 
        */
-
-//      _ <- NotificationStuff.checkSubmittedAlarms
     } yield ()
 
   val mtnExpressRoutes =
@@ -114,9 +112,7 @@ object MyApp extends App {
       else
         java.time.Clock.system(ZoneId.of("America/Denver"))
       _ <- registerServiceWorker()
-//      _ <- NotificationStuff.addNotificationPermissionRequestToButton
 //      _ <- NotificationStuff.displayNotificationPermission
-      // TODO Restore setup behavior here: DomManipulation.createAndApplyPageStructure(
       _ <- ZIO {
         val duration =
           new FiniteDuration(1, scala.concurrent.duration.SECONDS)
@@ -188,7 +184,7 @@ object MyApp extends App {
       }
       _ <- (for {
         // TODO Get this attached within the normal laminar app
-        _ <- NotificationStuff.addAlarmBehaviorToTimes
+//        _ <- NotificationStuff.addAlarmBehaviorToTimes
         _ <- ModalBehavior.addModalOpenBehavior
         _ <- ModalBehavior.addModalCloseBehavior
       } yield ()).repeat(Schedule.spaced(1.second))

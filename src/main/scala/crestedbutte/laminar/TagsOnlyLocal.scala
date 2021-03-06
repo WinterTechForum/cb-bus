@@ -16,12 +16,17 @@ import crestedbutte.{
   UpcomingArrivalInfoWithFullSchedule,
 }
 import crestedbutte.Location.StopLocation
+import crestedbutte.NotificationStuff.desiredAlarms
 import crestedbutte.dom.BulmaLocal
 import crestedbutte.routes.TownShuttleTimes
 import org.scalajs.dom
-import org.scalajs.dom.experimental.Notification
+import org.scalajs.dom.experimental.{
+  Notification,
+  NotificationOptions,
+}
 
 import java.time.Clock
+import scala.scalajs.js
 
 object TagsOnlyLocal {
   import com.raquo.laminar.api.L._
@@ -125,6 +130,39 @@ object TagsOnlyLocal {
       cls := "bill-box",
       idAttr := "container",
       child <-- upcomingArrivalData,
+      timeStamps --> Observer[BusTime](
+        onNext = localTime => {
+          println(s"Checking for alarms at: $localTime")
+          val busTimes = desiredAlarms.dequeueAll {
+            _ =>
+              true
+          }
+          busTimes.map {
+            busTime =>
+              val headsUpAmount = 3 // minutes
+              if (localTime
+                    .between(busTime)
+                    .toMinutes >= headsUpAmount)
+                println("1")
+              dom.window.setTimeout(
+                // TODO Replace this with submission to an EventBus[BusTime] that can be read via the RepeatingElement
+                () =>
+                  // Read submitted time, find difference between it and the current time, then submit a setInterval function
+                  // with the appropriate delay
+                  new Notification(
+                    s"The ${busTime.toString} bus is arriving in ${headsUpAmount} minutes!",
+                    NotificationOptions(
+                      vibrate = js.Array(100d),
+                    ),
+                  ),
+                (localTime
+                  .between(busTime)
+                  .toMinutes - headsUpAmount) * 60 * 1000,
+              )
+              println("2")
+          }
+        },
+      ),
       /*
       Restore once I have a Laminar-friendly Bulma
       Bulma.menu(
@@ -340,14 +378,44 @@ object TagsOnlyLocal {
     name: String,
     classes: String,
     busTime: BusTime,
-  ) =
+  ) = {
+    val clickObserver = Observer[dom.MouseEvent](
+      onNext = ev => {
+
+        // This will give the user an idea of what the eventual notification will look/sound like
+        // While also letting them know that they successfully scheduled it.
+        new Notification(
+          s"You will be alerted when the bus is about to arrive with a Notification like this.",
+          NotificationOptions(
+            vibrate = js.Array(100d),
+          ),
+        )
+
+        desiredAlarms
+          .appendAll(
+            Seq(
+              BusTime(
+                ev.target
+                  .asInstanceOf[
+                    org.scalajs.dom.raw.Element,
+                  ]
+                  .getAttribute("data-lossless-value")
+                  .replace("'", "")
+                  .trim,
+              ),
+            ),
+          )
+      },
+    )
     img(
       cls := "glyphicon " + classes,
       src := s"/glyphicons/svg/individual-svg/$name",
       alt := "Thanks for riding the bus!",
       dataAttr("lossless-value") := busTime.toString,
       verticalAlign := "middle",
+      onClick --> clickObserver,
     )
+  }
 
   def svgIcon(
     name: String,

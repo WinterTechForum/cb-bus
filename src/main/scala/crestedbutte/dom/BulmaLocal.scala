@@ -2,6 +2,7 @@ package crestedbutte.dom
 
 import crestedbutte.BusScheduleAtStop
 import com.raquo.laminar.api.L._
+import crestedbutte.laminar.TagsOnlyLocal
 
 object BulmaLocal {
 
@@ -28,11 +29,11 @@ object BulmaLocal {
                 paddingBottom := "3px",
                 span(time.toDumbAmericanString),
                 // TODO Re-enable once Notifications are more solid
-                //              svgIconForAlarm(
-                //                "glyphicons-basic-443-bell-ringing.svg",
-                //                "arrival-time-alarm",
-                //                time
-                //              )
+                TagsOnlyLocal.svgIconForAlarm(
+                  "glyphicons-basic-443-bell-ringing.svg",
+                  "arrival-time-alarm",
+                  time,
+                ),
               ),
           ),
         ),
