@@ -7,6 +7,7 @@ import crestedbutte.{
   ElementNames,
   LateNightRecommendation,
   Location,
+  NotificationStuff,
   PhoneNumber,
   RouteName,
   StopTimeInfo,
@@ -16,7 +17,7 @@ import crestedbutte.{
   UpcomingArrivalInfoWithFullSchedule,
 }
 import crestedbutte.Location.StopLocation
-import crestedbutte.NotificationStuff.desiredAlarms
+import crestedbutte.NotificationStuff.{desiredAlarms, headsUpAmount}
 import crestedbutte.dom.BulmaLocal
 import crestedbutte.routes.TownShuttleTimes
 import org.scalajs.dom
@@ -139,10 +140,10 @@ object TagsOnlyLocal {
           }
           busTimes.map {
             busTime =>
-              val headsUpAmount = 3 // minutes
               if (localTime
                     .between(busTime)
-                    .toMinutes >= headsUpAmount)
+                    // TODO Direct comparison
+                    .toMinutes >= headsUpAmount.toMinutes)
                 println("1")
               dom.window.setTimeout(
                 // TODO Replace this with submission to an EventBus[BusTime] that can be read via the RepeatingElement
@@ -150,14 +151,14 @@ object TagsOnlyLocal {
                   // Read submitted time, find difference between it and the current time, then submit a setInterval function
                   // with the appropriate delay
                   new Notification(
-                    s"The ${busTime.toString} bus is arriving in ${headsUpAmount} minutes!",
+                    s"The ${busTime.toString} bus is arriving in ${headsUpAmount.toMinutes} minutes!",
                     NotificationOptions(
                       vibrate = js.Array(100d),
                     ),
                   ),
                 (localTime
                   .between(busTime)
-                  .toMinutes - headsUpAmount) * 60 * 1000,
+                  .toMinutes - headsUpAmount.toMinutes) * 60 * 1000,
               )
               println("2")
           }
@@ -379,41 +380,25 @@ object TagsOnlyLocal {
     classes: String,
     busTime: BusTime,
   ) = {
-    val clickObserver = Observer[dom.MouseEvent](
+    val clickObserverNarrow = Observer[BusTime](
       onNext = ev => {
-
         // This will give the user an idea of what the eventual notification will look/sound like
         // While also letting them know that they successfully scheduled it.
         new Notification(
-          s"You will be alerted when the bus is about to arrive with a Notification like this.",
+          s"You will be alerted with a Notification like this when the bus is ${NotificationStuff.headsUpAmount.toMinutes} minutes away.",
           NotificationOptions(
             vibrate = js.Array(100d),
           ),
         )
-
-        desiredAlarms
-          .appendAll(
-            Seq(
-              BusTime(
-                ev.target
-                  .asInstanceOf[
-                    org.scalajs.dom.raw.Element,
-                  ]
-                  .getAttribute("data-lossless-value")
-                  .replace("'", "")
-                  .trim,
-              ),
-            ),
-          )
+        desiredAlarms.append(ev)
       },
     )
     img(
       cls := "glyphicon " + classes,
       src := s"/glyphicons/svg/individual-svg/$name",
       alt := "Thanks for riding the bus!",
-      dataAttr("lossless-value") := busTime.toString,
       verticalAlign := "middle",
-      onClick --> clickObserver,
+      onClick.map(_ => busTime) --> clickObserverNarrow,
     )
   }
 

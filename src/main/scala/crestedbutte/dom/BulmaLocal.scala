@@ -3,6 +3,7 @@ package crestedbutte.dom
 import crestedbutte.BusScheduleAtStop
 import com.raquo.laminar.api.L._
 import crestedbutte.laminar.TagsOnlyLocal
+import org.scalajs.dom.experimental.Notification
 
 object BulmaLocal {
 
@@ -28,12 +29,13 @@ object BulmaLocal {
                 verticalAlign := "middle",
                 paddingBottom := "3px",
                 span(time.toDumbAmericanString),
-                // TODO Re-enable once Notifications are more solid
-                TagsOnlyLocal.svgIconForAlarm(
-                  "glyphicons-basic-443-bell-ringing.svg",
-                  "arrival-time-alarm",
-                  time,
-                ),
+                if (Notification.permission == "granted") // TODO Make this check less Stringy
+                  TagsOnlyLocal.svgIconForAlarm(
+                    "glyphicons-basic-443-bell-ringing.svg",
+                    "arrival-time-alarm",
+                    time,
+                  )
+                else div(),
               ),
           ),
         ),
