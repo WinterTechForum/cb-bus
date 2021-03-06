@@ -165,6 +165,24 @@ object TagsOnlyLocal {
         }
       }
 
+    // TODO Make this a separate component?
+    def featureToggle(
+      feature: Feature,
+    ) =
+      label(
+        cls := "checkbox",
+        feature.toString,
+        input(
+          typ := "checkbox",
+          onInput.mapToChecked.map(
+            FeatureStatus(feature, _),
+          ) --> featureUpdates,
+          onInput.mapToChecked --> Observer[Boolean](
+            onNext = isChecked => println("isChecked: " + isChecked),
+          ),
+        ),
+      )
+
     div(
       cls := "bill-box",
       idAttr := "container",
@@ -230,26 +248,15 @@ object TagsOnlyLocal {
 //      ),
       if (pageMode == AppMode.Development) {
         div(
-          label(
-            cls := "checkbox",
-            "Map Links",
-            input(
-              typ := "checkbox",
-              onInput.mapToChecked.map(
-                FeatureStatus(Feature.MapLinks, _),
-              ) --> featureUpdates,
-              onInput.mapToChecked --> Observer[Boolean](
-                onNext =
-                  isChecked => println("isChecked: " + isChecked),
-              ),
-            ),
-          ),
-          div(
-            child <-- $enabledFeatures.map(
-              enabledFeatures =>
-                pprint.apply(enabledFeatures).toString,
-            ),
-          ),
+          featureToggle(Feature.MapLinks),
+          featureToggle(Feature.BusAlarms),
+          // This just displays $enabledFeatures in a cruddy way.
+//          div(
+//            child <-- $enabledFeatures.map(
+//              enabledFeatures =>
+//                pprint.apply(enabledFeatures).toString,
+//            ),
+//          ),
           button(
             idAttr := ElementNames.Notifications.requestPermission,
             cls := "button",
@@ -374,6 +381,7 @@ object TagsOnlyLocal {
     stopTimeInfo: StopTimeInfo,
     busScheduleAtStop: BusScheduleAtStop,
     routeName: RouteName,
+    $enabledFeatures: Signal[FeatureSets],
   ) =
     div(
       button(
@@ -399,6 +407,10 @@ object TagsOnlyLocal {
           busScheduleAtStop,
           modalContentElementName(busScheduleAtStop.location,
                                   routeName),
+          $enabledFeatures.map(
+            enabledFeatures =>
+              enabledFeatures.isEnabled(Feature.BusAlarms),
+          ),
         ),
       ),
     )
@@ -434,6 +446,7 @@ object TagsOnlyLocal {
                     stopTimeInfo,
                     fullScheduleAtStop,
                     upcomingArrivalComponentData.routeName,
+                    $enabledFeatures,
                   )
                 case Right(safeRideRecommendation) =>
                   safeRideLink(safeRideRecommendation)

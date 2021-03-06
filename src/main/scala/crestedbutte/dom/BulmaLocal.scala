@@ -10,6 +10,7 @@ object BulmaLocal {
   def bulmaModal(
     scheduleAtStop: BusScheduleAtStop,
     idValue: String,
+    $alertsEnabled: Signal[Boolean],
   ) =
     div(
       idAttr := idValue,
@@ -29,13 +30,16 @@ object BulmaLocal {
                 verticalAlign := "middle",
                 paddingBottom := "3px",
                 span(time.toDumbAmericanString),
-                if (Notification.permission == "granted") // TODO Make this check less Stringy
-                  TagsOnlyLocal.svgIconForAlarm(
-                    "glyphicons-basic-443-bell-ringing.svg",
-                    "arrival-time-alarm",
-                    time,
-                  )
-                else div(),
+                child <-- $alertsEnabled.map(
+                  alertsEnabled =>
+                    if (Notification.permission == "granted" && alertsEnabled) // TODO Make this check less Stringy
+                      TagsOnlyLocal.svgIconForAlarm(
+                        "glyphicons-basic-443-bell-ringing.svg",
+                        "arrival-time-alarm",
+                        time,
+                      )
+                    else div(),
+                ),
               ),
           ),
         ),
