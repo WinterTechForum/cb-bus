@@ -18,6 +18,11 @@ import crestedbutte.laminar.{
   TagsOnlyLocal,
 }
 import org.scalajs.dom
+import org.scalajs.dom.console
+import org.scalajs.dom.experimental.permissions
+import org.scalajs.dom.raw.Position
+import typings.std.PermissionDescriptor
+import typings.std.global.navigator
 import zio.duration.durationInt
 
 import java.time.{Instant, OffsetDateTime, ZoneId}

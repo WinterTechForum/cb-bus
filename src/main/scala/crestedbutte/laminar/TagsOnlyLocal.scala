@@ -27,6 +27,8 @@ import org.scalajs.dom.experimental.{
   Notification,
   NotificationOptions,
 }
+import org.scalajs.dom.raw.Position
+import typings.std.global.navigator
 
 import java.time.Clock
 import scala.scalajs.js
@@ -183,6 +185,23 @@ object TagsOnlyLocal {
         ),
       )
 
+    def showPosition(
+      position: Position,
+    ) =
+      println(
+        "Latitude: " + position.coords.latitude + "  Longitude: " + position.coords.longitude,
+      )
+
+    def getLocation() =
+      //    val permissionsLocal: permissions.PermissionsNavigator = org.scalajs.dom.experimental.permissions.toPermissions(navigator)
+      //    permissionsLocal.permissions.query(PermissionDescriptor(org.scalajs.dom.experimental.permissions.PermissionName.geolocation))
+      if (navigator.geolocation != null) {
+        navigator.geolocation.getCurrentPosition(showPosition);
+      }
+      else {
+        println("Geo Location not supported by browser");
+      }
+
     div(
       cls := "bill-box",
       idAttr := "container",
@@ -257,6 +276,15 @@ object TagsOnlyLocal {
 //                pprint.apply(enabledFeatures).toString,
 //            ),
 //          ),
+          button(
+            idAttr := "Get position",
+            onClick --> Observer[dom.MouseEvent](
+              onNext = ev => {
+                getLocation()
+              },
+            ),
+            "Get GPS coordinates",
+          ),
           button(
             idAttr := ElementNames.Notifications.requestPermission,
             cls := "button",
