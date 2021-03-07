@@ -18,11 +18,6 @@ import crestedbutte.laminar.{
   TagsOnlyLocal,
 }
 import org.scalajs.dom
-import org.scalajs.dom.console
-import org.scalajs.dom.experimental.permissions
-import org.scalajs.dom.raw.Position
-import typings.std.PermissionDescriptor
-import typings.std.global.navigator
 import zio.duration.durationInt
 
 import java.time.{Instant, OffsetDateTime, ZoneId}
@@ -56,27 +51,6 @@ object MyApp extends App {
             )
             .flatMap(typer),
       )
-
-  def loopLogic(
-    pageMode: AppMode.Value,
-    components: Seq[ComponentData],
-  ) =
-    for {
-      routeNameOpt <- getOptional("route", x => Some(x))
-      // Yeck! This can go away now! I should only consult this query param on initial page load.
-      /*
-      selectedComponent: ComponentData = routeNameOpt
-        .flatMap(
-          routeNameStringParam =>
-            components.find(
-              _.componentName
-                .elementNameMatches(routeNameStringParam),
-            ),
-        )
-        .getOrElse(components.head)
-
-     */
-    } yield ()
 
   val mtnExpressRoutes =
     new CompanyRoutes("Mtn Express",
@@ -123,22 +97,12 @@ object MyApp extends App {
           new FiniteDuration(10, scala.concurrent.duration.SECONDS)
         val clockTicks = new EventBus[Int]
 
-        val selectedRoute: Var[ComponentData] = Var(
-          ComponentDataRoute(
-            TownShuttleTimes, // TODO This isn't necessarily going to be the starting route
-          ),
-        )
-
-        val timeStamps: Signal[BusTime] = clockTicks.events.foldLeft(
-          new BusTime(
-            OffsetDateTime.now(javaClock).toLocalTime,
-          ),
-        )(
-          (oldTime, _) =>
-            new BusTime(
-              OffsetDateTime.now(javaClock).toLocalTime,
-            ),
-        )
+        val initialRouteOpt: Option[String] =
+          UrlParsing
+            .getUrlParameter(
+              dom.window.location.toString,
+              "route",
+            )
 
         val components: Seq[ComponentData] =
           if (pageMode == AppMode.Development)
@@ -167,6 +131,32 @@ object MyApp extends App {
                 RtaSouthbound.fullSchedule,
               ),
             )
+
+        val selectedRoute: Var[ComponentData] = Var(
+          initialRouteOpt
+            .flatMap(
+              initialRoute =>
+                components.find(
+                  _.componentName.elementNameMatches(initialRoute),
+                ),
+            )
+            .getOrElse(
+              ComponentDataRoute(
+                TownShuttleTimes,
+              ),
+            ),
+        )
+
+        val timeStamps: Signal[BusTime] = clockTicks.events.foldLeft(
+          new BusTime(
+            OffsetDateTime.now(javaClock).toLocalTime,
+          ),
+        )(
+          (oldTime, _) =>
+            new BusTime(
+              OffsetDateTime.now(javaClock).toLocalTime,
+            ),
+        )
 
         dom.document.getElementById("landing-message").innerHTML = ""
         render(
