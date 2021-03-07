@@ -106,28 +106,6 @@ object TagsOnlyLocal {
         TownShuttleTimes,
       )
 
-    val clickObserver = Observer[dom.MouseEvent](
-      onNext = ev => {
-        if (Notification.permission == "default")
-          Notification.requestPermission(
-            response =>
-              println(
-                "Notification requestPermission response: " + response,
-              ),
-          )
-        else if (Notification.permission == "denied")
-          println(
-            "They denied permission to notifications. Give it up.",
-          )
-        else if (Notification.permission == "granted")
-          println("we already have permission.")
-        else
-          println(
-            "Uknown permission state: " + Notification.permission,
-          )
-      },
-    )
-
     val featureUpdates = new EventBus[FeatureStatus]
 
     val initialFeatureSets = FeatureSets(
@@ -172,134 +150,43 @@ object TagsOnlyLocal {
         }
       }
 
-    // TODO Make this a separate component?
-    def featureToggle(
-      feature: Feature,
-    ) =
-      label(
-        cls := "checkbox",
-        feature.toString,
-        input(
-          typ := "checkbox",
-          onInput.mapToChecked.map(
-            FeatureStatus(feature, _),
-          ) --> featureUpdates,
-          onInput.mapToChecked --> Observer[Boolean](
-            onNext = isChecked => println("isChecked: " + isChecked),
-          ),
-        ),
-      )
-
-    def showPosition(
-      position: Position,
-    ) =
-      println(
-        "Latitude: " + position.coords.latitude + "  Longitude: " + position.coords.longitude,
-      )
-
     // TODO Honor permissions
-    def getLocation(): Option[GpsCoordinates] = {
-      //    val permissionsLocal: permissions.PermissionsNavigator = org.scalajs.dom.experimental.permissions.toPermissions(navigator)
-      //    permissionsLocal.permissions.query(PermissionDescriptor(org.scalajs.dom.experimental.permissions.PermissionName.geolocation))
-      var positionResult: Option[GpsCoordinates] = None
-      if (navigator.geolocation != null) {
-        // TODO This callback is screwing me up. I think.
-        navigator.geolocation.getCurrentPosition(
-          successCallback = position => {
-            showPosition(position)
-            gpsPosition.set(
-              Some(
-                GpsCoordinates(latitude = position.coords.latitude,
-                               longitude = position.coords.longitude),
-              ),
-            )
-            positionResult = Some(
-              GpsCoordinates(latitude = position.coords.latitude,
-                             longitude = position.coords.longitude),
-            )
-          },
-        );
-      }
-      else {
-        println("Geo Location not supported by browser");
-      }
-      positionResult
-    }
-
     div(
       cls := "bill-box",
       idAttr := "container",
       child <-- upcomingArrivalData,
       timeStamps --> Observer[BusTime](
         onNext = localTime => {
-          println(s"Checking for alarms at: $localTime")
-          val busTimes = desiredAlarms.dequeueAll {
-            _ =>
-              true
-          }
+          val busTimes = desiredAlarms.dequeueAll(_ => true)
           busTimes.map {
             busTime =>
               if (localTime
                     .between(busTime)
                     // TODO Direct comparison
                     .toMinutes >= headsUpAmount.toMinutes)
-                println("1")
-              dom.window.setTimeout(
-                // TODO Replace this with submission to an EventBus[BusTime] that can be read via the RepeatingElement
-                () =>
-                  // Read submitted time, find difference between it and the current time, then submit a setInterval function
-                  // with the appropriate delay
-                  new Notification(
-                    s"The ${busTime.toString} bus is arriving in ${headsUpAmount.toMinutes} minutes!",
-                    NotificationOptions(
-                      vibrate = js.Array(100d),
+                dom.window.setTimeout(
+                  // TODO Replace this with submission to an EventBus[BusTime] that can be read via the RepeatingElement
+                  () =>
+                    // Read submitted time, find difference between it and the current time, then submit a setInterval function
+                    // with the appropriate delay
+                    new Notification(
+                      s"The ${busTime.toString} bus is arriving in ${headsUpAmount.toMinutes} minutes!",
+                      NotificationOptions(
+                        vibrate = js.Array(100d),
+                      ),
                     ),
-                  ),
-                (localTime
-                  .between(busTime)
-                  .toMinutes - headsUpAmount.toMinutes) * 60 * 1000,
-              )
-              println("2")
+                  (localTime
+                    .between(busTime)
+                    .toMinutes - headsUpAmount.toMinutes) * 60 * 1000,
+                )
           }
         },
       ),
       if (pageMode == AppMode.Development) {
-        div(
-          timeStamps.map {
-            timestamp =>
-              println("Timed Location: " + getLocation())
-              getLocation()
-          } --> gpsPosition.writer,
-          featureToggle(Feature.MapLinks),
-          featureToggle(Feature.BusAlarms),
-          // This just displays $enabledFeatures in a cruddy way.
-//          div(
-//            child <-- $enabledFeatures.map(
-//              enabledFeatures =>
-//                pprint.apply(enabledFeatures).toString,
-//            ),
-//          ),
-          button(
-            idAttr := "Get position",
-//            onClick.map()
-            onClick --> Observer[dom.MouseEvent](
-              onNext = ev => {
-                getLocation()
-              },
-            ),
-            "Get GPS coordinates",
-          ),
-          button(
-            idAttr := ElementNames.Notifications.requestPermission,
-            cls := "button",
-            "Request Notifications Permission",
-            onClick --> clickObserver,
-          ),
-          button(
-            idAttr := ElementNames.Notifications.submitMessageToServiceWorker,
-            cls := "button",
-            "SubmitMessage to SW",
-          ),
+        Experimental.Sandbox(
+          timeStamps,
+          gpsPosition,
+          featureUpdates: EventBus[FeatureStatus],
         )
       }
       else div(),
@@ -364,30 +251,13 @@ object TagsOnlyLocal {
     div(
       width := "100%",
       cls := "stop-information",
-      // TODO Put behind dev flag. Or maybe I should have a Premium flag?
       child <-- $mapLinksEnabled.map(
         mapLinksEnabled =>
           if (mapLinksEnabled)
             div(
               cls := "map-link",
-              child <-- $gpsPosition.signal.map(
-                gpsCoordsOpt =>
-                  gpsCoordsOpt
-                    .flatMap(
-                      userCords =>
-                        location.gpsCoordinates.map(
-                          stopCoords =>
-                            div(
-                              GpsCalculations
-                                .distanceInKmBetweenEarthCoordinatesT(
-                                  userCords,
-                                  stopCoords,
-                                ),
-                            ),
-                        ),
-                    )
-                    .getOrElse(div()),
-              ),
+              child <-- Components
+                .distanceBetween($gpsPosition.signal, location),
               location.gpsCoordinates.map(geoLinkForStop),
             )
           else
@@ -443,19 +313,11 @@ object TagsOnlyLocal {
           busScheduleAtStop.location,
           routeName,
         ),
-//          data("schedule-modal") := modalContentElementName(
-//            busScheduleAtStop.location,
-//            routeName
-//          ),
-//        onClick := {},
-//          s"activateModal('#popup_${busScheduleAtStop.location}');",
-        dataAttr("lossless-value") := stopTimeInfo.time.toString,
         stopTimeInfo.time.toDumbAmericanString,
       ),
       div(
         cls := "wait-time",
         renderWaitTime(stopTimeInfo.waitingDuration),
-        // TODO Restore Laminar-friendly modal
         BulmaLocal.bulmaModal(
           busScheduleAtStop,
           modalContentElementName(busScheduleAtStop.location,
