@@ -52,16 +52,6 @@ object MyApp extends App {
             .flatMap(typer),
       )
 
-  val mtnExpressRoutes =
-    new CompanyRoutes("Mtn Express",
-                      Seq(
-                        TownShuttleTimes,
-                        CrystalCastleShuttle,
-                        ColumbineLoop,
-                        SnodgrassShuttle,
-                        ThreeSeasonsTimes,
-                      ))
-
   import com.raquo.laminar.api.L._
 
   val fullApplicationLogic =
@@ -104,33 +94,7 @@ object MyApp extends App {
               "route",
             )
 
-        val components: Seq[ComponentData] =
-          if (pageMode == AppMode.Development)
-            mtnExpressRoutes.routesWithTimes
-              .map(ComponentDataRoute) ++:
-            Seq(
-              laminar.ComponentDataRoute(
-                RtaNorthbound.fullSchedule,
-              ),
-              laminar.ComponentDataRoute(
-                RtaSouthbound.fullSchedule,
-              ),
-              ComponentDataTyped(
-                "RoundTripCalculator",
-                LaminarRoundTripCalculator.calculatorComponentName,
-              ),
-            )
-          else
-            mtnExpressRoutes.routesWithTimes
-              .map(ComponentDataRoute) ++:
-            Seq(
-              laminar.ComponentDataRoute(
-                RtaNorthbound.fullSchedule,
-              ),
-              laminar.ComponentDataRoute(
-                RtaSouthbound.fullSchedule,
-              ),
-            )
+        val components = AllRoutes.components(pageMode)
 
         val selectedRoute: Var[ComponentData] = Var(
           initialRouteOpt

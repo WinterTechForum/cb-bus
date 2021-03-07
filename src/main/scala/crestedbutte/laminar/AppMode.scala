@@ -13,7 +13,7 @@ object AppMode extends Enumeration {
   ): Val =
     x.asInstanceOf[Val]
 
-  type StopLocation = Value
+  type AppMode = Value
 
   val Production: Val = Val("production")
   val Development: Val = Val("dev")
