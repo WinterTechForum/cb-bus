@@ -1,26 +1,16 @@
 package crestedbutte
 
 import com.billding.time.{BusTime, ColoradoClock, TurboClock}
+import crestedbutte.Browser.Browser
+import crestedbutte.laminar._
 import crestedbutte.routes._
+import org.scalajs.dom
 import org.scalajs.dom.experimental.serviceworkers._
 import zio.clock._
 import zio.console.Console
-import zio.{App, Schedule, ZIO, ZLayer}
-import crestedbutte.Browser.Browser
-import crestedbutte.laminar.{
-  AppMode,
-  Bulma,
-  ComponentData,
-  ComponentDataRoute,
-  ComponentDataTyped,
-  LaminarRoundTripCalculator,
-  RepeatingElement,
-  TagsOnlyLocal,
-}
-import org.scalajs.dom
-import zio.duration.durationInt
+import zio.{App, ZIO, ZLayer}
 
-import java.time.{Instant, OffsetDateTime, ZoneId}
+import java.time.{OffsetDateTime, ZoneId}
 import scala.concurrent.duration.FiniteDuration
 import scala.util.{Failure, Success}
 
@@ -140,11 +130,6 @@ object MyApp extends App {
           ),
         )
       }
-      _ <- (for {
-        // TODO Get this attached within the normal laminar app
-        _ <- ModalBehavior.addModalOpenBehavior
-        _ <- ModalBehavior.addModalCloseBehavior
-      } yield ()).repeat(Schedule.spaced(1.second))
     } yield {
       0
     }

@@ -11,10 +11,14 @@ object BulmaLocal {
     scheduleAtStop: BusScheduleAtStop,
     idValue: String,
     $alertsEnabled: Signal[Boolean],
+    $active: Var[Boolean],
   ) =
     div(
       idAttr := idValue,
       cls := "modal",
+      cls <-- $active.signal.map(
+        active => if (active) "is-active" else "",
+      ),
       div(cls := "modal-background"),
       div(
         cls := "modal-content",
@@ -44,7 +48,18 @@ object BulmaLocal {
           ),
         ),
       ),
-      button(cls := "modal-close is-large", aria.label := "close"),
+      button(
+        cls := "modal-close is-large",
+        aria.label := "close",
+        onClick.preventDefault.map(_ => {
+          org.scalajs.dom.document
+            .querySelector("html")
+            .classList
+            .remove("is-clipped")
+          println("Clicked modal close")
+          false
+        }) --> $active,
+      ),
     )
 
 }

@@ -227,7 +227,8 @@ object TagsOnlyLocal {
     busScheduleAtStop: BusScheduleAtStop,
     routeName: RouteName,
     $enabledFeatures: Signal[FeatureSets],
-  ) =
+  ) = {
+    val modalActive = Var(false)
     div(
       button(
         cls := "arrival-time button open-arrival-time-modal",
@@ -235,6 +236,14 @@ object TagsOnlyLocal {
           busScheduleAtStop.location,
           routeName,
         ),
+        onClick.preventDefault.map(_ => {
+          org.scalajs.dom.document
+            .querySelector("html")
+            .classList
+            .add("is-clipped")
+          println("Clicked modal open")
+          true
+        }) --> modalActive,
         stopTimeInfo.time.toDumbAmericanString,
       ),
       div(
@@ -248,9 +257,11 @@ object TagsOnlyLocal {
             enabledFeatures =>
               enabledFeatures.isEnabled(Feature.BusAlarms),
           ),
+          modalActive,
         ),
       ),
     )
+  }
 
   def structuredSetOfUpcomingArrivals(
     upcomingArrivalComponentData: UpcomingArrivalComponentData,
