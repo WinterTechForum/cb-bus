@@ -2,58 +2,16 @@ package crestedbutte.laminar
 
 import com.billding.time.{BusDuration, BusTime}
 import com.raquo.laminar.nodes.ReactiveHtmlElement
-import crestedbutte.{
-  BusScheduleAtStop,
-  ElementNames,
-  Feature,
-  GpsCalculations,
-  GpsCoordinates,
-  LateNightRecommendation,
-  Location,
-  NotificationStuff,
-  PhoneNumber,
-  RouteName,
-  StopTimeInfo,
-  TimeCalculations,
-  UpcomingArrivalComponentData,
-  UpcomingArrivalInfo,
-  UpcomingArrivalInfoWithFullSchedule,
-}
-import crestedbutte.Location.StopLocation
-import crestedbutte.NotificationStuff.{desiredAlarms, headsUpAmount}
+import crestedbutte.NotificationStuff.desiredAlarms
 import crestedbutte.dom.BulmaLocal
-import crestedbutte.routes.TownShuttleTimes
-import org.scalajs.dom
+import crestedbutte._
 import org.scalajs.dom.experimental.{
   Notification,
   NotificationOptions,
 }
-import org.scalajs.dom.raw.Position
-import typings.std.global.navigator
 
 import java.time.Clock
 import scala.scalajs.js
-
-// TODO Move these classes
-case class FeatureStatus(
-  feature: Feature,
-  enabled: Boolean)
-
-case class FeatureSets(
-  values: Map[Feature, Boolean]) {
-
-  def isEnabled(
-    feature: Feature,
-  ): Boolean =
-    values(feature) // Unsafe
-  def update(
-    featureStatus: FeatureStatus,
-  ): FeatureSets =
-    copy(
-      values = values + (kv =
-          (featureStatus.feature, featureStatus.enabled)),
-    )
-}
 
 object TagsOnlyLocal {
   import com.raquo.laminar.api.L._
@@ -93,19 +51,10 @@ object TagsOnlyLocal {
     )
 
   def overallPageLayout(
-    clock: Clock,
     $selectedComponent: Signal[ComponentData],
     timeStamps: Signal[BusTime],
     pageMode: AppMode.Value,
-    allComponentData: Seq[ComponentData],
   ) = {
-
-    val initialArrivalsAtAllRouteStops = TimeCalculations
-      .getUpComingArrivalsWithFullScheduleNonZio(
-        clock,
-        TownShuttleTimes,
-      )
-
     val featureUpdates = new EventBus[FeatureStatus]
 
     val initialFeatureSets = FeatureSets(
@@ -122,15 +71,8 @@ object TagsOnlyLocal {
     val gpsPosition: Var[Option[GpsCoordinates]] = Var(None)
 
     val upcomingArrivalData =
-      $selectedComponent.combineWith(timeStamps).foldLeft(
-        _ =>
-          TagsOnlyLocal.structuredSetOfUpcomingArrivals(
-            initialArrivalsAtAllRouteStops,
-            $enabledFeatures,
-            gpsPosition,
-          ),
-      ) {
-        case (_, (route, timestamp)) => { // TODO Start using timestamp below, to avoid passing clock where it's not needed
+      $selectedComponent.combineWith(timeStamps).map {
+        case (route, timestamp) =>
           println("acting on selectedComponent update!")
           route match {
             case ComponentDataTyped(value, componentName) =>
@@ -140,56 +82,36 @@ object TagsOnlyLocal {
               TagsOnlyLocal.structuredSetOfUpcomingArrivals(
                 TimeCalculations
                   .getUpComingArrivalsWithFullScheduleNonZio(
-                    clock,
+                    timestamp,
                     namedRoute,
                   ),
                 $enabledFeatures,
                 gpsPosition,
               )
           }
-        }
       }
 
-    // TODO Honor permissions
     div(
       cls := "bill-box",
       idAttr := "container",
-      child <-- upcomingArrivalData,
+      child <-- upcomingArrivalData, // **THIS IS THE IMPORTANT STUFF** The fact that it's hard to see means I need to remove other bullshit
       timeStamps --> Observer[BusTime](
         onNext = localTime => {
-          val busTimes = desiredAlarms.dequeueAll(_ => true)
-          busTimes.map {
-            busTime =>
-              if (localTime
-                    .between(busTime)
-                    // TODO Direct comparison
-                    .toMinutes >= headsUpAmount.toMinutes)
-                dom.window.setTimeout(
-                  // TODO Replace this with submission to an EventBus[BusTime] that can be read via the RepeatingElement
-                  () =>
-                    // Read submitted time, find difference between it and the current time, then submit a setInterval function
-                    // with the appropriate delay
-                    new Notification(
-                      s"The ${busTime.toString} bus is arriving in ${headsUpAmount.toMinutes} minutes!",
-                      NotificationOptions(
-                        vibrate = js.Array(100d),
-                      ),
-                    ),
-                  (localTime
-                    .between(busTime)
-                    .toMinutes - headsUpAmount.toMinutes) * 60 * 1000,
-                )
-          }
+          desiredAlarms
+            .dequeueAll(_ => true)
+            .map(
+              Experimental
+                .createJankyBusAlertInSideEffectyWay(_, localTime),
+            )
         },
       ),
-      if (pageMode == AppMode.Development) {
+      Option.when(pageMode == AppMode.Development)(
         Experimental.Sandbox(
           timeStamps,
           gpsPosition,
           featureUpdates: EventBus[FeatureStatus],
-        )
-      }
-      else div(),
+        ),
+      ),
     )
   }
 

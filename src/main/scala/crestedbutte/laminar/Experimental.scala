@@ -1,11 +1,17 @@
 package crestedbutte.laminar
 
 import com.billding.time.BusTime
-import crestedbutte.{ElementNames, GpsCoordinates}
+import crestedbutte.NotificationStuff.headsUpAmount
+import crestedbutte.{ElementNames, FeatureStatus, GpsCoordinates}
 import org.scalajs.dom
-import org.scalajs.dom.experimental.Notification
+import org.scalajs.dom.experimental.{
+  Notification,
+  NotificationOptions,
+}
 import org.scalajs.dom.raw.Position
 import typings.std.global.navigator
+
+import scala.scalajs.js
 
 object Experimental {
   import com.raquo.laminar.api.L._
@@ -105,4 +111,27 @@ object Experimental {
       ),
     )
 
+  def createJankyBusAlertInSideEffectyWay(
+    busTime: BusTime,
+    localTime: BusTime,
+  ) =
+    if (localTime
+          .between(busTime)
+          // TODO Direct comparison
+          .toMinutes >= headsUpAmount.toMinutes)
+      dom.window.setTimeout(
+        // TODO Replace this with submission to an EventBus[BusTime] that can be read via the RepeatingElement
+        () =>
+          // Read submitted time, find difference between it and the current time, then submit a setInterval function
+          // with the appropriate delay
+          new Notification(
+            s"The ${busTime.toString} bus is arriving in ${headsUpAmount.toMinutes} minutes!",
+            NotificationOptions(
+              vibrate = js.Array(100d),
+            ),
+          ),
+        (localTime
+          .between(busTime)
+          .toMinutes - headsUpAmount.toMinutes) * 60 * 1000,
+      )
 }

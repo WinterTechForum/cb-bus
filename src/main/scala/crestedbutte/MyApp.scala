@@ -178,18 +178,16 @@ object MyApp extends App {
               duration,
             ) --> clockTicks,
             TagsOnlyLocal
-              .overallPageLayout(javaClock,
-                                 selectedRoute.signal,
-                                 timeStamps,
-                                 pageMode,
-                                 components,
+              .overallPageLayout(
+                selectedRoute.signal,
+                timeStamps,
+                pageMode,
               ),
           ),
         )
       }
       _ <- (for {
         // TODO Get this attached within the normal laminar app
-//        _ <- NotificationStuff.addAlarmBehaviorToTimes
         _ <- ModalBehavior.addModalOpenBehavior
         _ <- ModalBehavior.addModalCloseBehavior
       } yield ()).repeat(Schedule.spaced(1.second))

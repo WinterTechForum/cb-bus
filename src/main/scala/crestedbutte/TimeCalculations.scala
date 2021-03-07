@@ -93,13 +93,9 @@ object TimeCalculations {
     }
 
   def getUpComingArrivalsWithFullScheduleNonZio(
-    javaClock: java.time.Clock,
+    localTime: BusTime,
     busRoute: NamedRoute,
-  ): UpcomingArrivalComponentData = {
-    val localTime = new BusTime(
-      OffsetDateTime.now(javaClock).toLocalTime,
-    )
-    println("calculating with time: " + localTime)
+  ): UpcomingArrivalComponentData =
     UpcomingArrivalComponentData(
       TimeCalculations
         .calculateUpcomingArrivalWithFullScheduleAtAllStops(
@@ -108,5 +104,4 @@ object TimeCalculations {
         ),
       busRoute.routeName,
     )
-  }
 }

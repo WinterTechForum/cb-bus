@@ -3,6 +3,7 @@ package crestedbutte.laminar
 import com.raquo.laminar.api.L._
 import crestedbutte.{
   Feature,
+  FeatureStatus,
   GpsCalculations,
   GpsCoordinates,
   Location,
