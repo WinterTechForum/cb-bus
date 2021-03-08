@@ -47,18 +47,19 @@ object MyApp extends App {
   val fullApplicationLogic =
     for {
       clockParam: Clock.Service <- ZIO.access[Clock](_.get)
-      pageMode <- getOptional("mode", AppMode.fromString)
+      pageMode: AppMode.Value <- getOptional("mode",
+                                             AppMode.fromString)
         .map(
           _.getOrElse(AppMode.Production),
         )
       fixedTime <- getOptional("time", x => Some(BusTime(x)))
+
       clock = if (fixedTime.isDefined)
-        ZLayer.succeed(
-          TurboClock.TurboClock(
-            s"2020-02-21T${fixedTime.get.toString}:00.00-07:00",
-          ),
+        TurboClock.TurboClock(
+          s"2020-02-21T${fixedTime.get.toString}:00.00-07:00",
         )
-      else ZLayer.succeed(clockParam)
+      else clockParam
+
       javaClock = if (fixedTime.isDefined)
         java.time.Clock.fixed(
           OffsetDateTime
@@ -71,12 +72,7 @@ object MyApp extends App {
       else
         java.time.Clock.system(ZoneId.of("America/Denver"))
       _ <- registerServiceWorker()
-//      _ <- NotificationStuff.displayNotificationPermission
       _ <- ZIO {
-        val duration =
-          new FiniteDuration(10, scala.concurrent.duration.SECONDS)
-        val clockTicks = new EventBus[Int]
-
         val initialRouteOpt: Option[String] =
           UrlParsing
             .getUrlParameter(
@@ -84,50 +80,10 @@ object MyApp extends App {
               "route",
             )
 
-        val components = AllRoutes.components(pageMode)
-
-        val selectedRoute: Var[ComponentData] = Var(
-          initialRouteOpt
-            .flatMap(
-              initialRoute =>
-                components.find(
-                  _.componentName.elementNameMatches(initialRoute),
-                ),
-            )
-            .getOrElse(
-              ComponentDataRoute(
-                TownShuttleTimes,
-              ),
-            ),
-        )
-
-        val timeStamps: Signal[BusTime] = clockTicks.events.foldLeft(
-          new BusTime(
-            OffsetDateTime.now(javaClock).toLocalTime,
-          ),
-        )(
-          (oldTime, _) =>
-            new BusTime(
-              OffsetDateTime.now(javaClock).toLocalTime,
-            ),
-        )
-
         dom.document.getElementById("landing-message").innerHTML = ""
         render(
           dom.document.getElementById("landing-message"),
-          div(
-            Bulma.menu(selectedRoute, components),
-            RepeatingElement().repeatWithInterval(
-              1,
-              duration,
-            ) --> clockTicks,
-            TagsOnlyLocal
-              .overallPageLayout(
-                selectedRoute.signal,
-                timeStamps,
-                pageMode,
-              ),
-          ),
+          TagsOnlyLocal.FullApp(pageMode, initialRouteOpt, javaClock),
         )
       }
     } yield {

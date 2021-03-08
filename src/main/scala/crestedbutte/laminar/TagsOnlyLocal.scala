@@ -5,12 +5,14 @@ import com.raquo.laminar.nodes.ReactiveHtmlElement
 import crestedbutte.NotificationStuff.desiredAlarms
 import crestedbutte.dom.BulmaLocal
 import crestedbutte._
+import crestedbutte.routes.{AllRoutes, TownShuttleTimes}
 import org.scalajs.dom.experimental.{
   Notification,
   NotificationOptions,
 }
 
-import java.time.Clock
+import java.time.{Clock, OffsetDateTime}
+import scala.concurrent.duration.FiniteDuration
 import scala.scalajs.js
 
 object TagsOnlyLocal {
@@ -49,6 +51,57 @@ object TagsOnlyLocal {
       span(aria.hidden := true),
       span(aria.hidden := true),
     )
+
+  def FullApp(
+    pageMode: AppMode.Value,
+    initialRouteOpt: Option[String],
+    javaClock: Clock,
+  ) = {
+
+    val clockTicks = new EventBus[Int]
+
+    val components = AllRoutes.components(pageMode)
+
+    val selectedRoute: Var[ComponentData] = Var(
+      initialRouteOpt
+        .flatMap(
+          initialRoute =>
+            components.find(
+              _.componentName.elementNameMatches(initialRoute),
+            ),
+        )
+        .getOrElse(
+          ComponentDataRoute(
+            TownShuttleTimes,
+          ),
+        ),
+    )
+
+    val timeStamps: Signal[BusTime] = clockTicks.events.foldLeft(
+      new BusTime(
+        OffsetDateTime.now(javaClock).toLocalTime,
+      ),
+    )(
+      (oldTime, _) =>
+        new BusTime(
+          OffsetDateTime.now(javaClock).toLocalTime,
+        ),
+    )
+
+    div(
+      Bulma.menu(selectedRoute, components),
+      RepeatingElement().repeatWithInterval(
+        1,
+        new FiniteDuration(10, scala.concurrent.duration.SECONDS),
+      ) --> clockTicks,
+      TagsOnlyLocal
+        .overallPageLayout(
+          selectedRoute.signal,
+          timeStamps,
+          pageMode,
+        ),
+    )
+  }
 
   def overallPageLayout(
     $selectedComponent: Signal[ComponentData],
