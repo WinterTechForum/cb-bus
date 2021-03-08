@@ -3,7 +3,6 @@ package crestedbutte
 import com.billding.time.{BusTime, ColoradoClock, TurboClock}
 import crestedbutte.Browser.Browser
 import crestedbutte.laminar._
-import crestedbutte.routes._
 import org.scalajs.dom
 import org.scalajs.dom.experimental.serviceworkers._
 import zio.clock._
@@ -11,7 +10,6 @@ import zio.console.Console
 import zio.{App, ZIO, ZLayer}
 
 import java.time.{OffsetDateTime, ZoneId}
-import scala.concurrent.duration.FiniteDuration
 import scala.util.{Failure, Success}
 
 object MyApp extends App {
@@ -41,8 +39,6 @@ object MyApp extends App {
             )
             .flatMap(typer),
       )
-
-  import com.raquo.laminar.api.L._
 
   val fullApplicationLogic =
     for {
@@ -81,14 +77,12 @@ object MyApp extends App {
             )
 
         dom.document.getElementById("landing-message").innerHTML = ""
-        render(
+        com.raquo.laminar.api.L.render(
           dom.document.getElementById("landing-message"),
           TagsOnlyLocal.FullApp(pageMode, initialRouteOpt, javaClock),
         )
       }
-    } yield {
-      0
-    }
+    } yield 0
 
   def registerServiceWorker(): ZIO[Browser, Nothing, Unit] =
     ZIO

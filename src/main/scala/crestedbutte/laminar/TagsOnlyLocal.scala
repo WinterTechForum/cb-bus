@@ -3,54 +3,15 @@ package crestedbutte.laminar
 import com.billding.time.{BusDuration, BusTime}
 import com.raquo.laminar.nodes.ReactiveHtmlElement
 import crestedbutte.NotificationStuff.desiredAlarms
-import crestedbutte.dom.BulmaLocal
 import crestedbutte._
+import crestedbutte.dom.BulmaLocal
 import crestedbutte.routes.{AllRoutes, TownShuttleTimes}
-import org.scalajs.dom.experimental.{
-  Notification,
-  NotificationOptions,
-}
 
 import java.time.{Clock, OffsetDateTime}
 import scala.concurrent.duration.FiniteDuration
-import scala.scalajs.js
 
 object TagsOnlyLocal {
   import com.raquo.laminar.api.L._
-
-  def createPopupContent(
-    scheduleAtStop: BusScheduleAtStop,
-  ) =
-    div(
-      div(
-        idAttr := s"popup_${scheduleAtStop.location}",
-        cls := "overlay light",
-        a(cls := "cancel", href := "#", div("x" /*&times*/ )),
-        div(cls := "popup",
-            h2("Later Arrivals"),
-            div(cls := "content",
-                div(
-                  scheduleAtStop.times.map(
-                    time =>
-                      div(
-                        span(time.toDumbAmericanString),
-                      ),
-                  ),
-                ),
-            ),
-        ),
-      ),
-    )
-
-  def hamburgerMenu() =
-    a(role := "button",
-      cls := "navbar-burger",
-      aria.label := "menu",
-      aria.expanded := false,
-      span(aria.hidden := true),
-      span(aria.hidden := true),
-      span(aria.hidden := true),
-    )
 
   def FullApp(
     pageMode: AppMode.Value,
@@ -153,7 +114,7 @@ object TagsOnlyLocal {
           desiredAlarms
             .dequeueAll(_ => true)
             .map(
-              Experimental
+              Experimental.Notifications
                 .createJankyBusAlertInSideEffectyWay(_, localTime),
             )
         },
@@ -165,17 +126,6 @@ object TagsOnlyLocal {
           featureUpdates: EventBus[FeatureStatus],
         ),
       ),
-    )
-  }
-
-  def busScheduleDiv(
-    containerName: String,
-  ) = {
-    println("Making container : " + containerName)
-    div(cls := ElementNames.BoxClass,
-        idAttr := containerName,
-        div(cls := "timezone"),
-        div(idAttr := ElementNames.contentName),
     )
   }
 
@@ -197,15 +147,6 @@ object TagsOnlyLocal {
           safeRideRecommendation.message,
         ),
       ),
-    )
-
-  // TODO Redundant with above saferide link?
-  def phoneLink(
-    phoneNumber: PhoneNumber,
-  ) =
-    a(href := s"tel:${phoneNumber.number}",
-      cls := "link",
-      phoneNumber.name,
     )
 
   def renderWaitTime(
@@ -233,7 +174,7 @@ object TagsOnlyLocal {
               cls := "map-link",
               child <-- Components
                 .distanceBetween($gpsPosition.signal, location),
-              location.gpsCoordinates.map(geoLinkForStop),
+              location.gpsCoordinates.map(Components.GeoLink),
             )
           else
             div(),
@@ -243,58 +184,20 @@ object TagsOnlyLocal {
       div(cls := "upcoming-information", content),
     )
 
-  def geoLinkForStop(
-    gpsCoordinates: GpsCoordinates,
-  ) =
-    a(
-      cls := "link",
-      //    <a href="geo:37.786971,-122.399677;u=35">open map</a>
-//          href := s"geo:${stopLocation.gpsCoordinates.latitude}, ${stopLocation.gpsCoordinates.longitude}"
-      href := s"https://www.google.com/maps/search/?api=1&query=${gpsCoordinates.latitude},${gpsCoordinates.longitude}",
-      svgIcon("glyphicons-basic-592-map.svg"),
-    )
-
-  def activateModal(
-    targetName: String,
-  ): Unit =
-    org.scalajs.dom.document.body
-      .querySelector(targetName)
-      .classList
-      .add("is-active")
-
-  def modalContentElementNameTyped(
-    location: Location.Value,
-    routeName: RouteName,
-  ) =
-    dataAttr("schedule-modal") := modalContentElementName(location,
-                                                          routeName)
-
-  def modalContentElementName(
-    location: Location.Value,
-    routeName: RouteName,
-  ) =
-    "modal_content_" + routeName.name + "_" + location.elementName
-
   def renderStopTimeInfo(
     stopTimeInfo: StopTimeInfo,
     busScheduleAtStop: BusScheduleAtStop,
-    routeName: RouteName,
     $enabledFeatures: Signal[FeatureSets],
   ) = {
     val modalActive = Var(false)
     div(
       button(
         cls := "arrival-time button open-arrival-time-modal",
-        modalContentElementNameTyped(
-          busScheduleAtStop.location,
-          routeName,
-        ),
         onClick.preventDefault.map(_ => {
           org.scalajs.dom.document
             .querySelector("html")
             .classList
             .add("is-clipped")
-          println("Clicked modal open")
           true
         }) --> modalActive,
         stopTimeInfo.time.toDumbAmericanString,
@@ -304,8 +207,6 @@ object TagsOnlyLocal {
         renderWaitTime(stopTimeInfo.waitingDuration),
         BulmaLocal.bulmaModal(
           busScheduleAtStop,
-          modalContentElementName(busScheduleAtStop.location,
-                                  routeName),
           $enabledFeatures.map(
             enabledFeatures =>
               enabledFeatures.isEnabled(Feature.BusAlarms),
@@ -347,7 +248,6 @@ object TagsOnlyLocal {
                   renderStopTimeInfo(
                     stopTimeInfo,
                     fullScheduleAtStop,
-                    upcomingArrivalComponentData.routeName,
                     $enabledFeatures,
                   )
                 // TODO turn this into a feature?
@@ -362,33 +262,6 @@ object TagsOnlyLocal {
             )
         },
     )
-
-  def svgIconForAlarm(
-    name: String,
-    classes: String,
-    busTime: BusTime,
-  ) = {
-    val clickObserverNarrow = Observer[BusTime](
-      onNext = ev => {
-        // This will give the user an idea of what the eventual notification will look/sound like
-        // While also letting them know that they successfully scheduled it.
-        new Notification(
-          s"You will be alerted with a Notification like this when the bus is ${NotificationStuff.headsUpAmount.toMinutes} minutes away.",
-          NotificationOptions(
-            vibrate = js.Array(100d),
-          ),
-        )
-        desiredAlarms.append(ev)
-      },
-    )
-    img(
-      cls := "glyphicon " + classes,
-      src := s"/glyphicons/svg/individual-svg/$name",
-      alt := "Thanks for riding the bus!",
-      verticalAlign := "middle",
-      onClick.map(_ => busTime) --> clickObserverNarrow,
-    )
-  }
 
   def svgIcon(
     name: String,

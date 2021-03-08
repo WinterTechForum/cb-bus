@@ -1,8 +1,13 @@
 package crestedbutte.laminar
 
 import com.billding.time.BusTime
-import crestedbutte.NotificationStuff.headsUpAmount
-import crestedbutte.{ElementNames, FeatureStatus, GpsCoordinates}
+import crestedbutte.NotificationStuff.{desiredAlarms, headsUpAmount}
+import crestedbutte.{
+  ElementNames,
+  FeatureStatus,
+  GpsCoordinates,
+  NotificationStuff,
+}
 import org.scalajs.dom
 import org.scalajs.dom.experimental.{
   Notification,
@@ -77,6 +82,56 @@ object Experimental {
       },
     )
 
+    def createJankyBusAlertInSideEffectyWay(
+      busTime: BusTime,
+      localTime: BusTime,
+    ) =
+      if (localTime
+            .between(busTime)
+            // TODO Direct comparison
+            .toMinutes >= headsUpAmount.toMinutes)
+        dom.window.setTimeout(
+          // TODO Replace this with submission to an EventBus[BusTime] that can be read via the RepeatingElement
+          () =>
+            // Read submitted time, find difference between it and the current time, then submit a setInterval function
+            // with the appropriate delay
+            new Notification(
+              s"The ${busTime.toString} bus is arriving in ${headsUpAmount.toMinutes} minutes!",
+              NotificationOptions(
+                vibrate = js.Array(100d),
+              ),
+            ),
+          (localTime
+            .between(busTime)
+            .toMinutes - headsUpAmount.toMinutes) * 60 * 1000,
+        )
+
+    def AlarmIcon(
+      name: String,
+      classes: String,
+      busTime: BusTime,
+    ) = {
+      val clickObserverNarrow = Observer[BusTime](
+        onNext = ev => {
+          // This will give the user an idea of what the eventual notification will look/sound like
+          // While also letting them know that they successfully scheduled it.
+          new Notification(
+            s"You will be alerted with a Notification like this when the bus is ${NotificationStuff.headsUpAmount.toMinutes} minutes away.",
+            NotificationOptions(
+              vibrate = js.Array(100d),
+            ),
+          )
+          desiredAlarms.append(ev)
+        },
+      )
+      img(
+        cls := "glyphicon " + classes,
+        src := s"/glyphicons/svg/individual-svg/$name",
+        alt := "Thanks for riding the bus!",
+        verticalAlign := "middle",
+        onClick.map(_ => busTime) --> clickObserverNarrow,
+      )
+    }
   }
 
   def Sandbox(
@@ -111,27 +166,4 @@ object Experimental {
       ),
     )
 
-  def createJankyBusAlertInSideEffectyWay(
-    busTime: BusTime,
-    localTime: BusTime,
-  ) =
-    if (localTime
-          .between(busTime)
-          // TODO Direct comparison
-          .toMinutes >= headsUpAmount.toMinutes)
-      dom.window.setTimeout(
-        // TODO Replace this with submission to an EventBus[BusTime] that can be read via the RepeatingElement
-        () =>
-          // Read submitted time, find difference between it and the current time, then submit a setInterval function
-          // with the appropriate delay
-          new Notification(
-            s"The ${busTime.toString} bus is arriving in ${headsUpAmount.toMinutes} minutes!",
-            NotificationOptions(
-              vibrate = js.Array(100d),
-            ),
-          ),
-        (localTime
-          .between(busTime)
-          .toMinutes - headsUpAmount.toMinutes) * 60 * 1000,
-      )
 }

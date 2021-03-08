@@ -1,13 +1,23 @@
 package crestedbutte.laminar
 
+import com.billding.time.BusTime
 import com.raquo.laminar.api.L._
+import crestedbutte.NotificationStuff.desiredAlarms
+import crestedbutte.laminar.TagsOnlyLocal.svgIcon
 import crestedbutte.{
   Feature,
   FeatureStatus,
   GpsCalculations,
   GpsCoordinates,
   Location,
+  NotificationStuff,
 }
+import org.scalajs.dom.experimental.{
+  Notification,
+  NotificationOptions,
+}
+
+import scala.scalajs.js
 
 object Components {
 
@@ -58,4 +68,14 @@ object Components {
       Feature.values.map(featureToggle),
     )
   }
+
+  def GeoLink(
+    gpsCoordinates: GpsCoordinates,
+  ) =
+    a(
+      cls := "link",
+      href := s"https://www.google.com/maps/search/?api=1&query=${gpsCoordinates.latitude},${gpsCoordinates.longitude}",
+      svgIcon("glyphicons-basic-592-map.svg"),
+    )
+
 }

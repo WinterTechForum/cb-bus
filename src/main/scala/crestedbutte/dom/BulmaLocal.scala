@@ -2,19 +2,17 @@ package crestedbutte.dom
 
 import crestedbutte.BusScheduleAtStop
 import com.raquo.laminar.api.L._
-import crestedbutte.laminar.TagsOnlyLocal
+import crestedbutte.laminar.{Components, Experimental, TagsOnlyLocal}
 import org.scalajs.dom.experimental.Notification
 
 object BulmaLocal {
 
   def bulmaModal(
     scheduleAtStop: BusScheduleAtStop,
-    idValue: String,
     $alertsEnabled: Signal[Boolean],
     $active: Var[Boolean],
   ) =
     div(
-      idAttr := idValue,
       cls := "modal",
       cls <-- $active.signal.map(
         active => if (active) "is-active" else "",
@@ -37,7 +35,7 @@ object BulmaLocal {
                 child <-- $alertsEnabled.map(
                   alertsEnabled =>
                     if (Notification.permission == "granted" && alertsEnabled) // TODO Make this check less Stringy
-                      TagsOnlyLocal.svgIconForAlarm(
+                      Experimental.Notifications.AlarmIcon(
                         "glyphicons-basic-443-bell-ringing.svg",
                         "arrival-time-alarm",
                         time,
