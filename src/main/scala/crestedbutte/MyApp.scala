@@ -107,3 +107,106 @@ object MyApp extends App {
       }
 
 }
+
+object RoutingStuff {
+  import com.raquo.laminar.api.L._
+
+  import com.raquo.laminar.api.L
+  import com.raquo.waypoint._
+  import upickle.default._
+  import org.scalajs.dom
+
+  sealed trait Page
+  sealed trait AppPage extends Page
+
+  sealed case class UserPage(
+    userId: Int)
+      extends AppPage
+
+  sealed case class NotePage(
+    workspaceId: Int,
+    noteId: Int)
+      extends AppPage
+  case object LoginPage extends Page
+
+  implicit val NotePageRW: ReadWriter[NotePage] = macroRW
+  implicit val UserPageRW: ReadWriter[UserPage] = macroRW
+  implicit val AppPageRW: ReadWriter[AppPage] = macroRW
+  implicit val rw: ReadWriter[Page] = macroRW
+
+  val userRoute = Route(
+    encode = (userPage: UserPage) => userPage.userId,
+    decode = (arg: Int) => UserPage(userId = arg),
+    pattern = root / "user" / segment[Int] / endOfSegments,
+  )
+
+  val loginRoute =
+    Route.static(LoginPage, root / "login" / endOfSegments)
+
+  val router = new Router[Page](
+    routes = List(userRoute, loginRoute),
+    getPageTitle = _.toString, // mock page title (displayed in the browser tab next to favicon)
+    serializePage = page => write(page)(rw), // serialize page data for storage in History API log
+    deserializePage = pageStr => read(pageStr)(rw), // deserialize the above
+  )(
+    $popStateEvent = L.windowEvents.onPopState, // this is how Waypoint avoids an explicit dependency on Laminar
+    owner = L.unsafeWindowOwner, // this router will live as long as the window
+  )
+
+  val pageSplitter =
+    SplitRender[Page, HtmlElement](router.$currentPage)
+      .collectSignal[AppPage] {
+        $appPage =>
+          renderAppPage($appPage)
+      }
+      .collectStatic(LoginPage) { div("Login page") }
+
+  def renderUserPage(
+    $userPage: Signal[UserPage],
+  ): Div =
+    div(
+      "User page ",
+      child.text <-- $userPage.map(user => user.userId),
+    )
+
+  val splitter = SplitRender[Page, HtmlElement](router.$currentPage)
+    .collectSignal[UserPage] {
+      $userPage =>
+        renderUserPage($userPage)
+    }
+    .collectStatic(LoginPage) { div("Login page") }
+
+  val app: Div = div(
+    h1("Routing App"),
+    child <-- splitter.$view,
+  )
+
+  def renderNotePage(
+    $notePage: Signal[NotePage],
+  ): Div =
+    div(
+      "Note page. workspaceid: ",
+      child.text <-- $notePage.map(note => note.workspaceId),
+      ", noteid: ",
+      child.text <-- $notePage.map(note => note.noteId),
+    )
+
+  def renderAppPage(
+    $appPage: Signal[AppPage],
+  ): Div = {
+    val appPageSplitter = SplitRender[AppPage, HtmlElement]($appPage)
+      .collectSignal[UserPage] {
+        $userPage =>
+          renderUserPage($userPage)
+      }
+      .collectSignal[NotePage] {
+        $notePage =>
+          renderNotePage($notePage)
+      }
+    div(
+      h2("App header"),
+      child <-- appPageSplitter.$view,
+    )
+  }
+
+}

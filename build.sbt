@@ -59,6 +59,8 @@ libraryDependencies ++= Seq(
   "com.lihaoyi" %%% "pprint" % "0.5.9",
   "com.raquo" %%% "laminar" % "0.12.1",
   "com.raquo" %%% "airstream" % "0.12.0",
+  "com.lihaoyi" %% "upickle" % "0.9.6",
+  "com.raquo" %%% "waypoint" % "0.3.0",   // Requires Airstream 0.12.0 & URL DSL 0.3.2
   "com.beachape" %%% "enumeratum" % "1.6.1"
 
 //  "com.github.japgolly.scalacss" %%% "core" % "0.6.0",
