@@ -9,6 +9,7 @@ import crestedbutte.{
   FeatureStatus,
   GpsCalculations,
   GpsCoordinates,
+  LateNightRecommendation,
   Location,
   NotificationStuff,
 }
@@ -26,22 +27,19 @@ object Components {
     location: Location.Value,
   ) =
     gpsPosition.map(
-      gpsCoordsOpt =>
-        gpsCoordsOpt
-          .flatMap(
-            userCords =>
-              location.gpsCoordinates.map(
-                stopCoords =>
-                  div(
-                    GpsCalculations
-                      .distanceInKmBetweenEarthCoordinatesT(
-                        userCords,
-                        stopCoords,
-                      ),
+      _.flatMap(
+        userCords =>
+          location.gpsCoordinates.map(
+            stopCoords =>
+              div(
+                GpsCalculations
+                  .distanceInKmBetweenEarthCoordinatesT(
+                    userCords,
+                    stopCoords,
                   ),
               ),
-          )
-          .getOrElse(div()),
+          ),
+      ).getOrElse(div()),
     )
 
   def FeatureControlCenter(
@@ -76,6 +74,26 @@ object Components {
       cls := "link",
       href := s"https://www.google.com/maps/search/?api=1&query=${gpsCoordinates.latitude},${gpsCoordinates.longitude}",
       svgIcon("glyphicons-basic-592-map.svg"),
+    )
+
+  def SafeRideLink(
+    safeRideRecommendation: LateNightRecommendation,
+  ) =
+    div(
+      cls := "late-night-call-button",
+      a(
+        href := s"tel:${safeRideRecommendation.phoneNumber}",
+        cls := "link",
+        button(
+          cls := "button",
+          img(
+            cls := "glyphicon",
+            src := "/glyphicons/svg/individual-svg/glyphicons-basic-465-call.svg",
+            alt := "Call Late Night Shuttle!",
+          ),
+          safeRideRecommendation.message,
+        ),
+      ),
     )
 
 }

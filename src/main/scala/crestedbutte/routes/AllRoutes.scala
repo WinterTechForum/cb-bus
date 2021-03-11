@@ -5,9 +5,8 @@ import crestedbutte.laminar.AppMode.AppMode
 import crestedbutte.laminar.{
   AppMode,
   ComponentData,
-  ComponentDataRoute,
-  ComponentDataTyped,
   LaminarRoundTripCalculator,
+  RoundTripCalculatorComponent,
 }
 
 object AllRoutes {
@@ -26,30 +25,17 @@ object AllRoutes {
     appMode: AppMode,
   ): Seq[ComponentData] =
     if (appMode == AppMode.Development)
-      mtnExpressRoutes.routesWithTimes
-        .map(ComponentDataRoute) ++:
+      mtnExpressRoutes.routesWithTimes ++:
       Seq(
-        laminar.ComponentDataRoute(
-          RtaNorthbound.fullSchedule,
-        ),
-        laminar.ComponentDataRoute(
-          RtaSouthbound.fullSchedule,
-        ),
-        ComponentDataTyped(
-          "RoundTripCalculator",
-          LaminarRoundTripCalculator.calculatorComponentName,
-        ),
+        RtaNorthbound.fullSchedule,
+        RtaSouthbound.fullSchedule,
+        RoundTripCalculatorComponent,
       )
     else
-      mtnExpressRoutes.routesWithTimes
-        .map(ComponentDataRoute) ++:
+      mtnExpressRoutes.routesWithTimes ++:
       Seq(
-        laminar.ComponentDataRoute(
-          RtaNorthbound.fullSchedule,
-        ),
-        laminar.ComponentDataRoute(
-          RtaSouthbound.fullSchedule,
-        ),
+        RtaNorthbound.fullSchedule,
+        RtaSouthbound.fullSchedule,
       )
 
 }

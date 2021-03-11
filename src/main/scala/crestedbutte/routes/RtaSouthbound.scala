@@ -3,6 +3,7 @@ package crestedbutte.routes
 import com.billding.time.BusDuration.toBusDuration
 import com.billding.time.BusTime
 import crestedbutte._
+import crestedbutte.laminar.NamedRoute
 
 object RtaSouthbound {
 

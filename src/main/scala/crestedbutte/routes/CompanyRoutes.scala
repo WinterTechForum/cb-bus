@@ -1,6 +1,6 @@
 package crestedbutte.routes
 
-import crestedbutte.NamedRoute
+import crestedbutte.laminar.NamedRoute
 
 class CompanyRoutes(
   name: String,

@@ -1,6 +1,7 @@
 package crestedbutte
 
 import com.billding.time.BusTime
+import crestedbutte.laminar.NamedRoute
 import zio.{Has, ZIO}
 import zio.clock.Clock
 

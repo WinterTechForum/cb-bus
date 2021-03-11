@@ -32,9 +32,7 @@ object TagsOnlyLocal {
             ),
         )
         .getOrElse(
-          ComponentDataRoute(
-            TownShuttleTimes,
-          ),
+          TownShuttleTimes,
         ),
     )
 
@@ -43,7 +41,7 @@ object TagsOnlyLocal {
         OffsetDateTime.now(javaClock).toLocalTime,
       ),
     )(
-      (oldTime, _) =>
+      (_, _) =>
         new BusTime(
           OffsetDateTime.now(javaClock).toLocalTime,
         ),
@@ -51,10 +49,11 @@ object TagsOnlyLocal {
 
     div(
       Bulma.menu(selectedRoute, components),
-      RepeatingElement().repeatWithInterval(
-        1,
-        new FiniteDuration(10, scala.concurrent.duration.SECONDS),
-      ) --> clockTicks,
+      RepeatingElement()
+        .repeatWithInterval( // This acts like a Dune thumper
+          1,
+          new FiniteDuration(10, scala.concurrent.duration.SECONDS),
+        ) --> clockTicks,
       TagsOnlyLocal
         .overallPageLayout(
           selectedRoute.signal,
@@ -86,13 +85,12 @@ object TagsOnlyLocal {
 
     val upcomingArrivalData =
       $selectedComponent.combineWith(timeStamps).map {
-        case (route, timestamp) =>
-          println("acting on selectedComponent update!")
-          route match {
-            case ComponentDataTyped(value, componentName) =>
+        case (componentData, timestamp) =>
+          componentData match {
+            case RoundTripCalculatorComponent =>
               LaminarRoundTripCalculator
                 .RoundTripCalculatorLaminar()
-            case ComponentDataRoute(namedRoute) =>
+            case namedRoute: NamedRoute =>
               TagsOnlyLocal.structuredSetOfUpcomingArrivals(
                 TimeCalculations
                   .getUpComingArrivalsWithFullScheduleNonZio(
@@ -129,26 +127,6 @@ object TagsOnlyLocal {
     )
   }
 
-  def safeRideLink(
-    safeRideRecommendation: LateNightRecommendation,
-  ) =
-    div(
-      cls := "late-night-call-button",
-      a(
-        href := s"tel:${safeRideRecommendation.phoneNumber}",
-        cls := "link",
-        button(
-          cls := "button",
-          img(
-            cls := "glyphicon",
-            src := "/glyphicons/svg/individual-svg/glyphicons-basic-465-call.svg",
-            alt := "Call Late Night Shuttle!",
-          ),
-          safeRideRecommendation.message,
-        ),
-      ),
-    )
-
   def renderWaitTime(
     duration: BusDuration,
   ) =
@@ -161,7 +139,7 @@ object TagsOnlyLocal {
     location: Location.Value,
     content: ReactiveHtmlElement[_],
     $mapLinksEnabled: Signal[Boolean],
-    $gpsPosition: Var[Option[GpsCoordinates]],
+    $gpsPosition: Signal[Option[GpsCoordinates]], // TODO Should this be an `Option[Signal[GpsCoordinates]` instead?
     /* TODO: waitDuration: Duration*/
   ) =
     div(
@@ -173,7 +151,7 @@ object TagsOnlyLocal {
             div(
               cls := "map-link",
               child <-- Components
-                .distanceBetween($gpsPosition.signal, location),
+                .distanceBetween($gpsPosition, location),
               location.gpsCoordinates.map(Components.GeoLink),
             )
           else
@@ -217,24 +195,29 @@ object TagsOnlyLocal {
     )
   }
 
+  def RouteHeader(
+    routeName: RouteName,
+  ) =
+    div(
+      cls := "route-header",
+      span(
+        cls := "route-header_name",
+        routeName.userFriendlyName + " Departures",
+      ),
+      img(
+        cls := "glyphicon route-header_icon",
+        src := "/glyphicons/svg/individual-svg/glyphicons-basic-32-bus.svg",
+        alt := "Thanks for riding the bus!",
+      ),
+    )
+
   def structuredSetOfUpcomingArrivals(
     upcomingArrivalComponentData: UpcomingArrivalComponentData,
     $enabledFeatures: Signal[FeatureSets],
     gpsPosition: Var[Option[GpsCoordinates]],
   ) =
     div(
-      div(
-        cls := "route-header",
-        span(
-          cls := "route-header_name",
-          upcomingArrivalComponentData.routeName.userFriendlyName + " Departures",
-        ),
-        img(
-          cls := "glyphicon route-header_icon",
-          src := "/glyphicons/svg/individual-svg/glyphicons-basic-32-bus.svg",
-          alt := "Thanks for riding the bus!",
-        ),
-      ),
+      RouteHeader(upcomingArrivalComponentData.routeName),
       upcomingArrivalComponentData.upcomingArrivalInfoForAllRoutes
         .map {
           case UpcomingArrivalInfoWithFullSchedule(
@@ -250,15 +233,14 @@ object TagsOnlyLocal {
                     fullScheduleAtStop,
                     $enabledFeatures,
                   )
-                // TODO turn this into a feature?
                 case Right(safeRideRecommendation) =>
-                  safeRideLink(safeRideRecommendation)
+                  Components.SafeRideLink(safeRideRecommendation)
               },
               $enabledFeatures.map(
                 enabledFeatures =>
                   enabledFeatures.isEnabled(Feature.MapLinks),
               ),
-              gpsPosition,
+              gpsPosition.signal,
             )
         },
     )

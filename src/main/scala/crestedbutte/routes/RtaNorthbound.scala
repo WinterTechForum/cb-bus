@@ -1,11 +1,11 @@
 package crestedbutte.routes
 
 import com.billding.time.BusDuration.toBusDuration
+import crestedbutte.laminar.NamedRoute
 import crestedbutte.{
   BusSchedule,
   BusScheduleAtStop,
   Location,
-  NamedRoute,
   RouteLeg,
   RouteName,
 }

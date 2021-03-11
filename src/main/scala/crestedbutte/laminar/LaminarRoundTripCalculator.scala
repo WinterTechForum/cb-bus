@@ -4,7 +4,6 @@ import com.billding.time.{BusDuration, BusTime}
 import crestedbutte.{
   Location,
   LocationWithTime,
-  NamedRoute,
   RoundTrip,
   RoundTripCalculator,
   RoundTripParams,
