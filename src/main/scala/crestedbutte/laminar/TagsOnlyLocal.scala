@@ -151,7 +151,7 @@ object TagsOnlyLocal {
             div(
               cls := "map-link",
               child <-- Components
-                .distanceBetween($gpsPosition, location),
+                .distanceFromCurrentLocationToStop($gpsPosition, location),
               location.gpsCoordinates.map(Components.GeoLink),
             )
           else

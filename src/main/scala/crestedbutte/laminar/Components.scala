@@ -1,28 +1,12 @@
 package crestedbutte.laminar
 
-import com.billding.time.BusTime
 import com.raquo.laminar.api.L._
-import crestedbutte.NotificationStuff.desiredAlarms
 import crestedbutte.laminar.TagsOnlyLocal.svgIcon
-import crestedbutte.{
-  Feature,
-  FeatureStatus,
-  GpsCalculations,
-  GpsCoordinates,
-  LateNightRecommendation,
-  Location,
-  NotificationStuff,
-}
-import org.scalajs.dom.experimental.{
-  Notification,
-  NotificationOptions,
-}
-
-import scala.scalajs.js
+import crestedbutte._
 
 object Components {
 
-  def distanceBetween(
+  def distanceFromCurrentLocationToStop(
     gpsPosition: Signal[Option[GpsCoordinates]],
     location: Location.Value,
   ) =
@@ -47,7 +31,7 @@ object Components {
   ) = {
 
     // TODO Make this a separate component?
-    def featureToggle(
+    def FeatureToggle(
       feature: Feature,
     ) =
       label(
@@ -63,7 +47,7 @@ object Components {
 
     div(
       "Control Center",
-      Feature.values.map(featureToggle),
+      Feature.values.map(FeatureToggle),
     )
   }
 
