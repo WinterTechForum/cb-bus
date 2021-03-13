@@ -59,7 +59,7 @@ libraryDependencies ++= Seq(
   "com.lihaoyi" %%% "pprint" % "0.5.9",
   "com.raquo" %%% "laminar" % "0.12.1",
   "com.raquo" %%% "airstream" % "0.12.0",
-  "com.lihaoyi" %% "upickle" % "0.9.6",
+  "com.lihaoyi" %%% "upickle" % "1.3.0",
   "com.raquo" %%% "waypoint" % "0.3.0",   // Requires Airstream 0.12.0 & URL DSL 0.3.2
   "com.beachape" %%% "enumeratum" % "1.6.1"
 
@@ -86,6 +86,7 @@ cbBuild := {
 //  "ls ./target/scala-2.13" !
   (Process("mkdir ./src/main/resources/compiledJavascript") #|| Process("mkdir ./src/main/resources/compiledJavascript/busriderapp") #||
     Process("cp ./target/scala-2.13/busriderapp-fastopt/main.js ./src/main/resources/compiledJavascript/busriderapp") #&&
+    Process("cp ./target/scala-2.13/busriderapp-fastopt/main.js.map ./src/main/resources/compiledJavascript/busriderapp") #&&
 //    Process("cp ./target/scala-2.13/busriderapp-fastopt.js.map ./src/main/resources/compiledJavascript/") #&&
     Process("cp sw/target/scala-2.12/sw-opt.js ./src/main/resources/") #&&
     Process("cp sw/target/scala-2.12/sw-opt.js.map ./src/main/resources/") #&&
