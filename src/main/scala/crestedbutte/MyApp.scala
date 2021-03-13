@@ -2,7 +2,7 @@ package crestedbutte
 
 import com.billding.time.{BusTime, ColoradoClock, TurboClock}
 import crestedbutte.Browser.Browser
-import crestedbutte.laminar.AppMode.AppMode
+import crestedbutte.laminar.AppMode
 import crestedbutte.laminar._
 import org.scalajs.dom
 import org.scalajs.dom.experimental.serviceworkers._
@@ -46,8 +46,7 @@ object MyApp extends App {
   val fullApplicationLogic =
     for {
       clockParam: Clock.Service <- ZIO.access[Clock](_.get)
-      pageMode: AppMode.Value <- getOptional("mode",
-                                             AppMode.fromString)
+      pageMode: AppMode <- getOptional("mode", AppMode.withNameOption)
         .map(
           _.getOrElse(AppMode.Production),
         )
@@ -82,8 +81,8 @@ object MyApp extends App {
         dom.document.getElementById("landing-message").innerHTML = ""
         com.raquo.laminar.api.L.render(
           dom.document.getElementById("landing-message"),
-          RoutingStuff.app,
-//          TagsOnlyLocal.FullApp(pageMode, initialRouteOpt, javaClock),
+//          RoutingStuff.app,
+          TagsOnlyLocal.FullApp(pageMode, initialRouteOpt, javaClock),
         )
       }
     } yield 0
@@ -165,8 +164,10 @@ object RoutingStuff {
       encode = page => (Some(page.mode), page.time),
       decode = {
         case (mode, time) =>
-          LoginPage(mode = mode.getOrElse(AppMode.Production.name),
-                    time = time)
+          LoginPage(
+            mode = mode.getOrElse(AppMode.Production.toString),
+            time = time,
+          )
       },
       pattern = (root / "index_dev.html" / endOfSegments) ? (param[
           String,

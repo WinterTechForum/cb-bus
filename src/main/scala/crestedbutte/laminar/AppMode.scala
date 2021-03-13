@@ -1,26 +1,14 @@
 package crestedbutte.laminar
 
-object AppMode extends Enumeration {
+import enumeratum._
 
-  sealed protected case class Val(
-    name: String)
-      extends super.Val(name)
+sealed trait AppMode extends EnumEntry
 
-  import scala.language.implicitConversions
+object AppMode extends Enum[AppMode] {
+  val values = findValues // macro
 
-  implicit def valueToStopLocationVal(
-    x: Value,
-  ): Val =
-    x.asInstanceOf[Val]
+  case object Production extends AppMode
+  case object dev extends AppMode
+  case object Premium extends AppMode
 
-  type AppMode = Value
-
-  val Production: Val = Val("production")
-  val Development: Val = Val("dev")
-  val Premium: Val = Val("premium")
-
-  def fromString(
-    input: String,
-  ) =
-    values.find(_.name == input)
 }

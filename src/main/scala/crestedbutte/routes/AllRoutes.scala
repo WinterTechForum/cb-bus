@@ -1,7 +1,7 @@
 package crestedbutte.routes
 
 import crestedbutte.laminar
-import crestedbutte.laminar.AppMode.AppMode
+import crestedbutte.laminar.AppMode
 import crestedbutte.laminar.{
   AppMode,
   ComponentData,
@@ -24,7 +24,7 @@ object AllRoutes {
   def components(
     appMode: AppMode,
   ): Seq[ComponentData] =
-    if (appMode == AppMode.Development)
+    if (appMode == AppMode.dev)
       mtnExpressRoutes.routesWithTimes ++:
       Seq(
         RtaNorthbound.fullSchedule,

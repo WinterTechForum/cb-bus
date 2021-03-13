@@ -14,7 +14,7 @@ object TagsOnlyLocal {
   import com.raquo.laminar.api.L._
 
   def FullApp(
-    pageMode: AppMode.Value,
+    pageMode: AppMode,
     initialRouteOpt: Option[String],
     javaClock: Clock,
   ) = {
@@ -66,7 +66,7 @@ object TagsOnlyLocal {
   def overallPageLayout(
     $selectedComponent: Signal[ComponentData],
     timeStamps: Signal[BusTime],
-    pageMode: AppMode.Value,
+    pageMode: AppMode,
   ) = {
     val featureUpdates = new EventBus[FeatureStatus]
 
@@ -117,7 +117,7 @@ object TagsOnlyLocal {
             )
         },
       ),
-      Option.when(pageMode == AppMode.Development)(
+      Option.when(pageMode == AppMode.dev)(
         Experimental.Sandbox(
           timeStamps,
           gpsPosition,
