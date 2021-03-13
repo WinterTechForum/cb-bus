@@ -2,7 +2,7 @@ package crestedbutte.laminar
 
 object AppMode extends Enumeration {
 
-  protected case class Val(
+  sealed protected case class Val(
     name: String)
       extends super.Val(name)
 

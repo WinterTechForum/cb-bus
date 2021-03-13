@@ -2,6 +2,7 @@ package crestedbutte
 
 import com.billding.time.{BusTime, ColoradoClock, TurboClock}
 import crestedbutte.Browser.Browser
+import crestedbutte.laminar.AppMode.AppMode
 import crestedbutte.laminar._
 import org.scalajs.dom
 import org.scalajs.dom.experimental.serviceworkers._
@@ -133,13 +134,15 @@ object RoutingStuff {
 
   case class LoginPage(
     mode: String,
-    time: String, // TODO Make this a BusTime instead
+    time: Option[String], // TODO Make this a BusTime instead
   ) extends Page
 
   case object LoginPageOriginal extends Page
 
   val fancyPage = div("hi")
 
+  // TODO User enumeratum for AppMode so that I can do this instead of calling .toString on it
+  // implicit val AppModeRW: ReadWriter[AppMode.Value] = macroRW
   implicit val LoginPageRW: ReadWriter[LoginPage] = macroRW
   implicit val NotePageRW: ReadWriter[NotePage] = macroRW
   implicit val UserPageRW: ReadWriter[UserPage] = macroRW
@@ -158,14 +161,16 @@ object RoutingStuff {
 
   // mode=dev&route=RoundTripCalculator&time=12:01
   val loginRoute =
-    Route.onlyQuery[LoginPage, (String, String)](
-      encode = page => (page.mode, page.time),
+    Route.onlyQuery[LoginPage, (Option[String], Option[String])](
+      encode = page => (Some(page.mode), page.time),
       decode = {
-        case (mode, time) => LoginPage(mode = mode, time = time)
+        case (mode, time) =>
+          LoginPage(mode = mode.getOrElse(AppMode.Production.name),
+                    time = time)
       },
       pattern = (root / "index_dev.html" / endOfSegments) ? (param[
           String,
-        ]("mode") & param[String]("time")),
+        ]("mode").? & param[String]("time").?),
     )
 
   val router = new Router[Page](
