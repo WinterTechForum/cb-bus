@@ -21,6 +21,8 @@ object MyApp extends App {
       ZLayer.succeed(BrowserLive.browser) ++ Console.live ++
       ZLayer.succeed(ColoradoClock.live)
 
+    import com.raquo.waypoint.root
+    println("root: " + root.createPath())
     fullApplicationLogic.provideLayer(myEnvironment).exitCode
   }
 
@@ -79,7 +81,8 @@ object MyApp extends App {
         dom.document.getElementById("landing-message").innerHTML = ""
         com.raquo.laminar.api.L.render(
           dom.document.getElementById("landing-message"),
-          TagsOnlyLocal.FullApp(pageMode, initialRouteOpt, javaClock),
+          RoutingStuff.app,
+//          TagsOnlyLocal.FullApp(pageMode, initialRouteOpt, javaClock),
         )
       }
     } yield 0
@@ -127,8 +130,17 @@ object RoutingStuff {
     workspaceId: Int,
     noteId: Int)
       extends AppPage
-  case object LoginPage extends Page
 
+  case class LoginPage(
+    mode: String,
+    time: String, // TODO Make this a BusTime instead
+  ) extends Page
+
+  case object LoginPageOriginal extends Page
+
+  val fancyPage = div("hi")
+
+  implicit val LoginPageRW: ReadWriter[LoginPage] = macroRW
   implicit val NotePageRW: ReadWriter[NotePage] = macroRW
   implicit val UserPageRW: ReadWriter[UserPage] = macroRW
   implicit val AppPageRW: ReadWriter[AppPage] = macroRW
@@ -140,8 +152,21 @@ object RoutingStuff {
     pattern = root / "user" / segment[Int] / endOfSegments,
   )
 
+  println("Root: " + root.createPath())
+
+  import com.raquo.waypoint._
+
+  // mode=dev&route=RoundTripCalculator&time=12:01
   val loginRoute =
-    Route.static(LoginPage, root / "login" / endOfSegments)
+    Route.onlyQuery[LoginPage, (String, String)](
+      encode = page => (page.mode, page.time),
+      decode = {
+        case (mode, time) => LoginPage(mode = mode, time = time)
+      },
+      pattern = (root / "index_dev.html" / endOfSegments) ? (param[
+          String,
+        ]("mode") & param[String]("time")),
+    )
 
   val router = new Router[Page](
     routes = List(userRoute, loginRoute),
@@ -153,13 +178,16 @@ object RoutingStuff {
     owner = L.unsafeWindowOwner, // this router will live as long as the window
   )
 
-  val pageSplitter =
-    SplitRender[Page, HtmlElement](router.$currentPage)
-      .collectSignal[AppPage] {
-        $appPage =>
-          renderAppPage($appPage)
-      }
-      .collectStatic(LoginPage) { div("Login page") }
+  def renderMyPage(
+    $loginPage: Signal[LoginPage],
+  ) = {
+    println("eh?")
+    div(
+      cls := "bill-box",
+      child.text <-- $loginPage.map("Mode: " + _.mode),
+      child.text <-- $loginPage.map("Time: " + _.time),
+    )
+  }
 
   def renderUserPage(
     $userPage: Signal[UserPage],
@@ -170,11 +198,12 @@ object RoutingStuff {
     )
 
   val splitter = SplitRender[Page, HtmlElement](router.$currentPage)
-    .collectSignal[UserPage] {
-      $userPage =>
-        renderUserPage($userPage)
+    .collectSignal[AppPage] {
+      $appPage =>
+        renderAppPage($appPage)
     }
-    .collectStatic(LoginPage) { div("Login page") }
+    .collectSignal[LoginPage](renderMyPage)
+    .collectStatic(LoginPageOriginal) { div("Login page") }
 
   val app: Div = div(
     h1("Routing App"),
@@ -204,6 +233,7 @@ object RoutingStuff {
           renderNotePage($notePage)
       }
     div(
+      cls := "bill-box",
       h2("App header"),
       child <-- appPageSplitter.$view,
     )
