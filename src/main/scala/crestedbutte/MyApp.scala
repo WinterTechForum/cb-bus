@@ -229,8 +229,6 @@ object RoutingStuff {
           renderNotePage($notePage)
       }
     div(
-      cls := "bill-box",
-      h2("App header"),
       child <-- appPageSplitter.$view,
     )
   }
