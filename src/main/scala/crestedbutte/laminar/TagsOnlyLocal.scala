@@ -135,16 +135,12 @@ object TagsOnlyLocal {
     else
       duration.toMinutes + " min."
 
-  def createBusTimeElement(
-    location: Location.Value,
-    content: ReactiveHtmlElement[_],
+  def GeoBits(
     $mapLinksEnabled: Signal[Boolean],
-    $gpsPosition: Signal[Option[GpsCoordinates]], // TODO Should this be an `Option[Signal[GpsCoordinates]` instead?
-    /* TODO: waitDuration: Duration*/
+    location: Location.Value,
+    $gpsPosition: Signal[Option[GpsCoordinates]],
   ) =
     div(
-      width := "100%",
-      cls := "stop-information",
       child <-- $mapLinksEnabled.map(
         mapLinksEnabled =>
           if (mapLinksEnabled)
@@ -158,6 +154,19 @@ object TagsOnlyLocal {
           else
             div(),
       ),
+    )
+
+  def createBusTimeElement(
+    location: Location.Value,
+    content: ReactiveHtmlElement[_],
+    $mapLinksEnabled: Signal[Boolean],
+    $gpsPosition: Signal[Option[GpsCoordinates]], // TODO Should this be an `Option[Signal[GpsCoordinates]` instead?
+    /* TODO: waitDuration: Duration*/
+  ) =
+    div(
+      width := "100%",
+      cls := "stop-information",
+      GeoBits($mapLinksEnabled, location, $gpsPosition),
       div(cls := "stop-name", div(location.name)),
       div(cls := "stop-alt-name", div(location.altName)),
       div(cls := "upcoming-information", content),
