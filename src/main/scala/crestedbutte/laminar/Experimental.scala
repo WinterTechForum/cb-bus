@@ -1,6 +1,8 @@
 package crestedbutte.laminar
 
 import com.billding.time.BusTime
+import com.raquo.laminar.api.L
+import com.raquo.laminar.nodes.ReactiveHtmlElement
 import crestedbutte.NotificationStuff.{desiredAlarms, headsUpAmount}
 import crestedbutte.{
   ElementNames,
@@ -13,6 +15,7 @@ import org.scalajs.dom.experimental.{
   Notification,
   NotificationOptions,
 }
+import org.scalajs.dom.html
 import org.scalajs.dom.raw.Position
 import typings.std.global.navigator
 
@@ -138,7 +141,8 @@ object Experimental {
     timeStamps: Signal[BusTime],
     $gpsPosition: Var[Option[GpsCoordinates]],
     featureUpdates: EventBus[FeatureStatus],
-  ) =
+  ) = {
+    val (pickedTime, timePicker) = TimePicker.TimePicker()
     div(
       timeStamps.map(
         timestamp => getLocation($gpsPosition),
@@ -164,8 +168,10 @@ object Experimental {
         cls := "button",
         "SubmitMessage to SW",
       ),
-      TimePicker.TimePicker(),
+      child <-- pickedTime.map(time => div("BusTime: " + time)),
+      timePicker,
     )
+  }
 
   sealed trait AM_OR_PM
   case object AM extends AM_OR_PM

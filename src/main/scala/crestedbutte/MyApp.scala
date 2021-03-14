@@ -6,6 +6,8 @@ import crestedbutte.laminar.AppMode
 import crestedbutte.laminar._
 import org.scalajs.dom
 import org.scalajs.dom.experimental.serviceworkers._
+import urldsl.errors.DummyError
+import urldsl.language.QueryParameters
 import zio.clock._
 import zio.console.Console
 import zio.{App, ZIO, ZLayer}
@@ -22,8 +24,6 @@ object MyApp extends App {
       ZLayer.succeed(BrowserLive.browser) ++ Console.live ++
       ZLayer.succeed(ColoradoClock.live)
 
-    import com.raquo.waypoint.root
-    println("root: " + root.createPath())
     fullApplicationLogic.provideLayer(myEnvironment).exitCode
   }
 
@@ -71,7 +71,6 @@ object RoutingStuff {
   import upickle.default._
 
   sealed private trait Page
-  sealed private trait AppPage extends Page
 
   private case class BusPage(
     mode: String,
@@ -99,46 +98,45 @@ object RoutingStuff {
 
   implicit private val AppModeRW: ReadWriter[AppMode] = macroRW
   implicit private val BusPageRW: ReadWriter[BusPage] = macroRW
-  implicit private val AppPageRW: ReadWriter[AppPage] = macroRW
   implicit private val rw: ReadWriter[Page] = macroRW
 
-  println("Root: " + root.createPath())
+  private val encodePage
+    : BusPage => (Option[String], Option[String], Option[String]) =
+    page => (Some(page.mode), page.time, page.route)
 
-  import com.raquo.waypoint._
+  private val decodePage: (
+    (Option[String], Option[String], Option[String]),
+  ) => BusPage = {
+    case (mode, time, route) =>
+      BusPage(
+        mode = mode.getOrElse(AppMode.Production.toString),
+        time = time,
+        route = route,
+      )
+  }
 
-  // mode=dev&route=RoundTripCalculator&time=12:01
+  val params: QueryParameters[
+    (Option[String], Option[String], Option[String]),
+    DummyError,
+  ] =
+    param[
+      String,
+    ]("mode").? & param[String]("time").? & param[String]("route").?
+
   private val devRoute =
     Route.onlyQuery[BusPage,
                     (Option[String], Option[String], Option[String])](
-      encode = page => (Some(page.mode), page.time, page.route),
-      decode = {
-        case (mode, time, route) =>
-          BusPage(
-            mode = mode.getOrElse(AppMode.Production.toString),
-            time = time,
-            route = route,
-          )
-      },
-      pattern = (root / "index_dev.html" / endOfSegments) ? (param[
-          String,
-        ]("mode").? & param[String]("time").? & param[String]("route").?),
+      encode = encodePage,
+      decode = decodePage,
+      pattern = (root / "index_dev.html" / endOfSegments) ? params,
     )
 
   private val prodRoute =
     Route.onlyQuery[BusPage,
                     (Option[String], Option[String], Option[String])](
-      encode = page => (Some(page.mode), page.time, page.route),
-      decode = {
-        case (mode, time, route) =>
-          BusPage(
-            mode = mode.getOrElse(AppMode.Production.toString),
-            time = time,
-            route = route,
-          )
-      },
-      pattern = (root / endOfSegments) ? (param[
-          String,
-        ]("mode").? & param[String]("time").? & param[String]("route").?),
+      encode = encodePage,
+      decode = decodePage,
+      pattern = (root / endOfSegments) ? params,
     )
 
   private val router = new Router[Page](

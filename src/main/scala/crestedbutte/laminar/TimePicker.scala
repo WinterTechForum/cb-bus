@@ -1,5 +1,6 @@
 package crestedbutte.laminar
 
+import com.billding.time.BusTime
 import com.raquo.laminar.api.L._
 
 object TimePicker {
@@ -104,17 +105,35 @@ object TimePicker {
     val $hours = Var(1)
     val $minutes = Var(0)
     val $amOrPm = Var(AM: AM_OR_PM)
+    val initialTime = BusTime("08:00")
 
-    div(
-      cls := "time-picker-simple",
-      child <-- Signal.combine($hours, $minutes, $amOrPm).map {
-        // TODO Leading zero formating. Use BusTime class if possible
-        case (hours, minutes, amOrPm) => s"$hours:$minutes $amOrPm"
-      },
-      NumberPicker($hours, 1, 1, 12, "hour"),
-      NumberPicker($minutes, 10, 0, 59, "minute"),
-      Toggler($amOrPm),
-    )
+    val fullTime: Signal[BusTime] =
+      Signal
+        .combine($hours, $minutes, $amOrPm)
+        .foldLeft(_ => initialTime) {
+          // TODO Leading zero formating. Use BusTime class if possible
+          case (_, (hours, minutes, amOrPm)) =>
+            try {
+              BusTime(s"$hours:$minutes")
+            } catch {
+              case e: Exception =>
+                println("busTime parse exception: " + e.getMessage)
+
+                BusTime("10:00")
+            }
+        }
+
+    (fullTime,
+     div(
+       cls := "time-picker-simple",
+       child <-- Signal.combine($hours, $minutes, $amOrPm).map {
+         // TODO Leading zero formating. Use BusTime class if possible
+         case (hours, minutes, amOrPm) => s"$hours:$minutes $amOrPm"
+       },
+       NumberPicker($hours, 1, 1, 12, "hour"),
+       NumberPicker($minutes, 10, 0, 59, "minute"),
+       Toggler($amOrPm),
+     ))
   }
 
 }
