@@ -1,6 +1,6 @@
 package crestedbutte
 
-import com.billding.time.{BusTime, ColoradoClock, TurboClock}
+import com.billding.time.{BusTime, ColoradoClock}
 import crestedbutte.Browser.Browser
 import crestedbutte.laminar.AppMode
 import crestedbutte.laminar._
@@ -27,62 +27,14 @@ object MyApp extends App {
     fullApplicationLogic.provideLayer(myEnvironment).exitCode
   }
 
-  def getOptional[T](
-    parameterName: String,
-    typer: String => Option[T],
-  ): ZIO[Browser, Nothing, Option[T]] =
-    ZIO
-      .access[Browser](_.get)
-      .map(
-        browser =>
-          UrlParsing
-            .getUrlParameter(
-              browser.window().location.toString,
-              parameterName,
-            )
-            .flatMap(typer),
-      )
-
   val fullApplicationLogic =
     for {
-      clockParam: Clock.Service <- ZIO.access[Clock](_.get)
-      pageMode: AppMode <- getOptional("mode", AppMode.withNameOption)
-        .map(
-          _.getOrElse(AppMode.Production),
-        )
-      fixedTime <- getOptional("time", x => Some(BusTime(x)))
-
-      clock = if (fixedTime.isDefined)
-        TurboClock.TurboClock(
-          s"2020-02-21T${fixedTime.get.toString}:00.00-07:00",
-        )
-      else clockParam
-
-      javaClock = if (fixedTime.isDefined)
-        java.time.Clock.fixed(
-          OffsetDateTime
-            .parse(
-              s"2020-02-21T${fixedTime.get.toString}:00.00-07:00",
-            )
-            .toInstant,
-          ZoneId.of("America/Denver"),
-        )
-      else
-        java.time.Clock.system(ZoneId.of("America/Denver"))
       _ <- registerServiceWorker()
       _ <- ZIO {
-        val initialRouteOpt: Option[String] =
-          UrlParsing
-            .getUrlParameter(
-              dom.window.location.toString,
-              "route",
-            )
-
         dom.document.getElementById("landing-message").innerHTML = ""
         com.raquo.laminar.api.L.render(
           dom.document.getElementById("landing-message"),
-//          RoutingStuff.app,
-          TagsOnlyLocal.FullApp(pageMode, initialRouteOpt, javaClock),
+          RoutingStuff.app,
         )
       }
     } yield 0
@@ -131,18 +83,35 @@ object RoutingStuff {
     noteId: Int)
       extends AppPage
 
-  case class LoginPage(
+  case class BusPage(
     mode: String,
     time: Option[String], // TODO Make this a BusTime instead
-  ) extends Page
+    route: Option[String],
+  ) extends Page {
+
+    val fixedTime = time.map(BusTime(_))
+    println("fixedTime: " + fixedTime)
+
+    val javaClock =
+      if (fixedTime.isDefined)
+        java.time.Clock.fixed(
+          OffsetDateTime
+            .parse(
+              s"2020-02-21T${fixedTime.get.toString}:00.00-07:00",
+            )
+            .toInstant,
+          ZoneId.of("America/Denver"),
+        )
+      else
+        java.time.Clock.system(ZoneId.of("America/Denver"))
+  }
 
   case object LoginPageOriginal extends Page
 
   val fancyPage = div("hi")
 
-  // TODO User enumeratum for AppMode so that I can do this instead of calling .toString on it
-  // implicit val AppModeRW: ReadWriter[AppMode.Value] = macroRW
-  implicit val LoginPageRW: ReadWriter[LoginPage] = macroRW
+  implicit val AppModeRW: ReadWriter[AppMode] = macroRW
+  implicit val BusPageRW: ReadWriter[BusPage] = macroRW
   implicit val NotePageRW: ReadWriter[NotePage] = macroRW
   implicit val UserPageRW: ReadWriter[UserPage] = macroRW
   implicit val AppPageRW: ReadWriter[AppPage] = macroRW
@@ -160,18 +129,31 @@ object RoutingStuff {
 
   // mode=dev&route=RoundTripCalculator&time=12:01
   val loginRoute =
-    Route.onlyQuery[LoginPage, (Option[String], Option[String])](
-      encode = page => (Some(page.mode), page.time),
+    Route.onlyQuery[BusPage,
+                    (Option[String], Option[String], Option[String])](
+      encode = page => (Some(page.mode), page.time, page.route),
       decode = {
-        case (mode, time) =>
-          LoginPage(
+        case (mode, time, route) =>
+          BusPage(
             mode = mode.getOrElse(AppMode.Production.toString),
             time = time,
+            route = route,
           )
       },
+      /*
+        TODO restore route parsing:
+
+          val initialRouteOpt: Option[String] =
+            UrlParsing
+              .getUrlParameter(
+                dom.window.location.toString,
+                "route",
+              )
+
+       */
       pattern = (root / "index_dev.html" / endOfSegments) ? (param[
           String,
-        ]("mode").? & param[String]("time").?),
+        ]("mode").? & param[String]("time").? & param[String]("route").?),
     )
 
   val router = new Router[Page](
@@ -185,15 +167,18 @@ object RoutingStuff {
   )
 
   def renderMyPage(
-    $loginPage: Signal[LoginPage],
-  ) = {
-    println("eh?")
+    $loginPage: Signal[BusPage],
+  ) =
     div(
-      cls := "bill-box",
-      child.text <-- $loginPage.map("Mode: " + _.mode),
-      child.text <-- $loginPage.map("Time: " + _.time),
+      cls := "bill-box", // TODO Make sure this is okay for phones too
+      child <-- $loginPage.map(
+        busPageInfo =>
+          // TODO Start pulling out route queryParam
+          TagsOnlyLocal.FullApp(AppMode.withName(busPageInfo.mode),
+                                busPageInfo.route,
+                                busPageInfo.javaClock),
+      ),
     )
-  }
 
   def renderUserPage(
     $userPage: Signal[UserPage],
@@ -208,11 +193,10 @@ object RoutingStuff {
       $appPage =>
         renderAppPage($appPage)
     }
-    .collectSignal[LoginPage](renderMyPage)
+    .collectSignal[BusPage](renderMyPage)
     .collectStatic(LoginPageOriginal) { div("Login page") }
 
   val app: Div = div(
-    h1("Routing App"),
     child <-- splitter.$view,
   )
 
