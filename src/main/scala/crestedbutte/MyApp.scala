@@ -176,7 +176,6 @@ object RoutingStuff {
     $loginPage: Signal[BusPage],
   ) =
     div(
-      cls := "bill-box", // TODO Make sure this is okay for phones too
       child <-- $loginPage.map(
         busPageInfo =>
           // TODO Start pulling out route queryParam
