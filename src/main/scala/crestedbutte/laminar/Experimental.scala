@@ -144,7 +144,7 @@ object Experimental {
     val (pickedTime, timePicker) = TimePicker.TimePicker()
     div(
       timeStamps.map(
-        timestamp => getLocation($gpsPosition),
+        _ => getLocation($gpsPosition),
       ) --> $gpsPosition.writer,
       Components.FeatureControlCenter(featureUpdates.writer),
       button(
