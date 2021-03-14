@@ -70,9 +70,7 @@ object Components {
         cls := "link",
         button(
           cls := "button",
-          img(
-            cls := "glyphicon",
-            src := "/glyphicons/svg/individual-svg/glyphicons-basic-465-call.svg",
+          svgIcon("glyphicons-basic-465-call.svg").amend(
             alt := "Call Late Night Shuttle!",
           ),
           safeRideRecommendation.message,
