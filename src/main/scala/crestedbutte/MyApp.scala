@@ -157,7 +157,7 @@ object RoutingStuff {
             route = route,
           )
       },
-      pattern = (root / "index.html" / endOfSegments) ? (param[
+      pattern = (root / endOfSegments) ? (param[
           String,
         ]("mode").? & param[String]("time").? & param[String]("route").?),
     )
