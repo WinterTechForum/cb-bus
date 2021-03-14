@@ -69,28 +69,17 @@ object RoutingStuff {
   import com.raquo.laminar.api.L
   import com.raquo.waypoint._
   import upickle.default._
-  import org.scalajs.dom
 
-  sealed trait Page
-  sealed trait AppPage extends Page
+  sealed private trait Page
+  sealed private trait AppPage extends Page
 
-  sealed case class UserPage(
-    userId: Int)
-      extends AppPage
-
-  sealed case class NotePage(
-    workspaceId: Int,
-    noteId: Int)
-      extends AppPage
-
-  case class BusPage(
+  private case class BusPage(
     mode: String,
     time: Option[String], // TODO Make this a BusTime instead
     route: Option[String],
   ) extends Page {
 
     val fixedTime = time.map(BusTime(_))
-    println("fixedTime: " + fixedTime)
 
     val javaClock =
       if (fixedTime.isDefined)
@@ -106,29 +95,19 @@ object RoutingStuff {
         java.time.Clock.system(ZoneId.of("America/Denver"))
   }
 
-  case object LoginPageOriginal extends Page
+  private case object LoginPageOriginal extends Page
 
-  val fancyPage = div("hi")
-
-  implicit val AppModeRW: ReadWriter[AppMode] = macroRW
-  implicit val BusPageRW: ReadWriter[BusPage] = macroRW
-  implicit val NotePageRW: ReadWriter[NotePage] = macroRW
-  implicit val UserPageRW: ReadWriter[UserPage] = macroRW
-  implicit val AppPageRW: ReadWriter[AppPage] = macroRW
-  implicit val rw: ReadWriter[Page] = macroRW
-
-  val userRoute = Route(
-    encode = (userPage: UserPage) => userPage.userId,
-    decode = (arg: Int) => UserPage(userId = arg),
-    pattern = root / "user" / segment[Int] / endOfSegments,
-  )
+  implicit private val AppModeRW: ReadWriter[AppMode] = macroRW
+  implicit private val BusPageRW: ReadWriter[BusPage] = macroRW
+  implicit private val AppPageRW: ReadWriter[AppPage] = macroRW
+  implicit private val rw: ReadWriter[Page] = macroRW
 
   println("Root: " + root.createPath())
 
   import com.raquo.waypoint._
 
   // mode=dev&route=RoundTripCalculator&time=12:01
-  val devRoute =
+  private val devRoute =
     Route.onlyQuery[BusPage,
                     (Option[String], Option[String], Option[String])](
       encode = page => (Some(page.mode), page.time, page.route),
@@ -145,7 +124,7 @@ object RoutingStuff {
         ]("mode").? & param[String]("time").? & param[String]("route").?),
     )
 
-  val prodRoute =
+  private val prodRoute =
     Route.onlyQuery[BusPage,
                     (Option[String], Option[String], Option[String])](
       encode = page => (Some(page.mode), page.time, page.route),
@@ -162,8 +141,8 @@ object RoutingStuff {
         ]("mode").? & param[String]("time").? & param[String]("route").?),
     )
 
-  val router = new Router[Page](
-    routes = List(userRoute, prodRoute, devRoute),
+  private val router = new Router[Page](
+    routes = List(prodRoute, devRoute),
     getPageTitle = _.toString, // mock page title (displayed in the browser tab next to favicon)
     serializePage = page => write(page)(rw), // serialize page data for storage in History API log
     deserializePage = pageStr => read(pageStr)(rw), // deserialize the above
@@ -173,7 +152,7 @@ object RoutingStuff {
     owner = L.unsafeWindowOwner, // this router will live as long as the window
   )
 
-  def renderMyPage(
+  private def renderMyPage(
     $loginPage: Signal[BusPage],
   ) =
     div(
@@ -186,51 +165,13 @@ object RoutingStuff {
       ),
     )
 
-  def renderUserPage(
-    $userPage: Signal[UserPage],
-  ): Div =
-    div(
-      "User page ",
-      child.text <-- $userPage.map(user => user.userId),
-    )
-
-  val splitter = SplitRender[Page, HtmlElement](router.$currentPage)
-    .collectSignal[AppPage] {
-      $appPage =>
-        renderAppPage($appPage)
-    }
-    .collectSignal[BusPage](renderMyPage)
-    .collectStatic(LoginPageOriginal) { div("Login page") }
+  private val splitter =
+    SplitRender[Page, HtmlElement](router.$currentPage)
+      .collectSignal[BusPage](renderMyPage)
+      .collectStatic(LoginPageOriginal) { div("Login page") }
 
   val app: Div = div(
     child <-- splitter.$view,
   )
-
-  def renderNotePage(
-    $notePage: Signal[NotePage],
-  ): Div =
-    div(
-      "Note page. workspaceid: ",
-      child.text <-- $notePage.map(note => note.workspaceId),
-      ", noteid: ",
-      child.text <-- $notePage.map(note => note.noteId),
-    )
-
-  def renderAppPage(
-    $appPage: Signal[AppPage],
-  ): Div = {
-    val appPageSplitter = SplitRender[AppPage, HtmlElement]($appPage)
-      .collectSignal[UserPage] {
-        $userPage =>
-          renderUserPage($userPage)
-      }
-      .collectSignal[NotePage] {
-        $notePage =>
-          renderNotePage($notePage)
-      }
-    div(
-      child <-- appPageSplitter.$view,
-    )
-  }
 
 }
