@@ -128,7 +128,7 @@ object RoutingStuff {
   import com.raquo.waypoint._
 
   // mode=dev&route=RoundTripCalculator&time=12:01
-  val loginRoute =
+  val devRoute =
     Route.onlyQuery[BusPage,
                     (Option[String], Option[String], Option[String])](
       encode = page => (Some(page.mode), page.time, page.route),
@@ -140,24 +140,30 @@ object RoutingStuff {
             route = route,
           )
       },
-      /*
-        TODO restore route parsing:
-
-          val initialRouteOpt: Option[String] =
-            UrlParsing
-              .getUrlParameter(
-                dom.window.location.toString,
-                "route",
-              )
-
-       */
       pattern = (root / "index_dev.html" / endOfSegments) ? (param[
           String,
         ]("mode").? & param[String]("time").? & param[String]("route").?),
     )
 
+  val prodRoute =
+    Route.onlyQuery[BusPage,
+                    (Option[String], Option[String], Option[String])](
+      encode = page => (Some(page.mode), page.time, page.route),
+      decode = {
+        case (mode, time, route) =>
+          BusPage(
+            mode = mode.getOrElse(AppMode.Production.toString),
+            time = time,
+            route = route,
+          )
+      },
+      pattern = (root / "index.html" / endOfSegments) ? (param[
+          String,
+        ]("mode").? & param[String]("time").? & param[String]("route").?),
+    )
+
   val router = new Router[Page](
-    routes = List(userRoute, loginRoute),
+    routes = List(userRoute, devRoute, prodRoute),
     getPageTitle = _.toString, // mock page title (displayed in the browser tab next to favicon)
     serializePage = page => write(page)(rw), // serialize page data for storage in History API log
     deserializePage = pageStr => read(pageStr)(rw), // deserialize the above
