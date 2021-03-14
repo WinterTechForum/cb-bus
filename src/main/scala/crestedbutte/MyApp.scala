@@ -164,8 +164,8 @@ object RoutingStuff {
 
   val router = new Router[Page](
     routes = List(userRoute,
-      // devRoute,  Temporarily disable devRoute to see if that fixes prod
-      prodRoute),
+                  // devRoute,  Temporarily disable devRoute to see if that fixes prod
+                  prodRoute),
     getPageTitle = _.toString, // mock page title (displayed in the browser tab next to favicon)
     serializePage = page => write(page)(rw), // serialize page data for storage in History API log
     deserializePage = pageStr => read(pageStr)(rw), // deserialize the above
