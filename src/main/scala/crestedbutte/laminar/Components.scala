@@ -1,7 +1,6 @@
 package crestedbutte.laminar
 
 import com.raquo.laminar.api.L._
-import crestedbutte.laminar.TagsOnlyLocal.svgIcon
 import crestedbutte._
 
 object Components {
@@ -57,7 +56,7 @@ object Components {
     a(
       cls := "link",
       href := s"https://www.google.com/maps/search/?api=1&query=${gpsCoordinates.latitude},${gpsCoordinates.longitude}",
-      svgIcon("glyphicons-basic-592-map.svg"),
+      SvgIcon("glyphicons-basic-592-map.svg"),
     )
 
   def SafeRideLink(
@@ -70,12 +69,21 @@ object Components {
         cls := "link",
         button(
           cls := "button",
-          svgIcon("glyphicons-basic-465-call.svg").amend(
+          SvgIcon("glyphicons-basic-465-call.svg").amend(
             alt := "Call Late Night Shuttle!",
           ),
           safeRideRecommendation.message,
         ),
       ),
+    )
+
+  def SvgIcon(
+    name: String,
+  ) =
+    img(
+      cls := "glyphicon",
+      src := s"/glyphicons/svg/individual-svg/$name",
+      alt := "Thanks for riding the bus!",
     )
 
 }

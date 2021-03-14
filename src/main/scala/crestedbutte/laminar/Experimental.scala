@@ -127,13 +127,12 @@ object Experimental {
           desiredAlarms.append(ev)
         },
       )
-      img(
-        cls := "glyphicon " + classes,
-        src := s"/glyphicons/svg/individual-svg/$name",
-        alt := "Thanks for riding the bus!",
-        verticalAlign := "middle",
-        onClick.map(_ => busTime) --> clickObserverNarrow,
-      )
+      Components
+        .SvgIcon(name)
+        .amend(
+          verticalAlign := "middle",
+          onClick.map(_ => busTime) --> clickObserverNarrow,
+        )
     }
   }
 

@@ -68,6 +68,7 @@ object TagsOnlyLocal {
     timeStamps: Signal[BusTime],
     pageMode: AppMode,
   ) = {
+    // TODO Turn this into a Signal. The EventBus should be contained within the Experimental/FeatureControlCenter
     val featureUpdates = new EventBus[FeatureStatus]
 
     val initialFeatureSets = FeatureSets(
@@ -108,14 +109,13 @@ object TagsOnlyLocal {
       idAttr := "container",
       child <-- upcomingArrivalData, // **THIS IS THE IMPORTANT STUFF** The fact that it's hard to see means I need to remove other bullshit
       timeStamps --> Observer[BusTime](
-        onNext = localTime => {
+        onNext = localTime =>
           desiredAlarms
             .dequeueAll(_ => true)
             .map(
               Experimental.Notifications
                 .createJankyBusAlertInSideEffectyWay(_, localTime),
-            )
-        },
+            ),
       ),
       Option.when(pageMode == AppMode.dev)(
         Experimental.Sandbox(
@@ -187,8 +187,7 @@ object TagsOnlyLocal {
         BulmaLocal.bulmaModal(
           busScheduleAtStop,
           $enabledFeatures.map(
-            enabledFeatures =>
-              enabledFeatures.isEnabled(Feature.BusAlarms),
+            _.isEnabled(Feature.BusAlarms),
           ),
           modalActive,
         ),
@@ -205,11 +204,7 @@ object TagsOnlyLocal {
         cls := "route-header_name",
         routeName.userFriendlyName + " Departures",
       ),
-      img(
-        cls := "glyphicon route-header_icon",
-        src := "/glyphicons/svg/individual-svg/glyphicons-basic-32-bus.svg",
-        alt := "Thanks for riding the bus!",
-      ),
+      Components.SvgIcon("glyphicons-basic-32-bus.svg"),
     )
 
   def structuredSetOfUpcomingArrivals(
@@ -238,29 +233,11 @@ object TagsOnlyLocal {
                   Components.SafeRideLink(safeRideRecommendation)
               },
               $enabledFeatures.map(
-                enabledFeatures =>
-                  enabledFeatures.isEnabled(Feature.MapLinks),
+                _.isEnabled(Feature.MapLinks),
               ),
               gpsPosition.signal,
             )
         },
     )
-
-  def svgIcon(
-    name: String,
-  ) =
-    img(
-      cls := "glyphicon",
-      src := s"/glyphicons/svg/individual-svg/$name",
-      alt := "Thanks for riding the bus!",
-    )
-  /*
-  glyphicons-basic-591-map-marker.svg
-  glyphicons-basic-417-globe.svg
-  glyphicons-basic-262-direction-empty.svg
-  glyphicons-basic-581-directions.svg
-  glyphicons-basic-697-directions-sign.svg
-
- */
 
 }
