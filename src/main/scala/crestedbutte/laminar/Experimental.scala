@@ -143,6 +143,7 @@ object Experimental {
   ) = {
     val (pickedTime, timePicker) = TimePicker.TimePicker()
     div(
+      idAttr := "sandbox",
       timeStamps.map(
         _ => getLocation($gpsPosition),
       ) --> $gpsPosition.writer,

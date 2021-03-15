@@ -57,15 +57,17 @@ object TimePicker {
   }
 
   def NumberPicker(
-    $number: Var[Int],
+    initialValue: Int,
     deltaValue: Int,
     minValue: Int,
     maxValue: Int,
     sectionName: String,
   ) = {
+    val $numberX: Var[Int] = Var(initialValue)
+
     val updates = new EventBus[Int]
     val newNumberValues: EventStream[Int] =
-      updates.events.withCurrentValueOf($number).map {
+      updates.events.withCurrentValueOf($numberX).map {
         case (delta, curNumberValue) =>
           if (delta > 0)
             if (curNumberValue + delta <= maxValue)
@@ -79,44 +81,56 @@ object TimePicker {
 
       }
 
-    div(
-      cls := s"$sectionName wheel",
-      button(
-        cls := s"arrival-time adjuster-button open-arrival-time-modal tp-inc",
-        onClick.preventDefault.map(_ => deltaValue) --> updates,
-        img(
-          cls := "glyphicon",
-          src := "/glyphicons/svg/individual-svg/glyphicons-basic-222-chevron-up.svg",
-        ),
-      ),
+    (
       div(
-        cls := s"tp-display",
-        child <-- $number.signal.map(_.toString),
-      ),
-      button(
-        cls := s"arrival-time adjuster-button open-arrival-time-modal tp-dec",
-        onClick.preventDefault.map(_ => -deltaValue) --> updates,
-        img(
-          cls := "glyphicon",
-          src := "/glyphicons/svg/individual-svg/glyphicons-basic-221-chevron-down.svg",
+        cls := s"$sectionName wheel",
+        button(
+          cls := s"arrival-time adjuster-button open-arrival-time-modal tp-inc",
+          onClick.preventDefault.map(_ => deltaValue) --> updates,
+          img(
+            cls := "glyphicon",
+            src := "/glyphicons/svg/individual-svg/glyphicons-basic-222-chevron-up.svg",
+          ),
         ),
+        div(
+          cls := s"tp-display",
+          child <-- $numberX.signal.map(_.toString),
+        ),
+        button(
+          cls := s"arrival-time adjuster-button open-arrival-time-modal tp-dec",
+          onClick.preventDefault.map(_ => -deltaValue) --> updates,
+          img(
+            cls := "glyphicon",
+            src := "/glyphicons/svg/individual-svg/glyphicons-basic-221-chevron-down.svg",
+          ),
+        ),
+        newNumberValues --> $numberX,
       ),
-      newNumberValues --> $number,
+      $numberX.signal,
     )
 
   }
 
   def TimePicker() = {
 
-    val $hours = Var(1)
-    val $minutes = Var(0)
-//    val $amOrPm = Var(AM: AM_OR_PM)
+    val (hourPicker, hourS) =
+      NumberPicker(initialValue = 1,
+                   deltaValue = 1,
+                   minValue = 1,
+                   maxValue = 12,
+                   sectionName = "hour")
+    val (minutePicker, minuteS) =
+      NumberPicker(initialValue = 30,
+                   deltaValue = 10,
+                   minValue = 0,
+                   maxValue = 59,
+                   sectionName = "minute")
     val (amPmToggler, amOrPm) = Toggler(AM)
     val initialTime = BusTime("08:00")
 
     val fullTime: Signal[BusTime] =
       Signal
-        .combine($hours, $minutes, amOrPm)
+        .combine(hourS, minuteS, amOrPm)
         .foldLeft(_ => initialTime) {
           case (_, (hours, minutes, amOrPmInner)) => // TODO Use amOrPm
             try {
@@ -138,12 +152,12 @@ object TimePicker {
     (fullTime,
      div(
        cls := "time-picker-simple",
-       child <-- Signal.combine($hours, $minutes, amOrPm).map {
+       child <-- Signal.combine(hourS, minuteS, amOrPm).map {
          // TODO Leading zero formating. Use BusTime class if possible
          case (hours, minutes, amOrPm) => s"$hours:$minutes $amOrPm"
        },
-       NumberPicker($hours, 1, 1, 12, "hour"),
-       NumberPicker($minutes, 10, 0, 59, "minute"),
+       hourPicker,
+       minutePicker,
        amPmToggler,
      ))
   }

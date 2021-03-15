@@ -144,6 +144,7 @@ body {
 
 .wheel {
     display: grid;
+    place-items: center;
     grid-template-columns: 1fr;
     grid-template-rows: auto 1fr ;
     /*grid-template-columns: minmax(80px, 150px);*/
@@ -159,3 +160,8 @@ body {
 .tp-inc { grid-area: tp-inc; }
 .tp-display { grid-area: tp-display; }
 .tp-dec { grid-area: tp-dec; }
+
+#sandbox {
+    display: grid;
+    place-items: center;
+}
