@@ -84,25 +84,27 @@ object TagsOnlyLocal {
 
     val gpsPosition: Var[Option[GpsCoordinates]] = Var(None)
 
+    val calculator = LaminarRoundTripCalculator
+      .RoundTripCalculatorLaminar()
+
     val upcomingArrivalData =
-      $selectedComponent.combineWith(timeStamps).map {
-        case (componentData, timestamp) =>
-          componentData match {
-            case RoundTripCalculatorComponent =>
-              LaminarRoundTripCalculator
-                .RoundTripCalculatorLaminar()
-            case namedRoute: NamedRoute =>
-              TagsOnlyLocal.structuredSetOfUpcomingArrivals(
-                TimeCalculations
-                  .getUpComingArrivalsWithFullScheduleNonZio(
-                    timestamp,
-                    namedRoute,
-                  ),
-                $enabledFeatures,
-                gpsPosition,
-              )
-          }
-      }
+      $selectedComponent.combineWith(timeStamps)
+        .map {
+          case (componentData, timestamp) =>
+            componentData match {
+              case RoundTripCalculatorComponent => calculator
+              case namedRoute: NamedRoute =>
+                TagsOnlyLocal.structuredSetOfUpcomingArrivals(
+                  TimeCalculations
+                    .getUpComingArrivalsWithFullScheduleNonZio(
+                      timestamp,
+                      namedRoute,
+                    ),
+                  $enabledFeatures,
+                  gpsPosition,
+                )
+            }
+        }
 
     div(
       cls := "bill-box",
