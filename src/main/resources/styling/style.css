@@ -1,7 +1,7 @@
-html, body {
-    height: 100%;
-    margin: 0;
-}
+/*html, body {*/
+/*    height: 100%;*/
+/*    margin: 0;*/
+/*}*/
 
 body {
     margin: 5px;
@@ -17,7 +17,7 @@ body {
     color: #fff;
     border-radius: 5px;
     padding: 5px;
-    font-size: 170%;
+    font-size: 120%;
     margin-bottom: 10px;
 }
 
@@ -97,7 +97,7 @@ body {
 .route-header {
     text-align: center;
     font-weight: bold;
-    font-size: 150%;
+    /*font-size: 150%;*/
 }
 
 .route-header_name {
