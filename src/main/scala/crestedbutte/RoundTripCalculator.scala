@@ -163,10 +163,8 @@ object RoundTripCalculator {
 
     returnLeg.map {
       routeLeg =>
-        val reducedStart =
-          routeLeg
-            .trimToStartAt(target.location)
         routeLeg
+          .trimToStartAt(target.location)
           .trimToEndAt(destination)
     }
   }
