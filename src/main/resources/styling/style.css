@@ -127,8 +127,9 @@ body {
 
 .time-picker-simple {
     display: grid;
-    width: 150px; /* Better width calculation */
-    grid-template-columns:2fr 2fr 1fr;
+    /*width: 10%; !* Better width calculation *!*/
+    grid-template-columns: minmax(80px, 5%) minmax(80px, 5%) minmax(80px, 5%);
+    /*grid-template-columns: 2fr 2fr 1fr;*/
     grid-template-rows: auto 1fr ;
     grid-template-areas:
             "hour       minute      amOrPm";
@@ -145,6 +146,7 @@ body {
     display: grid;
     grid-template-columns: 1fr;
     grid-template-rows: auto 1fr ;
+    /*grid-template-columns: minmax(80px, 150px);*/
     grid-template-areas:
             "tp-inc"
             "tp-display"

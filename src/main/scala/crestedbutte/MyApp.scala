@@ -30,16 +30,14 @@ object MyApp extends App {
   val fullApplicationLogic =
     for {
       _ <- registerServiceWorker()
-      /*
       _ <- ZIO {
-        dom.document.getElementById("landing-message").innerHTML = ""
+        val appHolder = dom.document.getElementById("landing-message")
+        appHolder.innerHTML = ""
         com.raquo.laminar.api.L.render(
-          dom.document.getElementById("landing-message"),
+          appHolder,
           RoutingStuff.app,
         )
       }
-
-     */
     } yield 0
 
   def registerServiceWorker(): ZIO[Browser, Nothing, Unit] =
