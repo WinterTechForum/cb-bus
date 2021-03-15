@@ -12,6 +12,8 @@ import crestedbutte.{
   TripPlannerError,
 }
 import crestedbutte.routes.{RtaNorthbound, RtaSouthbound}
+import org.scalajs.dom
+import org.scalajs.dom.MouseEvent
 import website.webcomponents.material.{Button, SmartTimePicker}
 
 object LaminarRoundTripCalculator {
@@ -81,70 +83,6 @@ object LaminarRoundTripCalculator {
   case object AM extends DayTime
   case object PM extends DayTime
 
-  def TimePickerLocalSuccessOnly(
-    timeStream: Observer[BusTime],
-    initialValue: BusTime,
-    valueName: String,
-  ) = {
-    val timeString = Var(initialValue.toString)
-    val daytime: Var[DayTime] = Var(AM)
-
-    val typedTime
-      : Signal[Option[BusTime]] = // new EventBus[Option[BusTime]]
-      timeString.signal.map(rawTime => {
-        try {
-          Some(BusTime(rawTime))
-        } catch {
-          case ex: Exception => None
-        }
-      })
-
-    span(
-      input(`type` := "text",
-            defaultValue := timeString.now(),
-            inContext {
-              thisNode =>
-                onInput.map(_ => thisNode.ref.value) --> timeString
-            },
-            name := (valueName + "_time")),
-      input(`type` := "radio",
-            value := AM.toString,
-            name := (valueName + "_AM-OR-PM"),
-            idAttr := "AM",
-            checked := true,
-            onClick.map {
-              _ =>
-                AM
-            } --> daytime,
-            AM.toString),
-      label(forId := "AM", "AM"),
-      input(`type` := "radio",
-            value := PM.toString,
-            name := (valueName + "_AM-OR-PM"),
-            idAttr := "PM",
-            onClick.map {
-              _ =>
-                PM
-            } --> daytime,
-            PM.toString),
-      label(forId := "PM", "PM"),
-      typedTime.signal
-        .combineWith(daytime.signal)
-        .map {
-          case (maybeTime, dayTime) =>
-            maybeTime match {
-              case Some(busTime) =>
-                if (dayTime == AM) Some(busTime)
-                else Some(busTime.plus(BusDuration.ofMinutes(720)))
-              case None => None
-            }
-        }
-        .changes
-        .filter(_.isDefined)
-        .map(_.get) --> timeStream,
-    )
-  }
-
   def RoundTripCalculatorLaminar() = {
     val routes =
       List(RtaNorthbound.fullSchedule, RtaSouthbound.fullSchedule)
@@ -188,10 +126,24 @@ object LaminarRoundTripCalculator {
     val $returnStartPoint: Var[Location.Value] = Var(
       initialDestination,
     )
-    val arrivalTime: Var[BusTime] = Var(BusTime("07:00"))
-    val departureTime: Var[BusTime] = Var(
-      arrivalTime.now().plusMinutes(60),
-    )
+
+    val defaultArrivalTime = BusTime("07:10")
+    val (arrivalTimeS, arrivalTimePicker) =
+      TimePicker.TimePicker(defaultArrivalTime)
+
+    val clickBus = new EventBus[Unit]
+    val valuesDuringClick: EventStream[BusTime] =
+      clickBus.events.withCurrentValueOf(arrivalTimeS)
+
+    val submissionBehavior =
+      Observer[BusTime](
+        onNext = (busTime) => println("time @ click: " + busTime),
+      )
+
+    val defaultDepartureTime = defaultArrivalTime.plusMinutes(60)
+    val (departureTimeS, departureTimePicker) =
+      TimePicker.TimePicker(defaultDepartureTime)
+
     val submissions = new EventBus[RoundTripParams]
     val roundTripResults
       : EventStream[Either[TripPlannerError, RoundTrip]] =
@@ -222,6 +174,64 @@ object LaminarRoundTripCalculator {
           },
         )
 
+    val realSubmissionBehavior =
+      Observer[
+        (Location.Value,
+         Location.Value,
+         BusTime,
+         NamedRoute,
+         BusTime,
+         Location.Value,
+         NamedRoute),
+      ](onNext = {
+        case (startingPoint,
+              destination,
+              arrivalTime,
+              startRoute,
+              departureTime,
+              returnStartPoint,
+              returnRoute) =>
+          RoundTripParams(
+            startingPoint,
+            destination,
+            arrivalTime,
+            startRoute.routeWithTimes,
+            arrivalTime
+              .between(departureTime),
+            returnStartPoint,
+            returnRoute.routeWithTimes,
+          )
+      })
+
+    val valuesDuringRealSubmission: EventStream[RoundTripParams] =
+      clickBus.events
+        .withCurrentValueOf($startingPoint,
+                            $destination,
+                            arrivalTimeS,
+                            $startRouteVar,
+                            departureTimeS,
+                            $returnStartPoint,
+                            $returnRouteVar)
+        .map {
+          case (startingPoint,
+                destination,
+                arrivalTime,
+                startRoute,
+                departureTime,
+                returnStartPoint,
+                returnRoute) =>
+            RoundTripParams(
+              startingPoint,
+              destination,
+              arrivalTime,
+              startRoute.routeWithTimes,
+              arrivalTime
+                .between(departureTime),
+              returnStartPoint,
+              returnRoute.routeWithTimes,
+            )
+        }
+
     div(
       div(
         "On this line:",
@@ -250,17 +260,9 @@ object LaminarRoundTripCalculator {
       ),
       div(
         "and reaching: ",
-        child <--
-        destinationOptions,
+        child <-- destinationOptions,
       ),
-      div(
-        "At: ",
-        TimePickerLocalSuccessOnly(arrivalTime.writer,
-                                   arrivalTime.now(),
-                                   "arrivalTime"),
-        div("bap"),
-      ),
-      //            materialsButton()),
+      div("At: ", arrivalTimePicker),
       div(
         "And returning from: ",
         child <-- returnRoute
@@ -273,30 +275,15 @@ object LaminarRoundTripCalculator {
               ),
           ),
       ),
-      div("after: ",
-          TimePickerLocalSuccessOnly(departureTime.writer,
-                                     departureTime.now(),
-                                     "departureTime"),
-      ),
+      div("after: ", departureTimePicker),
       div(
         button(
           "Plan Trip",
-          onClick.map(
-            _ =>
-              RoundTripParams(
-                $startingPoint.now(),
-                $destination.now(),
-                arrivalTime.now(),
-                $startRouteVar.now().routeWithTimes,
-                arrivalTime
-                  .now()
-                  .between(departureTime.now()),
-                $returnStartPoint.now(),
-                $returnRouteVar.now().routeWithTimes,
-              ),
-          ) --> submissions,
+          onClick.map(_ => ()) --> clickBus,
+          valuesDuringRealSubmission --> submissions,
         ),
       ),
+      valuesDuringClick --> submissionBehavior,
       returnRoute --> $returnRouteVar.writer,
       div(
         child <-- roundTripResults.map {

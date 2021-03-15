@@ -7,16 +7,16 @@ import org.scalajs.dom.html
 
 object TimePicker {
 
-  sealed trait AM_OR_PM
-  case object AM extends AM_OR_PM
-  case object PM extends AM_OR_PM
+  sealed trait DAY_TIME
+  case object AM extends DAY_TIME
+  case object PM extends DAY_TIME
 
   def Toggler(
-    initialValue: AM_OR_PM,
-  ): (ReactiveHtmlElement[html.Div], StrictSignal[AM_OR_PM]) = {
+    initialValue: DAY_TIME,
+  ): (ReactiveHtmlElement[html.Div], StrictSignal[DAY_TIME]) = {
     val updates = new EventBus[Unit]
-    val $value: Var[AM_OR_PM] = Var(initialValue)
-    val newNumberValues: EventStream[AM_OR_PM] =
+    val $value: Var[DAY_TIME] = Var(initialValue)
+    val newNumberValues: EventStream[DAY_TIME] =
       updates.events.withCurrentValueOf($value).map {
         case (curNumberValue) =>
           if (curNumberValue == AM)
