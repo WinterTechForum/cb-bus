@@ -148,10 +148,7 @@ object LaminarRoundTripCalculator {
     val roundTripResults
       : EventStream[Either[TripPlannerError, RoundTrip]] =
       submissions.events
-        .map(
-          roundTripParams =>
-            RoundTripCalculator.calculate(roundTripParams),
-        )
+        .map(RoundTripCalculator.calculate)
 
     val startingPointOptions =
       $startRouteVar.signal
@@ -196,8 +193,7 @@ object LaminarRoundTripCalculator {
             destination,
             arrivalTime,
             startRoute.routeWithTimes,
-            arrivalTime
-              .between(departureTime),
+            departureTime,
             returnStartPoint,
             returnRoute.routeWithTimes,
           )
@@ -225,8 +221,7 @@ object LaminarRoundTripCalculator {
               destination,
               arrivalTime,
               startRoute.routeWithTimes,
-              arrivalTime
-                .between(departureTime),
+              departureTime,
               returnStartPoint,
               returnRoute.routeWithTimes,
             )

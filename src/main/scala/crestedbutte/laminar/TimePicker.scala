@@ -69,16 +69,19 @@ object TimePicker {
     val newNumberValues: EventStream[Int] =
       updates.events.withCurrentValueOf($numberX).map {
         case (delta, curNumberValue) =>
-          if (delta > 0)
-            if (curNumberValue + delta <= maxValue)
+          val newValue =
+            if (delta > 0)
+              if (curNumberValue + delta <= maxValue)
+                curNumberValue + delta
+              else
+                minValue
+            else if (curNumberValue + delta >= minValue)
               curNumberValue + delta
             else
-              curNumberValue
-          else if (curNumberValue + delta >= minValue)
-            curNumberValue + delta
-          else
-            curNumberValue
+              maxValue
 
+          println("New value: " + newValue)
+          newValue
       }
 
     (
@@ -135,13 +138,22 @@ object TimePicker {
         .foldLeft(_ => time) {
           case (_, (hours, minutes, amOrPmInner)) => // TODO Use amOrPm
             try {
+              // TODO Cleanup
               val offset =
                 if (amOrPmInner == AM)
                   0
                 else
                   12
 
-              BusTime(s"${hours + offset}:$minutes")
+              val finalHours =
+                if (hours == 12 && amOrPmInner == AM)
+                  0
+                else if (hours == 12 && amOrPmInner == PM)
+                  12
+                else
+                  hours + offset
+
+              BusTime(s"$finalHours:$minutes")
             } catch {
               case e: Exception =>
                 println("busTime parse exception: " + e.getMessage)

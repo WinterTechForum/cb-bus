@@ -43,7 +43,7 @@ case class RoundTripParams(
   destination: Location.Value,
   arrivalTime: BusTime,
   leaveSchedule: RouteWithTimes,
-  timeRequiredAtDestination: BusDuration,
+  departureTime: BusTime,
   returningLaunchPoint: Location.Value,
   returnSchedule: RouteWithTimes,
 )
@@ -62,7 +62,7 @@ object RoundTripCalculator {
       roundTripParams.destination,
       roundTripParams.arrivalTime,
       roundTripParams.leaveSchedule,
-      roundTripParams.timeRequiredAtDestination,
+      roundTripParams.departureTime,
       roundTripParams.returningLaunchPoint,
       roundTripParams.returnSchedule,
     )
@@ -72,38 +72,42 @@ object RoundTripCalculator {
     destination: Location.Value,
     arrivalTime: BusTime,
     leaveSchedule: RouteWithTimes,
-    timeRequiredAtDestination: BusDuration,
+    departureTime: BusTime,
     returningLaunchPoint: Location.Value,
     returnSchedule: RouteWithTimes,
   ): Either[TripPlannerError, RoundTrip] =
-    (reducedLegStartingAt(startLocation,
-                          arrivalTime,
-                          destination,
-                          leaveSchedule),
-     reducedReturnLeg(
-       LocationWithTime(returningLaunchPoint,
-                        arrivalTime.plus(timeRequiredAtDestination)),
-       returnSchedule,
-       startLocation,
-     )) match {
-      case (Right(startLeg), Right(returnLeg)) =>
-        Right(
-          RoundTrip(
-            startLeg,
-            returnLeg,
-          ),
-        )
-      case (Left(startLegError), Left(returnLegError)) =>
-        Left(
-          TripPlannerError(
-            startLegError.msg + ", " + returnLegError.msg,
-          ),
-        )
-      case (Left(startLegError), successfulIgnoredRoute) =>
-        Left(startLegError)
-      case (successfulIgnoredRoute, Left(returnLegError)) =>
-        Left(returnLegError)
-    }
+    if (arrivalTime.isAfter(departureTime))
+      Left(
+        TripPlannerError("Departure time must be after Arrival time."),
+      )
+    else
+      (reducedLegStartingAt(startLocation,
+                            arrivalTime,
+                            destination,
+                            leaveSchedule),
+       reducedReturnLeg(
+         LocationWithTime(returningLaunchPoint, departureTime),
+         returnSchedule,
+         startLocation,
+       )) match {
+        case (Right(startLeg), Right(returnLeg)) =>
+          Right(
+            RoundTrip(
+              startLeg,
+              returnLeg,
+            ),
+          )
+        case (Left(startLegError), Left(returnLegError)) =>
+          Left(
+            TripPlannerError(
+              startLegError.msg + ", " + returnLegError.msg,
+            ),
+          )
+        case (Left(startLegError), successfulIgnoredRoute) =>
+          Left(startLegError)
+        case (successfulIgnoredRoute, Left(returnLegError)) =>
+          Left(returnLegError)
+      }
 
   def findLatestDepartureTime(
     arrivalTime: BusTime,
