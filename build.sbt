@@ -49,7 +49,7 @@ Compile / npmDependencies ++= Seq(
 libraryDependencies ++= Seq(
   "com.billding" %%% "bulmalibrary" % "0.2.19",
   "com.billding" %%% "scalajsziolibrary" % "0.0.13",
-  "com.billding" %%% "brieftime" % "0.0.17",
+  "com.billding" %%% "brieftime" % "0.0.18",
   "dev.zio" %%% "zio" % zioVersion,
   "dev.zio" %%% "zio-streams" % zioVersion,
   "com.lihaoyi" %%% "scalatags" % "0.8.6",

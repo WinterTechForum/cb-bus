@@ -141,7 +141,8 @@ object Experimental {
     $gpsPosition: Var[Option[GpsCoordinates]],
     featureUpdates: EventBus[FeatureStatus],
   ) = {
-    val (pickedTime, timePicker) = TimePicker.TimePicker()
+    val (pickedTime, timePicker) =
+      TimePicker.TimePicker(BusTime("7:20"))
     div(
       idAttr := "sandbox",
       timeStamps.map(

@@ -111,27 +111,28 @@ object TimePicker {
 
   }
 
-  def TimePicker() = {
+  def TimePicker(
+    time: BusTime,
+  ) = {
 
     val (hourPicker, hourS) =
-      NumberPicker(initialValue = 1,
+      NumberPicker(initialValue = time.hours12,
                    deltaValue = 1,
                    minValue = 1,
                    maxValue = 12,
                    sectionName = "hour")
     val (minutePicker, minuteS) =
-      NumberPicker(initialValue = 30,
+      NumberPicker(initialValue = time.minutes,
                    deltaValue = 10,
                    minValue = 0,
                    maxValue = 59,
                    sectionName = "minute")
     val (amPmToggler, amOrPm) = Toggler(AM)
-    val initialTime = BusTime("08:00")
 
     val fullTime: Signal[BusTime] =
       Signal
         .combine(hourS, minuteS, amOrPm)
-        .foldLeft(_ => initialTime) {
+        .foldLeft(_ => time) {
           case (_, (hours, minutes, amOrPmInner)) => // TODO Use amOrPm
             try {
               val offset =
@@ -152,10 +153,6 @@ object TimePicker {
     (fullTime,
      div(
        cls := "time-picker-simple",
-       child <-- Signal.combine(hourS, minuteS, amOrPm).map {
-         // TODO Leading zero formating. Use BusTime class if possible
-         case (hours, minutes, amOrPm) => s"$hours:$minutes $amOrPm"
-       },
        hourPicker,
        minutePicker,
        amPmToggler,
