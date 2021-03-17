@@ -15,6 +15,13 @@ object Location extends Enumeration {
             if (letter.isLetter) letter.toString else "_",
         )
         .mkString
+
+    def matches(
+      other: Val,
+    ): Boolean =
+      this == other || (// Treat all 3 Four-way stops as equivalent
+      (this == FourWayUphill || this == FourwayGunnison || this == FourwayDownhill) &&
+      (other == FourWayUphill || other == FourwayGunnison || other == FourwayDownhill))
   }
 
   object Val {
