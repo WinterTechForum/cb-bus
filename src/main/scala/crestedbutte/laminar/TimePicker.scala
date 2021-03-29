@@ -2,35 +2,49 @@ package crestedbutte.laminar
 
 import com.billding.time.BusTime
 import com.raquo.laminar.api.L._
-import com.raquo.laminar.nodes.ReactiveHtmlElement
-import org.scalajs.dom.html
 
+/**
+  * Options:
+  *  Styling:
+  *    - In-line that shit
+  *    - Load a CSS snippet when the component is mounted
+  *
+  *  UX
+  *    - Roll over AM/PM when adjusting hours
+  *    - Keep scrolling on long press
+  *
+  *
+  *  Anything else that springs to mind
+  */
 object TimePicker {
 
   sealed trait DAY_TIME
   case object AM extends DAY_TIME
   case object PM extends DAY_TIME
 
+  case class Time()
+
   def Toggler(
     initialValue: DAY_TIME,
-  ): (ReactiveHtmlElement[html.Div], StrictSignal[DAY_TIME]) = {
+  ): (Div, Signal[DAY_TIME]) = {
     val updates = new EventBus[Unit]
     val $value: Var[DAY_TIME] = Var(initialValue)
     val newNumberValues: EventStream[DAY_TIME] =
       updates.events.withCurrentValueOf($value).map {
-        case (curNumberValue) =>
+        curNumberValue =>
           if (curNumberValue == AM)
             PM
           else
             AM
-
       }
 
     (
       div(
-        cls := "amOrPm wheel",
+        cls("amOrPm wheel"),
         button(
-          cls := "arrival-time adjuster-button open-arrival-time-modal tp-inc",
+          cls(
+            "arrival-time adjuster-button open-arrival-time-modal tp-inc",
+          ),
           onClick.preventDefault.map(_ => ()) --> updates,
           img(
             cls := "glyphicon",

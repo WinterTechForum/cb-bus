@@ -21,6 +21,10 @@ resolvers += "jitpack" at "https://jitpack.io"
 resolvers += Resolver.url("typesafe", url("https://repo.typesafe.com/typesafe/ivy-releases/"))(Resolver.ivyStylePatterns)
 resolvers += Resolver.githubPackages("swoogles", "BulmaScala")
 
+// This is only for quick dev turn-around
+resolvers += "Sonatype" at "https://s01.oss.sonatype.org/content/repositories/public"
+
+
 val zioVersion = "1.0.0-RC21-2"
 
 Compile / npmDependencies ++= Seq(
@@ -49,7 +53,7 @@ Compile / npmDependencies ++= Seq(
 libraryDependencies ++= Seq(
   "com.billding" %%% "bulmalibrary" % "0.2.19",
   "com.billding" %%% "scalajsziolibrary" % "0.0.13",
-  "com.billding" %%% "brieftime" % "0.0.18",
+  "com.billdingsoftware" %%% "timepicker" % "0.1.5-SNAPSHOT",
   "dev.zio" %%% "zio" % zioVersion,
   "dev.zio" %%% "zio-streams" % zioVersion,
   "com.lihaoyi" %%% "scalatags" % "0.8.6",

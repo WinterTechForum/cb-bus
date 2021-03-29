@@ -1,6 +1,6 @@
 package crestedbutte.laminar
 
-import com.billding.time.BusTime
+import com.billding.time.{BusTime}
 import com.raquo.laminar.api.L
 import com.raquo.laminar.nodes.ReactiveHtmlElement
 import crestedbutte.NotificationStuff.{desiredAlarms, headsUpAmount}
@@ -143,6 +143,15 @@ object Experimental {
   ) = {
     val (pickedTime, timePicker) =
       TimePicker.TimePicker(BusTime("7:20"))
+
+    def basicUpArrow() =
+      div("+")
+
+    def basicDownArrow() =
+      div("-")
+    val newTimePicker: com.billding.time.TimePickerTyped =
+      com.billding.time.TimePicker
+        .basicWithTypedTime("12:34")
     div(
       idAttr := "sandbox",
       timeStamps.map(
@@ -171,6 +180,7 @@ object Experimental {
       ),
       child <-- pickedTime.map(time => div("BusTime: " + time)),
       timePicker,
+      newTimePicker.component,
     )
   }
 

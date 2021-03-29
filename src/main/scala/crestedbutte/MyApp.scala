@@ -1,9 +1,8 @@
 package crestedbutte
 
-import com.billding.time.{BusTime, ColoradoClock}
+import com.billding.time.{BusTime, TimePicker}
 import crestedbutte.Browser.Browser
-import crestedbutte.laminar.AppMode
-import crestedbutte.laminar._
+import crestedbutte.laminar.{AppMode, TagsOnlyLocal}
 import org.scalajs.dom
 import org.scalajs.dom.experimental.serviceworkers._
 import urldsl.errors.DummyError
@@ -16,13 +15,13 @@ import java.time.{OffsetDateTime, ZoneId}
 import scala.util.{Failure, Success}
 
 object MyApp extends App {
+  TimePicker
 
   override def run(
     args: List[String],
   ): ZIO[zio.ZEnv, Nothing, zio.ExitCode] = {
     val myEnvironment =
-      ZLayer.succeed(BrowserLive.browser) ++ Console.live ++
-      ZLayer.succeed(ColoradoClock.live)
+      ZLayer.succeed(BrowserLive.browser) ++ Console.live
 
     fullApplicationLogic.provideLayer(myEnvironment).exitCode
   }

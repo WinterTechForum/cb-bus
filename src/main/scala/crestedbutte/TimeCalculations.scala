@@ -5,6 +5,7 @@ import crestedbutte.laminar.NamedRoute
 import zio.{Has, ZIO}
 import zio.clock.Clock
 
+import java.time.format.DateTimeFormatter
 import java.time.{DateTimeException, OffsetDateTime}
 
 object TimeCalculations {
@@ -66,7 +67,11 @@ object TimeCalculations {
     for {
       clockProper <- ZIO.access[Clock](_.get)
       now         <- clockProper.currentDateTime
-      localTime = new BusTime(now.toLocalTime)
+      localTime = BusTime(
+        now.toLocalTime.format(
+          DateTimeFormatter.ofPattern("HH:mm"),
+        ),
+      )
     } yield {
       TimeCalculations.calculateUpcomingArrivalAtAllStops(
         localTime,
@@ -80,7 +85,11 @@ object TimeCalculations {
     for {
       clockProper <- ZIO.access[Clock](_.get)
       now         <- clockProper.currentDateTime
-      localTime = new BusTime(now.toLocalTime)
+      localTime = BusTime(
+        now.toLocalTime.format(
+          DateTimeFormatter.ofPattern("HH:mm"),
+        ),
+      )
     } yield {
       println("in schedule code")
       UpcomingArrivalComponentData(

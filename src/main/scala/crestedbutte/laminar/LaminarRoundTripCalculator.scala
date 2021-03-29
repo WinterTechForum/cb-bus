@@ -128,8 +128,11 @@ object LaminarRoundTripCalculator {
     )
 
     val defaultArrivalTime = BusTime("07:10")
-    val (arrivalTimeS, arrivalTimePicker) =
-      TimePicker.TimePicker(defaultArrivalTime)
+    val com.billding.time
+      .TimePickerTyped(arrivalTimePicker, arrivalTimeS) =
+//      TimePicker.TimePicker(defaultArrivalTime)
+      com.billding.time.TimePicker
+        .basicWithTypedTime("7:00")
 
     val clickBus = new EventBus[Unit]
     val valuesDuringClick: EventStream[BusTime] =

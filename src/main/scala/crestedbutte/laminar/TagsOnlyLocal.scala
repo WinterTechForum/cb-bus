@@ -7,6 +7,7 @@ import crestedbutte._
 import crestedbutte.dom.BulmaLocal
 import crestedbutte.routes.{AllRoutes, TownShuttleTimes}
 
+import java.time.format.{DateTimeFormatter, FormatStyle}
 import java.time.{Clock, OffsetDateTime}
 import scala.concurrent.duration.FiniteDuration
 
@@ -37,13 +38,23 @@ object TagsOnlyLocal {
     )
 
     val timeStamps: Signal[BusTime] = clockTicks.events.foldLeft(
-      new BusTime(
-        OffsetDateTime.now(javaClock).toLocalTime,
+      BusTime(
+        OffsetDateTime
+          .now(javaClock)
+          .toLocalTime
+          .format(
+            DateTimeFormatter.ofPattern("HH:mm"),
+          ),
       ),
     )(
       (_, _) =>
-        new BusTime(
-          OffsetDateTime.now(javaClock).toLocalTime,
+        BusTime(
+          OffsetDateTime
+            .now(javaClock)
+            .toLocalTime
+            .format(
+              DateTimeFormatter.ofPattern("HH:mm"),
+            ),
         ),
     )
 
