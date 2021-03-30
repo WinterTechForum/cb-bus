@@ -6,7 +6,7 @@ import crestedbutte.{
   Location,
   RouteName,
 }
-import com.billding.time.BusDuration.toBusDuration
+import com.billding.time.MinuteDuration.toMinuteDuration
 import crestedbutte.laminar.NamedRoute
 
 /*

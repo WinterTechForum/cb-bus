@@ -1,8 +1,8 @@
 package crestedbutte
 
-import com.billding.time.BusTime
+import com.billding.time.WallTime
 
 case class BusTimeWithLocation(
-  busTime: BusTime,
+  busTime: WallTime,
   location: Location.Value,
 )

@@ -1,11 +1,6 @@
 package crestedbutte.laminar
 
-import com.billding.time.{
-  BusDuration,
-  BusTime,
-  TimePicker,
-  TimePickerTyped,
-}
+import com.billding.time.{TimePicker, TimePickerTyped, WallTime}
 import crestedbutte.{
   Location,
   LocationWithTime,
@@ -128,17 +123,17 @@ object LaminarRoundTripCalculator {
       initialDestination,
     )
 
-    val defaultArrivalTime = BusTime("07:10")
+    val defaultArrivalTime = WallTime("07:10")
     val TimePickerTyped(arrivalTimePicker, arrivalTimeS) =
       TimePicker
         .basicWithTypedTime("7:00")
 
     val clickBus = new EventBus[Unit]
-    val valuesDuringClick: EventStream[BusTime] =
+    val valuesDuringClick: EventStream[WallTime] =
       clickBus.events.withCurrentValueOf(arrivalTimeS)
 
     val submissionBehavior =
-      Observer[BusTime](
+      Observer[WallTime](
         onNext = (busTime) => println("time @ click: " + busTime),
       )
 
@@ -177,9 +172,9 @@ object LaminarRoundTripCalculator {
       Observer[
         (Location.Value,
          Location.Value,
-         BusTime,
+         WallTime,
          NamedRoute,
-         BusTime,
+         WallTime,
          Location.Value,
          NamedRoute),
       ](onNext = {

@@ -1,7 +1,7 @@
 package crestedbutte.routes
 
-import com.billding.time.BusDuration.toBusDuration
-import com.billding.time.BusTime
+import com.billding.time.MinuteDuration.toMinuteDuration
+import com.billding.time.WallTime
 import crestedbutte._
 import crestedbutte.laminar.NamedRoute
 
@@ -23,7 +23,7 @@ object RtaSouthbound {
         .plus(Location.GunnisonCommunitySchools, 4.minutes)
 
     // late buses actually terminate at the community school. The others loop through Gunni
-    if (routeLeg.stops.head.busTime.isBefore(BusTime("22:00")))
+    if (routeLeg.stops.head.busTime.isBefore(WallTime("22:00")))
       // Deviating from the PDFs, for usability's sake!
       basicRoute
         .plus(Location.EleventhAndVirginia, 2.minutes)
@@ -92,7 +92,7 @@ object RtaSouthbound {
         .plus(Location.GunnisonCommunitySchools, 4.minutes)
 
     // late buses actually terminate at the community school. The others loop through Gunni
-    if (routeLeg.stops.head.busTime.isBefore(BusTime("22:00")))
+    if (routeLeg.stops.head.busTime.isBefore(WallTime("22:00")))
       // Deviating from the PDFs, for usability's sake!
       basicRoute
         .plus(Location.EleventhAndVirginia, 2.minutes)

@@ -1,6 +1,6 @@
 package crestedbutte.laminar
 
-import com.billding.time.{BusTime}
+import com.billding.time.{WallTime}
 import com.raquo.laminar.api.L
 import com.raquo.laminar.nodes.ReactiveHtmlElement
 import crestedbutte.NotificationStuff.{desiredAlarms, headsUpAmount}
@@ -86,15 +86,15 @@ object Experimental {
     )
 
     def createJankyBusAlertInSideEffectyWay(
-      busTime: BusTime,
-      localTime: BusTime,
+      busTime: WallTime,
+      localTime: WallTime,
     ) =
       if (localTime
             .between(busTime)
             // TODO Direct comparison
             .toMinutes >= headsUpAmount.toMinutes)
         dom.window.setTimeout(
-          // TODO Replace this with submission to an EventBus[BusTime] that can be read via the RepeatingElement
+          // TODO Replace this with submission to an EventBus[WallTime] that can be read via the RepeatingElement
           () =>
             // Read submitted time, find difference between it and the current time, then submit a setInterval function
             // with the appropriate delay
@@ -112,9 +112,9 @@ object Experimental {
     def AlarmIcon(
       name: String,
       classes: String,
-      busTime: BusTime,
+      busTime: WallTime,
     ) = {
-      val clickObserverNarrow = Observer[BusTime](
+      val clickObserverNarrow = Observer[WallTime](
         onNext = ev => {
           // This will give the user an idea of what the eventual notification will look/sound like
           // While also letting them know that they successfully scheduled it.
@@ -137,7 +137,7 @@ object Experimental {
   }
 
   def Sandbox(
-    timeStamps: Signal[BusTime],
+    timeStamps: Signal[WallTime],
     $gpsPosition: Var[Option[GpsCoordinates]],
     featureUpdates: EventBus[FeatureStatus],
   ) = {

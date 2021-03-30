@@ -1,6 +1,6 @@
 package crestedbutte
 
-import com.billding.time.{BusDuration, BusTime}
+import com.billding.time.{MinuteDuration, WallTime}
 import crestedbutte.routes.RouteWithTimes
 import pprint.PPrinter
 
@@ -30,7 +30,7 @@ case class RouteLeg(
   // Assumes non-empty
   def plus(
     location: Location.Value,
-    busDuration: BusDuration,
+    busDuration: MinuteDuration,
   ) =
     RouteLeg(
       stops :+ LocationWithTime(location,
@@ -40,14 +40,14 @@ case class RouteLeg(
 
 case class LocationWithTime(
   location: Location.Value,
-  busTime: BusTime)
+  busTime: WallTime)
 
 case class RoundTripParams(
   startLocation: Location.Value,
   destination: Location.Value,
-  arrivalTime: BusTime,
+  arrivalTime: WallTime,
   leaveSchedule: RouteWithTimes,
-  departureTime: BusTime,
+  departureTime: WallTime,
   returningLaunchPoint: Location.Value,
   returnSchedule: RouteWithTimes,
 )
@@ -74,9 +74,9 @@ object RoundTripCalculator {
   def calculate(
     startLocation: Location.Value,
     destination: Location.Value,
-    arrivalTime: BusTime,
+    arrivalTime: WallTime,
     leaveSchedule: RouteWithTimes,
-    departureTime: BusTime,
+    departureTime: WallTime,
     returningLaunchPoint: Location.Value,
     returnSchedule: RouteWithTimes,
   ): Either[TripPlannerError, RoundTrip] =
@@ -133,13 +133,13 @@ object RoundTripCalculator {
     }
 
   def findLatestDepartureTime(
-    arrivalTime: BusTime,
+    arrivalTime: WallTime,
     leaveSchedule: RouteWithTimes,
   ): LocationWithTime = ???
 
   def reducedLegStartingAt(
     start: Location.Value,
-    arrivalTime: BusTime,
+    arrivalTime: WallTime,
     destination: Location.Value,
     leaveSchedule: RouteWithTimes,
   ): Either[TripPlannerError, RouteLeg] =
@@ -152,7 +152,7 @@ object RoundTripCalculator {
       )
 
   def findLatestDepartureLeg(
-    arrivalTime: BusTime,
+    arrivalTime: WallTime,
     destination: Location.Value,
     leaveSchedule: RouteWithTimes,
   ): Either[TripPlannerError, RouteLeg] =
@@ -162,7 +162,7 @@ object RoundTripCalculator {
           leg.stops.exists(
             stop =>
               stop.location
-                .matches(destination) && BusTime.busTimeOrdering
+                .matches(destination) && WallTime.ordering
                 .compare(stop.busTime, arrivalTime) <= 0, // todo ugh. bad int math.
           ),
       )
@@ -179,7 +179,7 @@ object RoundTripCalculator {
     start: LocationWithTime,
     schedule: RouteWithTimes,
     destination: Location.Value,
-  ): BusTime = ???
+  ): WallTime = ???
 
   def reducedReturnLeg(
     target: LocationWithTime,
@@ -209,7 +209,7 @@ object RoundTripCalculator {
           leg.stops.exists(
             stop =>
               stop.location
-                .matches(target.location) && BusTime.busTimeOrdering
+                .matches(target.location) && WallTime.ordering
                 .compare(stop.busTime, target.busTime) >= 0, // todo ugh. bad int math.
           ),
       )
@@ -223,8 +223,8 @@ object RoundTripCalculator {
       )
 
   def findEarliestReturnTime(
-    arrivalTime: BusTime,
-    timeRequiredAtDestination: BusDuration,
+    arrivalTime: WallTime,
+    timeRequiredAtDestination: MinuteDuration,
     returnSchedule: RouteWithTimes,
   ): LocationWithTime = ???
 }

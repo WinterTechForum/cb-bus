@@ -7,7 +7,7 @@ import crestedbutte.{
   LocationWithTime,
   RouteLeg,
 }
-import com.billding.time.{BusDuration, BusTime}
+import com.billding.time.WallTime
 
 // todo I need to start building this out of RouteLegs.
 //    If I correctly construct those, the express issue should go away.
@@ -64,7 +64,7 @@ object RouteWithTimes {
   def schedTyped(
     location: Location.Value,
     routeConstructor: RouteLeg => RouteLeg,
-    stopTimes: BusTime*,
+    stopTimes: WallTime*,
   ): RouteWithTimes =
     RouteWithTimes(
       stopTimes
@@ -88,6 +88,6 @@ object RouteWithTimes {
   ): RouteWithTimes =
     schedTyped(location,
                routeConstructor,
-               stopTimes.toList.map(BusTime(_)): _*) // ugh
+               stopTimes.toList.map(WallTime(_)): _*) // ugh
 
 }

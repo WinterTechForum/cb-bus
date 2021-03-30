@@ -1,20 +1,19 @@
 package crestedbutte
 
-import com.billding.time.BusTime
-import com.billding.time.BusDuration
+import com.billding.time.{MinuteDuration, WallTime}
 
 case class BusScheduleAtStop(
   location: Location.Value,
-  times: Seq[BusTime]) {
+  times: Seq[WallTime]) {
 
   def timesDelayedBy(
-    busDuration: BusDuration,
+    busDuration: MinuteDuration,
     locationIn: Location.Value,
   ) =
     BusScheduleAtStop(locationIn, times.map(_.plus(busDuration)))
 
   def delayedBy(
-    busDuration: BusDuration,
+    busDuration: MinuteDuration,
   ) =
     BusScheduleAtStop(location, times.map(_.plus(busDuration)))
 
@@ -24,12 +23,13 @@ case class BusScheduleAtStop(
     BusScheduleAtStop(locationIn, times)
 
   def scheduleAfter(
-    busTime: BusTime,
+    busTime: WallTime,
   ) =
     BusScheduleAtStop(
       location,
-      times.dropWhile(!BusTime.catchableBus(busTime, _)),
+      times.dropWhile(!TimeCalculations.catchableBus(busTime, _)),
     )
+
 }
 
 object BusScheduleAtStop {

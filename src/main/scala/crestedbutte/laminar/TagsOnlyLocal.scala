@@ -1,6 +1,6 @@
 package crestedbutte.laminar
 
-import com.billding.time.{BusDuration, BusTime}
+import com.billding.time.{MinuteDuration, WallTime}
 import com.raquo.laminar.nodes.ReactiveHtmlElement
 import crestedbutte.NotificationStuff.desiredAlarms
 import crestedbutte._
@@ -37,8 +37,8 @@ object TagsOnlyLocal {
         ),
     )
 
-    val timeStamps: Signal[BusTime] = clockTicks.events.foldLeft(
-      BusTime(
+    val timeStamps: Signal[WallTime] = clockTicks.events.foldLeft(
+      WallTime(
         OffsetDateTime
           .now(javaClock)
           .toLocalTime
@@ -48,7 +48,7 @@ object TagsOnlyLocal {
       ),
     )(
       (_, _) =>
-        BusTime(
+        WallTime(
           OffsetDateTime
             .now(javaClock)
             .toLocalTime
@@ -76,7 +76,7 @@ object TagsOnlyLocal {
 
   def overallPageLayout(
     $selectedComponent: Signal[ComponentData],
-    timeStamps: Signal[BusTime],
+    timeStamps: Signal[WallTime],
     pageMode: AppMode,
   ) = {
     // TODO Turn this into a Signal. The EventBus should be contained within the Experimental/FeatureControlCenter
@@ -121,7 +121,7 @@ object TagsOnlyLocal {
       cls := "bill-box",
       idAttr := "container",
       child <-- upcomingArrivalData, // **THIS IS THE IMPORTANT STUFF** The fact that it's hard to see means I need to remove other bullshit
-      timeStamps --> Observer[BusTime](
+      timeStamps --> Observer[WallTime](
         onNext = localTime =>
           desiredAlarms
             .dequeueAll(_ => true)
@@ -141,7 +141,7 @@ object TagsOnlyLocal {
   }
 
   def renderWaitTime(
-    duration: BusDuration,
+    duration: MinuteDuration,
   ) =
     if (duration.toMinutes == 0)
       "Leaving!"

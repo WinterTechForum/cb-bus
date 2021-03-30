@@ -1,16 +1,18 @@
 package crestedbutte
 
-import com.billding.time.{BusDuration, BusTime}
+import com.billding.time.{MinuteDuration, WallTime}
 
 case class BusSchedule(
-  stopTimes: List[BusTime]) {
+  stopTimes: List[WallTime]) {
 
   def nextBusArrivalTime(
-    now: BusTime,
-  ): Option[BusTime] =
+    now: WallTime,
+  ): Option[WallTime] =
     if (now.isLikelyEarlyMorningRatherThanLateNight)
       stopTimes
-        .find(stopTime => BusTime.catchableBus(now, stopTime))
+        .find(
+          stopTime => TimeCalculations.catchableBus(now, stopTime),
+        )
     else None
 }
 
@@ -19,19 +21,19 @@ object BusSchedule {
   def apply(
     firstBus: String,
     lastBus: String,
-    timeBetweenBuses: BusDuration,
+    timeBetweenBuses: MinuteDuration,
   ) =
     new BusSchedule(
       List
         .range(
           0,
-          BusTime(firstBus)
-            .between(BusTime(lastBus))
+          WallTime(firstBus)
+            .between(WallTime(lastBus))
             .dividedBy(timeBetweenBuses) + 1,
         ) // TODO Ugh. Nasty +1
         .map(
           index =>
-            BusTime(firstBus)
+            WallTime(firstBus)
               .plus(timeBetweenBuses.times(index.toInt)),
         ),
     )
@@ -42,6 +44,6 @@ object BusSchedule {
   ) =
     new BusSchedule(
       List(stopTimeStrings: _*)
-        .map(BusTime(_)),
+        .map(WallTime(_)),
     )
 }

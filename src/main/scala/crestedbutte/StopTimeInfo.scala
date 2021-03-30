@@ -1,8 +1,8 @@
 package crestedbutte
 
-import com.billding.time.BusTime
-import com.billding.time.BusDuration
+import com.billding.time.WallTime
+import com.billding.time.MinuteDuration
 
 case class StopTimeInfo(
-  time: BusTime,
-  waitingDuration: BusDuration)
+  time: WallTime,
+  waitingDuration: MinuteDuration)

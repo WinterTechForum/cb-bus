@@ -1,6 +1,6 @@
 package crestedbutte
 
-import com.billding.time.BusTime
+import com.billding.time.WallTime
 import crestedbutte.laminar.NamedRoute
 import zio.{Has, ZIO}
 import zio.clock.Clock
@@ -10,17 +10,27 @@ import java.time.{DateTimeException, OffsetDateTime}
 
 object TimeCalculations {
 
+  // TODO Shouldn't be part of this class
+  def catchableBus(
+    now: WallTime,
+    goal: WallTime,
+  ) =
+    goal.localTime
+      .isAfter(now.localTime) ||
+    goal.localTime
+      .equals(now.localTime)
+
   def nextBusArrivalTime(
-    timesAtStop: Seq[BusTime],
-    now: BusTime,
-  ): Option[BusTime] =
+    timesAtStop: Seq[WallTime],
+    now: WallTime,
+  ): Option[WallTime] =
     timesAtStop
-      .find(stopTime => BusTime.catchableBus(now, stopTime))
+      .find(stopTime => TimeCalculations.catchableBus(now, stopTime))
       .filter(_ => now.isLikelyEarlyMorningRatherThanLateNight)
 
   def getUpcomingArrivalInfo(
     stops: BusScheduleAtStop,
-    now: BusTime,
+    now: WallTime,
   ): UpcomingArrivalInfo =
     nextBusArrivalTime(stops.times, now)
       .map(
@@ -42,7 +52,7 @@ object TimeCalculations {
       )
 
   def calculateUpcomingArrivalAtAllStops(
-    now: BusTime,
+    now: WallTime,
     busRoute: NamedRoute,
   ): Seq[UpcomingArrivalInfo] =
     busRoute.routeWithTimes.allStops.map(
@@ -50,7 +60,7 @@ object TimeCalculations {
     )
 
   def calculateUpcomingArrivalWithFullScheduleAtAllStops(
-    now: BusTime,
+    now: WallTime,
     busRoute: NamedRoute,
   ): Seq[UpcomingArrivalInfoWithFullSchedule] =
     busRoute.routeWithTimes.allStops.map(
@@ -67,7 +77,7 @@ object TimeCalculations {
     for {
       clockProper <- ZIO.access[Clock](_.get)
       now         <- clockProper.currentDateTime
-      localTime = BusTime(
+      localTime = WallTime(
         now.toLocalTime.format(
           DateTimeFormatter.ofPattern("HH:mm"),
         ),
@@ -85,7 +95,7 @@ object TimeCalculations {
     for {
       clockProper <- ZIO.access[Clock](_.get)
       now         <- clockProper.currentDateTime
-      localTime = BusTime(
+      localTime = WallTime(
         now.toLocalTime.format(
           DateTimeFormatter.ofPattern("HH:mm"),
         ),
@@ -103,7 +113,7 @@ object TimeCalculations {
     }
 
   def getUpComingArrivalsWithFullScheduleNonZio(
-    localTime: BusTime,
+    localTime: WallTime,
     busRoute: NamedRoute,
   ): UpcomingArrivalComponentData =
     UpcomingArrivalComponentData(

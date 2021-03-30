@@ -1,6 +1,6 @@
 package crestedbutte
 
-import com.billding.time.{BusTime, TimePicker}
+import com.billding.time.{TimePicker, WallTime}
 import crestedbutte.Browser.Browser
 import crestedbutte.laminar.{AppMode, TagsOnlyLocal}
 import org.scalajs.dom
@@ -74,11 +74,11 @@ object RoutingStuff {
 
   private case class BusPage(
     mode: String,
-    time: Option[String], // TODO Make this a BusTime instead
+    time: Option[String], // TODO Make this a WallTime instead
     route: Option[String],
   ) extends Page {
 
-    val fixedTime = time.map(BusTime(_))
+    val fixedTime = time.map(WallTime(_))
 
     val javaClock =
       if (fixedTime.isDefined)
