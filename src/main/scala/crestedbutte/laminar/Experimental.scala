@@ -141,14 +141,6 @@ object Experimental {
     $gpsPosition: Var[Option[GpsCoordinates]],
     featureUpdates: EventBus[FeatureStatus],
   ) = {
-    val (pickedTime, timePicker) =
-      TimePicker.TimePicker(BusTime("7:20"))
-
-    def basicUpArrow() =
-      div("+")
-
-    def basicDownArrow() =
-      div("-")
     val newTimePicker: com.billding.time.TimePickerTyped =
       com.billding.time.TimePicker
         .basicWithTypedTime("12:34")
@@ -178,8 +170,6 @@ object Experimental {
         cls := "button",
         "SubmitMessage to SW",
       ),
-      child <-- pickedTime.map(time => div("BusTime: " + time)),
-      timePicker,
       newTimePicker.component,
     )
   }
