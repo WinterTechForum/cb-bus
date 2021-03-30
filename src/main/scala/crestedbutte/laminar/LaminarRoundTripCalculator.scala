@@ -84,10 +84,6 @@ object LaminarRoundTripCalculator {
     )
   }
 
-  sealed trait DayTime
-  case object AM extends DayTime
-  case object PM extends DayTime
-
   def RoundTripCalculatorLaminar() = {
     val routes =
       List(RtaNorthbound.fullSchedule, RtaSouthbound.fullSchedule)

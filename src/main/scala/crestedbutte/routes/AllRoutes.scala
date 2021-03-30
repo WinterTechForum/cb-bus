@@ -23,19 +23,18 @@ object AllRoutes {
 
   def components(
     appMode: AppMode,
-  ): Seq[ComponentData] =
-    if (appMode == AppMode.dev)
+  ): Seq[ComponentData] = {
+    val basicComponents =
       mtnExpressRoutes.routesWithTimes ++:
       Seq(
         RtaNorthbound.fullSchedule,
         RtaSouthbound.fullSchedule,
         RoundTripCalculatorComponent,
       )
+    if (appMode == AppMode.dev)
+      basicComponents // + other under-developed features
     else
-      mtnExpressRoutes.routesWithTimes ++:
-      Seq(
-        RtaNorthbound.fullSchedule,
-        RtaSouthbound.fullSchedule,
-      )
+      basicComponents
+  }
 
 }
