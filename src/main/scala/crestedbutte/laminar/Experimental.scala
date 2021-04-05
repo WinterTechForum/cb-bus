@@ -1,8 +1,6 @@
 package crestedbutte.laminar
 
-import com.billding.time.{WallTime}
-import com.raquo.laminar.api.L
-import com.raquo.laminar.nodes.ReactiveHtmlElement
+import com.billding.time.{TimePicker, WallTime}
 import crestedbutte.NotificationStuff.{desiredAlarms, headsUpAmount}
 import crestedbutte.{
   ElementNames,
@@ -15,7 +13,6 @@ import org.scalajs.dom.experimental.{
   Notification,
   NotificationOptions,
 }
-import org.scalajs.dom.html
 import org.scalajs.dom.raw.Position
 import typings.std.global.navigator
 
@@ -141,9 +138,7 @@ object Experimental {
     $gpsPosition: Var[Option[GpsCoordinates]],
     featureUpdates: EventBus[FeatureStatus],
   ) = {
-    val newTimePicker: com.billding.time.TimePickerTyped =
-      com.billding.time.TimePicker
-        .basicWithTypedTime("12:34")
+    val newTimePicker = TimePicker("12:34")
     div(
       idAttr := "sandbox",
       timeStamps.map(

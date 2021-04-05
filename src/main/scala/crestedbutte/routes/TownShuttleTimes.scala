@@ -32,6 +32,7 @@ object TownShuttleTimes
           .plus(Location.MountaineerSquare, 14.minutes)
           .plus(Location.TeocalliDownhill, 6.minutes)
           .plus(Location.FourwayDownhill, 1.minutes),
-        BusSchedule("07:10", "23:40", 15.minutes),
+        BusSchedule("07:10", "23:40", 15.minutes), // Summer/Winter
+//        BusSchedule("07:35", "22:55", 40.minutes), // Spring/Fall
       ),
     )

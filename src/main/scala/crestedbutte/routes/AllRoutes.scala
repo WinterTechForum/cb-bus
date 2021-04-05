@@ -9,13 +9,22 @@ import crestedbutte.laminar.{
 object AllRoutes {
 
   val mtnExpressRoutes =
-    new CompanyRoutes("Mtn Express",
+    /*
+    new CompanyRoutes("Mtn Express", // Peak-season
                       Seq(
                         TownShuttleTimes,
                         CrystalCastleShuttle,
                         ColumbineLoop,
                         SnodgrassShuttle,
                         ThreeSeasonsTimes,
+                      )
+    )
+
+     */
+
+    new CompanyRoutes("Mtn Express", // Off-season
+                      Seq(
+                        SpringFallLoop,
                       ))
 
   def components(

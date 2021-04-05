@@ -32,12 +32,9 @@ Compile / npmDependencies ++= Seq(
 //  "@types/react-router-dom" -> "5.1.2",
   "@material-ui/core" -> "4.11.1",
   "@material-ui/pickers" -> "3.2.10",
-//  "@material-ui/mwc-button" -> "0.20.0",
   "@material/mwc-button" -> "0.18.0",
   "@material-ui/pickers" -> "3.2.10",
   "smart-webcomponents" -> "9.0.0",
-//  "timepicker-ui" -> "1.2.0",
-//  "@types/timepicker-ui" -> "1.2.0",
   "react" -> "17.0.1"
 )
 
@@ -53,7 +50,7 @@ Compile / npmDependencies ++= Seq(
 libraryDependencies ++= Seq(
   "com.billding" %%% "bulmalibrary" % "0.2.19",
   "com.billding" %%% "scalajsziolibrary" % "0.0.13",
-  "com.billdingsoftware" %%% "timepicker" % "0.1.6",
+  "com.billdingsoftware" %%% "timepicker" % "0.1.7",
   "dev.zio" %%% "zio" % zioVersion,
   "dev.zio" %%% "zio-streams" % zioVersion,
   "com.lihaoyi" %%% "scalatags" % "0.8.6",
