@@ -123,9 +123,8 @@ object LaminarRoundTripCalculator {
       initialDestination,
     )
 
-    val defaultArrivalTime = WallTime("07:10")
     val TimePicker(arrivalTimePicker, arrivalTimeS) =
-      TimePicker("7:00")
+      TimePicker("7:00 AM")
 
     val clickBus = new EventBus[Unit]
     val valuesDuringClick: EventStream[WallTime] =
@@ -137,7 +136,7 @@ object LaminarRoundTripCalculator {
       )
 
     val TimePicker(departureTimePicker, departureTimeS) =
-      TimePicker(initialTime = "17:00")
+      TimePicker(initialTime = "5:00 PM")
 
     val submissions = new EventBus[RoundTripParams]
     val roundTripResults
