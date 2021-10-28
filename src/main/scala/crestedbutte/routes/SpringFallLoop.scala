@@ -19,7 +19,7 @@ object SpringFallLoop
           .plus(Location.TeocalliUphill, 1.minutes)
           .plus(Location.WoodCreekMountainEdge, 4.minutes)
           .plus(Location.ThePlaza, 1.minutes)
-          .plus(Location.MountaineerSquare, 13.minutes)
+          .plus(Location.MountaineerSquare, 18.minutes)
           .plus(Location.ThreeSeasons, 1.minutes)
           .plus(Location.UpperChateaux, 1.minutes)
           .plus(Location.LowerChateaux, 0.minutes)

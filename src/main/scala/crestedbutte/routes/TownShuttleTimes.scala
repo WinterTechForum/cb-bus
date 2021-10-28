@@ -29,10 +29,10 @@ object TownShuttleTimes
         _.plus(Location.Clarks, 4.minutes)
           .plus(Location.FourWayUphill, 1.minutes)
           .plus(Location.TeocalliUphill, 1.minutes)
-          .plus(Location.MountaineerSquare, 14.minutes)
+          .plus(Location.MountaineerSquare, 25.minutes)
           .plus(Location.TeocalliDownhill, 6.minutes)
           .plus(Location.FourwayDownhill, 1.minutes),
-//        BusSchedule("07:10", "23:40", 15.minutes), // Summer/Winter
-        BusSchedule("07:35", "22:55", 40.minutes), // Spring/Fall
+        BusSchedule("07:10", "23:40", 15.minutes), // Summer/Winter
+//        BusSchedule("07:35", "22:55", 40.minutes), // Spring/Fall
       ),
     )
