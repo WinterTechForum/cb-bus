@@ -5,7 +5,9 @@ import com.raquo.laminar.nodes.ReactiveHtmlElement
 import crestedbutte.NotificationStuff.desiredAlarms
 import crestedbutte._
 import crestedbutte.dom.BulmaLocal
+import crestedbutte.laminar.Experimental.getLocation
 import crestedbutte.routes.{AllRoutes, TownShuttleTimes}
+import org.scalajs.dom
 
 import java.time.format.{DateTimeFormatter, FormatStyle}
 import java.time.{Clock, OffsetDateTime}
@@ -118,23 +120,34 @@ object TagsOnlyLocal {
         }
 
     div(
-      cls := "bill-box",
-      idAttr := "container",
-      child <-- upcomingArrivalData, // **THIS IS THE IMPORTANT STUFF** The fact that it's hard to see means I need to remove other bullshit
-      timeStamps --> Observer[WallTime](
-        onNext = localTime =>
-          desiredAlarms
-            .dequeueAll(_ => true)
-            .map(
-              Experimental.Notifications
-                .createJankyBusAlertInSideEffectyWay(_, localTime),
-            ),
+      button(
+        idAttr := "Get position",
+        onClick --> Observer[dom.MouseEvent](
+          onNext = ev => {
+            getLocation(gpsPosition)
+          },
+        ),
+        "Get GPS coordinates",
       ),
-      Option.when(pageMode == AppMode.dev)(
-        Experimental.Sandbox(
-          timeStamps,
-          gpsPosition,
-          featureUpdates: EventBus[FeatureStatus],
+      div(
+        cls := "bill-box",
+        idAttr := "container",
+        child <-- upcomingArrivalData, // **THIS IS THE IMPORTANT STUFF** The fact that it's hard to see means I need to remove other bullshit
+        timeStamps --> Observer[WallTime](
+          onNext = localTime =>
+            desiredAlarms
+              .dequeueAll(_ => true)
+              .map(
+                Experimental.Notifications
+                  .createJankyBusAlertInSideEffectyWay(_, localTime),
+              ),
+        ),
+        Option.when(pageMode == AppMode.dev)(
+          Experimental.Sandbox(
+            timeStamps,
+            gpsPosition,
+            featureUpdates: EventBus[FeatureStatus],
+          ),
         ),
       ),
     )
