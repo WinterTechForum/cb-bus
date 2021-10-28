@@ -1,4 +1,4 @@
-scalaVersion := "2.13.1"
+scalaVersion := "2.13.6"
 version := "0.2"
 
 enablePlugins(ScalaJSPlugin)
@@ -8,6 +8,8 @@ enablePlugins(TzdbPlugin)
 enablePlugins(ScalablyTypedConverterPlugin)
 //enablePlugins(ScalaJSBundlerPlugin)
 enablePlugins(WebScalaJSBundlerPlugin)
+
+//stTypescriptVersion := "4.2.3"
 
 pipelineStages in Assets := Seq(scalaJSPipeline)
 //  .settings(
@@ -28,14 +30,12 @@ resolvers += "Sonatype" at "https://s01.oss.sonatype.org/content/repositories/pu
 val zioVersion = "1.0.0-RC21-2"
 
 Compile / npmDependencies ++= Seq(
-//  "react-router-dom" -> "5.1.2",
-//  "@types/react-router-dom" -> "5.1.2",
-  "@material-ui/core" -> "4.11.1",
-  "@material-ui/pickers" -> "3.2.10",
-  "@material/mwc-button" -> "0.18.0",
-  "@material-ui/pickers" -> "3.2.10",
+//  "@material-ui/core" -> "4.11.1",
+//  "@material-ui/pickers" -> "3.2.10",
+//  "@material/mwc-button" -> "0.18.0",
+//  "@materiae-ui/pickers" -> "3.2.10",
   "smart-webcomponents" -> "9.0.0",
-  "react" -> "17.0.1"
+//  "react" -> "17.0.1"
 )
 
 /*
@@ -48,7 +48,7 @@ Compile / npmDependencies ++= Seq(
  */
 
 libraryDependencies ++= Seq(
-  "com.billding" %%% "bulmalibrary" % "0.2.19",
+  "com.billding" %%% "bulmascala" % "0.2.19",
   "com.billding" %%% "scalajsziolibrary" % "0.0.13",
   "com.billdingsoftware" %%% "timepicker" % "0.2.1",
   "dev.zio" %%% "zio" % zioVersion,

@@ -7,8 +7,8 @@ In your editor, you might want to exclude ./src/main/resources/compiledJavascrip
 
 To setup npm peer dependencies
 
-    npm install react@^17.0.1
-    npm install react-dom@^17.0.1
+    npm install --save-dev react@^17.0.1
+    npm install --save-dev react-dom@^17.0.1
 
 To view source maps:
 
