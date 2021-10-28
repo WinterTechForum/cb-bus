@@ -122,6 +122,7 @@ object RoutingStuff {
     param[
       String,
     ]("mode").? & param[String]("time").? & param[String]("route").?
+  println("Get params")
 
   private val devRoute =
     Route.onlyQuery[BusPage,
@@ -139,6 +140,8 @@ object RoutingStuff {
       pattern = (root / endOfSegments) ? params,
     )
 
+  println("Creating router")
+
   private val router = new Router[Page](
     routes = List(
       prodRoute,
@@ -147,11 +150,17 @@ object RoutingStuff {
     getPageTitle = _.toString, // mock page title (displayed in the browser tab next to favicon)
     serializePage = page => write(page)(rw), // serialize page data for storage in History API log
     deserializePage = pageStr => read(pageStr)(rw), // deserialize the above
-//    routeFallback = _ => div("You are trying to access and invalid link")
+    routeFallback = _ =>
+      BusPage(
+        mode = "Production",
+        time = None, // TODO Make this a WallTime instead
+        route = None,
+      ),
   )(
     $popStateEvent = L.windowEvents.onPopState, // this is how Waypoint avoids an explicit dependency on Laminar
     owner = L.unsafeWindowOwner, // this router will live as long as the window
   )
+  println("Created router")
 
   private def renderMyPage(
     $loginPage: Signal[BusPage],
