@@ -6,7 +6,11 @@ import crestedbutte.NotificationStuff.desiredAlarms
 import crestedbutte._
 import crestedbutte.dom.BulmaLocal
 import crestedbutte.laminar.Experimental.getLocation
-import crestedbutte.routes.{AllRoutes, TownShuttleTimes}
+import crestedbutte.routes.{
+  AllRoutes,
+  SpringFallLoop,
+  TownShuttleTimes,
+}
 import org.scalajs.dom
 
 import java.time.format.{DateTimeFormatter, FormatStyle}
@@ -35,7 +39,7 @@ object TagsOnlyLocal {
             ),
         )
         .getOrElse(
-          TownShuttleTimes,
+          SpringFallLoop,
         ),
     )
 
