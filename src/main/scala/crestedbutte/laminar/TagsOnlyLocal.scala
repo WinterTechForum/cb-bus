@@ -255,7 +255,8 @@ object TagsOnlyLocal {
                   Components.SafeRideLink(safeRideRecommendation)
               },
               $enabledFeatures.map(
-                _.isEnabled(Feature.MapLinks),
+//                _.isEnabled(Feature.MapLinks),
+                _ => true, // Maps always enabled now
               ),
               gpsPosition.signal,
             )
