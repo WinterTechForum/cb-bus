@@ -1,4 +1,7 @@
-scalaVersion := "2.13.6"
+// Can't upgrade till this is resolve:
+// https://github.com/ScalablyTyped/Converter/issues/565
+scalaVersion := "2.13.11"
+
 version := "0.2"
 
 enablePlugins(ScalaJSPlugin)
@@ -22,6 +25,7 @@ scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.CommonJSModule) }
 resolvers += "jitpack" at "https://jitpack.io"
 resolvers += Resolver.url("typesafe", url("https://repo.typesafe.com/typesafe/ivy-releases/"))(Resolver.ivyStylePatterns)
 resolvers += Resolver.githubPackages("swoogles", "BulmaScala")
+resolvers += Resolver.githubPackages("swoogles", "ScalaJsZioLibrary")
 
 // This is only for quick dev turn-around
 resolvers += "Sonatype" at "https://s01.oss.sonatype.org/content/repositories/public"
@@ -34,7 +38,7 @@ Compile / npmDependencies ++= Seq(
 //  "@material-ui/pickers" -> "3.2.10",
 //  "@material/mwc-button" -> "0.18.0",
 //  "@materiae-ui/pickers" -> "3.2.10",
-  "smart-webcomponents" -> "9.0.0",
+  "smart-webcomponents" -> "16.0.1",
 //  "react" -> "17.0.1"
 )
 
@@ -48,20 +52,20 @@ Compile / npmDependencies ++= Seq(
  */
 
 libraryDependencies ++= Seq(
-  "com.billding" %%% "bulmascala" % "0.2.19",
+  "com.billding" %%% "bulmascala" % "0.2.20",
   "com.billding" %%% "scalajsziolibrary" % "0.0.13",
-  "com.billdingsoftware" %%% "timepicker" % "0.2.1",
+  "com.billdingsoftware" %%% "timepicker" % "0.2.4",
   "dev.zio" %%% "zio" % zioVersion,
   "dev.zio" %%% "zio-streams" % zioVersion,
-  "com.lihaoyi" %%% "scalatags" % "0.8.6",
+  "com.lihaoyi" %%% "scalatags" % "0.12.0",
   "io.github.cquiroz" %%% "scala-java-time" % "2.0.0",
   "dev.zio" %%% "zio-test"     % zioVersion % "test",
   "dev.zio" %%% "zio-test-sbt" % zioVersion % "test",
   "com.lihaoyi" %%% "pprint" % "0.5.9",
-  "com.raquo" %%% "laminar" % "0.12.1",
-  "com.raquo" %%% "airstream" % "0.12.0",
-  "com.lihaoyi" %%% "upickle" % "1.3.0",
-  "com.raquo" %%% "waypoint" % "0.3.0",   // Requires Airstream 0.12.0 & URL DSL 0.3.2
+  "com.raquo" %%% "laminar" % "16.0.0",
+  "com.raquo" %%% "airstream" % "16.0.0",
+  "com.lihaoyi" %%% "upickle" % "3.1.3",
+  "com.raquo" %%% "waypoint" % "7.0.0",   // Requires Airstream 0.12.0 & URL DSL 0.3.2
   "com.beachape" %%% "enumeratum" % "1.6.1"
 
 //  "com.github.japgolly.scalacss" %%% "core" % "0.6.0",
@@ -115,6 +119,6 @@ lazy val sw = (project in file("sw"))
   .settings(
     scalaJSUseMainModuleInitializer := true,
     libraryDependencies ++= Seq(
-      "org.scala-js" %%% "scalajs-dom" % "1.0.0"
+      "org.scala-js" %%% "scalajs-dom" % "2.6.0"
     )
   )
