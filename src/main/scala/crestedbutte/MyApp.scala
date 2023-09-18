@@ -162,7 +162,7 @@ object RoutingStuff {
     popStateEvents = L.windowEvents(_.onPopState), // this is how Waypoint avoids an explicit dependency on Laminar
     owner = L.unsafeWindowOwner, // this router will live as long as the window
   )
-  println("Created router")
+  println("Created router!")
 
   private def renderMyPage(
     $loginPage: Signal[BusPage],

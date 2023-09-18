@@ -1,11 +1,9 @@
 package todo
 
 import org.scalajs.dom.experimental.Fetch._
-import org.scalajs.dom.experimental.serviceworkers.ServiceWorkerGlobalScope._
-import org.scalajs.dom.experimental.serviceworkers.{
-  ExtendableEvent,
-  FetchEvent
-}
+import org.scalajs.dom.{NotificationOptions, ServiceWorkerGlobalScope}
+import org.scalajs.dom.ServiceWorkerGlobalScope.self
+import org.scalajs.dom.experimental.serviceworkers.{ExtendableEvent, FetchEvent}
 import org.scalajs.dom.experimental._
 import org.scalajs.dom.raw.MessageEvent
 
@@ -113,26 +111,31 @@ object ServiceWorker {
 
   def toCache(): Future[Unit] = {
     self.caches
-      .open(todoCache)
-      .toFuture
-      .flatMap(cache =>
+      .flatMap(_.open(todoCache).toFuture.flatMap(cache =>
         //          println("toCache: caching assets...")
-        cache.addAll(todoAssets).toFuture)
-  }
+        cache.addAll(todoAssets).toFuture))
+//    self.caches
+//      .open(todoCache)
+//      .toFuture
+//      .flatMap(cache =>
+//        //          println("toCache: caching assets...")
+//        cache.addAll(todoAssets).toFuture)
+  }.get
 
   def fromCache(request: Request): Future[Response] =
     self.caches
-      .`match`(request)
+      .map(_.`match`(request)
       .toFuture
       .flatMap { case response: Response =>
         if ( request.url.contains("index")) println(s"fromCache: matched request > ${request.url}")
         Future.successful(response)
       case other => Future.failed(new Exception("Could not find cached request"))
       }
+      ).get
 
   def invalidateCache(): Unit = {
     self.caches
-      .delete(todoCache)
+      .map(_.delete(todoCache)
       .toFuture
       .map { invalidatedCache =>
         if (invalidatedCache) {
@@ -142,6 +145,6 @@ object ServiceWorker {
           toCache()
         }
       }
-    ()
+    ).get
   }
 }

@@ -90,13 +90,14 @@ cbBuild := {
   (Compile/scalafmt).value
   import scala.sys.process._
 //  "ls ./target/scala-2.13" !
-  (Process("mkdir ./src/main/resources/compiledJavascript") #|| Process("mkdir ./src/main/resources/compiledJavascript/busriderapp") #||
-    Process("cp ./target/scala-2.13/busriderapp-fastopt/main.js ./src/main/resources/compiledJavascript/busriderapp") #&&
-    Process("cp ./target/scala-2.13/busriderapp-fastopt/main.js.map ./src/main/resources/compiledJavascript/busriderapp") #&&
-//    Process("cp ./target/scala-2.13/busriderapp-fastopt.js.map ./src/main/resources/compiledJavascript/") #&&
+  (Process("mkdir ./src/main/resources/compiledJavascript") #|| Process("mkdir ./src/main/resources/compiledJavascript/cb-bus") #||
+    Process("cp ./target/scala-2.13/cb-bus-fastopt/main.js ./src/main/resources/compiledJavascript/cb-bus") #&&
+//    Process("cp ./target/scala-2.13/cb-bus-fastopt/main.js.map ./src/main/resources/compiledJavascript/cb-bus") #&&
+//    Process("cp ./target/scala-2.13/cb-bus-fastopt.js.map ./src/main/resources/compiledJavascript/") #&&
     Process("cp sw/target/scala-2.12/sw-opt.js ./src/main/resources/") #&&
-    Process("cp sw/target/scala-2.12/sw-opt.js.map ./src/main/resources/") #&&
-    Process("cp ./target/scala-2.13/busriderapp-jsdeps.js ./src/main/resources/compiledJavascript/"))!
+    Process("cp sw/target/scala-2.12/sw-opt.js.map ./src/main/resources/")
+//    Process("cp ./target/scala-2.13/cb-bus-jsdeps.js ./src/main/resources/compiledJavascript/")
+    )!
 }
 
 lazy val cbPublish = taskKey[Unit]("Build the files for a real deploment")
@@ -107,8 +108,8 @@ cbPublish := {
   import scala.sys.process._
   //  "ls ./target/scala-2.13" !
   (Process("mkdir ./src/main/resources/compiledJavascript") #||
-    Process("cp ./target/scala-2.13/busriderapp-opt/main.js ./src/main/resources/compiledJavascript/busriderapp-opt/") #||
-    Process("cp ./target/scala-2.13/busriderapp-opt.js.map src/main/resources/compiledJavascript/") #||
+    Process("cp ./target/scala-2.13/cb-bus-opt/main.js ./src/main/resources/compiledJavascript/cb-bus-opt/") #||
+    Process("cp ./target/scala-2.13/cb-bus-opt.js.map src/main/resources/compiledJavascript/") #||
     Process("cp sw/target/scala-2.12/sw-opt.js src/main/resources/") #||
     Process("cp sw/target/scala-2.12/sw-opt.js.map src/main/resources/"))!
 }
