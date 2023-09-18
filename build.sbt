@@ -108,7 +108,7 @@ cbPublish := {
   import scala.sys.process._
   //  "ls ./target/scala-2.13" !
   (Process("mkdir ./src/main/resources/compiledJavascript") #||
-    Process("cp ./target/scala-2.13/cb-bus-opt/main.js ./src/main/resources/compiledJavascript/cb-bus-opt/") #||
+    Process("cp ./target/scala-2.13/cb-bus-opt/main.js ./src/main/resources/compiledJavascript/") #||
     Process("cp ./target/scala-2.13/cb-bus-opt.js.map src/main/resources/compiledJavascript/") #||
     Process("cp sw/target/scala-2.12/sw-opt.js src/main/resources/") #||
     Process("cp sw/target/scala-2.12/sw-opt.js.map src/main/resources/"))!

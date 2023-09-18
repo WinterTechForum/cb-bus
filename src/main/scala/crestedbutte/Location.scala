@@ -101,6 +101,10 @@ object Location extends Enumeration {
     "Gunnison Community Schools",
   )
 
+  val GunnisonLibrary: Val = Val(
+    "Gunnison Library",
+  )
+
   val EleventhAndVirginia: Val = Val("Eleventh & Virgina")
 
   val Safeway: Val =

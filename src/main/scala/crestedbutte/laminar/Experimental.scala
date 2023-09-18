@@ -153,7 +153,7 @@ object Experimental {
             getLocation($gpsPosition)
           },
         ),
-        "Get GPS coordinates",
+        "Get GPS coords",
       ),
       button(
         idAttr := ElementNames.Notifications.requestPermission,
