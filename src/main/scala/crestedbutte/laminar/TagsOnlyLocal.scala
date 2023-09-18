@@ -131,7 +131,7 @@ object TagsOnlyLocal {
             getLocation(gpsPosition)
           },
         ),
-        "Get GPS coordinates",
+        "Get GPS coords",
       ),
       div(
         cls := "bill-box",
