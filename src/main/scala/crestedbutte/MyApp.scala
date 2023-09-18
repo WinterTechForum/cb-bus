@@ -70,22 +70,25 @@ object RoutingStuff {
   import com.raquo.waypoint._
   import upickle.default._
 
-  sealed private trait Page
-
   private case class BusPage(
     mode: String,
     time: Option[String], // TODO Make this a WallTime instead
     route: Option[String],
-  ) extends Page {
+  ) {
 
+    println("Mode: " + mode)
+    println("Time param: " + time)
+    println("Route param: " + route)
     val fixedTime = time.map(WallTime(_))
+
+    println("Fixed time: " + fixedTime)
 
     val javaClock =
       if (fixedTime.isDefined)
         java.time.Clock.fixed(
           OffsetDateTime
             .parse(
-              s"2020-02-21T${fixedTime.get.toString}:00.00-07:00",
+              s"2020-02-21T${fixedTime.get.toEUString}:00.00-07:00",
             )
             .toInstant,
           ZoneId.of("America/Denver"),
@@ -94,13 +97,7 @@ object RoutingStuff {
         java.time.Clock.system(ZoneId.of("America/Denver"))
   }
 
-  private case object LoginPageOriginal extends Page
-
-  implicit private val BusPageRW: ReadWriter[BusPage] = macroRW
-
-  implicit private val loginPageOriginalRW
-    : ReadWriter[LoginPageOriginal.type] = macroRW
-  implicit private val rw: ReadWriter[Page] = macroRW
+  implicit private val rw: ReadWriter[BusPage] = macroRW
 
   private val encodePage
     : BusPage => (Option[String], Option[String], Option[String]) =
@@ -144,10 +141,10 @@ object RoutingStuff {
 
   println("Creating router")
 
-  private val router = new Router[Page](
+  private val router = new Router[BusPage](
     routes = List(
       prodRoute,
-//      devRoute,
+      devRoute,
     ),
     getPageTitle = _.toString, // mock page title (displayed in the browser tab next to favicon)
     serializePage = page => write(page)(rw), // serialize page data for storage in History API log
@@ -178,9 +175,8 @@ object RoutingStuff {
     )
 
   private val splitter =
-    SplitRender[Page, HtmlElement](router.currentPageSignal)
+    SplitRender[BusPage, HtmlElement](router.currentPageSignal)
       .collectSignal[BusPage](renderMyPage)
-      .collectStatic(LoginPageOriginal) { div("Login page") }
 
   val app: Div = div(
     child <-- splitter.signal,
