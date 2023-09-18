@@ -9,6 +9,7 @@ import crestedbutte.{
   NotificationStuff,
 }
 import org.scalajs.dom
+import org.scalajs.dom.NotificationOptions
 import org.scalajs.dom.experimental.{
   Notification,
   NotificationOptions,

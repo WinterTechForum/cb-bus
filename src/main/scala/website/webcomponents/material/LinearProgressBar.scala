@@ -1,14 +1,8 @@
 package website.webcomponents.material
 
-import com.raquo.domtypes.generic.codecs._
 import com.raquo.laminar.api.L._
-import com.raquo.laminar.builders.HtmlTag
-import com.raquo.laminar.keys.{
-  ReactiveHtmlAttr,
-  ReactiveProp,
-  ReactiveStyle,
-}
 import com.raquo.laminar.nodes.ReactiveHtmlElement
+import com.raquo.laminar.tags.HtmlTag
 import org.scalajs.dom
 
 import scala.scalajs.js
@@ -37,19 +31,18 @@ object LinearProgressBar {
   private val tag =
     new HtmlTag[Ref]("mwc-linear-progress", void = false)
 
-  val indeterminate =
-    new ReactiveProp("indeterminate", BooleanAsIsCodec)
-  val reverse = new ReactiveProp("reverse", BooleanAsIsCodec)
-  val closed = new ReactiveProp("closed", BooleanAsIsCodec)
-  val progress = new ReactiveProp("progress", DoubleAsIsCodec)
-  val buffer = new ReactiveProp("buffer", DoubleAsIsCodec)
+//  val indeterminate =
+//    new ReactiveProp("indeterminate", BooleanAsIsCodec)
+//  val reverse = new ReactiveProp("reverse", BooleanAsIsCodec)
+//  val closed = new ReactiveProp("closed", BooleanAsIsCodec)
+//  val progress = new ReactiveProp("progress", DoubleAsIsCodec)
+//  val buffer = new ReactiveProp("buffer", DoubleAsIsCodec)
 
   object styles {
-    import com.raquo.domtypes.generic.keys.Style // Laminar aliases ReactiveStyle as Style, but we want the original underlying type here
+//    import com.raquo.domtypes.generic.keys.Style // Laminar aliases ReactiveStyle as Style, but we want the original underlying type here
 
-    val mdcThemePrimary = new ReactiveStyle(
-      new Style("--mdc-theme-primary"),
-    )
+    val mdcThemePrimary =
+      new Style("--mdc-theme-primary")
   }
 
   def apply(

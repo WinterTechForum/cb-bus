@@ -34,10 +34,11 @@ object BulmaBehaviorLocal {
                       node.addEventListener(
                         "click",
                         (_: MouseEvent) => {
-                          val targetRoute =
+                          val targetRoute = {
                             node.attributes
                               .getNamedItem("data-route")
                               .value
+                          }
                           browser.rewriteCurrentUrl("route",
                                                     targetRoute)
                           browser

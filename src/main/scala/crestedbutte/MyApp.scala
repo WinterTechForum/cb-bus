@@ -96,8 +96,10 @@ object RoutingStuff {
 
   private case object LoginPageOriginal extends Page
 
-  implicit private val AppModeRW: ReadWriter[AppMode] = macroRW
   implicit private val BusPageRW: ReadWriter[BusPage] = macroRW
+
+  implicit private val loginPageOriginalRW
+    : ReadWriter[LoginPageOriginal.type] = macroRW
   implicit private val rw: ReadWriter[Page] = macroRW
 
   private val encodePage
@@ -157,7 +159,7 @@ object RoutingStuff {
         route = None,
       ),
   )(
-    $popStateEvent = L.windowEvents.onPopState, // this is how Waypoint avoids an explicit dependency on Laminar
+    popStateEvents = L.windowEvents(_.onPopState), // this is how Waypoint avoids an explicit dependency on Laminar
     owner = L.unsafeWindowOwner, // this router will live as long as the window
   )
   println("Created router")
@@ -176,12 +178,12 @@ object RoutingStuff {
     )
 
   private val splitter =
-    SplitRender[Page, HtmlElement](router.$currentPage)
+    SplitRender[Page, HtmlElement](router.currentPageSignal)
       .collectSignal[BusPage](renderMyPage)
       .collectStatic(LoginPageOriginal) { div("Login page") }
 
   val app: Div = div(
-    child <-- splitter.$view,
+    child <-- splitter.signal,
   )
 
 }

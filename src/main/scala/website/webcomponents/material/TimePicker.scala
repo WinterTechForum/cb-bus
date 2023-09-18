@@ -1,16 +1,10 @@
 package website.webcomponents.material
 
-import com.raquo.domtypes.generic.codecs.{
-  BooleanAsAttrPresenceCodec,
-  StringAsIsCodec,
-}
 import com.raquo.laminar.api.L._
-import com.raquo.laminar.builders.HtmlTag
-import com.raquo.laminar.keys.{
-  ReactiveHtmlAttr,
-  ReactiveProp,
-  ReactiveStyle,
-}
+import com.raquo.laminar.tags._
+//import com.raquo.laminar.api.Ht.builders.HtmlTag
+import com.raquo.laminar.codecs._
+//import com.raquo.laminar.keys._
 import com.raquo.laminar.nodes.ReactiveHtmlElement
 import org.scalajs.dom
 
@@ -38,16 +32,17 @@ object TimePicker {
 
   private val tag = new HtmlTag[Ref]("TimePicker", void = false)
 
-  val id: ReactiveProp[String, String] = idAttr
+  ReactiveHtmlElement
+//  val id: ReactiveProp[String, String] = idAttr
 
-  val label = new ReactiveHtmlAttr[String]("label", StringAsIsCodec)
+//  val label = new ReactiveHtmlAttr[String]("label", StringAsIsCodec)
 
-  val raised = new ReactiveHtmlAttr[Boolean](
-    "raised",
-    BooleanAsAttrPresenceCodec,
-  )
+//  val raised = new ReactiveHtmlAttr[Boolean](
+//    "raised",
+//    BooleanAsAttrPresenceCodec,
+//  )
 
-  val icon = new ReactiveHtmlAttr[String]("icon", StringAsIsCodec)
+//  val icon = new ReactiveHtmlAttr[String]("icon", StringAsIsCodec)
 
   val onMouseOver = new EventProp[dom.MouseEvent]("mouseover")
 
@@ -59,11 +54,10 @@ object TimePicker {
   }
 
   object styles {
-    import com.raquo.domtypes.generic.keys.Style // Laminar aliases ReactiveStyle as Style, but we want the original underlying type here
+//    import com.raquo.domtypes.defs.styles.StyleDefs.generic.keys.Style // Laminar aliases ReactiveStyle as Style, but we want the original underlying type here
 
-    val mdcThemePrimary = new ReactiveStyle(
-      new Style("--mdc-theme-primary"),
-    )
+    val mdcThemePrimary =
+      new Style("--mdc-theme-primary")
   }
 
   def apply(
