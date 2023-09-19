@@ -3,11 +3,12 @@ package crestedbutte.laminar
 import com.billding.time.{MinuteDuration, WallTime}
 import com.raquo.laminar.nodes.ReactiveHtmlElement
 import crestedbutte.NotificationStuff.desiredAlarms
-import crestedbutte._
+import crestedbutte.*
 import crestedbutte.dom.BulmaLocal
 import crestedbutte.laminar.Experimental.getLocation
 import crestedbutte.routes.{
   AllRoutes,
+  RtaSouthbound,
   SpringFallLoop,
   TownShuttleTimes,
 }
@@ -38,7 +39,8 @@ object TagsOnlyLocal {
           ),
         )
         .getOrElse(
-          SpringFallLoop,
+//          SpringFallLoop,
+          RtaSouthbound.fullSchedule,
         ),
     )
 
