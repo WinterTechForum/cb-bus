@@ -52,10 +52,10 @@ object ServiceWorker {
     )
 
 
-    /*
     self.addEventListener(
       "message",
       (event: MessageEvent) => {
+        self.registration
         self.registration.showNotification(
           s"This is a notification from the service worker!",
           NotificationOptions(
@@ -65,7 +65,6 @@ object ServiceWorker {
       }
     )
 
-     */
 
     self.addEventListener(
       "fetch",

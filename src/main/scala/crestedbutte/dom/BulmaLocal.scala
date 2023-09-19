@@ -1,8 +1,9 @@
 package crestedbutte.dom
 
 import crestedbutte.BusScheduleAtStop
-import com.raquo.laminar.api.L._
+import com.raquo.laminar.api.L.*
 import crestedbutte.laminar.{Components, Experimental, TagsOnlyLocal}
+import org.scalajs.dom
 import org.scalajs.dom.experimental.Notification
 
 object BulmaLocal {
@@ -33,8 +34,8 @@ object BulmaLocal {
               span(time.toDumbAmericanString),
               child <-- $alertsEnabled.map(alertsEnabled =>
                 if (
-                  Notification.permission == "granted" && alertsEnabled
-                ) // TODO Make this check less Stringy
+                  dom.Notification.permission == "granted" && alertsEnabled
+                )
                   Experimental.Notifications.AlarmIcon(
                     "glyphicons-basic-443-bell-ringing.svg",
                     "arrival-time-alarm",

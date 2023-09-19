@@ -86,28 +86,33 @@ object Experimental {
     def createJankyBusAlertInSideEffectyWay(
       busTime: WallTime,
       localTime: WallTime,
-    ) =
-      if (
-        localTime
-          .between(busTime)
-          // TODO Direct comparison
-          .toMinutes >= headsUpAmount.toMinutes
+    ) = {
+      println("Dequeued time for alarm: " + busTime)
+//      if (
+//        localTime
+//          .between(busTime)
+//          // TODO Direct comparison
+//          .toMinutes <= headsUpAmount.toMinutes
+//      ) {
+//        println("Setting timeout")
+//        dom.window.setTimeout(
+      // TODO Replace this with submission to an EventBus[WallTime] that can be read via the RepeatingElement
+//          () =>
+      // Read submitted time, find difference between it and the current time, then submit a setInterval function
+      // with the appropriate delay
+      new Notification(
+        s"The ${busTime.toString} bus is arriving in ${headsUpAmount.toMinutes} minutes!",
+        NotificationOptions(
+          vibrate = js.Array(100d),
+        ),
       )
-        dom.window.setTimeout(
-          // TODO Replace this with submission to an EventBus[WallTime] that can be read via the RepeatingElement
-          () =>
-            // Read submitted time, find difference between it and the current time, then submit a setInterval function
-            // with the appropriate delay
-            new Notification(
-              s"The ${busTime.toString} bus is arriving in ${headsUpAmount.toMinutes} minutes!",
-              NotificationOptions(
-                vibrate = js.Array(100d),
-              ),
-            ),
-          (localTime
-            .between(busTime)
-            .toMinutes - headsUpAmount.toMinutes) * 60 * 1000,
-        )
+//          0,
+//          (localTime
+//            .between(busTime)
+//            .toMinutes - headsUpAmount.toMinutes) * 60 * 1000,
+//        )
+//      }
+    }
 
     def AlarmIcon(
       name: String,
@@ -116,6 +121,7 @@ object Experimental {
     ) = {
       val clickObserverNarrow = Observer[WallTime](
         onNext = ev => {
+          println("Clicked alarm")
           // This will give the user an idea of what the eventual notification will look/sound like
           // While also letting them know that they successfully scheduled it.
           new Notification(
@@ -144,8 +150,7 @@ object Experimental {
     val newTimePicker = TimePicker("12:34")
     div(
       idAttr := "sandbox",
-      timeStamps.map(_ =>
-        getLocation($gpsPosition),
+      timeStamps.map(_ => getLocation($gpsPosition),
       ) --> $gpsPosition.writer,
       Components.FeatureControlCenter(featureUpdates.writer),
       button(

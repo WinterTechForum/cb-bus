@@ -139,7 +139,12 @@ object TagsOnlyLocal {
         timeStamps --> Observer[WallTime](
           onNext = localTime =>
             desiredAlarms
-              .dequeueAll(_ => true)
+              .dequeueAll(busTime =>
+                localTime
+                  .between(busTime)
+                  // TODO Direct comparison
+                  .toMinutes <= NotificationStuff.headsUpAmount.toMinutes,
+              )
               .map(
                 Experimental.Notifications
                   .createJankyBusAlertInSideEffectyWay(_, localTime),
