@@ -17,13 +17,15 @@ object Bulma {
     val menuClicks = new EventBus[dom.Event]
 
     val activeStyling =
-      menuClicks.events.foldLeft("")(
-        (acc, next) => {
+      menuClicks.events.foldLeft("") {
+        (
+          acc,
+          next,
+        ) =>
           println("clicked the menu!")
           println("acc: " + acc)
           if (!acc.contains("is-active")) "is-active" else ""
-        },
-      )
+      }
 
     def menuButton(
       componentData: ComponentData,

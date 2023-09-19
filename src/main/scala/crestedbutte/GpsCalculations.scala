@@ -4,8 +4,7 @@ object GpsCalculations {
 
   def degreesToRadians(
     degrees: Double,
-  ) =
-    degrees * Math.PI / 180
+  ) = degrees * Math.PI / 180
 
   def distanceInKmBetweenEarthCoordinatesT(
     position1: GpsCoordinates,
@@ -15,7 +14,8 @@ object GpsCalculations {
       distanceInKmBetweenEarthCoordinates(position1.latitude,
                                           position1.longitude,
                                           position2.latitude,
-                                          position2.longitude),
+                                          position2.longitude,
+      ),
     ).setScale(1, BigDecimal.RoundingMode.HALF_UP).toDouble
 
   def distanceInKmBetweenEarthCoordinates(
@@ -33,7 +33,9 @@ object GpsCalculations {
     val lat2rads = degreesToRadians(lat2)
 
     val a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.sin(dLon / 2) * Math.sin(dLon / 2) * Math.cos(lat1rads) * Math
+      Math.sin(dLon / 2) * Math.sin(dLon / 2) * Math.cos(
+        lat1rads,
+      ) * Math
         .cos(lat2rads);
     val c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
     earthRadiusKm * c

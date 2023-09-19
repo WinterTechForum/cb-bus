@@ -26,15 +26,16 @@ trait BinderWithStartStop[-El <: ReactiveElement.Base]
   override def bind(
     element: El,
   ): DynamicSubscription =
-    ReactiveElement.bindSubscriptionUnsafe(element) {
-      ctx =>
-        subscribed = true
-        start()
+    ReactiveElement.bindSubscriptionUnsafe(element) { ctx =>
+      subscribed = true
+      start()
 
-        new Subscription(ctx.owner, cleanup = () => {
-          stop()
-          subscribed = false
-        })
+      new Subscription(ctx.owner,
+                       cleanup = () => {
+                         stop()
+                         subscribed = false
+                       },
+      )
     }
 
 }

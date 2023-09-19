@@ -57,7 +57,6 @@ object Button {
 
   def apply(
     mods: ModFunction*,
-  ): HtmlElement =
-    tag(mods.map(_(Button)): _*)
+  ): HtmlElement = tag(mods.map(_(Button)): _*)
 
 }

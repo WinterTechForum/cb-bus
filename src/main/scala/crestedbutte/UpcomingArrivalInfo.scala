@@ -2,14 +2,14 @@ package crestedbutte
 
 // This class should be usable *without* needing access to the Clock.
 case class UpcomingArrivalInfo(
-  location: Location.Value,
+  location: Location,
   content: Either[StopTimeInfo, LateNightRecommendation],
   /* TODO: waitDuration: Duration*/)
 
 object UpcomingArrivalInfo {
 
   def apply(
-    location: Location.Value,
+    location: Location,
     content: StopTimeInfo,
   ): UpcomingArrivalInfo =
     UpcomingArrivalInfo(
@@ -20,7 +20,7 @@ object UpcomingArrivalInfo {
     )
 
   def apply(
-    location: Location.Value,
+    location: Location,
     content: LateNightRecommendation,
   ): UpcomingArrivalInfo =
     UpcomingArrivalInfo(

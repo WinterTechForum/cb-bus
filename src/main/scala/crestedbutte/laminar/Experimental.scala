@@ -43,12 +43,14 @@ object Experimental {
           $gpsPosition.set(
             Some(
               GpsCoordinates(latitude = position.coords.latitude,
-                             longitude = position.coords.longitude),
+                             longitude = position.coords.longitude,
+              ),
             ),
           )
           positionResult = Some(
             GpsCoordinates(latitude = position.coords.latitude,
-                           longitude = position.coords.longitude),
+                           longitude = position.coords.longitude,
+            ),
           )
         },
       );
@@ -62,13 +64,12 @@ object Experimental {
   object Notifications {
 
     val clickObserver = Observer[dom.MouseEvent](
-      onNext = ev => {
+      onNext = ev =>
         if (Notification.permission == "default")
-          Notification.requestPermission(
-            response =>
-              println(
-                "Notification requestPermission response: " + response,
-              ),
+          Notification.requestPermission(response =>
+            println(
+              "Notification requestPermission response: " + response,
+            ),
           )
         else if (Notification.permission == "denied")
           println(
@@ -79,18 +80,19 @@ object Experimental {
         else
           println(
             "Uknown permission state: " + Notification.permission,
-          )
-      },
+          ),
     )
 
     def createJankyBusAlertInSideEffectyWay(
       busTime: WallTime,
       localTime: WallTime,
     ) =
-      if (localTime
-            .between(busTime)
-            // TODO Direct comparison
-            .toMinutes >= headsUpAmount.toMinutes)
+      if (
+        localTime
+          .between(busTime)
+          // TODO Direct comparison
+          .toMinutes >= headsUpAmount.toMinutes
+      )
         dom.window.setTimeout(
           // TODO Replace this with submission to an EventBus[WallTime] that can be read via the RepeatingElement
           () =>
@@ -142,16 +144,14 @@ object Experimental {
     val newTimePicker = TimePicker("12:34")
     div(
       idAttr := "sandbox",
-      timeStamps.map(
-        _ => getLocation($gpsPosition),
+      timeStamps.map(_ =>
+        getLocation($gpsPosition),
       ) --> $gpsPosition.writer,
       Components.FeatureControlCenter(featureUpdates.writer),
       button(
         idAttr := "Get position",
         onClick --> Observer[dom.MouseEvent](
-          onNext = ev => {
-            getLocation($gpsPosition)
-          },
+          onNext = ev => getLocation($gpsPosition),
         ),
         "Get GPS coords",
       ),
@@ -180,7 +180,7 @@ object Experimental {
     val updates = new EventBus[Unit]
     val newNumberValues: EventStream[AM_OR_PM] =
       updates.events.withCurrentValueOf($value).map {
-        case (curNumberValue) =>
+        case curNumberValue =>
           if (curNumberValue == AM)
             PM
           else

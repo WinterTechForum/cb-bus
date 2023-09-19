@@ -9,13 +9,12 @@ case class FeatureSets(
 
   def isEnabled(
     feature: Feature,
-  ): Boolean =
-    values(feature) // Unsafe
+  ): Boolean = values(feature) // Unsafe
   def update(
     featureStatus: FeatureStatus,
   ): FeatureSets =
     copy(
-      values = values + (kv =
-          (featureStatus.feature, featureStatus.enabled)),
+      values =
+        values + (kv = (featureStatus.feature, featureStatus.enabled)),
     )
 }

@@ -28,10 +28,9 @@ trait RepeatWithIntervalHelper {
       private var maybeTimer: Option[SetIntervalHandle] = Option.empty
 
       def doStop(): Unit =
-        maybeTimer.foreach {
-          timer =>
-            js.timers.clearInterval(timer)
-            maybeTimer = Option.empty
+        maybeTimer.foreach { timer =>
+          js.timers.clearInterval(timer)
+          maybeTimer = Option.empty
         }
 
       def doStart(): Unit =
@@ -70,7 +69,8 @@ trait RepeatWithIntervalHelper {
     ): BinderWithStartStop[ReactiveHtmlElement.Base] =
       repeatWithInterval(value,
                          interval,
-                         t => eventBus.writer.onNext(t))
+                         t => eventBus.writer.onNext(t),
+      )
 
   }
 }

@@ -62,7 +62,6 @@ object TimePicker {
 
   def apply(
     mods: ModFunction*,
-  ): HtmlElement =
-    tag(mods.map(_(TimePicker)): _*)
+  ): HtmlElement = tag(mods.map(_(TimePicker)): _*)
 
 }

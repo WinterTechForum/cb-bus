@@ -32,11 +32,10 @@ object TagsOnlyLocal {
 
     val selectedRoute: Var[ComponentData] = Var(
       initialRouteOpt
-        .flatMap(
-          initialRoute =>
-            components.find(
-              _.componentName.elementNameMatches(initialRoute),
-            ),
+        .flatMap(initialRoute =>
+          components.find(
+            _.componentName.elementNameMatches(initialRoute),
+          ),
         )
         .getOrElse(
           SpringFallLoop,
@@ -53,7 +52,10 @@ object TagsOnlyLocal {
           ),
       ),
     )(
-      (_, _) =>
+      (
+        _,
+        _,
+      ) =>
         WallTime(
           OffsetDateTime
             .now(javaClock)
@@ -106,30 +108,27 @@ object TagsOnlyLocal {
 
     val upcomingArrivalData =
       $selectedComponent.combineWith(timeStamps)
-        .map {
-          case (componentData, timestamp) =>
-            componentData match {
-              case RoundTripCalculatorComponent => calculator
-              case namedRoute: NamedRoute =>
-                TagsOnlyLocal.structuredSetOfUpcomingArrivals(
-                  TimeCalculations
-                    .getUpComingArrivalsWithFullScheduleNonZio(
-                      timestamp,
-                      namedRoute,
-                    ),
-                  $enabledFeatures,
-                  gpsPosition,
-                )
-            }
+        .map { case (componentData, timestamp) =>
+          componentData match {
+            case RoundTripCalculatorComponent => calculator
+            case namedRoute: NamedRoute =>
+              TagsOnlyLocal.structuredSetOfUpcomingArrivals(
+                TimeCalculations
+                  .getUpComingArrivalsWithFullScheduleNonZio(
+                    timestamp,
+                    namedRoute,
+                  ),
+                $enabledFeatures,
+                gpsPosition,
+              )
+          }
         }
 
     div(
       button(
         idAttr := "Get position",
         onClick --> Observer[dom.MouseEvent](
-          onNext = ev => {
-            getLocation(gpsPosition)
-          },
+          onNext = ev => getLocation(gpsPosition),
         ),
         "Get GPS coords",
       ),
@@ -167,30 +166,32 @@ object TagsOnlyLocal {
 
   def GeoBits(
     $mapLinksEnabled: Signal[Boolean],
-    location: Location.Value,
+    location: Location,
     $gpsPosition: Signal[Option[GpsCoordinates]],
   ) =
     div(
-      child <-- $mapLinksEnabled.map(
-        mapLinksEnabled =>
-          if (mapLinksEnabled)
-            div(
-              cls := "map-link",
-              child <-- Components
-                .distanceFromCurrentLocationToStop($gpsPosition,
-                                                   location),
-              location.gpsCoordinates.map(Components.GeoLink),
-            )
-          else
-            div(),
+      child <-- $mapLinksEnabled.map(mapLinksEnabled =>
+        if (mapLinksEnabled)
+          div(
+            cls := "map-link",
+            child <-- Components
+              .distanceFromCurrentLocationToStop($gpsPosition,
+                                                 location,
+              ),
+            location.gpsCoordinates.map(Components.GeoLink),
+          )
+        else
+          div(),
       ),
     )
 
   def createBusTimeElement(
-    location: Location.Value,
+    location: Location,
     content: ReactiveHtmlElement[_],
     $mapLinksEnabled: Signal[Boolean],
-    $gpsPosition: Signal[Option[GpsCoordinates]], // TODO Should this be an `Option[Signal[GpsCoordinates]` instead?
+    $gpsPosition: Signal[
+      Option[GpsCoordinates],
+    ], // TODO Should this be an `Option[Signal[GpsCoordinates]` instead?
     /* TODO: waitDuration: Duration*/
   ) =
     div(
@@ -211,13 +212,13 @@ object TagsOnlyLocal {
     div(
       button(
         cls := "arrival-time button open-arrival-time-modal",
-        onClick.preventDefault.map(_ => {
+        onClick.preventDefault.map { _ =>
           org.scalajs.dom.document
             .querySelector("html")
             .classList
             .add("is-clipped")
           true
-        }) --> modalActive,
+        } --> modalActive,
         stopTimeInfo.time.toDumbAmericanString,
       ),
       div(
@@ -256,8 +257,8 @@ object TagsOnlyLocal {
       upcomingArrivalComponentData.upcomingArrivalInfoForAllRoutes
         .map {
           case UpcomingArrivalInfoWithFullSchedule(
-              UpcomingArrivalInfo(location, content),
-              fullScheduleAtStop,
+                UpcomingArrivalInfo(location, content),
+                fullScheduleAtStop,
               ) =>
             TagsOnlyLocal.createBusTimeElement(
               location,

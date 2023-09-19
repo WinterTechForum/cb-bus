@@ -4,5 +4,4 @@ case class UpcomingArrivalComponentData(
   upcomingArrivalInfoForAllRoutes: Seq[
     UpcomingArrivalInfoWithFullSchedule,
   ],
-  routeName: RouteName,
-)
+  routeName: RouteName)

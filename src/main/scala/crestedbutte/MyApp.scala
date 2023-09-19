@@ -7,29 +7,28 @@ import org.scalajs.dom
 import org.scalajs.dom.experimental.serviceworkers._
 import urldsl.errors.DummyError
 import urldsl.language.QueryParameters
-import zio.clock._
-import zio.console.Console
-import zio.{App, ZIO, ZLayer}
+import zio.{ZIO, ZLayer}
 
 import java.time.{OffsetDateTime, ZoneId}
 import scala.util.{Failure, Success}
+import zio.ZIOAppDefault
 
-object MyApp extends App {
+object MyApp extends ZIOAppDefault {
   TimePicker
 
-  override def run(
-    args: List[String],
-  ): ZIO[zio.ZEnv, Nothing, zio.ExitCode] = {
+  override def run = {
     val myEnvironment =
-      ZLayer.succeed(BrowserLive.browser) ++ Console.live
+      ZLayer.succeed(BrowserLive.browser)
 
-    fullApplicationLogic.provideLayer(myEnvironment).exitCode
+    println("2!?")
+    fullApplicationLogic.provide(myEnvironment)
   }
 
   val fullApplicationLogic =
     for {
+      _ <- ZIO.debug("ZIO 2!")
       _ <- registerServiceWorker()
-      _ <- ZIO {
+      _ <- ZIO.attempt {
         val appHolder = dom.document.getElementById("landing-message")
         appHolder.innerHTML = ""
         com.raquo.laminar.api.L.render(
@@ -41,24 +40,25 @@ object MyApp extends App {
 
   def registerServiceWorker(): ZIO[Browser, Nothing, Unit] =
     ZIO
-      .access[Browser](_.get)
-      .map {
-        browser =>
-          // TODO Ew. Try to get this removed after first version of PWA is working
-          import scala.concurrent.ExecutionContext.Implicits.global
-          println("Attempting to register sw")
+      .service[Browser]
+      .map { browser =>
+        // TODO Ew. Try to get this removed after first version of PWA is working
+        import scala.concurrent.ExecutionContext.Implicits.global
+        println("Attempting to register sw")
 
-          toServiceWorkerNavigator(browser.window().navigator).serviceWorker
-            .register("./sw-opt.js")
-            .toFuture
-            .onComplete {
-              case Success(registration) =>
-                registration.update()
-              case Failure(error) =>
-                println(
-                  s"registerServiceWorker: service worker registration failed > ${error.printStackTrace()}",
-                )
-            }
+        toServiceWorkerNavigator(
+          browser.window().navigator,
+        ).serviceWorker
+          .register("./sw-opt.js")
+          .toFuture
+          .onComplete {
+            case Success(registration) =>
+              registration.update()
+            case Failure(error) =>
+              println(
+                s"registerServiceWorker: service worker registration failed > ${error.printStackTrace()}",
+              )
+          }
       }
 
 }
@@ -73,8 +73,7 @@ object RoutingStuff {
   private case class BusPage(
     mode: String,
     time: Option[String], // TODO Make this a WallTime instead
-    route: Option[String],
-  ) {
+    route: Option[String]) {
 
     println("Mode: " + mode)
     println("Time param: " + time)
@@ -105,13 +104,12 @@ object RoutingStuff {
 
   private val decodePage: (
     (Option[String], Option[String], Option[String]),
-  ) => BusPage = {
-    case (mode, time, route) =>
-      BusPage(
-        mode = mode.getOrElse(AppMode.Production.toString),
-        time = time,
-        route = route,
-      )
+  ) => BusPage = { case (mode, time, route) =>
+    BusPage(
+      mode = mode.getOrElse(AppMode.Production.toString),
+      time = time,
+      route = route,
+    )
   }
 
   val params: QueryParameters[
@@ -121,11 +119,12 @@ object RoutingStuff {
     param[
       String,
     ]("mode").? & param[String]("time").? & param[String]("route").?
-  println("Get params")
+  println("Get params in zio 2")
 
   private val devRoute =
     Route.onlyQuery[BusPage,
-                    (Option[String], Option[String], Option[String])](
+                    (Option[String], Option[String], Option[String]),
+    ](
       encode = encodePage,
       decode = decodePage,
       pattern = (root / "index_dev.html" / endOfSegments) ? params,
@@ -133,7 +132,8 @@ object RoutingStuff {
 
   private val prodRoute =
     Route.onlyQuery[BusPage,
-                    (Option[String], Option[String], Option[String])](
+                    (Option[String], Option[String], Option[String]),
+    ](
       encode = encodePage,
       decode = decodePage,
       pattern = (root / endOfSegments) ? params,
@@ -146,9 +146,14 @@ object RoutingStuff {
       prodRoute,
       devRoute,
     ),
-    getPageTitle = _.toString, // mock page title (displayed in the browser tab next to favicon)
-    serializePage = page => write(page)(rw), // serialize page data for storage in History API log
-    deserializePage = pageStr => read(pageStr)(rw), // deserialize the above
+    getPageTitle =
+      _.toString, // mock page title (displayed in the browser tab next to favicon)
+    serializePage = page =>
+      write(page)(
+        rw,
+      ), // serialize page data for storage in History API log
+    deserializePage =
+      pageStr => read(pageStr)(rw), // deserialize the above
     routeFallback = _ =>
       BusPage(
         mode = "Production",
@@ -156,8 +161,11 @@ object RoutingStuff {
         route = None,
       ),
   )(
-    popStateEvents = L.windowEvents(_.onPopState), // this is how Waypoint avoids an explicit dependency on Laminar
-    owner = L.unsafeWindowOwner, // this router will live as long as the window
+    popStateEvents = L.windowEvents(
+      _.onPopState,
+    ), // this is how Waypoint avoids an explicit dependency on Laminar
+    owner =
+      L.unsafeWindowOwner, // this router will live as long as the window
   )
   println("Created router!")
 
@@ -165,12 +173,12 @@ object RoutingStuff {
     $loginPage: Signal[BusPage],
   ) =
     div(
-      child <-- $loginPage.map(
-        busPageInfo =>
-          // TODO Start pulling out route queryParam
-          TagsOnlyLocal.FullApp(AppMode.withName(busPageInfo.mode),
-                                busPageInfo.route,
-                                busPageInfo.javaClock),
+      child <-- $loginPage.map(busPageInfo =>
+        // TODO Start pulling out route queryParam
+        TagsOnlyLocal.FullApp(AppMode.withName(busPageInfo.mode),
+                              busPageInfo.route,
+                              busPageInfo.javaClock,
+        ),
       ),
     )
 

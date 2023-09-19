@@ -68,7 +68,6 @@ object SmartTimePicker {
 
   def apply(
     mods: ModFunction*,
-  ): HtmlElement =
-    tag(mods.map(_(SmartTimePicker)): _*)
+  ): HtmlElement = tag(mods.map(_(SmartTimePicker)): _*)
 
 }

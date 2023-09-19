@@ -1,6 +1,6 @@
 package crestedbutte
 
-import com.billding.time.BusTime
+import com.billding.time.WallTime
 import crestedbutte.routes.{RouteWithTimes, RtaSouthbound}
 import utest.{TestSuite, Tests}
 import utest._
@@ -30,20 +30,20 @@ object RouteWithTimesTest extends TestSuite {
           Seq(
             RouteLeg(
               Seq(
-                LocationWithTime(Location.BrushCreek, BusTime("07:40")),
-                LocationWithTime(Location.CBSouth, BusTime("07:50")),
-                LocationWithTime(Location.Almont, BusTime("08:00")),
+                LocationWithTime(Location.BrushCreek, WallTime("07:40")),
+                LocationWithTime(Location.CBSouth, WallTime("07:50")),
+                LocationWithTime(Location.Almont, WallTime("08:00")),
               )),
             RouteLeg(
               Seq(
-                LocationWithTime(Location.BrushCreek, BusTime("08:00")),
-                LocationWithTime(Location.Almont, BusTime("08:18")),
+                LocationWithTime(Location.BrushCreek, WallTime("08:00")),
+                LocationWithTime(Location.Almont, WallTime("08:18")),
               )),
             RouteLeg(
               Seq(
-                LocationWithTime(Location.BrushCreek, BusTime("08:30")),
-                LocationWithTime(Location.CBSouth, BusTime("08:40")),
-                LocationWithTime(Location.Almont, BusTime("08:50")),
+                LocationWithTime(Location.BrushCreek, WallTime("08:30")),
+                LocationWithTime(Location.CBSouth, WallTime("08:40")),
+                LocationWithTime(Location.Almont, WallTime("08:50")),
               ))
           )
         )

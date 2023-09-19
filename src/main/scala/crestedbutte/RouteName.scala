@@ -6,16 +6,14 @@ case class RouteName(
 
   val name: String =
     userFriendlyName
-      .map(
-        (letter: Char) =>
-          if (letter.isLetter) letter.toString else "_",
+      .map((letter: Char) =>
+        if (letter.isLetter) letter.toString else "_",
       )
       .mkString
 
   def elementNameMatches(
     elementName: String,
-  ) =
-    name == elementName
+  ) = name == elementName
   // TODO Check ordering of all coordinates
   /*
   val TownLoop: Val = Val()
@@ -23,6 +21,6 @@ case class RouteName(
   val ThreeSeasonsLoop: Val =
     Val()
 
- */
+   */
 
 }

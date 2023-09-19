@@ -1,6 +1,6 @@
 // Can't upgrade till this is resolve:
 // https://github.com/ScalablyTyped/Converter/issues/565
-scalaVersion := "2.13.11"
+scalaVersion := "3.3.1"
 
 version := "0.2"
 
@@ -31,7 +31,7 @@ resolvers += Resolver.githubPackages("swoogles", "ScalaJsZioLibrary")
 resolvers += "Sonatype" at "https://s01.oss.sonatype.org/content/repositories/public"
 
 
-val zioVersion = "1.0.0-RC21-2"
+val zioVersion = "2.0.17"
 
 Compile / npmDependencies ++= Seq(
 //  "@material-ui/core" -> "4.11.1",
@@ -52,28 +52,28 @@ Compile / npmDependencies ++= Seq(
  */
 
 libraryDependencies ++= Seq(
-  "com.billding" %%% "bulmascala" % "0.2.20",
-  "com.billding" %%% "scalajsziolibrary" % "0.0.15",
-  "com.billdingsoftware" %%% "timepicker" % "0.2.4",
+  "com.billding" %%% "bulmascala" % "0.2.22",
+  "com.billding" %%% "scalajsziolibrary" % "0.0.16",
+  "com.billdingsoftware" %%% "timepicker" % "0.3.0",
   "dev.zio" %%% "zio" % zioVersion,
   "dev.zio" %%% "zio-streams" % zioVersion,
   "com.lihaoyi" %%% "scalatags" % "0.12.0",
-  "io.github.cquiroz" %%% "scala-java-time" % "2.0.0",
+  "io.github.cquiroz" %%% "scala-java-time" % "2.5.0",
   "dev.zio" %%% "zio-test"     % zioVersion % "test",
   "dev.zio" %%% "zio-test-sbt" % zioVersion % "test",
-  "com.lihaoyi" %%% "pprint" % "0.5.9",
+  "com.lihaoyi" %%% "pprint" % "0.8.1",
   "com.raquo" %%% "laminar" % "16.0.0",
   "com.raquo" %%% "airstream" % "16.0.0",
   "com.raquo" %%% "domtypes" % "17.1.0",
   "com.lihaoyi" %%% "upickle" % "3.1.3",
   "com.raquo" %%% "waypoint" % "7.0.0",   // Requires Airstream 0.12.0 & URL DSL 0.3.2
-  "com.beachape" %%% "enumeratum" % "1.6.1"
+  "com.beachape" %%% "enumeratum" % "1.7.3"
 
 //  "com.github.japgolly.scalacss" %%% "core" % "0.6.0",
 //  "com.github.japgolly.scalacss" %%% "ext-scalatags" % "0.6.0",
 )
 
-libraryDependencies += "com.lihaoyi" %%% "utest" % "0.7.5" % "test"
+libraryDependencies += "com.lihaoyi" %%% "utest" % "0.8.1" % "test"
 
 testFrameworks += new TestFramework("utest.runner.Framework")
 
@@ -91,7 +91,7 @@ cbBuild := {
   import scala.sys.process._
 //  "ls ./target/scala-2.13" !
   (Process("mkdir ./src/main/resources/compiledJavascript") #|| Process("mkdir ./src/main/resources/compiledJavascript/cb-bus") #||
-    Process("cp ./target/scala-2.13/cb-bus-fastopt/main.js ./src/main/resources/compiledJavascript/cb-bus") #&&
+    Process("cp ./target/scala-3.3.1/cb-bus-fastopt/main.js ./src/main/resources/compiledJavascript/cb-bus") #&&
 //    Process("cp ./target/scala-2.13/cb-bus-fastopt/main.js.map ./src/main/resources/compiledJavascript/cb-bus") #&&
 //    Process("cp ./target/scala-2.13/cb-bus-fastopt.js.map ./src/main/resources/compiledJavascript/") #&&
     Process("cp sw/target/scala-2.12/sw-opt.js ./src/main/resources/") #&&
@@ -108,8 +108,8 @@ cbPublish := {
   import scala.sys.process._
   //  "ls ./target/scala-2.13" !
   (Process("mkdir ./src/main/resources/compiledJavascript") #||
-    Process("cp ./target/scala-2.13/cb-bus-opt/main.js ./src/main/resources/compiledJavascript/") #||
-    Process("cp ./target/scala-2.13/cb-bus-opt.js.map src/main/resources/compiledJavascript/") #||
+    Process("cp ./target/scala-3.3.1/cb-bus-opt/main.js ./src/main/resources/compiledJavascript/") #||
+    Process("cp ./target/scala-3.3.1/cb-bus-opt.js.map src/main/resources/compiledJavascript/") #||
     Process("cp sw/target/scala-2.12/sw-opt.js src/main/resources/") #||
     Process("cp sw/target/scala-2.12/sw-opt.js.map src/main/resources/"))!
 }
@@ -119,6 +119,7 @@ zonesFilter := {(z: String) => z == "America/Denver" || z == "America/Mountain"}
 lazy val sw = (project in file("sw"))
   .enablePlugins(ScalaJSPlugin)
   .settings(
+    scalaVersion := "3.3.1",
     scalaJSUseMainModuleInitializer := true,
     libraryDependencies ++= Seq(
       "org.scala-js" %%% "scalajs-dom" % "2.6.0"

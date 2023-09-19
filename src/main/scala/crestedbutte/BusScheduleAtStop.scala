@@ -3,24 +3,21 @@ package crestedbutte
 import com.billding.time.{MinuteDuration, WallTime}
 
 case class BusScheduleAtStop(
-  location: Location.Value,
+  location: Location,
   times: Seq[WallTime]) {
 
   def timesDelayedBy(
     busDuration: MinuteDuration,
-    locationIn: Location.Value,
-  ) =
-    BusScheduleAtStop(locationIn, times.map(_.plus(busDuration)))
+    locationIn: Location,
+  ) = BusScheduleAtStop(locationIn, times.map(_.plus(busDuration)))
 
   def delayedBy(
     busDuration: MinuteDuration,
-  ) =
-    BusScheduleAtStop(location, times.map(_.plus(busDuration)))
+  ) = BusScheduleAtStop(location, times.map(_.plus(busDuration)))
 
   def at(
-    locationIn: Location.Value,
-  ) =
-    BusScheduleAtStop(locationIn, times)
+    locationIn: Location,
+  ) = BusScheduleAtStop(locationIn, times)
 
   def scheduleAfter(
     busTime: WallTime,
@@ -35,7 +32,7 @@ case class BusScheduleAtStop(
 object BusScheduleAtStop {
 
   def apply(
-    location: Location.Value,
+    location: Location,
     scheduleAtStop: BusSchedule,
   ): BusScheduleAtStop =
     BusScheduleAtStop(location, scheduleAtStop.stopTimes)

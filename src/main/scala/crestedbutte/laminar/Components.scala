@@ -7,21 +7,19 @@ object Components {
 
   def distanceFromCurrentLocationToStop(
     gpsPosition: Signal[Option[GpsCoordinates]],
-    location: Location.Value,
+    location: Location,
   ) =
     gpsPosition.map(
-      _.flatMap(
-        userCords =>
-          location.gpsCoordinates.map(
-            stopCoords =>
-              div(
-                GpsCalculations
-                  .distanceInKmBetweenEarthCoordinatesT(
-                    userCords,
-                    stopCoords,
-                  ),
+      _.flatMap(userCords =>
+        location.gpsCoordinates.map(stopCoords =>
+          div(
+            GpsCalculations
+              .distanceInKmBetweenEarthCoordinatesT(
+                userCords,
+                stopCoords,
               ),
           ),
+        ),
       ).getOrElse(div()),
     )
 

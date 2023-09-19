@@ -2,8 +2,8 @@ package crestedbutte
 
 import com.billding.time.WallTime
 import crestedbutte.laminar.NamedRoute
-import zio.{Has, ZIO}
-import zio.clock.Clock
+import zio.ZIO
+import zio.Clock
 
 import java.time.format.DateTimeFormatter
 import java.time.{DateTimeException, OffsetDateTime}
@@ -17,8 +17,8 @@ object TimeCalculations {
   ) =
     goal.localTime
       .isAfter(now.localTime) ||
-    goal.localTime
-      .equals(now.localTime)
+      goal.localTime
+        .equals(now.localTime)
 
   def nextBusArrivalTime(
     timesAtStop: Seq[WallTime],
@@ -33,16 +33,15 @@ object TimeCalculations {
     now: WallTime,
   ): UpcomingArrivalInfo =
     nextBusArrivalTime(stops.times, now)
-      .map(
-        nextArrivalTime =>
-          UpcomingArrivalInfo(
-            stops.location,
-            StopTimeInfo(
-              nextArrivalTime,
-              nextArrivalTime
-                .between(now),
-            ),
+      .map(nextArrivalTime =>
+        UpcomingArrivalInfo(
+          stops.location,
+          StopTimeInfo(
+            nextArrivalTime,
+            nextArrivalTime
+              .between(now),
           ),
+        ),
       )
       .getOrElse(
         UpcomingArrivalInfo(
@@ -55,45 +54,42 @@ object TimeCalculations {
     now: WallTime,
     busRoute: NamedRoute,
   ): Seq[UpcomingArrivalInfo] =
-    busRoute.routeWithTimes.allStops.map(
-      scheduleAtStop => getUpcomingArrivalInfo(scheduleAtStop, now),
+    busRoute.routeWithTimes.allStops.map(scheduleAtStop =>
+      getUpcomingArrivalInfo(scheduleAtStop, now),
     )
 
   def calculateUpcomingArrivalWithFullScheduleAtAllStops(
     now: WallTime,
     busRoute: NamedRoute,
   ): Seq[UpcomingArrivalInfoWithFullSchedule] =
-    busRoute.routeWithTimes.allStops.map(
-      scheduleAtStop =>
-        UpcomingArrivalInfoWithFullSchedule(
-          getUpcomingArrivalInfo(scheduleAtStop, now),
-          scheduleAtStop.scheduleAfter(now),
-        ),
+    busRoute.routeWithTimes.allStops.map(scheduleAtStop =>
+      UpcomingArrivalInfoWithFullSchedule(
+        getUpcomingArrivalInfo(scheduleAtStop, now),
+        scheduleAtStop.scheduleAfter(now),
+      ),
     )
 
   def getUpComingArrivals(
     busRoute: NamedRoute,
   ) =
     for {
-      clockProper <- ZIO.access[Clock](_.get)
+      clockProper <- ZIO.service[Clock]
       now         <- clockProper.currentDateTime
       localTime = WallTime(
         now.toLocalTime.format(
           DateTimeFormatter.ofPattern("HH:mm"),
         ),
       )
-    } yield {
-      TimeCalculations.calculateUpcomingArrivalAtAllStops(
-        localTime,
-        busRoute,
-      )
-    }
+    } yield TimeCalculations.calculateUpcomingArrivalAtAllStops(
+      localTime,
+      busRoute,
+    )
 
   def getUpComingArrivalsWithFullSchedule(
     busRoute: NamedRoute,
   ): ZIO[Clock, DateTimeException, UpcomingArrivalComponentData] =
     for {
-      clockProper <- ZIO.access[Clock](_.get)
+      clockProper <- ZIO.service[Clock]
       now         <- clockProper.currentDateTime
       localTime = WallTime(
         now.toLocalTime.format(

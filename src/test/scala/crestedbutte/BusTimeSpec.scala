@@ -1,9 +1,9 @@
 package crestedbutte
 
-import com.billding.time.BusDuration.toBusDuration
-import com.billding.time.BusTime
+import com.billding.time.MinuteDuration
+import com.billding.time.WallTime
 import zio.test.Assertion._
-import zio.test.{DefaultRunnableSpec, test, _} // Enables Int.minutes syntax
+import zio.test.{test, _} // Enables Int.minutes syntax
 
 /*
 object BusTimeSpec

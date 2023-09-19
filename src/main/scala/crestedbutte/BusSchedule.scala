@@ -10,8 +10,8 @@ case class BusSchedule(
   ): Option[WallTime] =
     if (now.isLikelyEarlyMorningRatherThanLateNight)
       stopTimes
-        .find(
-          stopTime => TimeCalculations.catchableBus(now, stopTime),
+        .find(stopTime =>
+          TimeCalculations.catchableBus(now, stopTime),
         )
     else None
 }
@@ -26,15 +26,14 @@ object BusSchedule {
     new BusSchedule(
       List
         .range(
-          0,
+          0L,
           WallTime(firstBus)
             .between(WallTime(lastBus))
             .dividedBy(timeBetweenBuses) + 1,
         ) // TODO Ugh. Nasty +1
-        .map(
-          index =>
-            WallTime(firstBus)
-              .plus(timeBetweenBuses.times(index.toInt)),
+        .map(index =>
+          WallTime(firstBus)
+            .plus(timeBetweenBuses.times(index.toInt)),
         ),
     )
 

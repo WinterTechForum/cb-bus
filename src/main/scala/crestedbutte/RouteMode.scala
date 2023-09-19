@@ -1,21 +1,8 @@
 package crestedbutte
 
-object RouteMode extends Enumeration {
-
-  protected case class Val(
-    name: String)
-      extends super.Val(name)
-  import scala.language.implicitConversions
-
-  implicit def valueToVal(
-    x: Value,
-  ): Val =
-    x.asInstanceOf[Val]
-
-  type RouteMode = Value
-
+enum RouteMode(
+  name: String) {
   // TODO Check ordering of all coordinates
-  val Active: Val = Val("Active")
-  val Hidden: Val = Val("Hidden")
-
+  case Active extends RouteMode("Active")
+  case Hidden extends RouteMode("Hidden")
 }

@@ -47,6 +47,5 @@ object LinearProgressBar {
 
   def apply(
     mods: ModFunction*,
-  ): HtmlElement =
-    tag(mods.map(_(LinearProgressBar)): _*)
+  ): HtmlElement = tag(mods.map(_(LinearProgressBar)): _*)
 }

@@ -4,5 +4,4 @@ import crestedbutte.laminar.NamedRoute
 
 class CompanyRoutes(
   name: String,
-  val routesWithTimes: Seq[NamedRoute],
-) {}
+  val routesWithTimes: Seq[NamedRoute]) {}

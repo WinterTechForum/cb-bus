@@ -44,36 +44,32 @@ object LaminarRoundTripCalculator {
 
     val valueMap: Map[SelectValue, T] =
       route
-        .map(
-          selectValue =>
-            (converterThatCouldBeATypeClass(selectValue),
-             selectValue),
+        .map(selectValue =>
+          (converterThatCouldBeATypeClass(selectValue), selectValue),
         )
         .toMap
     val selectValues = route.map(converterThatCouldBeATypeClass)
     span(
       cls := "select is-rounded",
       select(
-        inContext {
-          thisNode =>
-            onChange
-              .mapTo(thisNode.ref.value)
-              .map(
-                uniqueValue =>
-                  selectValues
-                    .find(_.uniqueValue == uniqueValue)
-                    .get,
-              )
-              .map(
-                valueMap.getOrElse(_,
-                                   throw new RuntimeException(
-                                     "can't find the value!",
-                                   )),
-              ) --> eventStream
+        inContext { thisNode =>
+          onChange
+            .mapTo(thisNode.ref.value)
+            .map(uniqueValue =>
+              selectValues
+                .find(_.uniqueValue == uniqueValue)
+                .get,
+            )
+            .map(
+              valueMap.getOrElse(_,
+                                 throw new RuntimeException(
+                                   "can't find the value!",
+                                 ),
+              ),
+            ) --> eventStream
         },
-        selectValues.map(
-          stop =>
-            option(value(stop.uniqueValue), stop.humanFriendlyName),
+        selectValues.map(stop =>
+          option(value(stop.uniqueValue), stop.humanFriendlyName),
         ),
       ),
     )
@@ -88,38 +84,37 @@ object LaminarRoundTripCalculator {
     val $startRouteVar: Var[NamedRoute] = Var(routes.head)
 
     val returnRoute: Signal[NamedRoute] =
-      $startRouteVar.signal.map(
-        startRoute => routes.find(_ != startRoute).get,
+      $startRouteVar.signal.map(startRoute =>
+        routes.find(_ != startRoute).get,
       )
 
     val $returnRouteVar = Var(routes.last)
 
     val rawNamesToTypes: EventStream[NamedRoute] =
-      startingRouteSelections.events.map {
-        case newVal =>
-          routes
-            .find(_.routeName.name == newVal)
-            .getOrElse(
-              throw new RuntimeException(
-                "Unexpected RouteName " + newVal,
-              ),
-            )
+      startingRouteSelections.events.map { case newVal =>
+        routes
+          .find(_.routeName.name == newVal)
+          .getOrElse(
+            throw new RuntimeException(
+              "Unexpected RouteName " + newVal,
+            ),
+          )
       }
 
-    implicit val location2selectorValue
-      : Location.Value => SelectValue = (location: Location.Value) =>
-      SelectValue(location.name, location.name)
+    implicit val location2selectorValue: Location => SelectValue =
+      (location: Location) =>
+        SelectValue(location.name, location.name)
 
-    val $startingPoint: Var[Location.Value] = Var(
+    val $startingPoint: Var[Location] = Var(
       $startRouteVar.now().firstStopOnRoute,
     )
     val initialDestination =
       $startRouteVar.now().lastStopOnRoute
 
-    val $destination: Var[Location.Value] = Var(
+    val $destination: Var[Location] = Var(
       initialDestination,
     )
-    val $returnStartPoint: Var[Location.Value] = Var(
+    val $returnStartPoint: Var[Location] = Var(
       initialDestination,
     )
 
@@ -132,7 +127,7 @@ object LaminarRoundTripCalculator {
 
     val submissionBehavior =
       Observer[WallTime](
-        onNext = (busTime) => println("time @ click: " + busTime),
+        onNext = busTime => println("time @ click: " + busTime),
       )
 
     val TimePicker(departureTimePicker, departureTimeS) =
@@ -156,24 +151,24 @@ object LaminarRoundTripCalculator {
 
     val destinationOptions =
       $startingPoint.signal
-        .map(
-          (startPoint: Location.Value) => {
-            Selector(
-              $startRouteVar.now().stopsRemainingAfter(startPoint),
-              $destination.writer,
-            )
-          },
-        )
+        .map { (startPoint: Location) =>
+          Selector(
+            $startRouteVar.now().stopsRemainingAfter(startPoint),
+            $destination.writer,
+          )
+        }
 
     val realSubmissionBehavior =
       Observer[
-        (Location.Value,
-         Location.Value,
-         WallTime,
-         NamedRoute,
-         WallTime,
-         Location.Value,
-         NamedRoute),
+        (
+          Location,
+          Location,
+          WallTime,
+          NamedRoute,
+          WallTime,
+          Location,
+          NamedRoute,
+        ),
       ](onNext = {
         case (startingPoint,
               destination,
@@ -181,7 +176,8 @@ object LaminarRoundTripCalculator {
               startRoute,
               departureTime,
               returnStartPoint,
-              returnRoute) =>
+              returnRoute,
+            ) =>
           RoundTripParams(
             startingPoint,
             destination,
@@ -201,7 +197,8 @@ object LaminarRoundTripCalculator {
                             $startRouteVar,
                             departureTimeS,
                             $returnStartPoint,
-                            $returnRouteVar)
+                            $returnRouteVar,
+        )
         .map {
           case (startingPoint,
                 destination,
@@ -209,7 +206,8 @@ object LaminarRoundTripCalculator {
                 startRoute,
                 departureTime,
                 returnStartPoint,
-                returnRoute) =>
+                returnRoute,
+              ) =>
             RoundTripParams(
               startingPoint,
               destination,
@@ -227,18 +225,17 @@ object LaminarRoundTripCalculator {
         span(
           cls := "select is-rounded",
           select(
-            inContext {
-              thisNode =>
-                onChange
-                  .mapTo(thisNode.ref.value) --> startingRouteSelections
+            inContext { thisNode =>
+              onChange
+                .mapTo(thisNode.ref.value) --> startingRouteSelections
             },
             rawNamesToTypes --> $startRouteVar.writer,
             value <-- $startRouteVar.signal
               .map(_.routeName.name),
-            routes.map(
-              route =>
-                option(value(route.routeName.name),
-                       route.routeName.userFriendlyName),
+            routes.map(route =>
+              option(value(route.routeName.name),
+                     route.routeName.userFriendlyName,
+              ),
             ),
           ),
         ),
@@ -255,13 +252,14 @@ object LaminarRoundTripCalculator {
       div(
         "And returning from: ",
         child <-- returnRoute
-          .map(_.routeWithTimes.legs.head.stops.map(_.location)) // todo turn into a function
           .map(
-            stops =>
-              Selector(
-                stops,
-                $returnStartPoint.writer,
-              ),
+            _.routeWithTimes.legs.head.stops.map(_.location),
+          ) // todo turn into a function
+          .map(stops =>
+            Selector(
+              stops,
+              $returnStartPoint.writer,
+            ),
           ),
       ),
       div("after: ", departureTimePicker),
@@ -293,7 +291,7 @@ object LaminarRoundTripCalculator {
     routeLeg.stops match {
       case (head :: rest) :+ last =>
         span(
-          head.location + " @ " + head.busTime.toDumbAmericanString + " => " + last.location + " @ " + last.busTime.toDumbAmericanString,
+          head.location.name + " @ " + head.busTime.toDumbAmericanString + " => " + last.location.name + " @ " + last.busTime.toDumbAmericanString,
         )
       case unhandled =>
         throw new RuntimeException("shit: " + unhandled)

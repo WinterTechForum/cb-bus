@@ -25,18 +25,19 @@ object AllRoutes {
     new CompanyRoutes("Mtn Express", // Off-season
                       Seq(
                         SpringFallLoop,
-                      ))
+                      ),
+    )
 
   def components(
     appMode: AppMode,
   ): Seq[ComponentData] = {
     val basicComponents =
       mtnExpressRoutes.routesWithTimes ++:
-      Seq(
-        RtaNorthbound.fullSchedule,
-        RtaSouthbound.fullSchedule,
-        RoundTripCalculatorComponent,
-      )
+        Seq(
+          RtaNorthbound.fullSchedule,
+          RtaSouthbound.fullSchedule,
+          RoundTripCalculatorComponent,
+        )
     if (appMode == AppMode.dev)
       basicComponents // + other under-developed features
     else

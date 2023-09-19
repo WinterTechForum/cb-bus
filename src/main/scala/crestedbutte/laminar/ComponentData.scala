@@ -19,33 +19,34 @@ case class NamedRoute(
   routeName: RouteName,
   routeWithTimes: RouteWithTimes)
     extends ComponentData {
-  val componentName = routeName // TODO rm this and depend on routeName. Too much indirection going on!
+  val componentName =
+    routeName // TODO rm this and depend on routeName. Too much indirection going on!
 
   def stopsRemainingAfter(
-    startPoint: Location.Value,
-  ): Seq[Location.Value] =
+    startPoint: Location,
+  ): Seq[Location] =
     routeWithTimes.allInvolvedStops.drop(
       routeWithTimes.allInvolvedStops
-        .indexWhere(
-          involvedStop => involvedStop.name == startPoint.name,
+        .indexWhere(involvedStop =>
+          involvedStop.name == startPoint.name,
         ) + 1, // Only include stops beyond the current stop
     )
 
-  val firstStopOnRoute: Location.Value =
+  val firstStopOnRoute: Location =
     routeWithTimes
       .routeLeg(0)
       .stops
       .head // todo unsafe
       .location
 
-  val lastStopOnRoute: Location.Value =
+  val lastStopOnRoute: Location =
     routeWithTimes
       .routeLeg(0)
       .stops
       .last // todo unsafe
       .location
 
-  val allStops: Seq[Location.Value] =
+  val allStops: Seq[Location] =
     routeWithTimes.legs.head.stops.map(_.location)
 }
 

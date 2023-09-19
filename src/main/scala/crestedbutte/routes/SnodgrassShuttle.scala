@@ -32,7 +32,8 @@ object SnodgrassShuttle
           .plus(Location.GothicWintersetTosnodgrass, 2.minutes)
           .plus(Location.SnodgrassTrailhead, 2.minutes)
           .plus(Location.GothicWintersetToMountaineerSquare,
-                2.minutes)
+                2.minutes,
+          )
           .plus(Location.MtCBTownHallToMountaineerSquare, 1.minutes)
           .plus(Location.ParadiseRoad, 1.minutes),
         BusSchedule("07:55", "21:55", 60.minutes),
