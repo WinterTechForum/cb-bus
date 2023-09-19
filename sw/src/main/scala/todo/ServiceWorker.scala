@@ -51,6 +51,8 @@ object ServiceWorker {
       }
     )
 
+
+    /*
     self.addEventListener(
       "message",
       (event: MessageEvent) => {
@@ -60,11 +62,10 @@ object ServiceWorker {
             vibrate = js.Array(100d)
           )
         )
-        //        println(
-        //          s"message received:  ${event.data}"
-//        )
       }
     )
+
+     */
 
     self.addEventListener(
       "fetch",
