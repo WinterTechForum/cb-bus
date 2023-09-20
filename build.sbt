@@ -57,6 +57,7 @@ libraryDependencies ++= Seq(
   "com.billdingsoftware" %%% "timepicker" % "0.3.0",
   "dev.zio" %%% "zio" % zioVersion,
   "dev.zio" %%% "zio-streams" % zioVersion,
+  "dev.zio" %%% "zio-streams" % zioVersion,
   "com.lihaoyi" %%% "scalatags" % "0.12.0",
   "io.github.cquiroz" %%% "scala-java-time" % "2.5.0",
   "dev.zio" %%% "zio-test"     % zioVersion % "test",
