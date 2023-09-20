@@ -10,16 +10,18 @@ object TripCalculatorTest extends ZIOSpecDefault:
   def spec =
     suite("TripCalculatorTest")(
       suite("startingLeg") (
-        test("departure leg tests") {
-          val start: Location = Location.BrushCreek
-          val arrivalTime: WallTime = WallTime("07:35")
-          val destination: Location = Location.RecCenter
-          val leaveSchedule: RouteWithTimes = RtaSouthbound.fullSchedule.routeWithTimes
+        test("departure leg tests"):
           val results =
-            RoundTripCalculator.reducedLegStartingAt(start, arrivalTime, destination, leaveSchedule).right.get
-          assertTrue(results.stops.head.busTime == WallTime("06:51"))
-        },
-        test("departure leg tests 2") {
+            RoundTripCalculator.reducedLegStartingAt(
+              start = Location.BrushCreek,
+              arrivalTime = WallTime("07:35"),
+              destination = Location.RecCenter,
+              leaveSchedule = RtaSouthbound.fullSchedule.routeWithTimes
+          ).getOrElse(???)
+          assertTrue:
+            results.stops.head.busTime == WallTime("06:51")
+        ,
+        test("departure leg tests 2"):
           val results =
             RoundTripCalculator.reducedLegStartingAt(
               start = Location.CBSouth,
@@ -27,10 +29,11 @@ object TripCalculatorTest extends ZIOSpecDefault:
               destination = Location.RecCenter,
               leaveSchedule = RtaSouthbound.fullSchedule.routeWithTimes
             ).getOrElse(???)
-          assertTrue(results.stops.head.busTime == WallTime("19:10"))
-        },
+          assertTrue:
+            results.stops.head.busTime == WallTime("19:10")
+        ,
 
-        test("Northbound to CB South in the morning, honoring the huge express bus void") {
+        test("Northbound to CB South in the morning, honoring the huge express bus void"):
           val results =
             RoundTripCalculator.reducedLegStartingAt(
               start = Location.GunnisonCommunitySchools,
@@ -40,33 +43,30 @@ object TripCalculatorTest extends ZIOSpecDefault:
             ).getOrElse(???)
           val startingPoint = results.stops.head.busTime
           assertTrue(startingPoint == WallTime("08:05"))
-        }
       ),
 
-      suite ("returnLeg") {
-//        test("departure leg tests") {
-//          val start: Location = Location.BrushCreek
-//          val earliestDepartureTime: WallTime = WallTime("08:00")
-//          val destination: Location = Location.RecCenter
-//          val leaveSchedule: RouteWithTimes = RtaSouthbound.fullSchedule.routeWithTimes
-//          val results =
-//            RoundTripCalculator.reducedReturnLeg(LocationWithTime(start, earliestDepartureTime), leaveSchedule, destination)
-//              .getOrElse(???)
-//          assertTrue(results.stops.head.busTime == WallTime("08:22") &&
-//            results.stops.last.busTime == WallTime("08:56"))
-//        },
-        test("departure leg tests 2") {
-          val start: Location = Location.Riverland
-          val earliestDepartureTime: WallTime = WallTime("15:00")
-          val destination: Location = Location.Almont
-          val leaveSchedule: RouteWithTimes = RtaSouthbound.fullSchedule.routeWithTimes
+      suite ("returnLeg")(
+        test("departure leg tests") {
           val results =
-            RoundTripCalculator.reducedReturnLeg(LocationWithTime(start, earliestDepartureTime), leaveSchedule, destination).right.get
-          assertTrue(results.stops.head.busTime == WallTime("15:28") &&
-            results.stops.last.busTime == WallTime("15:42"))
-        } @@ TestAspect.ignore
+            RoundTripCalculator.reducedReturnLeg(
+                start = LocationWithTime(Location.BrushCreek, WallTime("08:00")),
+                routeWithTimes = RtaSouthbound.fullSchedule.routeWithTimes,
+                destination = Location.RecCenter
+              ).getOrElse(???)
+          assertTrue(results.stops.head.busTime == WallTime("08:26") &&
+            results.stops.last.busTime == WallTime("09:01"))
+        },
+        test("departure leg tests 2") {
+          val results =
+            RoundTripCalculator.reducedReturnLeg(
+              start = LocationWithTime(Location.Riverland, WallTime("15:00")),
+              routeWithTimes = RtaSouthbound.fullSchedule.routeWithTimes,
+              destination = Location.Almont).right.get
+          assertTrue(results.stops.head.busTime == WallTime("15:42") &&
+            results.stops.last.busTime == WallTime("16:04"))
+        }
 
-      }
+      )
       //    test("Full Round Trip" ) {
       //      RoundTripCalculator.calculate(
       //        startLocation = Location.BrushCreek,

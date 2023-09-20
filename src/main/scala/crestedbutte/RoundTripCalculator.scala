@@ -150,6 +150,7 @@ object RoundTripCalculator {
           .trimToEndAt(destination),
       )
 
+  import math.Ordered.orderingToOrdered // Enables <= comparison for wall times
   def findLatestDepartureLeg(
     arrivalTime: WallTime,
     destination: Location,
@@ -159,18 +160,12 @@ object RoundTripCalculator {
       .findLast(leg =>
         leg.stops.exists(stop =>
           stop.location
-            .matches(destination) && WallTime.ordering
-            .compare(stop.busTime,
-                     arrivalTime,
-            ) <= 0, // todo ugh. bad int math.
+            .matches(destination) && stop.busTime <= arrivalTime,
         ),
       )
-      .map(Right(_))
-      .getOrElse(
-        Left(
+      .toRight(
           TripPlannerError(
             "Could not find a departing leg arriving by " + arrivalTime.toDumbAmericanString,
-          ),
         ),
       )
 
@@ -181,14 +176,14 @@ object RoundTripCalculator {
   ): WallTime = ???
 
   def reducedReturnLeg(
-                        target: LocationWithTime,
+                        start: LocationWithTime,
                         routeWithTimes: RouteWithTimes,
                         destination: Location,
                       ): Either[TripPlannerError, RouteLeg] = {
-    earliestReturnLeg(target, routeWithTimes)
+    earliestReturnLeg(start, routeWithTimes)
       .map: routeLeg =>
         routeLeg
-          .trimToStartAt(target.location)
+          .trimToStartAt(start.location)
           .trimToEndAt(destination)
   }
 
@@ -200,10 +195,7 @@ object RoundTripCalculator {
       .find(leg =>
         leg.stops.exists(stop =>
           stop.location
-            .matches(target.location) && WallTime.ordering
-            .compare(stop.busTime,
-                     target.busTime,
-            ) >= 0, // todo ugh. bad int math.
+            .matches(target.location) && stop.busTime >= target.busTime,
         ),
       )
       .toRight(
