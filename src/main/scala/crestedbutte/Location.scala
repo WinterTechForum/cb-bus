@@ -174,24 +174,4 @@ enum Location(
         (other == FourWayUphill || other == FourwayGunnison || other == FourwayDownhill)
     )
 
-//  private def apply(
-//      name: String,
-//      altName: String = "",
-//      gpsCoordinates: GpsCoordinates,
-//    ): Location =
-//      Location(name, altName, Some(gpsCoordinates))
-
-  import scala.language.implicitConversions
-
-  /*
-  implicit def valueToStopLocationVal(
-    x: Value,
-  ): Val =
-    x.asInstanceOf[Val]
-
-  type StopLocation = Value
-   */
-
-  // TODO Check ordering of all coordinates
-
 }

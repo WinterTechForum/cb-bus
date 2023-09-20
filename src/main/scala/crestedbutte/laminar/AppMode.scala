@@ -4,6 +4,7 @@ import enumeratum._
 
 sealed trait AppMode extends EnumEntry
 
+// TODO Use Scala 3 enum
 object AppMode extends Enum[AppMode] {
   val values = findValues // macro
 

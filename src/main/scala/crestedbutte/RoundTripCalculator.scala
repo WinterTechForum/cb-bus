@@ -21,9 +21,6 @@ case class RouteLeg(
   ): RouteLeg = {
     val indexOfLastStop =
       stops.indexWhere(_.location.matches(location))
-    println("should end at stop: " + location)
-    println("indexOfLastStop: " + indexOfLastStop)
-    PPrinter.BlackWhite.pprintln(stops)
     RouteLeg(stops.take(indexOfLastStop + 1))
   }
 
@@ -184,20 +181,15 @@ object RoundTripCalculator {
   ): WallTime = ???
 
   def reducedReturnLeg(
-    target: LocationWithTime,
-    routeWithTimes: RouteWithTimes,
-    destination: Location,
-  ): Either[TripPlannerError, RouteLeg] = {
-    println("Return leg starts from: " + target)
-    println("and ends at: " + destination)
-    val returnLeg: Either[TripPlannerError, RouteLeg] =
-      earliestReturnLeg(target, routeWithTimes)
-
-    returnLeg.map { routeLeg =>
-      routeLeg
-        .trimToStartAt(target.location)
-        .trimToEndAt(destination)
-    }
+                        target: LocationWithTime,
+                        routeWithTimes: RouteWithTimes,
+                        destination: Location,
+                      ): Either[TripPlannerError, RouteLeg] = {
+    earliestReturnLeg(target, routeWithTimes)
+      .map: routeLeg =>
+        routeLeg
+          .trimToStartAt(target.location)
+          .trimToEndAt(destination)
   }
 
   def earliestReturnLeg(
@@ -214,12 +206,9 @@ object RoundTripCalculator {
             ) >= 0, // todo ugh. bad int math.
         ),
       )
-      .map(Right(_))
-      .getOrElse(
-        Left(
-          TripPlannerError(
-            "Could not find a return leg after: " + target.busTime.toDumbAmericanString,
-          ),
+      .toRight(
+        TripPlannerError(
+          "Could not find a return leg after: " + target.busTime.toDumbAmericanString,
         ),
       )
 
