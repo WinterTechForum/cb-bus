@@ -39,8 +39,15 @@ object BulmaLocal {
                 namedRoute,
               )
             case ModalMode.SelectedLeg(routeLeg) =>
-              // TODO Provide a way to go back to previous mode
-              TagsOnlyLocal.RouteLeg(routeLeg),
+              div(
+                button(
+                  cls := "button",
+                  onClick.mapTo(ModalMode.UpcomingStops) --> $mode,
+                  "Back",
+                ),
+                // TODO Provide a way to go back to previous mode
+                TagsOnlyLocal.RouteLeg(routeLeg),
+              ),
       ),
       button(
         cls := "modal-close is-large",
