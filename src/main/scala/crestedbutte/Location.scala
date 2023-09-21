@@ -67,7 +67,8 @@ enum Location(
   // RTA stops.
   case GunnisonCommunitySchools
       extends Location(
-        "Gunnison Community Schools",
+        "Community Schools",
+        altName = "(Gunnison)",
       )
 
   case GunnisonLibrary

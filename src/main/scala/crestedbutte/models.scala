@@ -4,27 +4,27 @@ import com.billding.time.WallTime
 import com.billding.time.MinuteDuration
 
 case class StopTimeInfo(
-                         time: WallTime,
-                         waitingDuration: MinuteDuration)
+  time: WallTime,
+  waitingDuration: MinuteDuration)
 
 case class BusTimeWithLocation(
-                                busTime: WallTime,
-                                location: Location)
+  busTime: WallTime,
+  location: Location)
 
 enum RouteMode(
-                name: String) {
+  name: String) {
   // TODO Check ordering of all coordinates
   case Active extends RouteMode("Active")
   case Hidden extends RouteMode("Hidden")
 }
 
 case class PhoneNumber(
-                        number: String,
-                        name: String)
+  number: String,
+  name: String)
 
 // TODO General name
 case class RouteName(
-                      userFriendlyName: String) {
+  userFriendlyName: String) {
 
   val name: String =
     userFriendlyName
@@ -34,8 +34,8 @@ case class RouteName(
       .mkString
 
   def elementNameMatches(
-                          elementName: String,
-                        ) = name == elementName
+    elementName: String,
+  ) = name == elementName
   // TODO Check ordering of all coordinates
   /*
   val TownLoop: Val = Val()
@@ -48,28 +48,28 @@ case class RouteName(
 }
 
 case class LateNightRecommendation( // TODO Rename "LateNight" or something
-                                    message: String,
-                                    phoneNumber: String = "970-209-0519")
+  message: String,
+  phoneNumber: String = "970-209-0519")
 
 case class GpsCoordinates(
-                           latitude: Double,
-                           longitude: Double)
+  latitude: Double,
+  longitude: Double)
 
 case class UpcomingArrivalInfoWithFullSchedule(
-                                                upcomingArrivalInfo: UpcomingArrivalInfo,
-                                                busScheduleAtStop: BusScheduleAtStop) {}
+  upcomingArrivalInfo: UpcomingArrivalInfo,
+  busScheduleAtStop: BusScheduleAtStop) {}
 
 case class UpcomingArrivalInfo(
-                                location: Location,
-                                content: Either[StopTimeInfo, LateNightRecommendation],
-                                /* TODO: waitDuration: Duration*/)
+  location: Location,
+  content: Either[StopTimeInfo, LateNightRecommendation],
+  /* TODO: waitDuration: Duration*/)
 
 object UpcomingArrivalInfo {
 
   def apply(
-             location: Location,
-             content: StopTimeInfo,
-           ): UpcomingArrivalInfo =
+    location: Location,
+    content: StopTimeInfo,
+  ): UpcomingArrivalInfo =
     UpcomingArrivalInfo(
       location,
       Left(
@@ -78,9 +78,9 @@ object UpcomingArrivalInfo {
     )
 
   def apply(
-             location: Location,
-             content: LateNightRecommendation,
-           ): UpcomingArrivalInfo =
+    location: Location,
+    content: LateNightRecommendation,
+  ): UpcomingArrivalInfo =
     UpcomingArrivalInfo(
       location,
       Right(content),
@@ -89,7 +89,7 @@ object UpcomingArrivalInfo {
 }
 
 case class UpcomingArrivalComponentData(
-                                         upcomingArrivalInfoForAllRoutes: Seq[
-                                           UpcomingArrivalInfoWithFullSchedule,
-                                         ],
-                                         routeName: RouteName)
+  upcomingArrivalInfoForAllRoutes: Seq[
+    UpcomingArrivalInfoWithFullSchedule,
+  ],
+  routeName: RouteName)

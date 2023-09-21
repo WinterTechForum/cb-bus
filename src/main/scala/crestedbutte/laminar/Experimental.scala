@@ -2,12 +2,8 @@ package crestedbutte.laminar
 
 import com.billding.time.{TimePicker, WallTime}
 import crestedbutte.NotificationStuff.{desiredAlarms, headsUpAmount}
-import crestedbutte.{
-  ElementNames,
-  FeatureStatus,
-  GpsCoordinates,
-  NotificationStuff,
-}
+import crestedbutte.routes.RtaSouthbound
+import crestedbutte.*
 import org.scalajs.dom
 import org.scalajs.dom.NotificationOptions
 import org.scalajs.dom.experimental.{
@@ -150,7 +146,8 @@ object Experimental {
     val newTimePicker = TimePicker("12:34")
     div(
       idAttr := "sandbox",
-      timeStamps.map(_ => getLocation($gpsPosition),
+      timeStamps.map(_ =>
+        getLocation($gpsPosition),
       ) --> $gpsPosition.writer,
       Components.FeatureControlCenter(featureUpdates.writer),
       button(
@@ -172,6 +169,10 @@ object Experimental {
         "SubmitMessage to SW",
       ),
       newTimePicker.component,
+      TagsOnlyLocal.RouteLeg(
+        RtaSouthbound.fullSchedule.routeWithTimes.legs.head
+          .trimToStartAt(Location.BrushCreek),
+      ),
     )
   }
 

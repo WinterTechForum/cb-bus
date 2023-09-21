@@ -21,6 +21,20 @@ import scala.concurrent.duration.FiniteDuration
 object TagsOnlyLocal {
   import com.raquo.laminar.api.L._
 
+  def RouteLeg(
+    routeLeg: RouteLeg,
+  ) =
+    div(
+      routeLeg.stops.map(stop =>
+        createBusTimeElementOnLeg(
+          stop.location,
+          div(
+            stop.busTime.toDumbAmericanString,
+          ),
+        ),
+      ),
+    )
+
   def FullApp(
     pageMode: AppMode,
     initialRouteOpt: Option[String],
@@ -205,6 +219,19 @@ object TagsOnlyLocal {
       width := "100%",
       cls := "stop-information",
       GeoBits($mapLinksEnabled, location, $gpsPosition),
+      div(cls := "stop-name", div(location.name)),
+      div(cls := "stop-alt-name", div(location.altName)),
+      div(cls := "upcoming-information", content),
+    )
+
+  // TODO Dedup with above
+  def createBusTimeElementOnLeg(
+    location: Location,
+    content: ReactiveHtmlElement[_],
+  ) =
+    div(
+      width := "100%",
+      cls := "stop-information",
       div(cls := "stop-name", div(location.name)),
       div(cls := "stop-alt-name", div(location.altName)),
       div(cls := "upcoming-information", content),

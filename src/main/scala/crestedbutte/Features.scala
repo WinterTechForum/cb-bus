@@ -26,7 +26,8 @@ case class FeatureSets(
     featureStatus: FeatureStatus,
   ): FeatureSets =
     copy(
-      values =
-        values + (kv = (featureStatus.feature, featureStatus.enabled)),
+      values = values + (kv =
+        (featureStatus.feature, featureStatus.enabled),
+      ),
     )
 }
