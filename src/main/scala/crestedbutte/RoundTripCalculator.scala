@@ -7,35 +7,6 @@ import pprint.PPrinter
 case class TripPlannerError(
   msg: String)
 
-case class RouteLeg(
-  stops: Seq[LocationWithTime]) {
-  assert(stops.nonEmpty, "Empty Route")
-
-  def trimToStartAt(
-    location: Location,
-  ): RouteLeg =
-    RouteLeg(stops.dropWhile(!_.location.matches(location)))
-
-  def trimToEndAt(
-    location: Location,
-  ): RouteLeg = {
-    val indexOfLastStop =
-      stops.indexWhere(_.location.matches(location))
-    RouteLeg(stops.take(indexOfLastStop + 1))
-  }
-
-  // Assumes non-empty
-  def plus(
-    location: Location,
-    busDuration: MinuteDuration,
-  ) =
-    RouteLeg(
-      stops :+ LocationWithTime(location,
-                                stops.last.busTime.plus(busDuration),
-      ),
-    )
-}
-
 case class LocationWithTime(
   location: Location,
   busTime: WallTime)
@@ -164,8 +135,8 @@ object RoundTripCalculator {
         ),
       )
       .toRight(
-          TripPlannerError(
-            "Could not find a departing leg arriving by " + arrivalTime.toDumbAmericanString,
+        TripPlannerError(
+          "Could not find a departing leg arriving by " + arrivalTime.toDumbAmericanString,
         ),
       )
 
@@ -176,16 +147,15 @@ object RoundTripCalculator {
   ): WallTime = ???
 
   def reducedReturnLeg(
-                        start: LocationWithTime,
-                        routeWithTimes: RouteWithTimes,
-                        destination: Location,
-                      ): Either[TripPlannerError, RouteLeg] = {
+    start: LocationWithTime,
+    routeWithTimes: RouteWithTimes,
+    destination: Location,
+  ): Either[TripPlannerError, RouteLeg] =
     earliestReturnLeg(start, routeWithTimes)
       .map: routeLeg =>
         routeLeg
           .trimToStartAt(start.location)
           .trimToEndAt(destination)
-  }
 
   def earliestReturnLeg(
     target: LocationWithTime,
@@ -195,7 +165,9 @@ object RoundTripCalculator {
       .find(leg =>
         leg.stops.exists(stop =>
           stop.location
-            .matches(target.location) && stop.busTime >= target.busTime,
+            .matches(
+              target.location,
+            ) && stop.busTime >= target.busTime,
         ),
       )
       .toRight(
