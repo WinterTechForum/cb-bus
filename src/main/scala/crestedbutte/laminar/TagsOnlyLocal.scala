@@ -17,6 +17,7 @@ import org.scalajs.dom
 import java.time.format.{DateTimeFormatter, FormatStyle}
 import java.time.{Clock, OffsetDateTime}
 import scala.concurrent.duration.FiniteDuration
+import crestedbutte.dom.BulmaLocal.ModalMode
 
 object TagsOnlyLocal {
   import com.raquo.laminar.api.L._
@@ -250,6 +251,7 @@ object TagsOnlyLocal {
     namedRoute: NamedRoute,
   ) = {
     val modalActive = Var(false)
+    val modalMode: Var[ModalMode] = Var(ModalMode.UpcomingStops)
     div(
       button(
         cls := "arrival-time button open-arrival-time-modal",
@@ -271,6 +273,7 @@ object TagsOnlyLocal {
             _.isEnabled(Feature.BusAlarms),
           ),
           modalActive,
+          modalMode,
           namedRoute,
         ),
       ),

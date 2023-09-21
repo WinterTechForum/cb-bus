@@ -7,11 +7,16 @@ import org.scalajs.dom
 import org.scalajs.dom.experimental.Notification
 
 object BulmaLocal {
+  enum ModalMode:
+    case UpcomingStops
+    case SelectedLeg(
+      routeLeg: RouteLeg)
 
   def bulmaModal(
     scheduleAtStop: BusScheduleAtStop,
     $alertsEnabled: Signal[Boolean],
     $active: Var[Boolean],
+    $mode: Var[ModalMode],
     namedRoute: NamedRoute,
   ) =
     div(
@@ -24,44 +29,18 @@ object BulmaLocal {
         cls := "modal-content",
         marginLeft := "45px",
         marginRight := "45px",
-        div(
-          h4(textAlign := "center", scheduleAtStop.location.name),
-          h5(textAlign := "center", "Upcoming Arrivals"),
-          scheduleAtStop.times.map(time =>
-            div(
-              onClick --> Observer[dom.MouseEvent](
-                onNext = ev =>
-                  println(
-                    "NamedRoute: " +
-                      namedRoute.routeWithTimes.legs
-                        .find(leg =>
-                          leg.stops.contains(
-                            LocationWithTime(scheduleAtStop.location,
-                                             time,
-                            ),
-                          ),
-                        )
-                        .map(_.trimToStartAt(scheduleAtStop.location)),
-                  ),
-              ),
-              textAlign := "center",
-              verticalAlign := "middle",
-              paddingBottom := "3px",
-              span(time.toDumbAmericanString),
-              child <-- $alertsEnabled.map(alertsEnabled =>
-                if (
-                  dom.Notification.permission == "granted" && alertsEnabled
-                )
-                  Experimental.Notifications.AlarmIcon(
-                    "glyphicons-basic-443-bell-ringing.svg",
-                    "arrival-time-alarm",
-                    time,
-                  )
-                else div(),
-              ),
-            ),
-          ),
-        ),
+        child <-- $mode.signal.map: modalMode =>
+          modalMode match
+            case ModalMode.UpcomingStops =>
+              UpcomingStops(
+                scheduleAtStop,
+                $alertsEnabled,
+                $mode,
+                namedRoute,
+              )
+            case ModalMode.SelectedLeg(routeLeg) =>
+              // TODO Provide a way to go back to previous mode
+              TagsOnlyLocal.RouteLeg(routeLeg),
       ),
       button(
         cls := "modal-close is-large",
@@ -74,6 +53,49 @@ object BulmaLocal {
           println("Clicked modal close")
           false
         } --> $active,
+      ),
+    )
+
+  def UpcomingStops(
+    scheduleAtStop: BusScheduleAtStop,
+    $alertsEnabled: Signal[Boolean],
+    $mode: Var[ModalMode],
+    namedRoute: NamedRoute,
+  ) =
+    div(
+      h4(textAlign := "center", scheduleAtStop.location.name),
+      h5(textAlign := "center", "Upcoming Arrivals"),
+      scheduleAtStop.times.map(time =>
+        div(
+          onClick
+            .mapTo(
+              ModalMode.SelectedLeg(
+                namedRoute.routeWithTimes.legs
+                  .find(leg =>
+                    leg.stops.contains(
+                      LocationWithTime(scheduleAtStop.location, time),
+                    ),
+                  )
+                  .map(_.trimToStartAt(scheduleAtStop.location))
+                  .get, // Unsafe
+              ),
+            ) --> $mode,
+          textAlign := "center",
+          verticalAlign := "middle",
+          paddingBottom := "3px",
+          span(time.toDumbAmericanString),
+          child <-- $alertsEnabled.map(alertsEnabled =>
+            if (
+              dom.Notification.permission == "granted" && alertsEnabled
+            )
+              Experimental.Notifications.AlarmIcon(
+                "glyphicons-basic-443-bell-ringing.svg",
+                "arrival-time-alarm",
+                time,
+              )
+            else div(),
+          ),
+        ),
       ),
     )
 
