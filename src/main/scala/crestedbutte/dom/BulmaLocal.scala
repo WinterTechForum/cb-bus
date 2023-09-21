@@ -1,6 +1,6 @@
 package crestedbutte.dom
 
-import crestedbutte.BusScheduleAtStop
+import crestedbutte.*
 import com.raquo.laminar.api.L.*
 import crestedbutte.laminar.{Components, Experimental, TagsOnlyLocal}
 import org.scalajs.dom
@@ -12,6 +12,7 @@ object BulmaLocal {
     scheduleAtStop: BusScheduleAtStop,
     $alertsEnabled: Signal[Boolean],
     $active: Var[Boolean],
+    namedRoute: NamedRoute,
   ) =
     div(
       cls := "modal",
@@ -28,6 +29,21 @@ object BulmaLocal {
           h5(textAlign := "center", "Upcoming Arrivals"),
           scheduleAtStop.times.map(time =>
             div(
+              onClick --> Observer[dom.MouseEvent](
+                onNext = ev =>
+                  println(
+                    "NamedRoute: " +
+                      namedRoute.routeWithTimes.legs
+                        .find(leg =>
+                          leg.stops.contains(
+                            LocationWithTime(scheduleAtStop.location,
+                                             time,
+                            ),
+                          ),
+                        )
+                        .map(_.trimToStartAt(scheduleAtStop.location)),
+                  ),
+              ),
               textAlign := "center",
               verticalAlign := "middle",
               paddingBottom := "3px",

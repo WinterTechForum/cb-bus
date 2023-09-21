@@ -243,10 +243,11 @@ object TagsOnlyLocal {
       div(cls := "upcoming-information", content),
     )
 
-  def renderStopTimeInfo(
+  def StopTimeInfoForLocation(
     stopTimeInfo: StopTimeInfo,
     busScheduleAtStop: BusScheduleAtStop,
     $enabledFeatures: Signal[FeatureSets],
+    namedRoute: NamedRoute,
   ) = {
     val modalActive = Var(false)
     div(
@@ -270,6 +271,7 @@ object TagsOnlyLocal {
             _.isEnabled(Feature.BusAlarms),
           ),
           modalActive,
+          namedRoute,
         ),
       ),
     )
@@ -299,16 +301,17 @@ object TagsOnlyLocal {
           case UpcomingArrivalInfoWithFullSchedule(
                 UpcomingArrivalInfo(location, content),
                 fullScheduleAtStop,
-                namedRoute
+                namedRoute,
               ) =>
             TagsOnlyLocal.createBusTimeElement(
               location,
               content match {
                 case Left(stopTimeInfo) =>
-                  renderStopTimeInfo(
+                  StopTimeInfoForLocation(
                     stopTimeInfo,
                     fullScheduleAtStop,
                     $enabledFeatures,
+                    namedRoute,
                   )
                 case Right(safeRideRecommendation) =>
                   Components.SafeRideLink(safeRideRecommendation)

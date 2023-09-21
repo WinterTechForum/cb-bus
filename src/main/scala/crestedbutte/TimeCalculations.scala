@@ -65,7 +65,7 @@ object TimeCalculations {
       UpcomingArrivalInfoWithFullSchedule(
         getUpcomingArrivalInfo(scheduleAtStop, now),
         scheduleAtStop.scheduleAfter(now),
-        busRoute
+        busRoute,
       ),
     )
 
