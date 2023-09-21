@@ -87,7 +87,7 @@ object TagsOnlyLocal {
       RepeatingElement()
         .repeatWithInterval( // This acts like a Dune thumper
           1,
-          new FiniteDuration(10, scala.concurrent.duration.SECONDS),
+          new FiniteDuration(20, scala.concurrent.duration.SECONDS),
         ) --> clockTicks,
       TagsOnlyLocal
         .overallPageLayout(
@@ -125,6 +125,12 @@ object TagsOnlyLocal {
     val upcomingArrivalData =
       $selectedComponent.combineWith(timeStamps)
         .map { case (componentData, timestamp) =>
+          // This is a super janky way to avoid being unable to scroll
+          // after we refresh the page and close the model
+          org.scalajs.dom.document
+            .querySelector("html")
+            .classList
+            .remove("is-clipped")
           componentData match {
             case RoundTripCalculatorComponent => calculator
             case namedRoute: NamedRoute =>
