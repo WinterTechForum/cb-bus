@@ -11,7 +11,7 @@ case class LocationWithTime(
   location: Location,
   busTime: WallTime)
 
-case class RoundTripParams(
+case class TripParams(
   startLocation: Location,
   destination: Location,
   arrivalTime: WallTime,
@@ -20,23 +20,23 @@ case class RoundTripParams(
   returningLaunchPoint: Location,
   returnSchedule: RouteWithTimes)
 
-case class RoundTrip(
+case class Trip(
   leave: RouteLeg,
   returnLeg: RouteLeg)
 
-object RoundTripCalculator {
+object TripCalculator {
 
   def calculate(
-    roundTripParams: RoundTripParams,
-  ): Either[TripPlannerError, RoundTrip] =
+    tripParams: TripParams,
+  ): Either[TripPlannerError, Trip] =
     calculate(
-      roundTripParams.startLocation,
-      roundTripParams.destination,
-      roundTripParams.arrivalTime,
-      roundTripParams.leaveSchedule,
-      roundTripParams.departureTime,
-      roundTripParams.returningLaunchPoint,
-      roundTripParams.returnSchedule,
+      tripParams.startLocation,
+      tripParams.destination,
+      tripParams.arrivalTime,
+      tripParams.leaveSchedule,
+      tripParams.departureTime,
+      tripParams.returningLaunchPoint,
+      tripParams.returnSchedule,
     )
 
   def calculate(
@@ -47,7 +47,7 @@ object RoundTripCalculator {
     departureTime: WallTime,
     returningLaunchPoint: Location,
     returnSchedule: RouteWithTimes,
-  ): Either[TripPlannerError, RoundTrip] =
+  ): Either[TripPlannerError, Trip] =
     if (arrivalTime.isAfter(departureTime))
       Left(
         TripPlannerError(
@@ -85,7 +85,7 @@ object RoundTripCalculator {
       ) match {
         case (Right(startLeg), Right(returnLeg)) =>
           Right(
-            RoundTrip(
+            Trip(
               startLeg,
               returnLeg,
             ),

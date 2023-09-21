@@ -4,11 +4,11 @@ import com.billding.time.{TimePicker, WallTime}
 import crestedbutte.{
   Location,
   LocationWithTime,
-  RoundTrip,
-  RoundTripCalculator,
-  RoundTripParams,
   RouteLeg,
   RouteName,
+  Trip,
+  TripCalculator,
+  TripParams,
   TripPlannerError,
 }
 import crestedbutte.routes.{RtaNorthbound, RtaSouthbound}
@@ -133,11 +133,11 @@ object LaminarRoundTripCalculator {
     val TimePicker(departureTimePicker, departureTimeS) =
       TimePicker(initialTime = "5:00 PM")
 
-    val submissions = new EventBus[RoundTripParams]
+    val submissions = new EventBus[TripParams]
     val roundTripResults
-      : EventStream[Either[TripPlannerError, RoundTrip]] =
+      : EventStream[Either[TripPlannerError, Trip]] =
       submissions.events
-        .map(RoundTripCalculator.calculate)
+        .map(TripCalculator.calculate)
 
     val startingPointOptions =
       $startRouteVar.signal
@@ -178,7 +178,7 @@ object LaminarRoundTripCalculator {
               returnStartPoint,
               returnRoute,
             ) =>
-          RoundTripParams(
+          TripParams(
             startingPoint,
             destination,
             arrivalTime,
@@ -189,7 +189,7 @@ object LaminarRoundTripCalculator {
           )
       })
 
-    val valuesDuringRealSubmission: EventStream[RoundTripParams] =
+    val valuesDuringRealSubmission: EventStream[TripParams] =
       clickBus.events
         .withCurrentValueOf($startingPoint,
                             $destination,
@@ -208,7 +208,7 @@ object LaminarRoundTripCalculator {
                 returnStartPoint,
                 returnRoute,
               ) =>
-            RoundTripParams(
+            TripParams(
               startingPoint,
               destination,
               arrivalTime,
@@ -298,7 +298,7 @@ object LaminarRoundTripCalculator {
     }
 
   def renderRoundTrip(
-    roundTrip: RoundTrip,
+    roundTrip: Trip,
   ) =
     div(
       h2(cls := "title is-2", "Your trip:"),
