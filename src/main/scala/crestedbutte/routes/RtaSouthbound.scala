@@ -2,8 +2,7 @@ package crestedbutte.routes
 
 import com.billding.time.MinuteDuration.toMinuteDuration
 import com.billding.time.WallTime
-import crestedbutte._
-import crestedbutte.laminar.NamedRoute
+import crestedbutte.*
 
 object RtaSouthbound {
 

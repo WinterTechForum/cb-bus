@@ -57,7 +57,9 @@ case class GpsCoordinates(
 
 case class UpcomingArrivalInfoWithFullSchedule(
   upcomingArrivalInfo: UpcomingArrivalInfo,
-  busScheduleAtStop: BusScheduleAtStop) {}
+  busScheduleAtStop: BusScheduleAtStop,
+  namedRoute: NamedRoute, // TODO
+) {}
 
 case class UpcomingArrivalInfo(
   location: Location,

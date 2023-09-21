@@ -4,10 +4,10 @@ import crestedbutte.{
   BusSchedule,
   BusScheduleAtStop,
   Location,
+  NamedRoute,
   RouteName,
 }
 import com.billding.time.MinuteDuration.toMinuteDuration
-import crestedbutte.laminar.NamedRoute
 
 /*
   Every 60 minutes from 8:25 AM to 10:25 PM

@@ -1,10 +1,12 @@
-package crestedbutte.laminar
+package crestedbutte
 
+import crestedbutte.laminar.LaminarRoundTripCalculator
 import crestedbutte.routes.RouteWithTimes
 import crestedbutte.{Location, RouteName}
 
+// TODO Where should this ComponentData abstraction *actually* live?
 sealed trait ComponentData {
-//  namedRoute: NamedRoute,
+  //  namedRoute: NamedRoute,
 
   val componentName: RouteName
 }
@@ -14,6 +16,8 @@ case object RoundTripCalculatorComponent extends ComponentData {
   val componentName =
     LaminarRoundTripCalculator.calculatorComponentName
 }
+
+import crestedbutte.{Location, RouteName}
 
 case class NamedRoute(
   routeName: RouteName,
@@ -55,7 +59,7 @@ object NamedRoute {
   def apply(
     rawRouteName: String,
     routeWithTimes: RouteWithTimes,
-  ): Unit =
+  ): NamedRoute =
     NamedRoute(
       RouteName(rawRouteName),
       routeWithTimes,

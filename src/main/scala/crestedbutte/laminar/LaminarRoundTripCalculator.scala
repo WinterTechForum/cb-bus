@@ -4,6 +4,7 @@ import com.billding.time.{TimePicker, WallTime}
 import crestedbutte.{
   Location,
   LocationWithTime,
+  NamedRoute,
   RouteLeg,
   RouteName,
   Trip,

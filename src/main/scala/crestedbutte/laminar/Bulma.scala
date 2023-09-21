@@ -1,7 +1,8 @@
 package crestedbutte.laminar
 
-import com.raquo.laminar.api.L._
+import com.raquo.laminar.api.L.*
 import com.raquo.laminar.nodes.ReactiveHtmlElement
+import crestedbutte.ComponentData
 import org.scalajs.dom
 import org.scalajs.dom.html
 

@@ -299,6 +299,7 @@ object TagsOnlyLocal {
           case UpcomingArrivalInfoWithFullSchedule(
                 UpcomingArrivalInfo(location, content),
                 fullScheduleAtStop,
+                namedRoute
               ) =>
             TagsOnlyLocal.createBusTimeElement(
               location,

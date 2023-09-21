@@ -1,7 +1,6 @@
 package crestedbutte
 
 import com.billding.time.WallTime
-import crestedbutte.laminar.NamedRoute
 import zio.ZIO
 import zio.Clock
 
@@ -66,6 +65,7 @@ object TimeCalculations {
       UpcomingArrivalInfoWithFullSchedule(
         getUpcomingArrivalInfo(scheduleAtStop, now),
         scheduleAtStop.scheduleAfter(now),
+        busRoute
       ),
     )
 

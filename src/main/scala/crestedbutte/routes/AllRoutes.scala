@@ -1,10 +1,7 @@
 package crestedbutte.routes
 
-import crestedbutte.laminar.{
-  AppMode,
-  ComponentData,
-  RoundTripCalculatorComponent,
-}
+import crestedbutte.{ComponentData, RoundTripCalculatorComponent}
+import crestedbutte.laminar.AppMode
 
 object AllRoutes {
 
