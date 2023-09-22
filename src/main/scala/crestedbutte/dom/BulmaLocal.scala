@@ -46,7 +46,7 @@ object BulmaLocal {
               ),
               // TODO Provide a way to go back to previous mode
               TagsOnlyLocal.RouteLeg(routeLeg),
-            )
+            ),
       ),
       button(
         cls := "modal-close is-large",

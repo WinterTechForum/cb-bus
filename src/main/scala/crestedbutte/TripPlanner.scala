@@ -55,13 +55,14 @@ object TripPlanner {
         ),
       )
     else {
-      (reducedLegStartingAt(startLocation,
-                            arrivalTime,
-                            destination,
-                            leaveSchedule,
+      (routeWithTimeOfArrival(startLocation,
+                              arrivalTime,
+                              destination,
+                              leaveSchedule,
        ),
-       reducedReturnLeg(
-         LocationWithTime(returningLaunchPoint, departureTime),
+        routeStartingAfter(
+         returningLaunchPoint,
+         departureTime,
          returnSchedule,
          startLocation,
        ),
@@ -91,21 +92,9 @@ object TripPlanner {
     leaveSchedule: RouteWithTimes,
   ): LocationWithTime = ???
 
-  def reducedLegStartingAt(
-    start: Location,
-    arrivalTime: WallTime,
-    destination: Location,
-    leaveSchedule: RouteWithTimes,
-  ): Either[TripPlannerError, RouteLeg] =
-    findLatestDepartureLeg(arrivalTime, destination, leaveSchedule)
-      .map(routeLeg =>
-        routeLeg
-          .trimToStartAt(start)
-          .trimToEndAt(destination),
-      )
-
   import math.Ordered.orderingToOrdered // Enables <= comparison for wall times
-  def findLatestDepartureLeg(
+  def routeWithTimeOfArrival(
+    start: Location,
     arrivalTime: WallTime,
     destination: Location,
     leaveSchedule: RouteWithTimes,
@@ -116,6 +105,11 @@ object TripPlanner {
           stop.location
             .matches(destination) && stop.busTime <= arrivalTime,
         ),
+      )
+      .map(routeLeg =>
+        routeLeg
+          .trimToStartAt(start)
+          .trimToEndAt(destination),
       )
       .toRight(
         TripPlannerError(
@@ -129,33 +123,30 @@ object TripPlanner {
     destination: Location,
   ): WallTime = ???
 
-  def reducedReturnLeg(
-    start: LocationWithTime,
-    routeWithTimes: RouteWithTimes,
-    destination: Location,
-  ): Either[TripPlannerError, RouteLeg] =
-    earliestReturnLeg(start, routeWithTimes)
-      .map: routeLeg =>
-        routeLeg
-          .trimToStartAt(start.location)
-          .trimToEndAt(destination)
-
-  def earliestReturnLeg(
-    target: LocationWithTime,
-    routeWithTimes: RouteWithTimes,
+  def routeStartingAfter(
+                          start: Location,
+                          arrivalTime: WallTime,
+//                          start: LocationWithTime,
+                         routeWithTimes: RouteWithTimes,
+                         destination: Location,
   ): Either[TripPlannerError, RouteLeg] =
     routeWithTimes.legs
       .find(leg =>
         leg.stops.exists(stop =>
           stop.location
             .matches(
-              target.location,
-            ) && stop.busTime >= target.busTime,
+              start,
+            ) && stop.busTime >= arrivalTime,
         ),
       )
+
+      .map: routeLeg =>
+          routeLeg
+            .trimToStartAt(start)
+            .trimToEndAt(destination)
       .toRight(
         TripPlannerError(
-          "Could not find a return leg after: " + target.busTime.toDumbAmericanString,
+          "Could not find a return leg after: " + arrivalTime.toDumbAmericanString,
         ),
       )
 

@@ -55,7 +55,7 @@ object TagsOnlyLocal {
         )
         .getOrElse(
 //          SpringFallLoop,
-          TripPlannerComponent
+          TripPlannerComponent,
 //          RtaSouthbound.fullSchedule,
         ),
     )

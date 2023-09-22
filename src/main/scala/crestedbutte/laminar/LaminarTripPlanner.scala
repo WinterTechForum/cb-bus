@@ -8,8 +8,8 @@ import crestedbutte.{
   RouteLeg,
   RouteName,
   Trip,
-  TripPlanner,
   TripParams,
+  TripPlanner,
   TripPlannerError,
 }
 import crestedbutte.routes.{RtaNorthbound, RtaSouthbound}
