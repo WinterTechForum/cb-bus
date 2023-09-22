@@ -24,7 +24,7 @@ case class Trip(
   leave: RouteLeg,
   returnLeg: RouteLeg)
 
-object TripCalculator {
+object TripPlanner {
 
   def calculate(
     tripParams: TripParams,

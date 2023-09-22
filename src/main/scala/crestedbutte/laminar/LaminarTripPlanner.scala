@@ -8,7 +8,7 @@ import crestedbutte.{
   RouteLeg,
   RouteName,
   Trip,
-  TripCalculator,
+  TripPlanner,
   TripParams,
   TripPlannerError,
 }
@@ -138,7 +138,7 @@ object LaminarTripPlanner {
     val roundTripResults
       : EventStream[Either[TripPlannerError, Trip]] =
       submissions.events
-        .map(TripCalculator.calculate)
+        .map(TripPlanner.calculate)
 
     val startingPointOptions =
       $startRouteVar.signal

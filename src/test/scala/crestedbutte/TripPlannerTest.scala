@@ -6,13 +6,13 @@ import com.billding.time.WallTime
 import routes.RouteWithTimes
 import routes.*
 
-object TripCalculatorTest extends ZIOSpecDefault:
+object TripPlannerTest extends ZIOSpecDefault:
   def spec =
-    suite("TripCalculatorTest")(
+    suite("TripPlannerTest")(
       suite("startingLeg") (
         test("departure leg tests"):
           val results =
-            TripCalculator.reducedLegStartingAt(
+            TripPlanner.reducedLegStartingAt(
               start = Location.BrushCreek,
               arrivalTime = WallTime("07:35"),
               destination = Location.RecCenter,
@@ -23,7 +23,7 @@ object TripCalculatorTest extends ZIOSpecDefault:
         ,
         test("departure leg tests 2"):
           val results =
-            TripCalculator.reducedLegStartingAt(
+            TripPlanner.reducedLegStartingAt(
               start = Location.CBSouth,
               arrivalTime = WallTime("20:00"),
               destination = Location.RecCenter,
@@ -35,7 +35,7 @@ object TripCalculatorTest extends ZIOSpecDefault:
 
         test("Northbound to CB South in the morning, honoring the huge express bus void"):
           val results =
-            TripCalculator.reducedLegStartingAt(
+            TripPlanner.reducedLegStartingAt(
               start = Location.GunnisonCommunitySchools,
               arrivalTime = WallTime("09:00"),
               destination = Location.CBSouth,
@@ -48,7 +48,7 @@ object TripCalculatorTest extends ZIOSpecDefault:
       suite ("returnLeg")(
         test("departure leg tests") {
           val results =
-            TripCalculator.reducedReturnLeg(
+            TripPlanner.reducedReturnLeg(
                 start = LocationWithTime(Location.BrushCreek, WallTime("08:00")),
                 routeWithTimes = RtaSouthbound.fullSchedule.routeWithTimes,
                 destination = Location.RecCenter
@@ -58,7 +58,7 @@ object TripCalculatorTest extends ZIOSpecDefault:
         },
         test("departure leg tests 2") {
           val results =
-            TripCalculator.reducedReturnLeg(
+            TripPlanner.reducedReturnLeg(
               start = LocationWithTime(Location.Riverland, WallTime("15:00")),
               routeWithTimes = RtaSouthbound.fullSchedule.routeWithTimes,
               destination = Location.Almont).right.get
