@@ -11,10 +11,10 @@ sealed trait ComponentData {
   val componentName: RouteName
 }
 
-case object RoundTripCalculatorComponent extends ComponentData {
+case object TripPlannerComponent extends ComponentData {
 
   val componentName =
-    LaminarTripPlanner.calculatorComponentName
+    LaminarTripPlanner.componentName
 }
 
 import crestedbutte.{Location, RouteName}

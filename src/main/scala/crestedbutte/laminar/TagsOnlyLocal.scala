@@ -55,7 +55,7 @@ object TagsOnlyLocal {
         )
         .getOrElse(
 //          SpringFallLoop,
-          RoundTripCalculatorComponent
+          TripPlannerComponent
 //          RtaSouthbound.fullSchedule,
         ),
     )
@@ -121,7 +121,7 @@ object TagsOnlyLocal {
 
     val gpsPosition: Var[Option[GpsCoordinates]] = Var(None)
 
-    val calculator = LaminarTripPlanner
+    val planner = LaminarTripPlanner
       .TripPlannerLaminar()
 
     val upcomingArrivalData =
@@ -134,7 +134,7 @@ object TagsOnlyLocal {
             .classList
             .remove("is-clipped")
           componentData match {
-            case RoundTripCalculatorComponent => calculator
+            case TripPlannerComponent => planner
             case namedRoute: NamedRoute =>
               TagsOnlyLocal.structuredSetOfUpcomingArrivals(
                 TimeCalculations
