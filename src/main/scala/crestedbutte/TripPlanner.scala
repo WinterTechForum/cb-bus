@@ -87,11 +87,6 @@ object TripPlanner {
       }
     }
 
-  def findLatestDepartureTime(
-    arrivalTime: WallTime,
-    leaveSchedule: RouteWithTimes,
-  ): LocationWithTime = ???
-
   import math.Ordered.orderingToOrdered // Enables <= comparison for wall times
   def routeWithTimeOfArrival(
     start: Location,
@@ -116,12 +111,6 @@ object TripPlanner {
           "Could not find a departing leg arriving by " + arrivalTime.toDumbAmericanString,
         ),
       )
-
-  def whenYouWouldArrive(
-    start: LocationWithTime,
-    schedule: RouteWithTimes,
-    destination: Location,
-  ): WallTime = ???
 
   def routeStartingAfter(
                           start: Location,
@@ -150,9 +139,4 @@ object TripPlanner {
         ),
       )
 
-  def findEarliestReturnTime(
-    arrivalTime: WallTime,
-    timeRequiredAtDestination: MinuteDuration,
-    returnSchedule: RouteWithTimes,
-  ): LocationWithTime = ???
 }
