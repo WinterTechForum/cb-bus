@@ -1,6 +1,7 @@
 package crestedbutte
 
 import com.billding.time.{MinuteDuration, WallTime}
+import crestedbutte.TripParamz.StartingAfter
 import crestedbutte.routes.RouteWithTimes
 import pprint.PPrinter
 
@@ -10,6 +11,68 @@ case class TripPlannerError(
 case class LocationWithTime(
   location: Location,
   busTime: WallTime)
+
+enum TripParamz {
+  case StartingAfter(
+                      start: Location,
+                      arrivalTime: WallTime, // TODO rename to earliestDeparture
+                      routeWithTimes: RouteWithTimes,
+                      destination: Location,
+                    )
+
+  case ArrivingBy(
+                   start: Location,
+                   arrivalTime: WallTime,
+                   destination: Location,
+                   leaveSchedule: RouteWithTimes,
+                 )
+
+  import math.Ordered.orderingToOrdered // Enables <= comparison for wall times
+  def evaluate(
+
+              ): Either[TripPlannerError, RouteLeg] = this match
+    case s: StartingAfter =>
+
+        s.routeWithTimes.legs
+          .find(leg =>
+            leg.stops.exists(stop =>
+              stop.location
+                .matches(
+                  s.start,
+                ) && stop.busTime >= s.arrivalTime,
+            ),
+          )
+
+          .map: routeLeg =>
+            routeLeg
+              .trimToStartAt(s.start)
+              .trimToEndAt(s.destination)
+          .toRight(
+            TripPlannerError(
+              "Could not find a return leg after: " + s.arrivalTime.toDumbAmericanString,
+            ),
+          )
+    case b: ArrivingBy =>
+
+      b.leaveSchedule.legs
+        .findLast(leg =>
+          leg.stops.exists(stop =>
+            stop.location
+              .matches(b.destination) && stop.busTime <= b.arrivalTime,
+          ),
+        )
+        .map(routeLeg =>
+          routeLeg
+            .trimToStartAt(b.start)
+            .trimToEndAt(b.destination),
+        )
+        .toRight(
+          TripPlannerError(
+            "Could not find a departing leg arriving by " + b.arrivalTime.toDumbAmericanString,
+          ),
+        )
+
+}
 
 case class TripParams(
   startLocation: Location,
@@ -55,17 +118,17 @@ object TripPlanner {
         ),
       )
     else {
-      (routeWithTimeOfArrival(startLocation,
+      (TripParamz.ArrivingBy(startLocation,
                               arrivalTime,
                               destination,
                               leaveSchedule,
-       ),
-        routeStartingAfter(
-         returningLaunchPoint,
-         departureTime,
-         returnSchedule,
-         startLocation,
-       ),
+       ).evaluate(),
+        TripParamz.StartingAfter(
+          returningLaunchPoint,
+          departureTime,
+          returnSchedule,
+          startLocation,
+        ).evaluate()
       ) match {
         case (Right(startLeg), Right(returnLeg)) =>
           Right(
@@ -86,57 +149,5 @@ object TripPlanner {
           Left(returnLegError)
       }
     }
-
-  import math.Ordered.orderingToOrdered // Enables <= comparison for wall times
-  def routeWithTimeOfArrival(
-    start: Location,
-    arrivalTime: WallTime,
-    destination: Location,
-    leaveSchedule: RouteWithTimes,
-  ): Either[TripPlannerError, RouteLeg] =
-    leaveSchedule.legs
-      .findLast(leg =>
-        leg.stops.exists(stop =>
-          stop.location
-            .matches(destination) && stop.busTime <= arrivalTime,
-        ),
-      )
-      .map(routeLeg =>
-        routeLeg
-          .trimToStartAt(start)
-          .trimToEndAt(destination),
-      )
-      .toRight(
-        TripPlannerError(
-          "Could not find a departing leg arriving by " + arrivalTime.toDumbAmericanString,
-        ),
-      )
-
-  def routeStartingAfter(
-                          start: Location,
-                          arrivalTime: WallTime,
-//                          start: LocationWithTime,
-                         routeWithTimes: RouteWithTimes,
-                         destination: Location,
-  ): Either[TripPlannerError, RouteLeg] =
-    routeWithTimes.legs
-      .find(leg =>
-        leg.stops.exists(stop =>
-          stop.location
-            .matches(
-              start,
-            ) && stop.busTime >= arrivalTime,
-        ),
-      )
-
-      .map: routeLeg =>
-          routeLeg
-            .trimToStartAt(start)
-            .trimToEndAt(destination)
-      .toRight(
-        TripPlannerError(
-          "Could not find a return leg after: " + arrivalTime.toDumbAmericanString,
-        ),
-      )
 
 }

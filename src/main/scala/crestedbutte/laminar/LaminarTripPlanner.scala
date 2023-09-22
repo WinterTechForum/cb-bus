@@ -159,37 +159,6 @@ object LaminarTripPlanner {
           )
         }
 
-    val realSubmissionBehavior =
-      Observer[
-        (
-          Location,
-          Location,
-          WallTime,
-          NamedRoute,
-          WallTime,
-          Location,
-          NamedRoute,
-        ),
-      ](onNext = {
-        case (startingPoint,
-              destination,
-              arrivalTime,
-              startRoute,
-              departureTime,
-              returnStartPoint,
-              returnRoute,
-            ) =>
-          TripParams(
-            startingPoint,
-            destination,
-            arrivalTime,
-            startRoute.routeWithTimes,
-            departureTime,
-            returnStartPoint,
-            returnRoute.routeWithTimes,
-          )
-      })
-
     val valuesDuringRealSubmission: EventStream[TripParams] =
       clickBus.events
         .withCurrentValueOf($startingPoint,

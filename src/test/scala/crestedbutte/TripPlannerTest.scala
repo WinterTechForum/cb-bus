@@ -12,35 +12,35 @@ object TripPlannerTest extends ZIOSpecDefault:
       suite("startingLeg") (
         test("departure leg tests"):
           val results =
-            TripPlanner.routeWithTimeOfArrival(
+            TripParamz.ArrivingBy(
               start = Location.BrushCreek,
               arrivalTime = WallTime("07:35"),
               destination = Location.RecCenter,
               leaveSchedule = RtaSouthbound.fullSchedule.routeWithTimes
-          ).getOrElse(???)
+          ).evaluate().getOrElse(???)
           assertTrue:
             results.stops.head.busTime == WallTime("06:51")
         ,
         test("departure leg tests 2"):
           val results =
-            TripPlanner.routeWithTimeOfArrival(
+            TripParamz.ArrivingBy(
               start = Location.CBSouth,
               arrivalTime = WallTime("20:00"),
               destination = Location.RecCenter,
               leaveSchedule = RtaSouthbound.fullSchedule.routeWithTimes
-            ).getOrElse(???)
+            ).evaluate().getOrElse(???)
           assertTrue:
             results.stops.head.busTime == WallTime("19:10")
         ,
 
         test("Northbound to CB South in the morning, honoring the huge express bus void"):
           val results =
-            TripPlanner.routeWithTimeOfArrival(
+            TripParamz.ArrivingBy(
               start = Location.GunnisonCommunitySchools,
               arrivalTime = WallTime("09:00"),
               destination = Location.CBSouth,
               leaveSchedule = RtaNorthbound.fullSchedule.routeWithTimes
-            ).getOrElse(???)
+            ).evaluate().getOrElse(???)
           val startingPoint = results.stops.head.busTime
           assertTrue(startingPoint == WallTime("08:05"))
       ),
@@ -48,22 +48,23 @@ object TripPlannerTest extends ZIOSpecDefault:
       suite ("returnLeg")(
         test("departure leg tests") {
           val results =
-            TripPlanner.routeStartingAfter(
+              TripParamz.StartingAfter(
                 start = Location.BrushCreek,
                 arrivalTime = WallTime("08:00"),
                 routeWithTimes = RtaSouthbound.fullSchedule.routeWithTimes,
                 destination = Location.RecCenter
-              ).getOrElse(???)
+            ).evaluate().getOrElse(???)
           assertTrue(results.stops.head.busTime == WallTime("08:26") &&
             results.stops.last.busTime == WallTime("09:01"))
         },
         test("departure leg tests 2") {
           val results =
-            TripPlanner.routeStartingAfter(
-              start = Location.Riverland,
-              arrivalTime = WallTime("15:00"),
-              routeWithTimes = RtaSouthbound.fullSchedule.routeWithTimes,
-              destination = Location.Almont).right.get
+              TripParamz.StartingAfter(
+                start = Location.Riverland,
+                arrivalTime = WallTime("15:00"),
+                routeWithTimes = RtaSouthbound.fullSchedule.routeWithTimes,
+                destination = Location.Almont
+            ).evaluate().right.get
           assertTrue(results.stops.head.busTime == WallTime("15:42") &&
             results.stops.last.busTime == WallTime("16:04"))
         }
