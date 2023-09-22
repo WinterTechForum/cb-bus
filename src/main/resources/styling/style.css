@@ -8,6 +8,10 @@ body {
     background-color: #444;
 }
 
+.modal-background {
+    background-color: rgba(10,10,10,.95);
+}
+
 #landing-message {
     min-height: 100%;
 }

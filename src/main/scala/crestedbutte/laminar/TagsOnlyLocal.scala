@@ -120,8 +120,8 @@ object TagsOnlyLocal {
 
     val gpsPosition: Var[Option[GpsCoordinates]] = Var(None)
 
-    val calculator = LaminarRoundTripCalculator
-      .RoundTripCalculatorLaminar()
+    val calculator = LaminarTripPlanner
+      .TripPlannerLaminar()
 
     val upcomingArrivalData =
       $selectedComponent.combineWith(timeStamps)

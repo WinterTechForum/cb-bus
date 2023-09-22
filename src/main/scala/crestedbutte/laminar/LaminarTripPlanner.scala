@@ -17,7 +17,7 @@ import org.scalajs.dom
 import org.scalajs.dom.MouseEvent
 import website.webcomponents.material.{Button, SmartTimePicker}
 
-object LaminarRoundTripCalculator {
+object LaminarTripPlanner {
   import com.raquo.laminar.api.L._
 
   val calculatorComponentName = RouteName("RoundTripCalculator")
@@ -25,7 +25,7 @@ object LaminarRoundTripCalculator {
   def app() = {
     import org.scalajs.dom
     val app = div(
-      LaminarRoundTripCalculator.RoundTripCalculatorLaminar(),
+      LaminarTripPlanner.TripPlannerLaminar(),
     )
     render(
       dom.document.getElementById(calculatorComponentName.name),
@@ -76,7 +76,7 @@ object LaminarRoundTripCalculator {
     )
   }
 
-  def RoundTripCalculatorLaminar() = {
+  def TripPlannerLaminar() = {
     val routes =
       List(RtaNorthbound.fullSchedule, RtaSouthbound.fullSchedule)
 

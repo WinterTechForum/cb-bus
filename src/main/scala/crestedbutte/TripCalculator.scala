@@ -55,23 +55,6 @@ object TripCalculator {
         ),
       )
     else {
-      val startingLeg = reducedLegStartingAt(startLocation,
-                                             arrivalTime,
-                                             destination,
-                                             leaveSchedule,
-      )
-      println("startingLeg: ")
-      PPrinter.BlackWhite.pprintln(startingLeg)
-
-      val returnLeg =
-        reducedReturnLeg(
-          LocationWithTime(returningLaunchPoint, departureTime),
-          returnSchedule,
-          startLocation,
-        )
-
-      println("returnLeg: ")
-      PPrinter.BlackWhite.pprintln(returnLeg)
       (reducedLegStartingAt(startLocation,
                             arrivalTime,
                             destination,

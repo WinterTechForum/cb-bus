@@ -29,25 +29,24 @@ object BulmaLocal {
         cls := "modal-content",
         marginLeft := "45px",
         marginRight := "45px",
-        child <-- $mode.signal.map: modalMode =>
-          modalMode match
-            case ModalMode.UpcomingStops =>
-              UpcomingStops(
-                scheduleAtStop,
-                $alertsEnabled,
-                $mode,
-                namedRoute,
-              )
-            case ModalMode.SelectedLeg(routeLeg) =>
-              div(
-                button(
-                  cls := "button",
-                  onClick.mapTo(ModalMode.UpcomingStops) --> $mode,
-                  "Back",
-                ),
-                // TODO Provide a way to go back to previous mode
-                TagsOnlyLocal.RouteLeg(routeLeg),
+        child <-- $mode.signal.map:
+          case ModalMode.UpcomingStops =>
+            UpcomingStops(
+              scheduleAtStop,
+              $alertsEnabled,
+              $mode,
+              namedRoute,
+            )
+          case ModalMode.SelectedLeg(routeLeg) =>
+            div(
+              button(
+                cls := "button",
+                onClick.mapTo(ModalMode.UpcomingStops) --> $mode,
+                "Back",
               ),
+              // TODO Provide a way to go back to previous mode
+              TagsOnlyLocal.RouteLeg(routeLeg),
+            )
       ),
       button(
         cls := "modal-close is-large",
