@@ -42,7 +42,7 @@ object TagsOnlyLocal {
     div:
       List(
         routeLeg.stops.head,
-        routeLeg.stops.last
+        routeLeg.stops.last,
       ).map: stop =>
         createBusTimeElementOnLeg(
           stop.location,

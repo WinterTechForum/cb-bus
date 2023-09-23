@@ -150,8 +150,6 @@ object LaminarTripPlanner {
           )
         }
 
-
-
     val valuesDuringRealSubmissionZ: EventStream[TripParamZ] =
       clickBus.events
         .withCurrentValueOf(
