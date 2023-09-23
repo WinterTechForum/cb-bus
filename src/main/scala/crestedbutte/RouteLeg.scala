@@ -4,7 +4,9 @@ import com.billding.time.MinuteDuration
 
 case class RouteLeg(
   stops: Seq[LocationWithTime]) {
-  assert(stops.nonEmpty, "Empty Route")
+  assert(stops.nonEmpty,
+         "Empty Route",
+  ) // TODO Upgrade into a true effect
 
   def trimToStartAt(
     location: Location,

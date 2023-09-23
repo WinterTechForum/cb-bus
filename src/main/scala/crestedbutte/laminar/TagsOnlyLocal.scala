@@ -36,6 +36,20 @@ object TagsOnlyLocal {
       ),
     )
 
+  def RouteLegEnds(
+    routeLeg: RouteLeg,
+  ) =
+    div:
+      List(
+        routeLeg.stops.head,
+        routeLeg.stops.last
+      ).map: stop =>
+        createBusTimeElementOnLeg(
+          stop.location,
+          div:
+            stop.busTime.toDumbAmericanString,
+        )
+
   def FullApp(
     pageMode: AppMode,
     initialRouteOpt: Option[String],

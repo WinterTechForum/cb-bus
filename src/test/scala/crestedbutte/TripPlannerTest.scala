@@ -12,7 +12,7 @@ object TripPlannerTest extends ZIOSpecDefault:
       suite("startingLeg") (
         test("departure leg tests"):
           val results =
-            TripParamz.ArrivingBy(
+            TripParamZ.ArrivingBy(
               start = Location.BrushCreek,
               arrivalTime = WallTime("07:35"),
               destination = Location.RecCenter,
@@ -23,7 +23,7 @@ object TripPlannerTest extends ZIOSpecDefault:
         ,
         test("departure leg tests 2"):
           val results =
-            TripParamz.ArrivingBy(
+            TripParamZ.ArrivingBy(
               start = Location.CBSouth,
               arrivalTime = WallTime("20:00"),
               destination = Location.RecCenter,
@@ -35,7 +35,7 @@ object TripPlannerTest extends ZIOSpecDefault:
 
         test("Northbound to CB South in the morning, honoring the huge express bus void"):
           val results =
-            TripParamz.ArrivingBy(
+            TripParamZ.ArrivingBy(
               start = Location.GunnisonCommunitySchools,
               arrivalTime = WallTime("09:00"),
               destination = Location.CBSouth,
@@ -48,7 +48,7 @@ object TripPlannerTest extends ZIOSpecDefault:
       suite ("returnLeg")(
         test("departure leg tests") {
           val results =
-              TripParamz.StartingAfter(
+              TripParamZ.StartingAfter(
                 start = Location.BrushCreek,
                 arrivalTime = WallTime("08:00"),
                 routeWithTimes = RtaSouthbound.fullSchedule.routeWithTimes,
@@ -59,7 +59,7 @@ object TripPlannerTest extends ZIOSpecDefault:
         },
         test("departure leg tests 2") {
           val results =
-              TripParamz.StartingAfter(
+              TripParamZ.StartingAfter(
                 start = Location.Riverland,
                 arrivalTime = WallTime("15:00"),
                 routeWithTimes = RtaSouthbound.fullSchedule.routeWithTimes,

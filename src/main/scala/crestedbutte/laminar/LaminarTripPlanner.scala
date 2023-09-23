@@ -1,17 +1,7 @@
 package crestedbutte.laminar
 
 import com.billding.time.{TimePicker, WallTime}
-import crestedbutte.{
-  Location,
-  LocationWithTime,
-  NamedRoute,
-  RouteLeg,
-  RouteName,
-  Trip,
-  TripParams,
-  TripPlanner,
-  TripPlannerError,
-}
+import crestedbutte.*
 import crestedbutte.routes.{RtaNorthbound, RtaSouthbound}
 import org.scalajs.dom
 import org.scalajs.dom.MouseEvent
@@ -134,11 +124,12 @@ object LaminarTripPlanner {
     val TimePicker(departureTimePicker, departureTimeS) =
       TimePicker(initialTime = "5:00 PM")
 
-    val submissions = new EventBus[TripParams]
-    val roundTripResults
-      : EventStream[Either[TripPlannerError, Trip]] =
-      submissions.events
-        .map(TripPlanner.calculate)
+    val submissionZ = new EventBus[TripParamZ]
+
+    val roundTripResultZ
+      : EventStream[Either[TripPlannerError, RouteLeg]] =
+      submissionZ.events
+        .map(_.evaluate())
 
     val startingPointOptions =
       $startRouteVar.signal
@@ -159,35 +150,29 @@ object LaminarTripPlanner {
           )
         }
 
-    val valuesDuringRealSubmission: EventStream[TripParams] =
+
+
+    val valuesDuringRealSubmissionZ: EventStream[TripParamZ] =
       clickBus.events
-        .withCurrentValueOf($startingPoint,
-                            $destination,
-                            arrivalTimeS,
-                            $startRouteVar,
-                            departureTimeS,
-                            $returnStartPoint,
-                            $returnRouteVar,
+        .withCurrentValueOf(
+          $startingPoint,
+          $destination,
+          arrivalTimeS,
+          $startRouteVar,
         )
-        .map {
-          case (startingPoint,
+        .map:
+          case (
+                startingPoint,
                 destination,
                 arrivalTime,
                 startRoute,
-                departureTime,
-                returnStartPoint,
-                returnRoute,
               ) =>
-            TripParams(
+            TripParamZ.ArrivingBy(
               startingPoint,
-              destination,
               arrivalTime,
+              destination,
               startRoute.routeWithTimes,
-              departureTime,
-              returnStartPoint,
-              returnRoute.routeWithTimes,
             )
-        }
 
     div(
       div(
@@ -220,6 +205,13 @@ object LaminarTripPlanner {
       ),
       div("At: ", arrivalTimePicker),
       div(
+        child <-- roundTripResultZ.map: res =>
+          div:
+            res match
+              case Left(value)  => "Trip not possible."
+              case Right(value) => TagsOnlyLocal.RouteLegEnds(value),
+      ),
+      div(
         "And returning from: ",
         child <-- returnRoute
           .map(
@@ -237,21 +229,21 @@ object LaminarTripPlanner {
         button(
           "Plan Trip",
           onClick.map(_ => ()) --> clickBus,
-          valuesDuringRealSubmission --> submissions,
+          valuesDuringRealSubmissionZ --> submissionZ,
         ),
       ),
       valuesDuringClick --> submissionBehavior,
       returnRoute --> $returnRouteVar.writer,
-      div(
-        child <-- roundTripResults.map {
-          case Left(tripPlannerError: TripPlannerError) =>
-            div(
-              "Could not plan a route: " + tripPlannerError.msg,
-            )
-          case Right(roundTripResult) =>
-            renderRoundTrip(roundTripResult)
-        },
-      ),
+//      div(
+//        child <-- roundTripResults.map {
+//          case Left(tripPlannerError: TripPlannerError) =>
+//            div(
+//              "Could not plan a route: " + tripPlannerError.msg,
+//            )
+//          case Right(roundTripResult) =>
+//            renderRoundTrip(roundTripResult)
+//        },
+//      ),
     )
   }
 
@@ -276,6 +268,14 @@ object LaminarTripPlanner {
       div(renderLeg(roundTrip.leave)),
       h3(cls := "title is-3", "Homeward"),
       div(renderLeg(roundTrip.returnLeg)),
+    )
+
+  def renderTrip(
+    routeLeg: RouteLeg,
+  ) =
+    div(
+      h2(cls := "title is-2", "Your trip:"),
+      div(renderLeg(routeLeg)),
     )
 
 }
