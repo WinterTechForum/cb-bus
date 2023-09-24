@@ -70,12 +70,13 @@ object LaminarTripPlanner {
     val routes =
       List(RtaNorthbound.fullSchedule, RtaSouthbound.fullSchedule)
 
+    val $currentRoute: Var[NamedRoute] = Var(RtaSouthbound.fullSchedule)
     val startingRouteSelections = new EventBus[String]
 
     val $startRouteVar: Var[NamedRoute] = Var(routes.head)
 
     val returnRoute: Signal[NamedRoute] =
-      $startRouteVar.signal.map(startRoute =>
+      $currentRoute.signal.map(startRoute =>
         routes.find(_ != startRoute).get,
       )
 
@@ -97,10 +98,10 @@ object LaminarTripPlanner {
         SelectValue(location.name, location.name)
 
     val $startingPoint: Var[Location] = Var(
-      $startRouteVar.now().firstStopOnRoute,
+      $currentRoute.now().firstStopOnRoute,
     )
     val initialDestination =
-      $startRouteVar.now().lastStopOnRoute
+      $currentRoute.now().lastStopOnRoute
 
     val $destination: Var[Location] = Var(
       initialDestination,
@@ -132,7 +133,7 @@ object LaminarTripPlanner {
         .map(_.evaluate())
 
     val startingPointOptions =
-      $startRouteVar.signal
+      $currentRoute.signal
         .map(_.allStops)
         .map(
           Selector(
@@ -145,7 +146,7 @@ object LaminarTripPlanner {
       $startingPoint.signal
         .map { (startPoint: Location) =>
           Selector(
-            $startRouteVar.now().stopsRemainingAfter(startPoint),
+            $currentRoute.now().stopsRemainingAfter(startPoint),
             $destination.writer,
           )
         }
@@ -156,7 +157,7 @@ object LaminarTripPlanner {
           $startingPoint,
           $destination,
           arrivalTimeS,
-          $startRouteVar,
+          $currentRoute,
         )
         .map:
           case (
@@ -173,26 +174,7 @@ object LaminarTripPlanner {
             )
 
     div(
-      div(
-        "On this line:",
-        span(
-          cls := "select is-rounded",
-          select(
-            inContext { thisNode =>
-              onChange
-                .mapTo(thisNode.ref.value) --> startingRouteSelections
-            },
-            rawNamesToTypes --> $startRouteVar.writer,
-            value <-- $startRouteVar.signal
-              .map(_.routeName.name),
-            routes.map(route =>
-              option(value(route.routeName.name),
-                     route.routeName.userFriendlyName,
-              ),
-            ),
-          ),
-        ),
-      ),
+      Components.RouteSelector($currentRoute),
       div(
         "Starting from: ",
         child <-- startingPointOptions,

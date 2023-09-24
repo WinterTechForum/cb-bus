@@ -1,14 +1,15 @@
 package crestedbutte.laminar
 
-import com.raquo.laminar.api.L._
-import crestedbutte._
+import com.raquo.laminar.api.L.*
+import crestedbutte.*
+import crestedbutte.routes.{RtaNorthbound, RtaSouthbound}
 
 object Components {
 
   def distanceFromCurrentLocationToStop(
-    gpsPosition: Signal[Option[GpsCoordinates]],
-    location: Location,
-  ) =
+                                         gpsPosition: Signal[Option[GpsCoordinates]],
+                                         location: Location,
+                                       ) =
     gpsPosition.map(
       _.flatMap(userCords =>
         location.gpsCoordinates.map(stopCoords =>
@@ -24,13 +25,13 @@ object Components {
     )
 
   def FeatureControlCenter(
-    featureUpdates: WriteBus[FeatureStatus],
-  ) = {
+                            featureUpdates: WriteBus[FeatureStatus],
+                          ) = {
 
     // TODO Make this a separate component?
     def FeatureToggle(
-      feature: Feature,
-    ) =
+                       feature: Feature,
+                     ) =
       label(
         cls := "checkbox",
         feature.toString,
@@ -49,8 +50,8 @@ object Components {
   }
 
   def GeoLink(
-    gpsCoordinates: GpsCoordinates,
-  ) =
+               gpsCoordinates: GpsCoordinates,
+             ) =
     a(
       cls := "link",
       href := s"https://www.google.com/maps/search/?api=1&query=${gpsCoordinates.latitude},${gpsCoordinates.longitude}",
@@ -58,8 +59,8 @@ object Components {
     )
 
   def SafeRideLink(
-    safeRideRecommendation: LateNightRecommendation,
-  ) =
+                    safeRideRecommendation: LateNightRecommendation,
+                  ) =
     div(
       cls := "late-night-call-button",
       a(
@@ -76,12 +77,27 @@ object Components {
     )
 
   def SvgIcon(
-    name: String,
-  ) =
+               name: String,
+             ) =
     img(
       cls := "glyphicon",
       src := s"/glyphicons/svg/individual-svg/$name",
       alt := "Thanks for riding the bus!",
     )
 
+  def RouteSelector($currentRoute: Var[NamedRoute]) =
+    div(cls := "control",
+      label(cls := "radio",
+        input(typ := "radio", nameAttr := "foobar",
+          value := "Foo", onClick.mapTo(RtaNorthbound.fullSchedule) --> $currentRoute
+        ),
+        RtaNorthbound.fullSchedule.routeName.userFriendlyName
+      ),
+      label(cls := "radio",
+        input(typ := "radio", nameAttr := "foobar", defaultChecked := true,
+          value := "Bar", onClick.mapTo(RtaSouthbound.fullSchedule) --> $currentRoute
+        ),
+        RtaSouthbound.fullSchedule.routeName.userFriendlyName
+      )
+    )
 }

@@ -144,11 +144,13 @@ object Experimental {
     featureUpdates: EventBus[FeatureStatus],
   ) = {
     val newTimePicker = TimePicker("12:34")
+    val $currentRoute: Var[NamedRoute] = Var(RtaSouthbound.fullSchedule)
     div(
       idAttr := "sandbox",
       timeStamps.map(_ => getLocation($gpsPosition),
       ) --> $gpsPosition.writer,
       Components.FeatureControlCenter(featureUpdates.writer),
+      Components.RouteSelector($currentRoute),
       button(
         idAttr := "Get position",
         onClick --> Observer[dom.MouseEvent](
@@ -168,10 +170,6 @@ object Experimental {
         "SubmitMessage to SW",
       ),
       newTimePicker.component,
-      TagsOnlyLocal.RouteLeg(
-        RtaSouthbound.fullSchedule.routeWithTimes.legs.head
-          .trimToStartAt(Location.BrushCreek),
-      ),
     )
   }
 
