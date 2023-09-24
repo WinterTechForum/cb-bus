@@ -30,11 +30,11 @@ object AllRoutes {
   ): Seq[ComponentData] = {
     val basicComponents =
 //      mtnExpressRoutes.routesWithTimes ++:
-        Seq(
-          RtaNorthbound.fullSchedule,
-          RtaSouthbound.fullSchedule,
-          TripPlannerComponent,
-        )
+      Seq(
+        RtaNorthbound.fullSchedule,
+        RtaSouthbound.fullSchedule,
+        TripPlannerComponent,
+      )
     if (appMode == AppMode.dev)
       basicComponents // + other under-developed features
     else

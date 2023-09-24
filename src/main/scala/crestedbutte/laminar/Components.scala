@@ -7,7 +7,9 @@ import org.scalajs.dom
 import crestedbutte.laminar.Experimental.getLocation
 
 object Components {
-  def GPS(gpsPosition: Var[Option[GpsCoordinates]]) =
+  def GPS(
+    gpsPosition: Var[Option[GpsCoordinates]],
+  ) =
     button(
       idAttr := "Get position",
       onClick --> Observer[dom.MouseEvent](

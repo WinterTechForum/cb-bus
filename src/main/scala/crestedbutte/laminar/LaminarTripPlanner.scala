@@ -210,9 +210,8 @@ object LaminarTripPlanner {
         child <-- tripResult.map: res =>
           div:
             res match
-              case Left(value) => "Trip not possible."
-              case Right(value) => TagsOnlyLocal.RouteLegEnds(value)
-                ,
+              case Left(value)  => "Trip not possible."
+              case Right(value) => TagsOnlyLocal.RouteLegEnds(value),
       ),
       valuesDuringClick --> submissionBehavior,
       returnRoute --> $returnRouteVar.writer,
