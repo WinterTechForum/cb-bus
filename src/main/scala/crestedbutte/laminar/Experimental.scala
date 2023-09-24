@@ -144,10 +144,13 @@ object Experimental {
     featureUpdates: EventBus[FeatureStatus],
   ) = {
     val newTimePicker = TimePicker("12:34")
-    val $currentRoute: Var[NamedRoute] = Var(RtaSouthbound.fullSchedule)
+    val $currentRoute: Var[NamedRoute] = Var(
+      RtaSouthbound.fullSchedule,
+    )
     div(
       idAttr := "sandbox",
-      timeStamps.map(_ => getLocation($gpsPosition),
+      timeStamps.map(_ =>
+        getLocation($gpsPosition),
       ) --> $gpsPosition.writer,
       Components.FeatureControlCenter(featureUpdates.writer),
       Components.RouteSelector($currentRoute),

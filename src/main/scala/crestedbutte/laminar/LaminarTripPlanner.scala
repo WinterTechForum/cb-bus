@@ -71,7 +71,9 @@ object LaminarTripPlanner {
     val routes =
       List(RtaNorthbound.fullSchedule, RtaSouthbound.fullSchedule)
 
-    val $currentRoute: Var[NamedRoute] = Var(RtaSouthbound.fullSchedule)
+    val $currentRoute: Var[NamedRoute] = Var(
+      RtaSouthbound.fullSchedule,
+    )
     val $tripBoundary: Var[TripBoundary] = Var(ArrivingBy)
     val startingRouteSelections = new EventBus[String]
 
@@ -129,8 +131,7 @@ object LaminarTripPlanner {
 
     val submissionZ = new EventBus[TripParamZ]
 
-    val tripResult
-      : EventStream[Either[TripPlannerError, RouteLeg]] =
+    val tripResult: EventStream[Either[TripPlannerError, RouteLeg]] =
       submissionZ.events
         .map(_.evaluate())
 
@@ -160,16 +161,16 @@ object LaminarTripPlanner {
           $destination,
           arrivalTimeS,
           $currentRoute,
-          $tripBoundary
+          $tripBoundary,
         )
         .map:
           case (
-            startingPoint,
-            destination,
-            arrivalTime,
-            startRoute,
-            tripBoundary
-            ) =>
+                startingPoint,
+                destination,
+                arrivalTime,
+                startRoute,
+                tripBoundary,
+              ) =>
             tripBoundary match
               case TripBoundary.StartingAfter =>
                 TripParamZ.StartingAfter(
@@ -185,7 +186,6 @@ object LaminarTripPlanner {
                   destination,
                   startRoute.routeWithTimes,
                 )
-
 
     div(
       Components.RouteSelector($currentRoute),
