@@ -29,7 +29,7 @@ object AllRoutes {
     appMode: AppMode,
   ): Seq[ComponentData] = {
     val basicComponents =
-      mtnExpressRoutes.routesWithTimes ++:
+//      mtnExpressRoutes.routesWithTimes ++:
         Seq(
           RtaNorthbound.fullSchedule,
           RtaSouthbound.fullSchedule,

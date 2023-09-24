@@ -200,18 +200,19 @@ object LaminarTripPlanner {
       Components.TripBoundarySelector($tripBoundary),
       div("At: ", timePicker),
       div(
-        child <-- tripResult.map: res =>
-          div:
-            res match
-              case Left(value)  => "Trip not possible."
-              case Right(value) => TagsOnlyLocal.RouteLegEnds(value),
-      ),
-      div(
         button(
           "Plan Trip",
           onClick.map(_ => ()) --> clickBus,
           valuesDuringRealSubmissionZ --> submissionZ,
         ),
+      ),
+      div(
+        child <-- tripResult.map: res =>
+          div:
+            res match
+              case Left(value) => "Trip not possible."
+              case Right(value) => TagsOnlyLocal.RouteLegEnds(value)
+                ,
       ),
       valuesDuringClick --> submissionBehavior,
       returnRoute --> $returnRouteVar.writer,

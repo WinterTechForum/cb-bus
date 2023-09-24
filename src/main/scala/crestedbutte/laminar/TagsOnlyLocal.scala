@@ -5,7 +5,6 @@ import com.raquo.laminar.nodes.ReactiveHtmlElement
 import crestedbutte.NotificationStuff.desiredAlarms
 import crestedbutte.*
 import crestedbutte.dom.BulmaLocal
-import crestedbutte.laminar.Experimental.getLocation
 import crestedbutte.routes.{
   AllRoutes,
   RtaSouthbound,

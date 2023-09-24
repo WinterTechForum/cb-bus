@@ -3,9 +3,11 @@ package crestedbutte.laminar
 import com.raquo.laminar.api.L.*
 import crestedbutte.*
 import crestedbutte.routes.{RtaNorthbound, RtaSouthbound}
+import org.scalajs.dom
+import crestedbutte.laminar.Experimental.getLocation
 
 object Components {
-  val GPS =
+  def GPS(gpsPosition: Var[Option[GpsCoordinates]]) =
     button(
       idAttr := "Get position",
       onClick --> Observer[dom.MouseEvent](
