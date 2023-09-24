@@ -88,16 +88,32 @@ object Components {
   def RouteSelector($currentRoute: Var[NamedRoute]) =
     div(cls := "control",
       label(cls := "radio",
-        input(typ := "radio", nameAttr := "foobar",
-          value := "Foo", onClick.mapTo(RtaNorthbound.fullSchedule) --> $currentRoute
+        input(typ := "radio", nameAttr := "routeSelection",
+          onClick.mapTo(RtaNorthbound.fullSchedule) --> $currentRoute
         ),
         RtaNorthbound.fullSchedule.routeName.userFriendlyName
       ),
       label(cls := "radio",
-        input(typ := "radio", nameAttr := "foobar", defaultChecked := true,
-          value := "Bar", onClick.mapTo(RtaSouthbound.fullSchedule) --> $currentRoute
+        input(typ := "radio", nameAttr := "routeSelection", defaultChecked := true,
+          onClick.mapTo(RtaSouthbound.fullSchedule) --> $currentRoute
         ),
         RtaSouthbound.fullSchedule.routeName.userFriendlyName
+      )
+    )
+
+  def TripBoundarySelector($tripBoundary: Var[TripBoundary]) =
+    div(cls := "control",
+      label(cls := "radio",
+        input(typ := "radio", nameAttr := "tripBoundarySelection", defaultChecked := $tripBoundary.now() == TripBoundary.ArrivingBy,
+          onClick.mapTo(TripBoundary.ArrivingBy) --> $tripBoundary
+        ),
+        "Arriving By"
+      ),
+      label(cls := "radio",
+        input(typ := "radio", nameAttr := "tripBoundarySelection", defaultChecked := $tripBoundary.now() == TripBoundary.StartingAfter,
+          onClick.mapTo(TripBoundary.StartingAfter) --> $tripBoundary
+        ),
+        "Leaving After"
       )
     )
 }

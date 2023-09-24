@@ -12,6 +12,9 @@ case class LocationWithTime(
   location: Location,
   busTime: WallTime)
 
+enum TripBoundary:
+  case StartingAfter, ArrivingBy
+
 enum TripParamZ {
   case StartingAfter(
     start: Location,

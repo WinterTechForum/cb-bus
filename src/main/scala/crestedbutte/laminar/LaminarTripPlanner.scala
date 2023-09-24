@@ -2,6 +2,7 @@ package crestedbutte.laminar
 
 import com.billding.time.{TimePicker, WallTime}
 import crestedbutte.*
+import crestedbutte.TripBoundary.ArrivingBy
 import crestedbutte.routes.{RtaNorthbound, RtaSouthbound}
 import org.scalajs.dom
 import org.scalajs.dom.MouseEvent
@@ -71,6 +72,7 @@ object LaminarTripPlanner {
       List(RtaNorthbound.fullSchedule, RtaSouthbound.fullSchedule)
 
     val $currentRoute: Var[NamedRoute] = Var(RtaSouthbound.fullSchedule)
+    val $tripBoundary: Var[TripBoundary] = Var(ArrivingBy)
     val startingRouteSelections = new EventBus[String]
 
     val $startRouteVar: Var[NamedRoute] = Var(routes.head)
@@ -110,7 +112,7 @@ object LaminarTripPlanner {
       initialDestination,
     )
 
-    val TimePicker(arrivalTimePicker, arrivalTimeS) =
+    val TimePicker(timePicker, arrivalTimeS) =
       TimePicker("7:00 AM")
 
     val clickBus = new EventBus[Unit]
@@ -127,7 +129,7 @@ object LaminarTripPlanner {
 
     val submissionZ = new EventBus[TripParamZ]
 
-    val roundTripResultZ
+    val tripResult
       : EventStream[Either[TripPlannerError, RouteLeg]] =
       submissionZ.events
         .map(_.evaluate())
@@ -158,20 +160,32 @@ object LaminarTripPlanner {
           $destination,
           arrivalTimeS,
           $currentRoute,
+          $tripBoundary
         )
         .map:
           case (
-                startingPoint,
-                destination,
-                arrivalTime,
-                startRoute,
-              ) =>
-            TripParamZ.ArrivingBy(
-              startingPoint,
-              arrivalTime,
-              destination,
-              startRoute.routeWithTimes,
-            )
+            startingPoint,
+            destination,
+            arrivalTime,
+            startRoute,
+            tripBoundary
+            ) =>
+            tripBoundary match
+              case TripBoundary.StartingAfter =>
+                TripParamZ.StartingAfter(
+                  startingPoint,
+                  arrivalTime,
+                  startRoute.routeWithTimes,
+                  destination,
+                )
+              case TripBoundary.ArrivingBy =>
+                TripParamZ.ArrivingBy(
+                  startingPoint,
+                  arrivalTime,
+                  destination,
+                  startRoute.routeWithTimes,
+                )
+
 
     div(
       Components.RouteSelector($currentRoute),
@@ -183,28 +197,15 @@ object LaminarTripPlanner {
         "and reaching: ",
         child <-- destinationOptions,
       ),
-      div("At: ", arrivalTimePicker),
+      Components.TripBoundarySelector($tripBoundary),
+      div("At: ", timePicker),
       div(
-        child <-- roundTripResultZ.map: res =>
+        child <-- tripResult.map: res =>
           div:
             res match
               case Left(value)  => "Trip not possible."
               case Right(value) => TagsOnlyLocal.RouteLegEnds(value),
       ),
-      div(
-        "And returning from: ",
-        child <-- returnRoute
-          .map(
-            _.routeWithTimes.legs.head.stops.map(_.location),
-          ) // todo turn into a function
-          .map(stops =>
-            Selector(
-              stops,
-              $returnStartPoint.writer,
-            ),
-          ),
-      ),
-      div("after: ", departureTimePicker),
       div(
         button(
           "Plan Trip",
