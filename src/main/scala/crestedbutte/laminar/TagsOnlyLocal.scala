@@ -163,13 +163,6 @@ object TagsOnlyLocal {
         }
 
     div(
-      button(
-        idAttr := "Get position",
-        onClick --> Observer[dom.MouseEvent](
-          onNext = ev => getLocation(gpsPosition),
-        ),
-        "Get GPS coords",
-      ),
       div(
         cls := "bill-box",
         idAttr := "container",

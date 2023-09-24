@@ -5,6 +5,14 @@ import crestedbutte.*
 import crestedbutte.routes.{RtaNorthbound, RtaSouthbound}
 
 object Components {
+  val GPS =
+    button(
+      idAttr := "Get position",
+      onClick --> Observer[dom.MouseEvent](
+        onNext = ev => getLocation(gpsPosition),
+      ),
+      "Get GPS coords",
+    )
 
   def distanceFromCurrentLocationToStop(
     gpsPosition: Signal[Option[GpsCoordinates]],
