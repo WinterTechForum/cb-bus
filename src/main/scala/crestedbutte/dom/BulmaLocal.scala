@@ -45,7 +45,7 @@ object BulmaLocal {
                 "Back",
               ),
               // TODO Provide a way to go back to previous mode
-              TagsOnlyLocal.RouteLeg(routeLeg),
+              TagsOnlyLocal.RouteLeg("Route", routeLeg),
             ),
       ),
       button(

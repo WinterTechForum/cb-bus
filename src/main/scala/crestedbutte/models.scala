@@ -95,3 +95,12 @@ case class UpcomingArrivalComponentData(
     UpcomingArrivalInfoWithFullSchedule,
   ],
   routeName: RouteName)
+
+case class Plan(
+                 legs: Seq[RouteLeg]
+               ):
+  val plainTextRepresentation: String =
+    legs.zipWithIndex
+      .map( (leg, idx) => s"Trip ${idx+1}\n\n" + leg.plainTextRepresentation)
+      .mkString("\n\n")
+

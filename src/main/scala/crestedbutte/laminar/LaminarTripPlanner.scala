@@ -49,14 +49,12 @@ object LaminarTripPlanner {
 
     val clickBus = new EventBus[Unit]
 
-    val TimePicker(departureTimePicker, departureTimeS) =
-      TimePicker(initialTime = "5:00 PM")
-
     val submissionZ = new EventBus[TripParamZ]
 
     val tripResult: EventStream[Either[TripPlannerError, RouteLeg]] =
       submissionZ.events
         .map(_.evaluate())
+    val $plan = Var(Plan(Seq.empty))
 
     val valuesDuringRealSubmissionZ: EventStream[TripParamZ] =
       clickBus.events
@@ -109,8 +107,9 @@ object LaminarTripPlanner {
           case Left(value) =>
             div:
               "Trip not possible."
-          case Right(value) => TagsOnlyLocal.RouteLegEnds(value),
+          case Right(value) => TagsOnlyLocal.RouteLegEnds(value, $plan),
       ),
+      child <-- $plan.signal.map(TagsOnlyLocal.Plan)
     )
   }
 

@@ -4,6 +4,16 @@ import com.billding.time.MinuteDuration
 
 case class RouteLeg(
   stops: Seq[LocationWithTime]) {
+  val plainTextRepresentation =
+    val start = stops.head
+    val end = stops.last
+    s"""${start.location.name}
+       |${start.busTime.toDumbAmericanString}
+       |
+       |${end.location.name}
+       |${end.busTime.toDumbAmericanString}
+       |""".stripMargin
+    
   assert(stops.nonEmpty,
          "Empty Route",
   ) // TODO Upgrade into a true effect
@@ -30,5 +40,13 @@ case class RouteLeg(
       stops :+ LocationWithTime(location,
                                 stops.last.busTime.plus(busDuration),
       ),
+    )
+
+  def ends =
+    RouteLeg(
+      Seq(
+        stops.head,
+        stops.last
+      )
     )
 }

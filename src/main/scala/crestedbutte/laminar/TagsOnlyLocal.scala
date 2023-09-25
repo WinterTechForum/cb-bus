@@ -21,10 +21,40 @@ import crestedbutte.dom.BulmaLocal.ModalMode
 object TagsOnlyLocal {
   import com.raquo.laminar.api.L._
 
+  def Plan(
+          plan: Plan
+          ) =
+    if (plan.legs.nonEmpty)
+      div(
+        "Plan: ",
+        button(
+          cls := "button",
+          "Copy to Clipboard",
+          onClick --> Observer {
+            _ =>
+              dom.window.navigator.clipboard
+                .writeText(plan.plainTextRepresentation)
+//                .toFuture
+//                .map(_ => println("Copied to clipboard"))
+          },
+        ),
+        plan.legs.zipWithIndex.map {
+          case (routeLeg, idx) => div(
+            RouteLeg(
+              "Trip " + (idx+1),
+              routeLeg,
+            ),
+          )
+        }
+      )
+    else div()
+
   def RouteLeg(
+    label: String,
     routeLeg: RouteLeg,
   ) =
     div(
+      label,
       routeLeg.stops.map(stop =>
         createBusTimeElementOnLeg(
           stop.location,
@@ -37,17 +67,30 @@ object TagsOnlyLocal {
 
   def RouteLegEnds(
     routeLeg: RouteLeg,
+    $plan: Var[Plan]
   ) =
-    div:
-      List(
-        routeLeg.stops.head,
-        routeLeg.stops.last,
-      ).map: stop =>
-        createBusTimeElementOnLeg(
-          stop.location,
-          div:
-            stop.busTime.toDumbAmericanString,
-        )
+    div(
+      div(
+          button(
+          "Add to Plan",
+          onClick --> Observer {
+            _ =>
+              $plan.update(plan => plan.copy(legs = plan.legs :+ routeLeg.ends))
+              println("New plan: " + $plan.now())
+          },
+        ),
+      ),
+      div:
+        List(
+          routeLeg.stops.head,
+          routeLeg.stops.last,
+        ).map: stop =>
+          createBusTimeElementOnLeg(
+            stop.location,
+            div:
+              stop.busTime.toDumbAmericanString,
+          )
+    )
 
   def FullApp(
     pageMode: AppMode,
