@@ -125,6 +125,7 @@ object Components {
                           humanFriendlyName: String)
 
 
+  // TODO Lot of ugly code to work through in this method
   def Selector[T](
                    route: Seq[T],
                    eventStream: Observer[T],

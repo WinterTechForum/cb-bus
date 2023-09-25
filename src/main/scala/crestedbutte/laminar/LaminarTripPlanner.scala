@@ -34,11 +34,12 @@ object LaminarTripPlanner {
       RtaSouthbound.fullSchedule,
     )
     val $tripBoundary: Var[TripBoundary] = Var(ArrivingBy)
-    val startingRouteSelections = new EventBus[String]
 
     val $startingPoint: Var[Location] = Var(
       $currentRoute.now().firstStopOnRoute,
     )
+
+    println("Last stop: " + $currentRoute.now().lastStopOnRoute)
 
     val $destination: Var[Location] = Var(
       $currentRoute.now().lastStopOnRoute
@@ -92,6 +93,7 @@ object LaminarTripPlanner {
     div(
       Components.RouteSelector($currentRoute),
       Components.StopSelector("Starting from: ",  $startingPoint.writer, $currentRoute),
+      // TODO Fix: this should have a later stop selected by default
       Components.StopSelector("Reaching: ",  $destination.writer, $currentRoute),
       Components.TripBoundarySelector($tripBoundary),
       timePicker,
