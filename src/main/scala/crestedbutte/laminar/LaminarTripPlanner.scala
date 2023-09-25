@@ -67,7 +67,9 @@ object LaminarTripPlanner {
     )
   }
 
-  def TripPlannerLaminar(initialTime: WallTime) = {
+  def TripPlannerLaminar(
+    initialTime: WallTime,
+  ) = {
     val routes =
       List(RtaNorthbound.fullSchedule, RtaSouthbound.fullSchedule)
 
@@ -77,25 +79,12 @@ object LaminarTripPlanner {
     val $tripBoundary: Var[TripBoundary] = Var(ArrivingBy)
     val startingRouteSelections = new EventBus[String]
 
-    val $startRouteVar: Var[NamedRoute] = Var(routes.head)
-
     val returnRoute: Signal[NamedRoute] =
       $currentRoute.signal.map(startRoute =>
         routes.find(_ != startRoute).get,
       )
 
     val $returnRouteVar = Var(routes.last)
-
-    val rawNamesToTypes: EventStream[NamedRoute] =
-      startingRouteSelections.events.map { case newVal =>
-        routes
-          .find(_.routeName.name == newVal)
-          .getOrElse(
-            throw new RuntimeException(
-              "Unexpected RouteName " + newVal,
-            ),
-          )
-      }
 
     implicit val location2selectorValue: Location => SelectValue =
       (location: Location) =>
@@ -104,14 +93,9 @@ object LaminarTripPlanner {
     val $startingPoint: Var[Location] = Var(
       $currentRoute.now().firstStopOnRoute,
     )
-    val initialDestination =
-      $currentRoute.now().lastStopOnRoute
 
     val $destination: Var[Location] = Var(
-      initialDestination,
-    )
-    val $returnStartPoint: Var[Location] = Var(
-      initialDestination,
+      $currentRoute.now().lastStopOnRoute
     )
 
     val TimePicker(timePicker, arrivalTimeS) =
@@ -198,7 +182,7 @@ object LaminarTripPlanner {
         child <-- destinationOptions,
       ),
       Components.TripBoundarySelector($tripBoundary),
-      div("At: ", timePicker),
+      div(timePicker),
       div(
         button(
           "Plan Trip",

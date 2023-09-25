@@ -73,7 +73,9 @@ object TagsOnlyLocal {
         ),
     )
 
-    def currentWallTime(javaClock: Clock) =
+    def currentWallTime(
+      javaClock: Clock,
+    ) =
       WallTime(
         OffsetDateTime
           .now(javaClock)
@@ -86,13 +88,12 @@ object TagsOnlyLocal {
     val initialTime = currentWallTime(javaClock)
 
     val timeStamps: Signal[WallTime] = clockTicks.events.foldLeft(
-      initialTime
+      initialTime,
     )(
       (
         _,
         _,
-      ) =>
-       currentWallTime(javaClock)
+      ) => currentWallTime(javaClock),
     )
 
     div(
@@ -107,7 +108,7 @@ object TagsOnlyLocal {
           selectedRoute.signal,
           timeStamps,
           pageMode,
-          initialTime
+          initialTime,
         ),
     )
   }
@@ -116,7 +117,7 @@ object TagsOnlyLocal {
     $selectedComponent: Signal[ComponentData],
     timeStamps: Signal[WallTime],
     pageMode: AppMode,
-    initialTime: WallTime
+    initialTime: WallTime,
   ) = {
     // TODO Turn this into a Signal. The EventBus should be contained within the Experimental/FeatureControlCenter
     val featureUpdates = new EventBus[FeatureStatus]
