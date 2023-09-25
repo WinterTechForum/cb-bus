@@ -73,7 +73,7 @@ object TagsOnlyLocal {
         ),
     )
 
-    val timeStamps: Signal[WallTime] = clockTicks.events.foldLeft(
+    def currentWallTime(javaClock: Clock) =
       WallTime(
         OffsetDateTime
           .now(javaClock)
@@ -81,20 +81,18 @@ object TagsOnlyLocal {
           .format(
             DateTimeFormatter.ofPattern("HH:mm"),
           ),
-      ),
+      )
+
+    val initialTime = currentWallTime(javaClock)
+
+    val timeStamps: Signal[WallTime] = clockTicks.events.foldLeft(
+      initialTime
     )(
       (
         _,
         _,
       ) =>
-        WallTime(
-          OffsetDateTime
-            .now(javaClock)
-            .toLocalTime
-            .format(
-              DateTimeFormatter.ofPattern("HH:mm"),
-            ),
-        ),
+       currentWallTime(javaClock)
     )
 
     div(
@@ -109,6 +107,7 @@ object TagsOnlyLocal {
           selectedRoute.signal,
           timeStamps,
           pageMode,
+          initialTime
         ),
     )
   }
@@ -117,6 +116,7 @@ object TagsOnlyLocal {
     $selectedComponent: Signal[ComponentData],
     timeStamps: Signal[WallTime],
     pageMode: AppMode,
+    initialTime: WallTime
   ) = {
     // TODO Turn this into a Signal. The EventBus should be contained within the Experimental/FeatureControlCenter
     val featureUpdates = new EventBus[FeatureStatus]
@@ -135,7 +135,7 @@ object TagsOnlyLocal {
     val gpsPosition: Var[Option[GpsCoordinates]] = Var(None)
 
     val planner = LaminarTripPlanner
-      .TripPlannerLaminar()
+      .TripPlannerLaminar(initialTime)
 
     val upcomingArrivalData =
       $selectedComponent.combineWith(timeStamps)

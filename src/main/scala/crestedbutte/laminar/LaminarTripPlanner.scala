@@ -16,7 +16,7 @@ object LaminarTripPlanner {
   def app() = {
     import org.scalajs.dom
     val app = div(
-      LaminarTripPlanner.TripPlannerLaminar(),
+      LaminarTripPlanner.TripPlannerLaminar(WallTime("2:00 PM")),
     )
     render(
       dom.document.getElementById(componentName.name),
@@ -67,7 +67,7 @@ object LaminarTripPlanner {
     )
   }
 
-  def TripPlannerLaminar() = {
+  def TripPlannerLaminar(initialTime: WallTime) = {
     val routes =
       List(RtaNorthbound.fullSchedule, RtaSouthbound.fullSchedule)
 
@@ -115,7 +115,7 @@ object LaminarTripPlanner {
     )
 
     val TimePicker(timePicker, arrivalTimeS) =
-      TimePicker("7:00 AM")
+      TimePicker(initialTime.toDumbAmericanString)
 
     val clickBus = new EventBus[Unit]
     val valuesDuringClick: EventStream[WallTime] =
