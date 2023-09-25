@@ -97,6 +97,74 @@ object Components {
       alt := "Thanks for riding the bus!",
     )
 
+  implicit val location2selectorValue: Location => SelectValue =
+    (location: Location) =>
+      SelectValue(location.name, location.name)
+
+
+  def StopSelector(
+                    label: String,
+                    $selection: Observer[Location],
+                    $currentRoute: Var[NamedRoute],
+                  ) =
+    div(
+      label,
+      child <--
+        $currentRoute.signal
+          .map(_.allStops)
+              .map(
+                Selector(
+                  _,
+                  $selection,
+                ),
+              )
+    )
+
+  case class SelectValue(
+                          uniqueValue: String,
+                          humanFriendlyName: String)
+
+
+  def Selector[T](
+                   route: Seq[T],
+                   eventStream: Observer[T],
+                 )(implicit converterThatCouldBeATypeClass: T => SelectValue,
+                 ) = {
+
+    val valueMap: Map[SelectValue, T] =
+      route
+        .map(selectValue =>
+          (converterThatCouldBeATypeClass(selectValue), selectValue),
+        )
+        .toMap
+    val selectValues = route.map(converterThatCouldBeATypeClass)
+    span(
+      cls := "select is-rounded",
+      select(
+        inContext { thisNode =>
+          onChange
+            .mapTo(thisNode.ref.value)
+            .map(uniqueValue =>
+              selectValues
+                .find(_.uniqueValue == uniqueValue)
+                .get,
+            )
+            .map(
+              valueMap.getOrElse(_,
+                throw new RuntimeException(
+                  "can't find the value!",
+                ),
+              ),
+            ) --> eventStream
+        },
+        selectValues.map(stop =>
+          option(value(stop.uniqueValue), stop.humanFriendlyName),
+        ),
+      ),
+    )
+  }
+
+
   def RouteSelector(
     $currentRoute: Var[NamedRoute],
   ) =

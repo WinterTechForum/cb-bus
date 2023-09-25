@@ -24,49 +24,6 @@ object LaminarTripPlanner {
     )
   }
 
-  case class SelectValue(
-    uniqueValue: String,
-    humanFriendlyName: String)
-
-  def Selector[T](
-    route: Seq[T],
-    eventStream: Observer[T],
-  )(implicit converterThatCouldBeATypeClass: T => SelectValue,
-  ) = {
-
-    val valueMap: Map[SelectValue, T] =
-      route
-        .map(selectValue =>
-          (converterThatCouldBeATypeClass(selectValue), selectValue),
-        )
-        .toMap
-    val selectValues = route.map(converterThatCouldBeATypeClass)
-    span(
-      cls := "select is-rounded",
-      select(
-        inContext { thisNode =>
-          onChange
-            .mapTo(thisNode.ref.value)
-            .map(uniqueValue =>
-              selectValues
-                .find(_.uniqueValue == uniqueValue)
-                .get,
-            )
-            .map(
-              valueMap.getOrElse(_,
-                                 throw new RuntimeException(
-                                   "can't find the value!",
-                                 ),
-              ),
-            ) --> eventStream
-        },
-        selectValues.map(stop =>
-          option(value(stop.uniqueValue), stop.humanFriendlyName),
-        ),
-      ),
-    )
-  }
-
   def TripPlannerLaminar(
     initialTime: WallTime,
   ) = {
@@ -85,10 +42,6 @@ object LaminarTripPlanner {
       )
 
     val $returnRouteVar = Var(routes.last)
-
-    implicit val location2selectorValue: Location => SelectValue =
-      (location: Location) =>
-        SelectValue(location.name, location.name)
 
     val $startingPoint: Var[Location] = Var(
       $currentRoute.now().firstStopOnRoute,
@@ -118,25 +71,6 @@ object LaminarTripPlanner {
     val tripResult: EventStream[Either[TripPlannerError, RouteLeg]] =
       submissionZ.events
         .map(_.evaluate())
-
-    val startingPointOptions =
-      $currentRoute.signal
-        .map(_.allStops)
-        .map(
-          Selector(
-            _,
-            $startingPoint.writer,
-          ),
-        )
-
-    val destinationOptions =
-      $startingPoint.signal
-        .map { (startPoint: Location) =>
-          Selector(
-            $currentRoute.now().stopsRemainingAfter(startPoint),
-            $destination.writer,
-          )
-        }
 
     val valuesDuringRealSubmissionZ: EventStream[TripParamZ] =
       clickBus.events
@@ -173,16 +107,10 @@ object LaminarTripPlanner {
 
     div(
       Components.RouteSelector($currentRoute),
-      div(
-        "Starting from: ",
-        child <-- startingPointOptions,
-      ),
-      div(
-        "and reaching: ",
-        child <-- destinationOptions,
-      ),
+      Components.StopSelector("Starting from: ",  $startingPoint.writer, $currentRoute),
+      Components.StopSelector("Reaching: ",  $destination.writer, $currentRoute),
       Components.TripBoundarySelector($tripBoundary),
-      div(timePicker),
+      timePicker,
       div(
         button(
           "Plan Trip",
