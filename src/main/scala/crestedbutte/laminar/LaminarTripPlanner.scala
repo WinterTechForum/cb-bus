@@ -42,7 +42,7 @@ object LaminarTripPlanner {
     println("Last stop: " + $currentRoute.now().lastStopOnRoute)
 
     val $destination: Var[Location] = Var(
-      $currentRoute.now().lastStopOnRoute
+      $currentRoute.now().lastStopOnRoute,
     )
 
     val TimePicker(timePicker, arrivalTimeS) =
@@ -92,9 +92,15 @@ object LaminarTripPlanner {
 
     div(
       Components.RouteSelector($currentRoute),
-      Components.StopSelector("Starting from: ",  $startingPoint.writer, $currentRoute),
+      Components.StopSelector("Starting from: ",
+                              $startingPoint.writer,
+                              $currentRoute,
+      ),
       // TODO Fix: this should have a later stop selected by default
-      Components.StopSelector("Reaching: ",  $destination.writer, $currentRoute),
+      Components.StopSelector("Reaching: ",
+                              $destination.writer,
+                              $currentRoute,
+      ),
       Components.TripBoundarySelector($tripBoundary),
       timePicker,
       div(
@@ -110,9 +116,10 @@ object LaminarTripPlanner {
           case Left(value) =>
             div:
               "Trip not possible."
-          case Right(value) => TagsOnlyLocal.RouteLegEnds(value, $plan),
+          case Right(value) =>
+            TagsOnlyLocal.RouteLegEnds(value, $plan),
       ),
-      child <-- $plan.signal.map(TagsOnlyLocal.Plan)
+      child <-- $plan.signal.map(TagsOnlyLocal.Plan),
     )
   }
 

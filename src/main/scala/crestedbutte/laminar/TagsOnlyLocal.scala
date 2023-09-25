@@ -22,30 +22,29 @@ object TagsOnlyLocal {
   import com.raquo.laminar.api.L._
 
   def Plan(
-          plan: Plan
-          ) =
+    plan: Plan,
+  ) =
     if (plan.legs.nonEmpty)
       div(
         "Plan: ",
         button(
           cls := "button",
           "Copy to Clipboard",
-          onClick --> Observer {
-            _ =>
-              dom.window.navigator.clipboard
-                .writeText(plan.plainTextRepresentation)
+          onClick --> Observer { _ =>
+            dom.window.navigator.clipboard
+              .writeText(plan.plainTextRepresentation)
 //                .toFuture
 //                .map(_ => println("Copied to clipboard"))
           },
         ),
-        plan.legs.zipWithIndex.map {
-          case (routeLeg, idx) => div(
+        plan.legs.zipWithIndex.map { case (routeLeg, idx) =>
+          div(
             RouteLeg(
-              "Trip " + (idx+1),
+              "Trip " + (idx + 1),
               routeLeg,
             ),
           )
-        }
+        },
       )
     else div()
 
@@ -67,18 +66,19 @@ object TagsOnlyLocal {
 
   def RouteLegEnds(
     routeLeg: RouteLeg,
-    $plan: Var[Plan]
+    $plan: Var[Plan],
   ) =
     div(
       div(
-          button(
-            cls := "button",
-            "Add to Plan",
-            onClick --> Observer {
-              _ =>
-                $plan.update(plan => plan.copy(legs = plan.legs :+ routeLeg.ends))
-                println("New plan: " + $plan.now())
-            },
+        button(
+          cls := "button",
+          "Add to Plan",
+          onClick --> Observer { _ =>
+            $plan.update(plan =>
+              plan.copy(legs = plan.legs :+ routeLeg.ends),
+            )
+            println("New plan: " + $plan.now())
+          },
         ),
       ),
       div:
@@ -90,7 +90,7 @@ object TagsOnlyLocal {
             stop.location,
             div:
               stop.busTime.toDumbAmericanString,
-          )
+          ),
     )
 
   def FullApp(

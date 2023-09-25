@@ -98,39 +98,36 @@ object Components {
     )
 
   implicit val location2selectorValue: Location => SelectValue =
-    (location: Location) =>
-      SelectValue(location.name, location.name)
-
+    (location: Location) => SelectValue(location.name, location.name)
 
   def StopSelector(
-                    label: String,
-                    $selection: Observer[Location],
-                    $currentRoute: Var[NamedRoute],
-                  ) =
+    label: String,
+    $selection: Observer[Location],
+    $currentRoute: Var[NamedRoute],
+  ) =
     div(
       label,
       child <--
         $currentRoute.signal
           .map(_.allStops)
-              .map(
-                Selector(
-                  _,
-                  $selection,
-                ),
-              )
+          .map(
+            Selector(
+              _,
+              $selection,
+            ),
+          ),
     )
 
   case class SelectValue(
-                          uniqueValue: String,
-                          humanFriendlyName: String)
-
+    uniqueValue: String,
+    humanFriendlyName: String)
 
   // TODO Lot of ugly code to work through in this method
   def Selector[T](
-                   route: Seq[T],
-                   eventStream: Observer[T],
-                 )(implicit converterThatCouldBeATypeClass: T => SelectValue,
-                 ) = {
+    route: Seq[T],
+    eventStream: Observer[T],
+  )(implicit converterThatCouldBeATypeClass: T => SelectValue,
+  ) = {
 
     val valueMap: Map[SelectValue, T] =
       route
@@ -152,9 +149,9 @@ object Components {
             )
             .map(
               valueMap.getOrElse(_,
-                throw new RuntimeException(
-                  "can't find the value!",
-                ),
+                                 throw new RuntimeException(
+                                   "can't find the value!",
+                                 ),
               ),
             ) --> eventStream
         },
@@ -164,7 +161,6 @@ object Components {
       ),
     )
   }
-
 
   def RouteSelector(
     $currentRoute: Var[NamedRoute],

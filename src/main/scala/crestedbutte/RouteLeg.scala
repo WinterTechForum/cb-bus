@@ -13,7 +13,7 @@ case class RouteLeg(
        |${end.location.name}
        |${end.busTime.toDumbAmericanString}
        |""".stripMargin
-    
+
   assert(stops.nonEmpty,
          "Empty Route",
   ) // TODO Upgrade into a true effect
@@ -46,7 +46,7 @@ case class RouteLeg(
     RouteLeg(
       Seq(
         stops.head,
-        stops.last
-      )
+        stops.last,
+      ),
     )
 }

@@ -87,6 +87,4 @@ case class Trip(
   leave: RouteLeg,
   returnLeg: RouteLeg)
 
-object TripPlanner {
-
-}
+object TripPlanner {}
