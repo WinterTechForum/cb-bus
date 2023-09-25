@@ -97,6 +97,7 @@ object LaminarTripPlanner {
       timePicker,
       div(
         button(
+          cls := "button",
           "Plan Trip",
           onClick.map(_ => ()) --> clickBus,
           valuesDuringRealSubmissionZ --> submissionZ,

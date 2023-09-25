@@ -72,12 +72,13 @@ object TagsOnlyLocal {
     div(
       div(
           button(
-          "Add to Plan",
-          onClick --> Observer {
-            _ =>
-              $plan.update(plan => plan.copy(legs = plan.legs :+ routeLeg.ends))
-              println("New plan: " + $plan.now())
-          },
+            cls := "button",
+            "Add to Plan",
+            onClick --> Observer {
+              _ =>
+                $plan.update(plan => plan.copy(legs = plan.legs :+ routeLeg.ends))
+                println("New plan: " + $plan.now())
+            },
         ),
       ),
       div:
