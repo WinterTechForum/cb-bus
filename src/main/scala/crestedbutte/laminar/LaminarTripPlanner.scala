@@ -36,13 +36,6 @@ object LaminarTripPlanner {
     val $tripBoundary: Var[TripBoundary] = Var(ArrivingBy)
     val startingRouteSelections = new EventBus[String]
 
-    val returnRoute: Signal[NamedRoute] =
-      $currentRoute.signal.map(startRoute =>
-        routes.find(_ != startRoute).get,
-      )
-
-    val $returnRouteVar = Var(routes.last)
-
     val $startingPoint: Var[Location] = Var(
       $currentRoute.now().firstStopOnRoute,
     )
@@ -55,13 +48,6 @@ object LaminarTripPlanner {
       TimePicker(initialTime.toDumbAmericanString)
 
     val clickBus = new EventBus[Unit]
-    val valuesDuringClick: EventStream[WallTime] =
-      clickBus.events.withCurrentValueOf(arrivalTimeS)
-
-    val submissionBehavior =
-      Observer[WallTime](
-        onNext = busTime => println("time @ click: " + busTime),
-      )
 
     val TimePicker(departureTimePicker, departureTimeS) =
       TimePicker(initialTime = "5:00 PM")
@@ -119,56 +105,13 @@ object LaminarTripPlanner {
         ),
       ),
       div(
-        child <-- tripResult.map: res =>
-          div:
-            res match
-              case Left(value)  => "Trip not possible."
-              case Right(value) => TagsOnlyLocal.RouteLegEnds(value),
+        child <-- tripResult.map:
+          case Left(value) =>
+            div:
+              "Trip not possible."
+          case Right(value) => TagsOnlyLocal.RouteLegEnds(value),
       ),
-      valuesDuringClick --> submissionBehavior,
-      returnRoute --> $returnRouteVar.writer,
-//      div(
-//        child <-- roundTripResults.map {
-//          case Left(tripPlannerError: TripPlannerError) =>
-//            div(
-//              "Could not plan a route: " + tripPlannerError.msg,
-//            )
-//          case Right(roundTripResult) =>
-//            renderRoundTrip(roundTripResult)
-//        },
-//      ),
     )
   }
-
-  def renderLeg(
-    routeLeg: RouteLeg,
-  ) =
-    routeLeg.stops match {
-      case (head :: rest) :+ last =>
-        span(
-          head.location.name + " @ " + head.busTime.toDumbAmericanString + " => " + last.location.name + " @ " + last.busTime.toDumbAmericanString,
-        )
-      case unhandled =>
-        throw new RuntimeException("shit: " + unhandled)
-    }
-
-  def renderRoundTrip(
-    roundTrip: Trip,
-  ) =
-    div(
-      h2(cls := "title is-2", "Your trip:"),
-      h3(cls := "title is-3", "Outward"),
-      div(renderLeg(roundTrip.leave)),
-      h3(cls := "title is-3", "Homeward"),
-      div(renderLeg(roundTrip.returnLeg)),
-    )
-
-  def renderTrip(
-    routeLeg: RouteLeg,
-  ) =
-    div(
-      h2(cls := "title is-2", "Your trip:"),
-      div(renderLeg(routeLeg)),
-    )
 
 }
