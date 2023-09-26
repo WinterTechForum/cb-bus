@@ -180,5 +180,6 @@ enum Location(
 }
 
 object Location {
-  implicit val codec: JsonCodec[Location] = DeriveJsonCodec.gen[Location]
+  implicit val codec: JsonCodec[Location] =
+    DeriveJsonCodec.gen[Location]
 }

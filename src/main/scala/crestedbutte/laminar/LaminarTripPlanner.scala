@@ -5,7 +5,14 @@ import crestedbutte.*
 import crestedbutte.TripBoundary.ArrivingBy
 import crestedbutte.routes.{RtaNorthbound, RtaSouthbound}
 import org.scalajs.dom
-import org.scalajs.dom.{IDBDatabase, IDBEvent, IDBOpenDBRequest, MouseEvent, window, IDBTransactionMode}
+import org.scalajs.dom.{
+  window,
+  IDBDatabase,
+  IDBEvent,
+  IDBOpenDBRequest,
+  IDBTransactionMode,
+  MouseEvent,
+}
 import website.webcomponents.material.{Button, SmartTimePicker}
 
 object LaminarTripPlanner {
@@ -70,12 +77,12 @@ object LaminarTripPlanner {
         )
         .map:
           case (
-            startingPoint,
-            destination,
-            arrivalTime,
-            startRoute,
-            tripBoundary,
-            ) =>
+                startingPoint,
+                destination,
+                arrivalTime,
+                startRoute,
+                tripBoundary,
+              ) =>
             tripBoundary match
               case TripBoundary.StartingAfter =>
                 TripParamZ.StartingAfter(
@@ -102,18 +109,23 @@ object LaminarTripPlanner {
       button(
         cls := "button",
         "Delete saved plan",
-        onClick --> TagsOnlyLocal.saveDailyPlan(crestedbutte.Plan(Seq.empty))
+        onClick --> TagsOnlyLocal.saveDailyPlan(
+          crestedbutte.Plan(Seq.empty),
+        ),
       ),
       valuesDuringChangeZ --> submissionZ,
-      $startingPoint
-        .signal
-        .combineWith(
-          $destination,
-          $currentRoute,
-          $tripBoundary,
-          arrivalTimeS).changes.map(_ => ()) --> changeBus.writer,
-
-      Components.RouteSelector($currentRoute, $startingPoint, $destination),
+      $startingPoint.signal
+        .combineWith($destination,
+                     $currentRoute,
+                     $tripBoundary,
+                     arrivalTimeS,
+        )
+        .changes
+        .map(_ => ()) --> changeBus.writer,
+      Components.RouteSelector($currentRoute,
+                               $startingPoint,
+                               $destination,
+      ),
       Components.StopSelector("Starting from: ",
                               $startingPoint,
                               $currentRoute,

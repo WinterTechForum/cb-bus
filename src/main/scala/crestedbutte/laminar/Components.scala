@@ -110,8 +110,8 @@ object Components {
       child <--
         $currentRoute.signal
           .map(_.allStops)
-          .map(
-            route => Selector(
+          .map(route =>
+            Selector(
               route,
               $selection,
             ),
@@ -124,8 +124,8 @@ object Components {
 
   // TODO Lot of ugly code to work through in this method
   def Selector[T](
-                   route: Seq[T],
-                   stopSelection: Var[T],
+    route: Seq[T],
+    stopSelection: Var[T],
   )(implicit converterThatCouldBeATypeClass: T => SelectValue,
   ) = {
 
@@ -156,17 +156,20 @@ object Components {
             ) --> stopSelection.writer
         },
         selectValues.map(stop =>
-          option(selected := valueMap(stop) == stopSelection.now(), value(stop.uniqueValue), stop.humanFriendlyName),
+          option(selected := valueMap(stop) == stopSelection.now(),
+                 value(stop.uniqueValue),
+                 stop.humanFriendlyName,
+          ),
         ),
       ),
     )
   }
 
   def RouteSelector(
-                     $currentRoute: Var[NamedRoute],
-                     $startingPoint: Var[Location],
-                     $destination: Var[Location]
-                   ) =
+    $currentRoute: Var[NamedRoute],
+    $startingPoint: Var[Location],
+    $destination: Var[Location],
+  ) =
     val fullRouteAndStopsUpdater =
       Observer[NamedRoute](
         onNext = route => {
@@ -182,7 +185,9 @@ object Components {
         input(
           typ := "radio",
           nameAttr := "routeSelection",
-          onClick.mapTo(RtaNorthbound.fullSchedule) --> fullRouteAndStopsUpdater,
+          onClick.mapTo(
+            RtaNorthbound.fullSchedule,
+          ) --> fullRouteAndStopsUpdater,
         ),
         RtaNorthbound.fullSchedule.routeName.userFriendlyName,
       ),
@@ -192,7 +197,9 @@ object Components {
           typ := "radio",
           nameAttr := "routeSelection",
           defaultChecked := true,
-          onClick.mapTo(RtaSouthbound.fullSchedule) --> fullRouteAndStopsUpdater,
+          onClick.mapTo(
+            RtaSouthbound.fullSchedule,
+          ) --> fullRouteAndStopsUpdater,
         ),
         RtaSouthbound.fullSchedule.routeName.userFriendlyName,
       ),

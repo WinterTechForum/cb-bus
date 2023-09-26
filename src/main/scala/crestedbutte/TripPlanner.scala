@@ -12,7 +12,8 @@ case class TripPlannerError(
 
 case class LocationWithTime(
   location: Location,
-  busTime: WallTime) derives JsonCodec
+  busTime: WallTime)
+    derives JsonCodec
 
 enum TripBoundary:
   case StartingAfter, ArrivingBy

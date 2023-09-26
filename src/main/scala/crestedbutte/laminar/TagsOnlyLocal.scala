@@ -5,14 +5,25 @@ import com.raquo.laminar.nodes.ReactiveHtmlElement
 import crestedbutte.NotificationStuff.desiredAlarms
 import crestedbutte.*
 import crestedbutte.dom.BulmaLocal
-import crestedbutte.routes.{AllRoutes, RtaSouthbound, SpringFallLoop, TownShuttleTimes}
+import crestedbutte.routes.{
+  AllRoutes,
+  RtaSouthbound,
+  SpringFallLoop,
+  TownShuttleTimes,
+}
 import org.scalajs.dom
 
 import java.time.format.{DateTimeFormatter, FormatStyle}
 import java.time.{Clock, OffsetDateTime}
 import scala.concurrent.duration.FiniteDuration
 import crestedbutte.dom.BulmaLocal.ModalMode
-import org.scalajs.dom.{IDBDatabase, IDBEvent, IDBValue, IDBTransactionMode, window}
+import org.scalajs.dom.{
+  window,
+  IDBDatabase,
+  IDBEvent,
+  IDBTransactionMode,
+  IDBValue,
+}
 
 object TagsOnlyLocal {
   import com.raquo.laminar.api.L._
@@ -59,17 +70,17 @@ object TagsOnlyLocal {
       ),
     )
 
-
   var tripDb: IDBDatabase = null
 
   import zio.json._
 
-  private def createDb() = Observer {
-    _ =>
+  private def createDb() =
+    Observer { _ =>
 //      println("Should try create DB")
       if (tripDb != null) {
 //        println("DB already exists")
-      } else {
+      }
+      else {
         val dbRequest =
           window.indexedDB.get.open("CbBus", 2L)
 
@@ -83,31 +94,40 @@ object TagsOnlyLocal {
           tripDb.createObjectStore("dailyPlans")
           println("creating object store")
       }
-  }
+    }
 
-  def saveDailyPlan(plan: Plan) = Observer {
-    _ =>
+  def saveDailyPlan(
+    plan: Plan,
+  ) =
+    Observer { _ =>
       println("Saving daily plan")
 
       if (tripDb != null) {
         println("non-null DB. Let's try and save")
-        val transaction = tripDb.transaction("dailyPlans", IDBTransactionMode.readwrite)
+        val transaction =
+          tripDb.transaction("dailyPlans",
+                             IDBTransactionMode.readwrite,
+          )
         val objectStore = transaction.objectStore("dailyPlans")
         val request = objectStore.put(plan.toJson, "today")
-        request.onsuccess = (event: dom.Event) => {
+        request.onsuccess = (event: dom.Event) =>
           println("Successfully added plan to dailyPlans")
-        }
 
       }
-  }
+    }
 
-  def retrieveDailyPlan($plan: Var[Plan]) = Observer {
-    _ =>
+  def retrieveDailyPlan(
+    $plan: Var[Plan],
+  ) =
+    Observer { _ =>
       println("Retrieving daily plan")
 
       if (tripDb != null) {
         println("non-null DB. Let's try and save")
-        val transaction = tripDb.transaction("dailyPlans", IDBTransactionMode.readwrite)
+        val transaction =
+          tripDb.transaction("dailyPlans",
+                             IDBTransactionMode.readwrite,
+          )
         val objectStore = transaction.objectStore("dailyPlans")
         val request = objectStore.get("today")
         request.onsuccess = (db: IDBEvent[IDBValue]) => {
@@ -118,7 +138,7 @@ object TagsOnlyLocal {
         }
 
       }
-  }
+    }
 
   def RouteLegEnds(
     routeLeg: RouteLeg,
