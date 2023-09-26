@@ -93,12 +93,12 @@ object LaminarTripPlanner {
     div(
       Components.RouteSelector($currentRoute),
       Components.StopSelector("Starting from: ",
-                              $startingPoint.writer,
+                              $startingPoint,
                               $currentRoute,
       ),
       // TODO Fix: this should have a later stop selected by default
       Components.StopSelector("Reaching: ",
-                              $destination.writer,
+                              $destination,
                               $currentRoute,
       ),
       Components.TripBoundarySelector($tripBoundary),

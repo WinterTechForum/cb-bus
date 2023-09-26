@@ -102,7 +102,7 @@ object Components {
 
   def StopSelector(
     label: String,
-    $selection: Observer[Location],
+    $selection: Var[Location],
     $currentRoute: Var[NamedRoute],
   ) =
     div(
@@ -111,8 +111,8 @@ object Components {
         $currentRoute.signal
           .map(_.allStops)
           .map(
-            Selector(
-              _,
+            route => Selector(
+              route,
               $selection,
             ),
           ),
@@ -125,7 +125,7 @@ object Components {
   // TODO Lot of ugly code to work through in this method
   def Selector[T](
     route: Seq[T],
-    eventStream: Observer[T],
+    eventStream: Var[T],
   )(implicit converterThatCouldBeATypeClass: T => SelectValue,
   ) = {
 
@@ -153,10 +153,10 @@ object Components {
                                    "can't find the value!",
                                  ),
               ),
-            ) --> eventStream
+            ) --> eventStream.writer
         },
         selectValues.map(stop =>
-          option(value(stop.uniqueValue), stop.humanFriendlyName),
+          option(selected := valueMap(stop) == eventStream.now(), value(stop.uniqueValue), stop.humanFriendlyName),
         ),
       ),
     )
