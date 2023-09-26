@@ -153,7 +153,6 @@ object Experimental {
         getLocation($gpsPosition),
       ) --> $gpsPosition.writer,
       Components.FeatureControlCenter(featureUpdates.writer),
-      Components.RouteSelector($currentRoute),
       button(
         idAttr := "Get position",
         onClick --> Observer[dom.MouseEvent](

@@ -91,7 +91,7 @@ object LaminarTripPlanner {
                 )
 
     div(
-      Components.RouteSelector($currentRoute),
+      Components.RouteSelector($currentRoute, $startingPoint, $destination),
       Components.StopSelector("Starting from: ",
                               $startingPoint,
                               $currentRoute,
