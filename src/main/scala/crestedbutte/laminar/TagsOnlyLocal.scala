@@ -91,7 +91,7 @@ object TagsOnlyLocal {
 
         dbRequest.onupgradeneeded = (db: IDBEvent[IDBDatabase]) =>
           println("creating object store")
-          tripDb.createObjectStore("dailyPlans")
+          db.target.result.createObjectStore("dailyPlans")
           println("creating object store")
       }
     }
