@@ -1,5 +1,7 @@
 package crestedbutte
 
+import zio.json._
+
 enum Location(
   val name: String,
   val altName: String = "",
@@ -175,4 +177,8 @@ enum Location(
         (other == FourWayUphill || other == FourwayGunnison || other == FourwayDownhill)
     )
 
+}
+
+object Location {
+  implicit val codec: JsonCodec[Location] = DeriveJsonCodec.gen[Location]
 }

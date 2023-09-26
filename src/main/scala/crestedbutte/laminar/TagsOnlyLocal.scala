@@ -5,18 +5,14 @@ import com.raquo.laminar.nodes.ReactiveHtmlElement
 import crestedbutte.NotificationStuff.desiredAlarms
 import crestedbutte.*
 import crestedbutte.dom.BulmaLocal
-import crestedbutte.routes.{
-  AllRoutes,
-  RtaSouthbound,
-  SpringFallLoop,
-  TownShuttleTimes,
-}
+import crestedbutte.routes.{AllRoutes, RtaSouthbound, SpringFallLoop, TownShuttleTimes}
 import org.scalajs.dom
 
 import java.time.format.{DateTimeFormatter, FormatStyle}
 import java.time.{Clock, OffsetDateTime}
 import scala.concurrent.duration.FiniteDuration
 import crestedbutte.dom.BulmaLocal.ModalMode
+import org.scalajs.dom.{IDBDatabase, IDBEvent, IDBValue, IDBTransactionMode, window}
 
 object TagsOnlyLocal {
   import com.raquo.laminar.api.L._
@@ -30,11 +26,10 @@ object TagsOnlyLocal {
         button(
           cls := "button",
           "Copy to Clipboard",
+          onClick --> saveDailyPlan(plan),
           onClick --> Observer { _ =>
             dom.window.navigator.clipboard
               .writeText(plan.plainTextRepresentation)
-//                .toFuture
-//                .map(_ => println("Copied to clipboard"))
           },
         ),
         plan.legs.zipWithIndex.map { case (routeLeg, idx) =>
@@ -63,6 +58,67 @@ object TagsOnlyLocal {
         ),
       ),
     )
+
+
+  var tripDb: IDBDatabase = null
+
+  import zio.json._
+
+  private def createDb() = Observer {
+    _ =>
+//      println("Should try create DB")
+      if (tripDb != null) {
+//        println("DB already exists")
+      } else {
+        val dbRequest =
+          window.indexedDB.get.open("CbBus", 2L)
+
+        dbRequest.onsuccess = (db: IDBEvent[IDBDatabase]) =>
+          println("Assigning DB")
+          tripDb = db.target.result
+          println("Assigned DB")
+
+        dbRequest.onupgradeneeded = (db: IDBEvent[IDBDatabase]) =>
+          println("creating object store")
+          tripDb.createObjectStore("dailyPlans")
+          println("creating object store")
+      }
+  }
+
+  def saveDailyPlan(plan: Plan) = Observer {
+    _ =>
+      println("Saving daily plan")
+
+      if (tripDb != null) {
+        println("non-null DB. Let's try and save")
+        val transaction = tripDb.transaction("dailyPlans", IDBTransactionMode.readwrite)
+        val objectStore = transaction.objectStore("dailyPlans")
+        val request = objectStore.put(plan.toJson, "today")
+        request.onsuccess = (event: dom.Event) => {
+          println("Successfully added plan to dailyPlans")
+        }
+
+      }
+  }
+
+  def retrieveDailyPlan($plan: Var[Plan]) = Observer {
+    _ =>
+      println("Retrieving daily plan")
+
+      if (tripDb != null) {
+        println("non-null DB. Let's try and save")
+        val transaction = tripDb.transaction("dailyPlans", IDBTransactionMode.readwrite)
+        val objectStore = transaction.objectStore("dailyPlans")
+        val request = objectStore.get("today")
+        request.onsuccess = (db: IDBEvent[IDBValue]) => {
+          println("Retrieved item: " + db.target.result)
+          val retrieved = db.target.result.toString.fromJson[Plan]
+          $plan.set(retrieved.getOrElse(crestedbutte.Plan(Seq.empty)))
+          println("Retrieved item: " + retrieved)
+        }
+
+      }
+  }
 
   def RouteLegEnds(
     routeLeg: RouteLeg,
@@ -141,12 +197,14 @@ object TagsOnlyLocal {
     )
 
     div(
+//      onLoad.mapTo(()) --> createDb(),
       Bulma.menu(selectedRoute, components),
       RepeatingElement()
         .repeatWithInterval( // This acts like a Dune thumper
           1,
-          new FiniteDuration(20, scala.concurrent.duration.SECONDS),
+          new FiniteDuration(2, scala.concurrent.duration.SECONDS),
         ) --> clockTicks,
+      clockTicks --> createDb(),
       TagsOnlyLocal
         .overallPageLayout(
           selectedRoute.signal,

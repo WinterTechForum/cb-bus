@@ -1,9 +1,10 @@
 package crestedbutte
 
 import com.billding.time.MinuteDuration
+import zio.json._
 
 case class RouteLeg(
-  stops: Seq[LocationWithTime]) {
+  stops: Seq[LocationWithTime]) derives JsonCodec {
   val plainTextRepresentation =
     val start = stops.head
     val end = stops.last

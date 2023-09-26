@@ -5,12 +5,14 @@ import crestedbutte.TripParamZ.StartingAfter
 import crestedbutte.routes.RouteWithTimes
 import pprint.PPrinter
 
+import zio.json._
+
 case class TripPlannerError(
   msg: String)
 
 case class LocationWithTime(
   location: Location,
-  busTime: WallTime)
+  busTime: WallTime) derives JsonCodec
 
 enum TripBoundary:
   case StartingAfter, ArrivingBy

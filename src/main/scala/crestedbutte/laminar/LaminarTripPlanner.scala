@@ -5,7 +5,7 @@ import crestedbutte.*
 import crestedbutte.TripBoundary.ArrivingBy
 import crestedbutte.routes.{RtaNorthbound, RtaSouthbound}
 import org.scalajs.dom
-import org.scalajs.dom.MouseEvent
+import org.scalajs.dom.{IDBDatabase, IDBEvent, IDBOpenDBRequest, MouseEvent, window, IDBTransactionMode}
 import website.webcomponents.material.{Button, SmartTimePicker}
 
 object LaminarTripPlanner {
@@ -94,6 +94,16 @@ object LaminarTripPlanner {
 
     div(
       // TODO Cleaner way of updating Trip based on changes to any of these params
+      button(
+        cls := "button",
+        "Get saved plan",
+        onClick --> TagsOnlyLocal.retrieveDailyPlan($plan),
+      ),
+      button(
+        cls := "button",
+        "Delete saved plan",
+        onClick --> TagsOnlyLocal.saveDailyPlan(crestedbutte.Plan(Seq.empty))
+      ),
       valuesDuringChangeZ --> submissionZ,
       $startingPoint
         .signal

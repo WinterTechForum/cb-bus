@@ -33,6 +33,8 @@ resolvers += "Sonatype" at "https://s01.oss.sonatype.org/content/repositories/pu
 
 val zioVersion = "2.0.17"
 
+scalacOptions ++= Seq("-Xmax-inlines", "150")
+
 Compile / npmDependencies ++= Seq(
 //  "@material-ui/core" -> "4.11.1",
 //  "@material-ui/pickers" -> "3.2.10",
@@ -58,6 +60,7 @@ libraryDependencies ++= Seq(
   "dev.zio" %%% "zio" % zioVersion,
   "dev.zio" %%% "zio-streams" % zioVersion,
   "dev.zio" %%% "zio-streams" % zioVersion,
+  "dev.zio" %%% "zio-json" % "0.6.2",
   "com.lihaoyi" %%% "scalatags" % "0.12.0",
   "io.github.cquiroz" %%% "scala-java-time" % "2.5.0",
   "dev.zio" %%% "zio-test"     % zioVersion % "test",

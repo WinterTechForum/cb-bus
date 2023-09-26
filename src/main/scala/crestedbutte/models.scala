@@ -1,7 +1,6 @@
 package crestedbutte
 
-import com.billding.time.WallTime
-import com.billding.time.MinuteDuration
+import com.billding.time.*
 
 case class StopTimeInfo(
   time: WallTime,
@@ -96,8 +95,17 @@ case class UpcomingArrivalComponentData(
   ],
   routeName: RouteName)
 
+import zio.json._
+
+implicit val wallTimeCodec: JsonCodec[WallTime] =
+  DeriveJsonCodec.gen[WallTime]
+implicit val minutesCodec: JsonCodec[Minutes] =
+  DeriveJsonCodec.gen[Minutes]
+implicit val hourNotationCodec: JsonCodec[HourNotation] =
+  DeriveJsonCodec.gen[HourNotation]
+
 case class Plan(
-  legs: Seq[RouteLeg]):
+  legs: Seq[RouteLeg]) derives JsonCodec:
   val plainTextRepresentation: String =
     legs.zipWithIndex
       .map(
