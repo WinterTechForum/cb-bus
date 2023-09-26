@@ -48,6 +48,8 @@ object LaminarTripPlanner {
     val TimePicker(timePicker, arrivalTimeS) =
       TimePicker(initialTime.toDumbAmericanString)
 
+    val changeBus = new EventBus[Unit]
+
     val clickBus = new EventBus[Unit]
 
     val submissionZ = new EventBus[TripParamZ]
@@ -57,8 +59,8 @@ object LaminarTripPlanner {
         .map(_.evaluate())
     val $plan = Var(Plan(Seq.empty))
 
-    val valuesDuringRealSubmissionZ: EventStream[TripParamZ] =
-      clickBus.events
+    val valuesDuringChangeZ: EventStream[TripParamZ] =
+      changeBus.events
         .withCurrentValueOf(
           $startingPoint,
           $destination,
@@ -68,12 +70,12 @@ object LaminarTripPlanner {
         )
         .map:
           case (
-                startingPoint,
-                destination,
-                arrivalTime,
-                startRoute,
-                tripBoundary,
-              ) =>
+            startingPoint,
+            destination,
+            arrivalTime,
+            startRoute,
+            tripBoundary,
+            ) =>
             tripBoundary match
               case TripBoundary.StartingAfter =>
                 TripParamZ.StartingAfter(
@@ -91,6 +93,16 @@ object LaminarTripPlanner {
                 )
 
     div(
+      // TODO Cleaner way of updating Trip based on changes to any of these params
+      valuesDuringChangeZ --> submissionZ,
+      $startingPoint
+        .signal
+        .combineWith(
+          $destination,
+          $currentRoute,
+          $tripBoundary,
+          arrivalTimeS).changes.map(_ => ()) --> changeBus.writer,
+
       Components.RouteSelector($currentRoute, $startingPoint, $destination),
       Components.StopSelector("Starting from: ",
                               $startingPoint,
@@ -103,14 +115,6 @@ object LaminarTripPlanner {
       ),
       Components.TripBoundarySelector($tripBoundary),
       timePicker,
-      div(
-        button(
-          cls := "button",
-          "Plan Trip",
-          onClick.map(_ => ()) --> clickBus,
-          valuesDuringRealSubmissionZ --> submissionZ,
-        ),
-      ),
       div(
         child <-- tripResult.map:
           case Left(value) =>
