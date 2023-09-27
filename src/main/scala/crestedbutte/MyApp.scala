@@ -19,14 +19,11 @@ object MyApp extends ZIOAppDefault {
   override def run = {
     val myEnvironment =
       ZLayer.succeed(BrowserLive.browser)
-
-    println("2!?")
     fullApplicationLogic.provide(myEnvironment)
   }
 
   val fullApplicationLogic =
     for {
-      _ <- ZIO.debug("ZIO 2!")
       _ <- registerServiceWorker()
       _ <- ZIO.attempt {
         val appHolder = dom.document.getElementById("landing-message")
@@ -44,7 +41,6 @@ object MyApp extends ZIOAppDefault {
       .map { browser =>
         // TODO Ew. Try to get this removed after first version of PWA is working
         import scala.concurrent.ExecutionContext.Implicits.global
-        println("Attempting to register sw")
 
         toServiceWorkerNavigator(
           browser.window().navigator,
@@ -71,7 +67,7 @@ object RoutingStuff {
   import upickle.default._
 
   private case class BusPage(
-    mode: String,
+    mode: AppMode,
     time: Option[String], // TODO Make this a WallTime instead
     route: Option[String]) {
 
@@ -100,13 +96,13 @@ object RoutingStuff {
 
   private val encodePage
     : BusPage => (Option[String], Option[String], Option[String]) =
-    page => (Some(page.mode), page.time, page.route)
+    page => (Some(page.mode.toString), page.time, page.route)
 
   private val decodePage: (
     (Option[String], Option[String], Option[String]),
   ) => BusPage = { case (mode, time, route) =>
     BusPage(
-      mode = mode.getOrElse(AppMode.Production.toString),
+      mode = mode.map(AppMode.withName).getOrElse(AppMode.Production),
       time = time,
       route = route,
     )
@@ -119,7 +115,6 @@ object RoutingStuff {
     param[
       String,
     ]("mode").? & param[String]("time").? & param[String]("route").?
-  println("Get params in zio 2")
 
   private val devRoute =
     Route.onlyQuery[BusPage,
@@ -139,8 +134,6 @@ object RoutingStuff {
       pattern = (root / endOfSegments) ? params,
     )
 
-  println("Creating router")
-
   private val router = new Router[BusPage](
     routes = List(
       prodRoute,
@@ -156,7 +149,7 @@ object RoutingStuff {
       pageStr => read(pageStr)(rw), // deserialize the above
     routeFallback = _ =>
       BusPage(
-        mode = "Production",
+        mode = AppMode.Production,
         time = None, // TODO Make this a WallTime instead
         route = None,
       ),
@@ -167,7 +160,6 @@ object RoutingStuff {
     owner =
       L.unsafeWindowOwner, // this router will live as long as the window
   )
-  println("Created router!")
 
   private def renderMyPage(
     $loginPage: Signal[BusPage],
@@ -175,7 +167,7 @@ object RoutingStuff {
     div(
       child <-- $loginPage.map(busPageInfo =>
         // TODO Start pulling out route queryParam
-        TagsOnlyLocal.FullApp(AppMode.withName(busPageInfo.mode),
+        TagsOnlyLocal.FullApp(busPageInfo.mode,
                               busPageInfo.route,
                               busPageInfo.javaClock,
         ),

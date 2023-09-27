@@ -105,6 +105,8 @@ object LaminarTripPlanner {
                 )
 
     div(
+      onMountCallback: context =>
+        println("Mounted trip planner"),
       // TODO Cleaner way of updating Trip based on changes to any of these params
       button(
         cls := "button",
