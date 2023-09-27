@@ -1,6 +1,6 @@
 package crestedbutte.routes
 
-import crestedbutte.{ComponentData, TripPlannerComponent}
+import crestedbutte.{ComponentData, PlanViewer, TripPlannerComponent}
 import crestedbutte.laminar.AppMode
 
 object AllRoutes {
@@ -34,6 +34,7 @@ object AllRoutes {
         RtaNorthbound.fullSchedule,
         RtaSouthbound.fullSchedule,
         TripPlannerComponent,
+        PlanViewer
       )
     if (appMode == AppMode.dev)
       basicComponents // + other under-developed features

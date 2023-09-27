@@ -114,7 +114,7 @@ object TagsOnlyLocal {
 
     val components = AllRoutes.components(pageMode)
 
-    val selectedRoute: Var[ComponentData] = Var(
+    val selectedComponent: Var[ComponentData] = Var(
       initialComponent
         .flatMap(initialRoute =>
           components.find:
@@ -154,7 +154,7 @@ object TagsOnlyLocal {
     div(
       onMountCallback: context =>
         Persistence.createDb(db),
-      Bulma.menu(selectedRoute, components),
+      Bulma.menu(selectedComponent, components),
       RepeatingElement()
         .repeatWithInterval( // This acts like a Dune thumper
           1,
@@ -162,7 +162,7 @@ object TagsOnlyLocal {
         ) --> clockTicks,
       TagsOnlyLocal
         .overallPageLayout(
-          selectedRoute.signal,
+          selectedComponent.signal,
           timeStamps,
           pageMode,
           initialTime,

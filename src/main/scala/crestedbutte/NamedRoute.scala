@@ -11,6 +11,10 @@ sealed trait ComponentData {
   val componentName: ComponentName
 }
 
+case object PlanViewer extends ComponentData {
+  val componentName = ComponentName("PlanViewer")
+}
+
 case object TripPlannerComponent extends ComponentData {
 
   val componentName =
