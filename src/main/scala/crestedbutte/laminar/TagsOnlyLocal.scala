@@ -1,5 +1,6 @@
 package crestedbutte.laminar
 
+import crestedbutte.pwa.Persistence
 import com.billding.time.{MinuteDuration, WallTime}
 import com.raquo.laminar.nodes.ReactiveHtmlElement
 import crestedbutte.NotificationStuff.desiredAlarms
@@ -30,6 +31,7 @@ object TagsOnlyLocal {
 
   def Plan(
     plan: Plan,
+    db: Var[Option[IDBDatabase]]
   ) =
     if (plan.legs.nonEmpty)
       div(
@@ -37,7 +39,7 @@ object TagsOnlyLocal {
         button(
           cls := "button",
           "Copy to Clipboard",
-          onClick --> saveDailyPlan(plan),
+          onClick --> Persistence.saveDailyPlan(plan, db),
           onClick --> Observer { _ =>
             dom.window.navigator.clipboard
               .writeText(plan.plainTextRepresentation)
@@ -70,75 +72,6 @@ object TagsOnlyLocal {
       ),
     )
 
-  var tripDb: IDBDatabase = null
-
-  import zio.json._
-
-  private def createDb() =
-    Observer { _ =>
-//      println("Should try create DB")
-      if (tripDb != null) {
-//        println("DB already exists")
-      }
-      else {
-        val dbRequest =
-          window.indexedDB.get.open("CbBus", 2L)
-
-        dbRequest.onsuccess = (db: IDBEvent[IDBDatabase]) =>
-          println("Assigning DB")
-          tripDb = db.target.result
-          println("Assigned DB")
-
-        dbRequest.onupgradeneeded = (db: IDBEvent[IDBDatabase]) =>
-          println("creating object store")
-          db.target.result.createObjectStore("dailyPlans")
-          println("creating object store")
-      }
-    }
-
-  def saveDailyPlan(
-    plan: Plan,
-  ) =
-    Observer { _ =>
-      println("Saving daily plan")
-
-      if (tripDb != null) {
-        println("non-null DB. Let's try and save")
-        val transaction =
-          tripDb.transaction("dailyPlans",
-                             IDBTransactionMode.readwrite,
-          )
-        val objectStore = transaction.objectStore("dailyPlans")
-        val request = objectStore.put(plan.toJson, "today")
-        request.onsuccess = (event: dom.Event) =>
-          println("Successfully added plan to dailyPlans")
-
-      }
-    }
-
-  def retrieveDailyPlan(
-    $plan: Var[Plan],
-  ) =
-    Observer { _ =>
-      println("Retrieving daily plan")
-
-      if (tripDb != null) {
-        println("non-null DB. Let's try and save")
-        val transaction =
-          tripDb.transaction("dailyPlans",
-                             IDBTransactionMode.readwrite,
-          )
-        val objectStore = transaction.objectStore("dailyPlans")
-        val request = objectStore.get("today")
-        request.onsuccess = (db: IDBEvent[IDBValue]) => {
-          println("Retrieved item: " + db.target.result)
-          val retrieved = db.target.result.toString.fromJson[Plan]
-          $plan.set(retrieved.getOrElse(crestedbutte.Plan(Seq.empty)))
-          println("Retrieved item: " + retrieved)
-        }
-
-      }
-    }
 
   def RouteLegEnds(
     routeLeg: RouteLeg,
@@ -174,6 +107,7 @@ object TagsOnlyLocal {
     initialRouteOpt: Option[String],
     javaClock: Clock,
   ) = {
+    val db: Var[Option[IDBDatabase]] = Var(None) // TODO Give a real DB value to restore functionality
 
     val clockTicks = new EventBus[Int]
 
@@ -224,13 +158,14 @@ object TagsOnlyLocal {
           1,
           new FiniteDuration(2, scala.concurrent.duration.SECONDS),
         ) --> clockTicks,
-      clockTicks --> createDb(),
+      clockTicks --> Persistence.createDb(db),
       TagsOnlyLocal
         .overallPageLayout(
           selectedRoute.signal,
           timeStamps,
           pageMode,
           initialTime,
+          db
         ),
     )
   }
@@ -240,6 +175,7 @@ object TagsOnlyLocal {
     timeStamps: Signal[WallTime],
     pageMode: AppMode,
     initialTime: WallTime,
+    db: Var[Option[IDBDatabase]] = Var(None)
   ) = {
     // TODO Turn this into a Signal. The EventBus should be contained within the Experimental/FeatureControlCenter
     val featureUpdates = new EventBus[FeatureStatus]
@@ -258,7 +194,8 @@ object TagsOnlyLocal {
     val gpsPosition: Var[Option[GpsCoordinates]] = Var(None)
 
     val planner = LaminarTripPlanner
-      .TripPlannerLaminar(initialTime)
+      .TripPlannerLaminar(initialTime, db)
+
 
     val upcomingArrivalData =
       $selectedComponent.combineWith(timeStamps)

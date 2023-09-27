@@ -3,16 +3,10 @@ package crestedbutte.laminar
 import com.billding.time.{TimePicker, WallTime}
 import crestedbutte.*
 import crestedbutte.TripBoundary.ArrivingBy
+import crestedbutte.pwa.Persistence
 import crestedbutte.routes.{RtaNorthbound, RtaSouthbound}
 import org.scalajs.dom
-import org.scalajs.dom.{
-  window,
-  IDBDatabase,
-  IDBEvent,
-  IDBOpenDBRequest,
-  IDBTransactionMode,
-  MouseEvent,
-}
+import org.scalajs.dom.{IDBDatabase, IDBEvent, IDBOpenDBRequest, IDBTransactionMode, MouseEvent, window}
 import website.webcomponents.material.{Button, SmartTimePicker}
 
 object LaminarTripPlanner {
@@ -22,8 +16,9 @@ object LaminarTripPlanner {
 
   def app() = {
     import org.scalajs.dom
+    val db: Var[Option[IDBDatabase]] = Var(None) // TODO Give a real DB value to restore functionality
     val app = div(
-      LaminarTripPlanner.TripPlannerLaminar(WallTime("2:00 PM")),
+      LaminarTripPlanner.TripPlannerLaminar(WallTime("2:00 PM"), db),
     )
     render(
       dom.document.getElementById(componentName.name),
@@ -33,6 +28,7 @@ object LaminarTripPlanner {
 
   def TripPlannerLaminar(
     initialTime: WallTime,
+    db: Var[Option[IDBDatabase]]
   ) = {
     val routes =
       List(RtaNorthbound.fullSchedule, RtaSouthbound.fullSchedule)
@@ -104,13 +100,14 @@ object LaminarTripPlanner {
       button(
         cls := "button",
         "Get saved plan",
-        onClick --> TagsOnlyLocal.retrieveDailyPlan($plan),
+        onClick --> Persistence.retrieveDailyPlan($plan, db),
       ),
       button(
         cls := "button",
         "Delete saved plan",
-        onClick --> TagsOnlyLocal.saveDailyPlan(
+        onClick --> Persistence.saveDailyPlan(
           crestedbutte.Plan(Seq.empty),
+          db
         ),
       ),
       valuesDuringChangeZ --> submissionZ,
@@ -145,7 +142,7 @@ object LaminarTripPlanner {
           case Right(value) =>
             TagsOnlyLocal.RouteLegEnds(value, $plan),
       ),
-      child <-- $plan.signal.map(TagsOnlyLocal.Plan),
+      child <-- $plan.signal.map(TagsOnlyLocal.Plan(_, db)),
     )
   }
 
