@@ -67,9 +67,9 @@ object RoutingStuff {
   import upickle.default._
 
   private case class BusPage(
-                              mode: AppMode,
-                              time: Option[WallTime], // TODO Make this a WallTime instead
-                              component: Option[ComponentName]) {
+    mode: AppMode,
+    time: Option[WallTime], // TODO Make this a WallTime instead
+    component: Option[ComponentName]) {
 
     println("Mode: " + mode)
     println("Time param: " + time)
@@ -95,12 +95,17 @@ object RoutingStuff {
   implicit val wallTimeRw: ReadWriter[WallTime] =
     readwriter[String].bimap[WallTime](_.toEUString, WallTime(_))
 
-  implicit private val componentNameRw: ReadWriter[ComponentName] = macroRW
+  implicit private val componentNameRw: ReadWriter[ComponentName] =
+    macroRW
   implicit private val rw: ReadWriter[BusPage] = macroRW
 
   private val encodePage
     : BusPage => (Option[String], Option[String], Option[String]) =
-    page => (Some(page.mode.toString), page.time.map(_.toEUString), page.component.map(_.name))
+    page =>
+      (Some(page.mode.toString),
+       page.time.map(_.toEUString),
+       page.component.map(_.name),
+      )
 
   private val decodePage: (
     (Option[String], Option[String], Option[String]),
@@ -118,7 +123,9 @@ object RoutingStuff {
   ] =
     param[
       String,
-    ]("mode").? & param[String]("time").? & param[String]("component").?
+    ]("mode").? & param[String]("time").? & param[String](
+      "component",
+    ).?
 
   private val devRoute =
     Route.onlyQuery[BusPage,

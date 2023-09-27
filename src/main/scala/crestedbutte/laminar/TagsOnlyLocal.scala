@@ -102,9 +102,9 @@ object TagsOnlyLocal {
     )
 
   def FullApp(
-               pageMode: AppMode,
-               initialComponent: Option[ComponentName],
-               javaClock: Clock,
+    pageMode: AppMode,
+    initialComponent: Option[ComponentName],
+    javaClock: Clock,
   ) = {
     val db: Var[Option[IDBDatabase]] = Var(
       None,
@@ -117,10 +117,10 @@ object TagsOnlyLocal {
     val selectedComponent: Var[ComponentData] = Var(
       initialComponent
         .flatMap(initialRoute =>
-          components.find:
-            component =>
-              println("Component: " + component.componentName.name)
-              component.componentName.elementNameMatches(initialRoute.name),
+          components.find: component =>
+            println("Component: " + component.componentName.name)
+            component.componentName
+              .elementNameMatches(initialRoute.name),
         )
         .getOrElse(
           TripPlannerComponent,
@@ -207,6 +207,7 @@ object TagsOnlyLocal {
             .classList
             .remove("is-clipped")
           componentData match {
+            case PlanViewer => ???
             case TripPlannerComponent => planner
             case namedRoute: NamedRoute =>
               TagsOnlyLocal.structuredSetOfUpcomingArrivals(
@@ -348,7 +349,7 @@ object TagsOnlyLocal {
   }
 
   def RouteHeader(
-                   routeName: ComponentName,
+    routeName: ComponentName,
   ) =
     div(
       cls := "route-header",

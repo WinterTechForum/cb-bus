@@ -33,19 +33,19 @@ object Persistence:
   def createDb(
     tripDb: Var[Option[IDBDatabase]],
   ) =
-      if (tripDb.now().isEmpty)
-        val dbRequest =
-          window.indexedDB.get.open("CbBus", 3L)
+    if (tripDb.now().isEmpty)
+      val dbRequest =
+        window.indexedDB.get.open("CbBus", 3L)
 
-        dbRequest.onsuccess = (db: IDBEvent[IDBDatabase]) =>
-          println("Assigning DB")
-          tripDb.set(Some(db.target.result))
-          println("Assigned DB: " + tripDb.now())
+      dbRequest.onsuccess = (db: IDBEvent[IDBDatabase]) =>
+        println("Assigning DB")
+        tripDb.set(Some(db.target.result))
+        println("Assigned DB: " + tripDb.now())
 
-        dbRequest.onupgradeneeded = (db: IDBEvent[IDBDatabase]) =>
-          println("creating object store")
+      dbRequest.onupgradeneeded = (db: IDBEvent[IDBDatabase]) =>
+        println("creating object store")
 //          db.target.result.createObjectStore("dailyPlans")
-          println("creating object store")
+        println("creating object store")
 
   def saveDailyPlan(
     plan: Plan,

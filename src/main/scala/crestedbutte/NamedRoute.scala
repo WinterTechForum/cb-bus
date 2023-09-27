@@ -2,7 +2,7 @@ package crestedbutte
 
 import crestedbutte.laminar.LaminarTripPlanner
 import crestedbutte.routes.RouteWithTimes
-import crestedbutte.{Location, ComponentName}
+import crestedbutte.{ComponentName, Location}
 
 // TODO Where should this ComponentData abstraction *actually* live?
 sealed trait ComponentData {
@@ -21,11 +21,11 @@ case object TripPlannerComponent extends ComponentData {
     LaminarTripPlanner.componentName
 }
 
-import crestedbutte.{Location, ComponentName}
+import crestedbutte.{ComponentName, Location}
 
 case class NamedRoute(
-                       routeName: ComponentName,
-                       routeWithTimes: RouteWithTimes)
+  routeName: ComponentName,
+  routeWithTimes: RouteWithTimes)
     extends ComponentData {
   val componentName =
     routeName // TODO rm this and depend on routeName. Too much indirection going on!

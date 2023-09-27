@@ -3,9 +3,9 @@ package crestedbutte.routes
 import crestedbutte.{
   BusSchedule,
   BusScheduleAtStop,
+  ComponentName,
   Location,
   NamedRoute,
-  ComponentName,
 }
 import com.billding.time.MinuteDuration.toMinuteDuration
 

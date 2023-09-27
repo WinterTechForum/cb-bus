@@ -34,7 +34,7 @@ object AllRoutes {
         RtaNorthbound.fullSchedule,
         RtaSouthbound.fullSchedule,
         TripPlannerComponent,
-        PlanViewer
+        PlanViewer,
       )
     if (appMode == AppMode.dev)
       basicComponents // + other under-developed features

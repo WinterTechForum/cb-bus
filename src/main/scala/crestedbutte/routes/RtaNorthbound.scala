@@ -4,10 +4,10 @@ import com.billding.time.MinuteDuration.toMinuteDuration
 import crestedbutte.{
   BusSchedule,
   BusScheduleAtStop,
+  ComponentName,
   Location,
   NamedRoute,
   RouteLeg,
-  ComponentName,
 }
 
 object RtaNorthbound {

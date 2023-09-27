@@ -4,9 +4,9 @@ import com.billding.time.MinuteDuration.toMinuteDuration
 import crestedbutte.{
   BusSchedule,
   BusScheduleAtStop,
+  ComponentName,
   Location,
   NamedRoute,
-  ComponentName,
 }
 
 /*
