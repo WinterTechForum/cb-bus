@@ -6,7 +6,7 @@ import crestedbutte.{
   BusScheduleAtStop,
   Location,
   NamedRoute,
-  RouteName,
+  ComponentName,
 }
 
 /*
@@ -25,7 +25,7 @@ Mountaineer Square to a designated stop on a condo route, on demand only.
  */
 object SnodgrassShuttle
     extends NamedRoute(
-      RouteName("Snodgrass Shuttle"),
+      ComponentName("Snodgrass Shuttle"),
       RouteWithTimes.schedTyped(
         Location.MountaineerSquare,
         _.plus(Location.CinnamonMtnGothicToSnodgrass, 1.minutes)

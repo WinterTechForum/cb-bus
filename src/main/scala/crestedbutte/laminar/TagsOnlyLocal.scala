@@ -102,9 +102,9 @@ object TagsOnlyLocal {
     )
 
   def FullApp(
-    pageMode: AppMode,
-    initialRouteOpt: Option[String],
-    javaClock: Clock,
+               pageMode: AppMode,
+               initialComponent: Option[ComponentName],
+               javaClock: Clock,
   ) = {
     val db: Var[Option[IDBDatabase]] = Var(
       None,
@@ -115,11 +115,12 @@ object TagsOnlyLocal {
     val components = AllRoutes.components(pageMode)
 
     val selectedRoute: Var[ComponentData] = Var(
-      initialRouteOpt
+      initialComponent
         .flatMap(initialRoute =>
-          components.find(
-            _.componentName.elementNameMatches(initialRoute),
-          ),
+          components.find:
+            component =>
+              println("Component: " + component.componentName.name)
+              component.componentName.elementNameMatches(initialRoute.name),
         )
         .getOrElse(
           TripPlannerComponent,
@@ -347,7 +348,7 @@ object TagsOnlyLocal {
   }
 
   def RouteHeader(
-    routeName: RouteName,
+                   routeName: ComponentName,
   ) =
     div(
       cls := "route-header",

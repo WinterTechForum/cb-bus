@@ -22,7 +22,7 @@ case class PhoneNumber(
   name: String)
 
 // TODO General name
-case class RouteName(
+case class ComponentName(
   userFriendlyName: String) {
 
   val name: String =
@@ -93,7 +93,7 @@ case class UpcomingArrivalComponentData(
   upcomingArrivalInfoForAllRoutes: Seq[
     UpcomingArrivalInfoWithFullSchedule,
   ],
-  routeName: RouteName)
+  routeName: ComponentName)
 
 import zio.json._
 

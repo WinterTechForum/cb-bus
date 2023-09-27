@@ -19,7 +19,7 @@ import website.webcomponents.material.{Button, SmartTimePicker}
 object LaminarTripPlanner {
   import com.raquo.laminar.api.L._
 
-  val componentName = RouteName("TripPlanner")
+  val componentName = ComponentName("TripPlanner")
 
   def app() = {
     import org.scalajs.dom

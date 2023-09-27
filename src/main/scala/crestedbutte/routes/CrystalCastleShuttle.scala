@@ -6,7 +6,7 @@ import crestedbutte.{
   BusScheduleAtStop,
   Location,
   NamedRoute,
-  RouteName,
+  ComponentName,
 }
 
 /*
@@ -25,7 +25,7 @@ Every 30 minutes from 8:10 AM to 10:40 PM
  */
 object CrystalCastleShuttle
     extends NamedRoute(
-      RouteName("Crystal/Castle"),
+      ComponentName("Crystal/Castle"),
       RouteWithTimes.schedTyped(
         Location.MountaineerSquare,
         _.plus(Location.Pitchfork, 2.minutes)

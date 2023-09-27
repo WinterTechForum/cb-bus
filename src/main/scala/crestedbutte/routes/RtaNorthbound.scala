@@ -7,7 +7,7 @@ import crestedbutte.{
   Location,
   NamedRoute,
   RouteLeg,
-  RouteName,
+  ComponentName,
 }
 
 object RtaNorthbound {
@@ -100,7 +100,7 @@ object RtaNorthbound {
     )
 
   val fullSchedule = NamedRoute(
-    RouteName("Rta Northbound"),
+    ComponentName("Rta Northbound"),
     normalRouteWithTimes,
 //      .combinedWith(expressRouteWithTimes),
   )

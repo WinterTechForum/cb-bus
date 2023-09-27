@@ -67,13 +67,13 @@ object RoutingStuff {
   import upickle.default._
 
   private case class BusPage(
-    mode: AppMode,
-    time: Option[WallTime], // TODO Make this a WallTime instead
-    route: Option[String]) {
+                              mode: AppMode,
+                              time: Option[WallTime], // TODO Make this a WallTime instead
+                              component: Option[ComponentName]) {
 
     println("Mode: " + mode)
     println("Time param: " + time)
-    println("Route param: " + route)
+    println("Component param: " + component)
     val fixedTime = time
 
     println("Fixed time: " + fixedTime)
@@ -95,19 +95,20 @@ object RoutingStuff {
   implicit val wallTimeRw: ReadWriter[WallTime] =
     readwriter[String].bimap[WallTime](_.toEUString, WallTime(_))
 
+  implicit private val componentNameRw: ReadWriter[ComponentName] = macroRW
   implicit private val rw: ReadWriter[BusPage] = macroRW
 
   private val encodePage
     : BusPage => (Option[String], Option[String], Option[String]) =
-    page => (Some(page.mode.toString), page.time.map(_.toEUString), page.route)
+    page => (Some(page.mode.toString), page.time.map(_.toEUString), page.component.map(_.name))
 
   private val decodePage: (
     (Option[String], Option[String], Option[String]),
-  ) => BusPage = { case (mode, time, route) =>
+  ) => BusPage = { case (mode, time, component) =>
     BusPage(
       mode = mode.map(AppMode.withName).getOrElse(AppMode.Production),
       time = time.map(WallTime.apply),
-      route = route,
+      component = component.map(ComponentName.apply),
     )
   }
 
@@ -117,7 +118,7 @@ object RoutingStuff {
   ] =
     param[
       String,
-    ]("mode").? & param[String]("time").? & param[String]("route").?
+    ]("mode").? & param[String]("time").? & param[String]("component").?
 
   private val devRoute =
     Route.onlyQuery[BusPage,
@@ -154,7 +155,7 @@ object RoutingStuff {
       BusPage(
         mode = AppMode.Production,
         time = None, // TODO Make this a WallTime instead
-        route = None,
+        component = None,
       ),
   )(
     popStateEvents = L.windowEvents(
@@ -171,7 +172,7 @@ object RoutingStuff {
       child <-- $loginPage.map(busPageInfo =>
         // TODO Start pulling out route queryParam
         TagsOnlyLocal.FullApp(busPageInfo.mode,
-                              busPageInfo.route,
+                              busPageInfo.component,
                               busPageInfo.javaClock,
         ),
       ),
