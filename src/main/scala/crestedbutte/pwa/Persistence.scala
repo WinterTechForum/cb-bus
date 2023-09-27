@@ -33,7 +33,6 @@ object Persistence:
   def createDb(
     tripDb: Var[Option[IDBDatabase]],
   ) =
-    Observer { _ =>
       if (tripDb.now().isEmpty)
         val dbRequest =
           window.indexedDB.get.open("CbBus", 3L)
@@ -47,7 +46,6 @@ object Persistence:
           println("creating object store")
 //          db.target.result.createObjectStore("dailyPlans")
           println("creating object store")
-    }
 
   def saveDailyPlan(
     plan: Plan,

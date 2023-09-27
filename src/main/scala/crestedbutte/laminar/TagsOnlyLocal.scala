@@ -152,14 +152,14 @@ object TagsOnlyLocal {
     )
 
     div(
-//      onLoad.mapTo(()) --> createDb(),
+      onMountCallback: context =>
+        Persistence.createDb(db),
       Bulma.menu(selectedRoute, components),
       RepeatingElement()
         .repeatWithInterval( // This acts like a Dune thumper
           1,
-          new FiniteDuration(2, scala.concurrent.duration.SECONDS),
+          new FiniteDuration(25, scala.concurrent.duration.SECONDS),
         ) --> clockTicks,
-      clockTicks --> Persistence.createDb(db),
       TagsOnlyLocal
         .overallPageLayout(
           selectedRoute.signal,
