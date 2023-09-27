@@ -68,13 +68,13 @@ object RoutingStuff {
 
   private case class BusPage(
     mode: AppMode,
-    time: Option[String], // TODO Make this a WallTime instead
+    time: Option[WallTime], // TODO Make this a WallTime instead
     route: Option[String]) {
 
     println("Mode: " + mode)
     println("Time param: " + time)
     println("Route param: " + route)
-    val fixedTime = time.map(WallTime(_))
+    val fixedTime = time
 
     println("Fixed time: " + fixedTime)
 
@@ -92,18 +92,21 @@ object RoutingStuff {
         java.time.Clock.system(ZoneId.of("America/Denver"))
   }
 
+  implicit val wallTimeRw: ReadWriter[WallTime] =
+    readwriter[String].bimap[WallTime](_.toEUString, WallTime(_))
+
   implicit private val rw: ReadWriter[BusPage] = macroRW
 
   private val encodePage
     : BusPage => (Option[String], Option[String], Option[String]) =
-    page => (Some(page.mode.toString), page.time, page.route)
+    page => (Some(page.mode.toString), page.time.map(_.toEUString), page.route)
 
   private val decodePage: (
     (Option[String], Option[String], Option[String]),
   ) => BusPage = { case (mode, time, route) =>
     BusPage(
       mode = mode.map(AppMode.withName).getOrElse(AppMode.Production),
-      time = time,
+      time = time.map(WallTime.apply),
       route = route,
     )
   }
