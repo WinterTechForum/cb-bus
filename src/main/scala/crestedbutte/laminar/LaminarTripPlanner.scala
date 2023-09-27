@@ -6,7 +6,14 @@ import crestedbutte.TripBoundary.ArrivingBy
 import crestedbutte.pwa.Persistence
 import crestedbutte.routes.{RtaNorthbound, RtaSouthbound}
 import org.scalajs.dom
-import org.scalajs.dom.{IDBDatabase, IDBEvent, IDBOpenDBRequest, IDBTransactionMode, MouseEvent, window}
+import org.scalajs.dom.{
+  window,
+  IDBDatabase,
+  IDBEvent,
+  IDBOpenDBRequest,
+  IDBTransactionMode,
+  MouseEvent,
+}
 import website.webcomponents.material.{Button, SmartTimePicker}
 
 object LaminarTripPlanner {
@@ -16,7 +23,9 @@ object LaminarTripPlanner {
 
   def app() = {
     import org.scalajs.dom
-    val db: Var[Option[IDBDatabase]] = Var(None) // TODO Give a real DB value to restore functionality
+    val db: Var[Option[IDBDatabase]] = Var(
+      None,
+    ) // TODO Give a real DB value to restore functionality
     val app = div(
       LaminarTripPlanner.TripPlannerLaminar(WallTime("2:00 PM"), db),
     )
@@ -28,7 +37,7 @@ object LaminarTripPlanner {
 
   def TripPlannerLaminar(
     initialTime: WallTime,
-    db: Var[Option[IDBDatabase]]
+    db: Var[Option[IDBDatabase]],
   ) = {
     val routes =
       List(RtaNorthbound.fullSchedule, RtaSouthbound.fullSchedule)
@@ -107,7 +116,7 @@ object LaminarTripPlanner {
         "Delete saved plan",
         onClick --> Persistence.saveDailyPlan(
           crestedbutte.Plan(Seq.empty),
-          db
+          db,
         ),
       ),
       valuesDuringChangeZ --> submissionZ,

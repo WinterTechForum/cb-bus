@@ -31,7 +31,7 @@ object TagsOnlyLocal {
 
   def Plan(
     plan: Plan,
-    db: Var[Option[IDBDatabase]]
+    db: Var[Option[IDBDatabase]],
   ) =
     if (plan.legs.nonEmpty)
       div(
@@ -72,7 +72,6 @@ object TagsOnlyLocal {
       ),
     )
 
-
   def RouteLegEnds(
     routeLeg: RouteLeg,
     $plan: Var[Plan],
@@ -107,7 +106,9 @@ object TagsOnlyLocal {
     initialRouteOpt: Option[String],
     javaClock: Clock,
   ) = {
-    val db: Var[Option[IDBDatabase]] = Var(None) // TODO Give a real DB value to restore functionality
+    val db: Var[Option[IDBDatabase]] = Var(
+      None,
+    )
 
     val clockTicks = new EventBus[Int]
 
@@ -121,7 +122,6 @@ object TagsOnlyLocal {
           ),
         )
         .getOrElse(
-//          SpringFallLoop,
           TripPlannerComponent,
 //          RtaSouthbound.fullSchedule,
         ),
@@ -165,7 +165,7 @@ object TagsOnlyLocal {
           timeStamps,
           pageMode,
           initialTime,
-          db
+          db,
         ),
     )
   }
@@ -175,7 +175,7 @@ object TagsOnlyLocal {
     timeStamps: Signal[WallTime],
     pageMode: AppMode,
     initialTime: WallTime,
-    db: Var[Option[IDBDatabase]] = Var(None)
+    db: Var[Option[IDBDatabase]],
   ) = {
     // TODO Turn this into a Signal. The EventBus should be contained within the Experimental/FeatureControlCenter
     val featureUpdates = new EventBus[FeatureStatus]
@@ -195,7 +195,6 @@ object TagsOnlyLocal {
 
     val planner = LaminarTripPlanner
       .TripPlannerLaminar(initialTime, db)
-
 
     val upcomingArrivalData =
       $selectedComponent.combineWith(timeStamps)
