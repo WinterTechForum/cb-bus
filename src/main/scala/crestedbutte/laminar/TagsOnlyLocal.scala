@@ -140,7 +140,10 @@ object TagsOnlyLocal {
           ),
       )
 
-    val initialTime = currentWallTime(javaClock)
+    val initialTime =
+      currentWallTime:
+        javaClock
+      .roundToNextFive()
 
     val timeStamps: Signal[WallTime] = clockTicks.events.foldLeft(
       initialTime,
@@ -207,7 +210,7 @@ object TagsOnlyLocal {
             .classList
             .remove("is-clipped")
           componentData match {
-            case PlanViewer => ???
+            case PlanViewer           => ???
             case TripPlannerComponent => planner
             case namedRoute: NamedRoute =>
               TagsOnlyLocal.structuredSetOfUpcomingArrivals(
