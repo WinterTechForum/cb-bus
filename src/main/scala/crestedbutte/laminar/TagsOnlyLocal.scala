@@ -143,7 +143,7 @@ object TagsOnlyLocal {
     val initialTime =
       currentWallTime:
         javaClock
-      .roundToNextFive()
+      .roundToNextFiveMutable()
 
     val timeStamps: Signal[WallTime] = clockTicks.events.foldLeft(
       initialTime,
