@@ -151,16 +151,16 @@ object TagsOnlyLocal {
         !org.scalajs.dom.document
           .querySelector("html")
           .classList
-          .contains("is-clipped")
-    )
+          .contains("is-clipped"),
+      )
       .foldLeft(
-      initialTime,
-    )(
-      (
-        _,
-        _,
-      ) => currentWallTime(javaClock),
-    )
+        initialTime,
+      )(
+        (
+          _,
+          _,
+        ) => currentWallTime(javaClock),
+      )
 
     div(
       onMountCallback: context =>
@@ -169,7 +169,7 @@ object TagsOnlyLocal {
       RepeatingElement()
         .repeatWithInterval( // This acts like a Dune thumper
           1,
-          new FiniteDuration(25, scala.concurrent.duration.SECONDS),
+          new FiniteDuration(5, scala.concurrent.duration.SECONDS),
         ) --> clockTicks,
       TagsOnlyLocal
         .overallPageLayout(

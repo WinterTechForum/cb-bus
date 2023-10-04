@@ -83,7 +83,9 @@ object BulmaLocal {
                   namedRoute.routeWithTimes.legs
                     .find(leg =>
                       leg.stops.contains(
-                        LocationWithTime(scheduleAtStop.location, time),
+                        LocationWithTime(scheduleAtStop.location,
+                                         time,
+                        ),
                       ),
                     )
                     .map(_.trimToStartAt(scheduleAtStop.location))
@@ -103,7 +105,7 @@ object BulmaLocal {
               )
             else div(),
           ),
-        )
+        ),
       ),
     )
 
