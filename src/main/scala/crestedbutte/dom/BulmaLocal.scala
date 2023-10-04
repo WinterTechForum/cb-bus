@@ -44,7 +44,6 @@ object BulmaLocal {
                 onClick.mapTo(ModalMode.UpcomingStops) --> $mode,
                 "Back",
               ),
-              // TODO Provide a way to go back to previous mode
               TagsOnlyLocal.RouteLeg("Route", routeLeg),
             ),
       ),
@@ -73,23 +72,26 @@ object BulmaLocal {
       h5(textAlign := "center", "Upcoming Arrivals"),
       scheduleAtStop.times.map(time =>
         div(
-          onClick
-            .mapTo(
-              ModalMode.SelectedLeg(
-                namedRoute.routeWithTimes.legs
-                  .find(leg =>
-                    leg.stops.contains(
-                      LocationWithTime(scheduleAtStop.location, time),
-                    ),
-                  )
-                  .map(_.trimToStartAt(scheduleAtStop.location))
-                  .get, // Unsafe
-              ),
-            ) --> $mode,
           textAlign := "center",
           verticalAlign := "middle",
           paddingBottom := "3px",
-          span(time.toDumbAmericanString),
+          button(
+            cls := "button",
+            onClick
+              .mapTo(
+                ModalMode.SelectedLeg(
+                  namedRoute.routeWithTimes.legs
+                    .find(leg =>
+                      leg.stops.contains(
+                        LocationWithTime(scheduleAtStop.location, time),
+                      ),
+                    )
+                    .map(_.trimToStartAt(scheduleAtStop.location))
+                    .get, // Unsafe
+                ),
+              ) --> $mode,
+            time.toDumbAmericanString,
+          ),
           child <-- $alertsEnabled.map(alertsEnabled =>
             if (
               dom.Notification.permission == "granted" && alertsEnabled
@@ -101,7 +103,7 @@ object BulmaLocal {
               )
             else div(),
           ),
-        ),
+        )
       ),
     )
 
