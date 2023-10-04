@@ -145,7 +145,15 @@ object TagsOnlyLocal {
         javaClock
       .roundToNextFiveMutable()
 
-    val timeStamps: Signal[WallTime] = clockTicks.events.foldLeft(
+    val timeStamps: Signal[WallTime] = clockTicks.events
+      .filter(_ =>
+        // Don't reset content if we're in the middle of a modal
+        !org.scalajs.dom.document
+          .querySelector("html")
+          .classList
+          .contains("is-clipped")
+    )
+      .foldLeft(
       initialTime,
     )(
       (
