@@ -2,7 +2,7 @@ package crestedbutte.laminar
 
 import com.billding.time.{TimePicker, WallTime}
 import crestedbutte.*
-import crestedbutte.TripBoundary.ArrivingBy
+import crestedbutte.TripBoundary
 import crestedbutte.pwa.Persistence
 import crestedbutte.routes.{RtaNorthbound, RtaSouthbound}
 import org.scalajs.dom
@@ -45,13 +45,11 @@ object LaminarTripPlanner {
     val $currentRoute: Var[NamedRoute] = Var(
       RtaSouthbound.fullSchedule,
     )
-    val $tripBoundary: Var[TripBoundary] = Var(ArrivingBy)
+    val $tripBoundary: Var[TripBoundary] = Var(TripBoundary.StartingAfter)
 
     val $startingPoint: Var[Location] = Var(
       $currentRoute.now().firstStopOnRoute,
     )
-
-    println("Last stop: " + $currentRoute.now().lastStopOnRoute)
 
     val $destination: Var[Location] = Var(
       $currentRoute.now().lastStopOnRoute,
@@ -88,7 +86,6 @@ object LaminarTripPlanner {
                 startRoute,
                 tripBoundary,
               ) =>
-            println("Handling a change")
             tripBoundary match
               case TripBoundary.StartingAfter =>
                 TripParamZ.StartingAfter(
@@ -106,10 +103,6 @@ object LaminarTripPlanner {
                 )
 
     div(
-      onMountCallback: context =>
-//        EventBus.emit(changeBus -> ())
-        println("Mounted trip planner after sending () to changeBus"),
-      // TODO Cleaner way of updating Trip based on changes to any of these params
       button(
         cls := "button",
         "Get saved plan",

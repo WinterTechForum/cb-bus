@@ -38,9 +38,7 @@ object Persistence:
         window.indexedDB.get.open("CbBus", 3L)
 
       dbRequest.onsuccess = (db: IDBEvent[IDBDatabase]) =>
-        println("Assigning DB")
         tripDb.set(Some(db.target.result))
-        println("Assigned DB: " + tripDb.now())
 
       dbRequest.onupgradeneeded = (db: IDBEvent[IDBDatabase]) =>
         println("creating object store")

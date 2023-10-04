@@ -71,12 +71,7 @@ object RoutingStuff {
     time: Option[WallTime], // TODO Make this a WallTime instead
     component: Option[ComponentName]) {
 
-    println("Mode: " + mode)
-    println("Time param: " + time)
-    println("Component param: " + component)
     val fixedTime = time
-
-    println("Fixed time: " + fixedTime)
 
     val javaClock =
       if (fixedTime.isDefined)
