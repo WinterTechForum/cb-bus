@@ -45,7 +45,9 @@ object LaminarTripPlanner {
     val $currentRoute: Var[NamedRoute] = Var(
       RtaSouthbound.fullSchedule,
     )
-    val $tripBoundary: Var[TripBoundary] = Var(TripBoundary.StartingAfter)
+    val $tripBoundary: Var[TripBoundary] = Var(
+      TripBoundary.StartingAfter,
+    )
 
     val $startingPoint: Var[Location] = Var(
       $currentRoute.now().firstStopOnRoute,
@@ -61,8 +63,6 @@ object LaminarTripPlanner {
     val changeBus = new EventBus[Unit]
 
     val submissionZ = new EventBus[TripParamZ]
-
-
 
     val tripResult: EventStream[Either[TripPlannerError, RouteLeg]] =
       submissionZ.events
