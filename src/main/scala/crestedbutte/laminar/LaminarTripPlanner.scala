@@ -62,9 +62,9 @@ object LaminarTripPlanner {
 
     val changeBus = new EventBus[Unit]
 
-    val clickBus = new EventBus[Unit]
-
     val submissionZ = new EventBus[TripParamZ]
+
+
 
     val tripResult: EventStream[Either[TripPlannerError, RouteLeg]] =
       submissionZ.events
@@ -88,6 +88,7 @@ object LaminarTripPlanner {
                 startRoute,
                 tripBoundary,
               ) =>
+            println("Handling a change")
             tripBoundary match
               case TripBoundary.StartingAfter =>
                 TripParamZ.StartingAfter(
@@ -106,7 +107,8 @@ object LaminarTripPlanner {
 
     div(
       onMountCallback: context =>
-        println("Mounted trip planner"),
+//        EventBus.emit(changeBus -> ())
+        println("Mounted trip planner after sending () to changeBus"),
       // TODO Cleaner way of updating Trip based on changes to any of these params
       button(
         cls := "button",
@@ -149,11 +151,12 @@ object LaminarTripPlanner {
         child <-- tripResult.map:
           case Left(value) =>
             div:
-              "Trip not possible."
+              value.msg
           case Right(value) =>
             TagsOnlyLocal.RouteLegEnds(value, $plan),
       ),
       child <-- $plan.signal.map(TagsOnlyLocal.Plan(_, db)),
+      EventStream.unit() --> changeBus.writer,
     )
   }
 
