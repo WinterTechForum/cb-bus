@@ -60,8 +60,11 @@ object Persistence:
             tripDbLocal.transaction("dailyPlans",
                                     IDBTransactionMode.readwrite,
             )
+          println("Persistence A")
           val objectStore = transaction.objectStore("dailyPlans")
+          println("Persistence B")
           val request = objectStore.put(plan.toJson, "today")
+          println("Persistence C")
           request.onsuccess = (event: dom.Event) =>
             println("Successfully added plan to dailyPlans")
 
