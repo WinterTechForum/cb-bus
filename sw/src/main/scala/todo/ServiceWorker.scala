@@ -27,7 +27,8 @@ object ServiceWorker {
     "/favicon.ico",
     "/images/BILLDING_LogoMark-256.png",
     "/styling/style.css",
-//    "/glyphicons/svg/individual-svg/glyphicons-basic-32-bus.svg",
+    "/glyphicons/svg/individual-svg/glyphicons-basic-32-bus.svg",
+    "/glyphicons/svg/individual-svg/glyphicons-basic-592-map.svg",
     "/styling/popup_nojs.css",
     "/styling/bulma.min.css",
   ).toJSArray
