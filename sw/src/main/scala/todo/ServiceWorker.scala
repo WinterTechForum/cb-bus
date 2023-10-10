@@ -15,7 +15,7 @@ import scala.scalajs.js.JSConverters.*
 import scala.util.{Failure, Success}
 
 object ServiceWorker {
-  val todoCache = "cb-bus"
+  val busCache = "cb-bus"
 
   val todoAssets: js.Array[RequestInfo] = List[RequestInfo](
     "/",
@@ -123,7 +123,7 @@ object ServiceWorker {
 
   def toCache(): Future[Unit] = {
     self.caches
-      .flatMap(_.open(todoCache).toFuture.flatMap{cache =>
+      .flatMap(_.open(busCache).toFuture.flatMap{ cache =>
         println("toCache: caching assets...")
         cache.addAll(todoAssets).toFuture})
   }.get
@@ -145,7 +145,7 @@ object ServiceWorker {
 
   def invalidateCache(): Unit = {
     self.caches
-      .map(_.delete(todoCache)
+      .map(_.delete(busCache)
       .toFuture
       .map { invalidatedCache =>
         if (invalidatedCache) {
