@@ -2,7 +2,7 @@
   "short_name": "CB Buses",
   "name": "CB Buses",
   "description": "Give live bus schedule updates",
-  "scope": "'/'",
+  "scope": "/",
   "icons": [
     {
       "src": "images/BILLDING_LogoMark-256.png",
