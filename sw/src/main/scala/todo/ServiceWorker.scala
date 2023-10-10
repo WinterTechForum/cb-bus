@@ -23,7 +23,7 @@ object ServiceWorker {
     "/index_dev.html",
     "/manifest.webmanifest",
 //    "/sw-opt.js",
-    "/compiledJavascript/busriderapp-opt/main.js",
+    "/compiledJavascript/main.js",
     "/favicon.ico",
     "/images/BILLDING_LogoMark-256.png",
     "/compiledJavascript/cb-bus/main.js",
@@ -126,12 +126,6 @@ object ServiceWorker {
       .flatMap(_.open(todoCache).toFuture.flatMap{cache =>
         println("toCache: caching assets...")
         cache.addAll(todoAssets).toFuture})
-//    self.caches
-//      .open(todoCache)
-//      .toFuture
-//      .flatMap(cache =>
-//        //          println("toCache: caching assets...")
-//        cache.addAll(todoAssets).toFuture)
   }.get
 
   def fromCache(request: Request): Future[Response] =
