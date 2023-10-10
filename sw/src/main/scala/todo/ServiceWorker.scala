@@ -24,6 +24,7 @@ object ServiceWorker {
     "/manifest.webmanifest",
 //    "/sw-opt.js",
     "/compiledJavascript/main.js",
+    "/compiledJavascript/main.js.map",
     "/favicon.ico",
     "/images/BILLDING_LogoMark-256.png",
     "/styling/style.css",
