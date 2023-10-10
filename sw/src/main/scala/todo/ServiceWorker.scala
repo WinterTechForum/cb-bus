@@ -21,11 +21,13 @@ object ServiceWorker {
     "/",
     "/index.html",
     "/index_dev.html",
+    "/manifest.webmanifest",
 //    "/sw-opt.js",
     "/compiledJavascript/busriderapp-opt/main.js",
+    "/favicon.ico",
+    "/images/BILLDING_LogoMark-256.png",
     "/compiledJavascript/cb-bus/main.js",
     "/styling/style.css",
-//    "/compiledJavascript/cb-bus-opt.js",
     "/glyphicons/svg/individual-svg/glyphicons-basic-32-bus.svg",
     "styling/popup_nojs.css",
     "styling/bulma.min.css",
@@ -78,7 +80,7 @@ object ServiceWorker {
     self.addEventListener(
       "fetch",
       (event: FetchEvent) => {
-        println("Fetching: " + event.request.url)
+//        println("Fetching: " + event.request.url)
         event.respondWith(
           fromCache(event.request)
             .recoverWith{ case error => fetch(event.request).toFuture}
@@ -139,7 +141,7 @@ object ServiceWorker {
         .flatMap {
           case response: Response =>
 //            if ( request.url.contains("index"))
-            println(s"fromCache: matched request > ${request.url}")
+//            println(s"fromCache: matched request > ${request.url}")
             Future.successful(response)
           case other =>
             println(s"fromCache: missed request > ${request.url}")
