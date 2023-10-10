@@ -49,6 +49,7 @@ object MyApp extends ZIOAppDefault {
           .toFuture
           .onComplete {
             case Success(registration) =>
+              println("Registered SW: " + registration.scope)
               registration.update()
             case Failure(error) =>
               println(
