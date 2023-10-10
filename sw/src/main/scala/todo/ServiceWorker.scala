@@ -26,11 +26,10 @@ object ServiceWorker {
     "/compiledJavascript/main.js",
     "/favicon.ico",
     "/images/BILLDING_LogoMark-256.png",
-    "/compiledJavascript/cb-bus/main.js",
     "/styling/style.css",
-    "/glyphicons/svg/individual-svg/glyphicons-basic-32-bus.svg",
-    "styling/popup_nojs.css",
-    "styling/bulma.min.css",
+//    "/glyphicons/svg/individual-svg/glyphicons-basic-32-bus.svg",
+    "/styling/popup_nojs.css",
+    "/styling/bulma.min.css",
   ).toJSArray
 
   def main(args: Array[String]): Unit = {
