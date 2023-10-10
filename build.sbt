@@ -96,6 +96,7 @@ cbBuild := {
 //  "ls ./target/scala-2.13" !
   (Process("mkdir ./src/main/resources/compiledJavascript") #|| Process("mkdir ./src/main/resources/compiledJavascript/cb-bus") #||
     Process("cp ./target/scala-3.3.1/cb-bus-fastopt/main.js ./src/main/resources/compiledJavascript/cb-bus") #&&
+    Process("cp ./target/scala-3.3.1/cb-bus-fastopt/main.js.map ./src/main/resources/compiledJavascript/cb-bus") #&&
 //    Process("cp ./target/scala-2.13/cb-bus-fastopt/main.js.map ./src/main/resources/compiledJavascript/cb-bus") #&&
 //    Process("cp ./target/scala-2.13/cb-bus-fastopt.js.map ./src/main/resources/compiledJavascript/") #&&
     Process("cp sw/target/scala-3.3.1/sw-opt.js ./src/main/resources/") #&&
@@ -113,7 +114,7 @@ cbPublish := {
   //  "ls ./target/scala-2.13" !
   (Process("mkdir ./src/main/resources/compiledJavascript") #||
     Process("cp ./target/scala-3.3.1/cb-bus-opt/main.js ./src/main/resources/compiledJavascript/") #||
-    Process("cp ./target/scala-3.3.1/cb-bus-opt.js.map src/main/resources/compiledJavascript/") #||
+    Process("cp ./target/scala-3.3.1/cb-bus-opt/main.js.map src/main/resources/compiledJavascript/") #||
     Process("cp sw/target/scala-3.3.1/sw-opt.js src/main/resources/") #||
     Process("cp sw/target/scala-3.3.1/sw-opt.js.map src/main/resources/"))!
 }

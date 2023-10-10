@@ -20,7 +20,7 @@ object ServiceWorker {
   val todoAssets: js.Array[RequestInfo] = List[RequestInfo](
     "/",
     "/index.html",
-    "/index_dev.html",
+//    "/index_dev.html",
     "/manifest.webmanifest",
 //    "/sw-opt.js",
     "/compiledJavascript/main.js",
