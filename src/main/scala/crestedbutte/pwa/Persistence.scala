@@ -41,12 +41,12 @@ object Persistence:
         tripDb.set(Some(db.target.result))
 
       dbRequest.onupgradeneeded = (db: IDBEvent[IDBDatabase]) =>
-          println("Deleting object store")
-          db.target.result.deleteObjectStore("dailyPlans")
-          println("Creating object store")
-          db.target.result.createObjectStore("dailyPlans")
-          tripDb.set(Some(db.target.result))
-          println("created object store")
+        println("Deleting object store")
+        db.target.result.deleteObjectStore("dailyPlans")
+        println("Creating object store")
+        db.target.result.createObjectStore("dailyPlans")
+        tripDb.set(Some(db.target.result))
+        println("created object store")
 
   def saveDailyPlan(
     plan: Plan,
