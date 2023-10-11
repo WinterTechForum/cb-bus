@@ -44,8 +44,7 @@ object Persistence:
         if (db.target.result.objectStoreNames.contains("dailyPlans"))
           db.target.result.createObjectStore("dailyPlans")
           println("created object store")
-        else
-          println("object store already exists. No action needed.")
+        else println("object store already exists. No action needed.")
 
   def saveDailyPlan(
     plan: Plan,
