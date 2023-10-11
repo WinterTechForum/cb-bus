@@ -368,4 +368,4 @@ f.$classData=v({Al:0},!1,"scala.scalajs.js.WrappedArray",{Al:1,Lm:1,zh:1,pa:1,N:
 (function(a){self.addEventListener("install",b=>{Of(Pf(),"install: service worker with message handler installed \x3e "+Da(b)+"\n");var c=Mf(a);b.waitUntil(Ue(We(),c))});self.addEventListener("activate",b=>{Of(Pf(),"activate: service worker activated \x3e "+Da(b)+"\n");return self.clients.claim()});self.addEventListener("message",()=>{});self.addEventListener("fetch",b=>{var c=Rf(b.request);var d=new ek(b),e=vd(),g=c.H;c=g instanceof I?c:Ok(c,g,Xd(new Yd,8,d,e));b.respondWith(Ue(We(),c))});Of(Pf(),
 "main: ServiceWorker installing...\n")})(Jf);
 }).call(this);
-//# sourceMappingURL=main.js.map
+//# sourceMappingURL=sw-opt.js.map
