@@ -35,16 +35,18 @@ object Persistence:
   ) =
     if (tripDb.now().isEmpty)
       val dbRequest =
-        window.indexedDB.get.open("CbBus", 4L)
+        window.indexedDB.get.open("CbBus", 6L)
 
       dbRequest.onsuccess = (db: IDBEvent[IDBDatabase]) =>
         tripDb.set(Some(db.target.result))
 
       dbRequest.onupgradeneeded = (db: IDBEvent[IDBDatabase]) =>
-        if (db.target.result.objectStoreNames.contains("dailyPlans"))
+          println("Deleting object store")
+          db.target.result.deleteObjectStore("dailyPlans")
+          println("Creating object store")
           db.target.result.createObjectStore("dailyPlans")
+          tripDb.set(Some(db.target.result))
           println("created object store")
-        else println("object store already exists. No action needed.")
 
   def saveDailyPlan(
     plan: Plan,
