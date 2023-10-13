@@ -261,7 +261,7 @@ object Components {
   def RouteLegElementInteractive(
     routeLeg: RouteLeg,
     db: Var[Option[IDBDatabase]],
-    $active: Var[Boolean]
+    $active: Var[Boolean],
   ) =
     div(
       routeLeg.stops.head match
@@ -288,22 +288,24 @@ object Components {
               ),
               button(
                 cls := "button",
-                onClick.preventDefault.mapTo(
-                  RouteLeg(Seq(routeLeg.stops.head, stop)),
-                ).map { (e: RouteLeg) =>
+                onClick.preventDefault
+                  .mapTo(
+                    RouteLeg(Seq(routeLeg.stops.head, stop)),
+                  )
+                  .map { (e: RouteLeg) =>
 
-                  val plan = Plan(Seq(e))
-                  dom.window.navigator.clipboard
-                    .writeText(plan.plainTextRepresentation)
-                  Persistence.updateDailyPlan(e, db)
-                  println("Should copy this to paste buffer!: " + e)
-                  org.scalajs.dom.document
-                    .querySelector("html")
-                    .classList
-                    .remove("is-clipped")
-                  println("Clicked modal close")
-                  false
-                } --> $active,
+                    val plan = Plan(Seq(e))
+                    dom.window.navigator.clipboard
+                      .writeText(plan.plainTextRepresentation)
+                    Persistence.updateDailyPlan(e, db)
+                    println("Should copy this to paste buffer!: " + e)
+                    org.scalajs.dom.document
+                      .querySelector("html")
+                      .classList
+                      .remove("is-clipped")
+                    println("Clicked modal close")
+                    false
+                  } --> $active,
                 "+",
               ),
             ),
@@ -313,10 +315,10 @@ object Components {
     )
 
   def RouteLegElementViewOnly(
-                       label: String,
-                       routeLeg: RouteLeg,
-                       db: Var[Option[IDBDatabase]]
-                     ) =
+    label: String,
+    routeLeg: RouteLeg,
+    db: Var[Option[IDBDatabase]],
+  ) =
     div(
       div(label),
       div(
@@ -324,7 +326,7 @@ object Components {
           createBusTimeElementOnLeg(
             stop.location,
             div(
-                stop.busTime.toDumbAmericanString,
+              stop.busTime.toDumbAmericanString,
             ),
           ),
         ),
@@ -372,9 +374,9 @@ object Components {
   import crestedbutte.pwa.Persistence
 
   def SavePlanButton(
-                      plan: Plan,
-                      db: Var[Option[IDBDatabase]],
-                    ) =
+    plan: Plan,
+    db: Var[Option[IDBDatabase]],
+  ) =
     if (plan.legs.nonEmpty)
       button(
         cls := "button",
@@ -404,7 +406,7 @@ object Components {
             RouteLegElementViewOnly(
               "Trip " + (idx + 1),
               routeLeg,
-              db
+              db,
             ),
           )
         },
@@ -529,7 +531,7 @@ object Components {
             .classList
             .remove("is-clipped")
           componentData match {
-            case PlanViewer           => TripViewerLaminar(initialTime, db)
+            case PlanViewer => TripViewerLaminar(initialTime, db)
             case TripPlannerComponent => planner
             case namedRoute: NamedRoute =>
               TopLevelRouteView(
@@ -540,7 +542,7 @@ object Components {
                   ),
                 $enabledFeatures,
                 gpsPosition,
-                db
+                db,
               )
           }
         }
@@ -640,8 +642,7 @@ object Components {
     busScheduleAtStop: BusScheduleAtStop,
     $enabledFeatures: Signal[FeatureSets],
     namedRoute: NamedRoute,
-    db: Var[Option[IDBDatabase]]
-
+    db: Var[Option[IDBDatabase]],
   ) = {
     val modalActive = Var(false)
     val modalMode: Var[ModalMode] = Var(ModalMode.UpcomingStops)
@@ -668,7 +669,7 @@ object Components {
           modalActive,
           modalMode,
           namedRoute,
-          db
+          db,
         ),
       ),
     )
@@ -690,7 +691,7 @@ object Components {
     upcomingArrivalComponentData: UpcomingArrivalComponentData,
     $enabledFeatures: Signal[FeatureSets],
     gpsPosition: Var[Option[GpsCoordinates]],
-    db: Var[Option[IDBDatabase]]
+    db: Var[Option[IDBDatabase]],
   ) =
     div(
       RouteHeader(upcomingArrivalComponentData.routeName),
@@ -710,7 +711,7 @@ object Components {
                     fullScheduleAtStop,
                     $enabledFeatures,
                     namedRoute,
-                    db
+                    db,
                   )
                 case Right(safeRideRecommendation) =>
                   Components.SafeRideLink(safeRideRecommendation)
@@ -725,9 +726,9 @@ object Components {
     )
 
   def TripViewerLaminar(
-                         initialTime: WallTime,
-                         db: Var[Option[IDBDatabase]],
-                       ) =
+    initialTime: WallTime,
+    db: Var[Option[IDBDatabase]],
+  ) =
 
     val $plan = Var(Plan(Seq.empty))
     div(
@@ -743,9 +744,9 @@ object Components {
               db,
             ),
           ),
-          Components.PlanElement(plan, db)
-        )
-      )
+          Components.PlanElement(plan, db),
+        ),
+      ),
     )
 
 }

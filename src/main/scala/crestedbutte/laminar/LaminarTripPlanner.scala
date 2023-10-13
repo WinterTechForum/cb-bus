@@ -34,7 +34,7 @@ object LaminarTripPlanner {
       app,
     )
   }
-  
+
   def TripPlannerLaminar(
     initialTime: WallTime,
     db: Var[Option[IDBDatabase]],
@@ -103,7 +103,7 @@ object LaminarTripPlanner {
                 )
 
     div(
-      onMountCallback( _ => Persistence.retrieveDailyPlan($plan, db)),
+      onMountCallback(_ => Persistence.retrieveDailyPlan($plan, db)),
       valuesDuringChangeZ --> submissionZ,
       $startingPoint.signal
         .combineWith($destination,
@@ -136,7 +136,7 @@ object LaminarTripPlanner {
           case Right(value) =>
             Components.RouteLegEnds(value, $plan),
       ),
-      child <-- $plan.signal.map( plan =>
+      child <-- $plan.signal.map(plan =>
         div(
           Components.SavePlanButton(plan, db),
           button(
@@ -147,8 +147,8 @@ object LaminarTripPlanner {
               db,
             ),
           ),
-          Components.PlanElement(plan, db)
-        )
+          Components.PlanElement(plan, db),
+        ),
       ),
       EventStream.unit() --> changeBus.writer,
     )

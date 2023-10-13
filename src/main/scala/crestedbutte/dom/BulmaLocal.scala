@@ -19,7 +19,7 @@ object BulmaLocal {
     $active: Var[Boolean],
     $mode: Var[ModalMode],
     namedRoute: NamedRoute,
-    db: Var[Option[IDBDatabase]]
+    db: Var[Option[IDBDatabase]],
   ) =
     div(
       cls := "modal",
@@ -47,7 +47,10 @@ object BulmaLocal {
                 onClick.mapTo(ModalMode.UpcomingStops) --> $mode,
                 "Back to Upcoming Arrivals",
               ),
-              Components.RouteLegElementInteractive(routeLeg, db, $active),
+              Components.RouteLegElementInteractive(routeLeg,
+                                                    db,
+                                                    $active,
+              ),
             ),
       ),
       button(
