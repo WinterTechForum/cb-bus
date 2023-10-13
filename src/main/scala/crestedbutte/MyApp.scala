@@ -2,7 +2,7 @@ package crestedbutte
 
 import com.billding.time.{TimePicker, WallTime}
 import crestedbutte.Browser.Browser
-import crestedbutte.laminar.{AppMode, TagsOnlyLocal}
+import crestedbutte.laminar.{AppMode, Components}
 import org.scalajs.dom
 import org.scalajs.dom.experimental.serviceworkers._
 import urldsl.errors.DummyError
@@ -200,7 +200,7 @@ object RoutingStuff {
     div(
       child <-- $loginPage.map(busPageInfo =>
         // TODO Start pulling out route queryParam
-        TagsOnlyLocal.FullApp(busPageInfo.mode,
+        Components.FullApp(busPageInfo.mode,
                               busPageInfo.component,
                               busPageInfo.javaClock,
         ),

@@ -2,7 +2,7 @@ package crestedbutte.dom
 
 import crestedbutte.*
 import com.raquo.laminar.api.L.*
-import crestedbutte.laminar.{Components, Experimental, TagsOnlyLocal}
+import crestedbutte.laminar.{Components, Experimental}
 import org.scalajs.dom
 import org.scalajs.dom.experimental.Notification
 
@@ -44,7 +44,7 @@ object BulmaLocal {
                 onClick.mapTo(ModalMode.UpcomingStops) --> $mode,
                 "Back",
               ),
-              TagsOnlyLocal.RouteLeg("Route", routeLeg),
+              Components.RouteLegElement("Route", routeLeg),
             ),
       ),
       button(

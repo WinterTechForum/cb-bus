@@ -11,6 +11,10 @@ body {
 .modal-background {
     background-color: rgba(10,10,10,.97);
 }
+.scrollable-route-leg {
+    height: 60vh; /* What's a good, flexible height value here? */
+    overflow: auto;
+}
 
 #landing-message {
     min-height: 100%;
