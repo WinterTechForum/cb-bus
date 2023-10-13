@@ -201,8 +201,8 @@ object RoutingStuff {
       child <-- $loginPage.map(busPageInfo =>
         // TODO Start pulling out route queryParam
         Components.FullApp(busPageInfo.mode,
-                              busPageInfo.component,
-                              busPageInfo.javaClock,
+                           busPageInfo.component,
+                           busPageInfo.javaClock,
         ),
       ),
     )

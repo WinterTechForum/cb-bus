@@ -26,6 +26,4 @@ import org.scalajs.dom.{
   IDBValue,
 }
 
-object TagsOnlyLocal {
-
-}
+object TagsOnlyLocal {}

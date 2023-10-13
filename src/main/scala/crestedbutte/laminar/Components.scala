@@ -259,59 +259,59 @@ object Components {
     )
 
   def RouteLegElement(
-                label: String,
-                routeLeg: RouteLeg,
-              ) =
+    label: String,
+    routeLeg: RouteLeg,
+  ) =
     div(
 //      routeLeg.stops.head. + " to ",
 
       routeLeg.stops.head match
 
         case LocationWithTime(
-          location,
-          busTime
-        ) =>
-
+              location,
+              busTime,
+            ) =>
           createBusTimeElementOnLeg(
             location,
             div(
               busTime.toDumbAmericanString,
             ),
           )
-
       ,
-      div(cls:="scrollable-route-leg",
+      div(
+        cls := "scrollable-route-leg",
         routeLeg.stops.tail.map(stop =>
           createBusTimeElementOnLeg(
             stop.location,
             div(
               button(
                 cls := "button",
-                onClick.mapTo(RouteLeg(Seq(routeLeg.stops.head, stop))) --> Observer {
-                  (e: RouteLeg) =>
+                onClick.mapTo(
+                  RouteLeg(Seq(routeLeg.stops.head, stop)),
+                ) --> Observer { (e: RouteLeg) =>
 
-                    val plan = Plan(Seq(e))
-                    dom.window.navigator.clipboard
-                      .writeText(plan.plainTextRepresentation)
-                    println("Should copy this to paste buffer: " + e)
+                  val plan = Plan(Seq(e))
+                  dom.window.navigator.clipboard
+                    .writeText(plan.plainTextRepresentation)
+                  println("Should copy this to paste buffer: " + e)
                 },
-                "+"
+                "+",
               ),
               div(
                 stop.busTime.toDumbAmericanString,
               ),
-            )
+            ),
           ),
         ),
-      )
+      ),
     )
 
   import com.raquo.laminar.nodes.ReactiveHtmlElement
 
   def RouteLegEnds(
-                    routeLeg: RouteLeg,
-                    $plan: Var[Plan],
-                  ) =
+    routeLeg: RouteLeg,
+    $plan: Var[Plan],
+  ) =
     div(
       div(
         button(
@@ -346,9 +346,9 @@ object Components {
   }
   import crestedbutte.pwa.Persistence
   def PlanElement(
-            plan: Plan,
-            db: Var[Option[IDBDatabase]],
-          ) =
+    plan: Plan,
+    db: Var[Option[IDBDatabase]],
+  ) =
     if (plan.legs.nonEmpty)
       div(
         "Plan: ",
@@ -375,10 +375,10 @@ object Components {
   import com.raquo.laminar.api.L._
 
   def FullApp(
-               pageMode: AppMode,
-               initialComponent: Option[ComponentName],
-               javaClock: Clock,
-             ) = {
+    pageMode: AppMode,
+    initialComponent: Option[ComponentName],
+    javaClock: Clock,
+  ) = {
     val db: Var[Option[IDBDatabase]] = Var(
       None,
     )
@@ -397,13 +397,13 @@ object Components {
         )
         .getOrElse(
 //          TripPlannerComponent,
-                    RtaSouthbound.fullSchedule,
+          RtaSouthbound.fullSchedule,
         ),
     )
 
     def currentWallTime(
-                         javaClock: Clock,
-                       ) =
+      javaClock: Clock,
+    ) =
       WallTime(
         OffsetDateTime
           .now(javaClock)
@@ -444,24 +444,23 @@ object Components {
           1,
           new FiniteDuration(5, scala.concurrent.duration.SECONDS),
         ) --> clockTicks,
-
       overallPageLayout(
-          selectedComponent.signal,
-          timeStamps,
-          pageMode,
-          initialTime,
-          db,
-        ),
+        selectedComponent.signal,
+        timeStamps,
+        pageMode,
+        initialTime,
+        db,
+      ),
     )
   }
 
   def overallPageLayout(
-                         $selectedComponent: Signal[ComponentData],
-                         timeStamps: Signal[WallTime],
-                         pageMode: AppMode,
-                         initialTime: WallTime,
-                         db: Var[Option[IDBDatabase]],
-                       ) = {
+    $selectedComponent: Signal[ComponentData],
+    timeStamps: Signal[WallTime],
+    pageMode: AppMode,
+    initialTime: WallTime,
+    db: Var[Option[IDBDatabase]],
+  ) = {
     // TODO Turn this into a Signal. The EventBus should be contained within the Experimental/FeatureControlCenter
     val featureUpdates = new EventBus[FeatureStatus]
 
@@ -491,7 +490,7 @@ object Components {
             .classList
             .remove("is-clipped")
           componentData match {
-            case PlanViewer => ???
+            case PlanViewer           => ???
             case TripPlannerComponent => planner
             case namedRoute: NamedRoute =>
               TopLevelRouteView(
@@ -537,18 +536,18 @@ object Components {
   }
 
   def renderWaitTime(
-                      duration: MinuteDuration,
-                    ) =
+    duration: MinuteDuration,
+  ) =
     if (duration.toMinutes == 0)
       "Leaving!"
     else
       duration.toMinutes + " min."
 
   def GeoBits(
-               $mapLinksEnabled: Signal[Boolean],
-               location: Location,
-               $gpsPosition: Signal[Option[GpsCoordinates]],
-             ) =
+    $mapLinksEnabled: Signal[Boolean],
+    location: Location,
+    $gpsPosition: Signal[Option[GpsCoordinates]],
+  ) =
     div(
       child <-- $mapLinksEnabled.map(mapLinksEnabled =>
         if (mapLinksEnabled)
@@ -556,7 +555,7 @@ object Components {
             cls := "map-link",
             child <-- Components
               .distanceFromCurrentLocationToStop($gpsPosition,
-                location,
+                                                 location,
               ),
             location.gpsCoordinates.map(Components.GeoLink),
           )
@@ -566,14 +565,14 @@ object Components {
     )
 
   def createBusTimeElement(
-                            location: Location,
-                            content: ReactiveHtmlElement[_],
-                            $mapLinksEnabled: Signal[Boolean],
-                            $gpsPosition: Signal[
-                              Option[GpsCoordinates],
-                            ], // TODO Should this be an `Option[Signal[GpsCoordinates]` instead?
-                            /* TODO: waitDuration: Duration*/
-                          ) =
+    location: Location,
+    content: ReactiveHtmlElement[_],
+    $mapLinksEnabled: Signal[Boolean],
+    $gpsPosition: Signal[
+      Option[GpsCoordinates],
+    ], // TODO Should this be an `Option[Signal[GpsCoordinates]` instead?
+    /* TODO: waitDuration: Duration*/
+  ) =
     div(
       width := "100%",
       cls := "stop-information",
@@ -585,9 +584,9 @@ object Components {
 
   // TODO Dedup with above
   def createBusTimeElementOnLeg(
-                                 location: Location,
-                                 content: ReactiveHtmlElement[_],
-                               ) =
+    location: Location,
+    content: ReactiveHtmlElement[_],
+  ) =
     div(
       width := "100%",
       cls := "stop-information",
@@ -597,11 +596,11 @@ object Components {
     )
 
   def StopTimeInfoForLocation(
-                               stopTimeInfo: StopTimeInfo,
-                               busScheduleAtStop: BusScheduleAtStop,
-                               $enabledFeatures: Signal[FeatureSets],
-                               namedRoute: NamedRoute,
-                             ) = {
+    stopTimeInfo: StopTimeInfo,
+    busScheduleAtStop: BusScheduleAtStop,
+    $enabledFeatures: Signal[FeatureSets],
+    namedRoute: NamedRoute,
+  ) = {
     val modalActive = Var(false)
     val modalMode: Var[ModalMode] = Var(ModalMode.UpcomingStops)
     div(
@@ -633,8 +632,8 @@ object Components {
   }
 
   def RouteHeader(
-                   routeName: ComponentName,
-                 ) =
+    routeName: ComponentName,
+  ) =
     div(
       cls := "route-header",
       span(
@@ -645,19 +644,19 @@ object Components {
     )
 
   def TopLevelRouteView(
-                                       upcomingArrivalComponentData: UpcomingArrivalComponentData,
-                                       $enabledFeatures: Signal[FeatureSets],
-                                       gpsPosition: Var[Option[GpsCoordinates]],
-                                     ) =
+    upcomingArrivalComponentData: UpcomingArrivalComponentData,
+    $enabledFeatures: Signal[FeatureSets],
+    gpsPosition: Var[Option[GpsCoordinates]],
+  ) =
     div(
       RouteHeader(upcomingArrivalComponentData.routeName),
       upcomingArrivalComponentData.upcomingArrivalInfoForAllRoutes
         .map {
           case UpcomingArrivalInfoWithFullSchedule(
-          UpcomingArrivalInfo(location, content),
-          fullScheduleAtStop,
-          namedRoute,
-          ) =>
+                UpcomingArrivalInfo(location, content),
+                fullScheduleAtStop,
+                namedRoute,
+              ) =>
             createBusTimeElement(
               location,
               content match {
