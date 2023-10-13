@@ -281,14 +281,18 @@ object Components {
 
       ,
       div(cls:="scrollable-route-leg",
-        routeLeg.stops.map(stop =>
+        routeLeg.stops.tail.map(stop =>
           createBusTimeElementOnLeg(
             stop.location,
             div(
               button(
                 cls := "button",
                 onClick.mapTo(RouteLeg(Seq(routeLeg.stops.head, stop))) --> Observer {
-                  e =>
+                  (e: RouteLeg) =>
+
+                    val plan = Plan(Seq(e))
+                    dom.window.navigator.clipboard
+                      .writeText(plan.plainTextRepresentation)
                     println("Should copy this to paste buffer: " + e)
                 },
                 "+"
@@ -341,7 +345,7 @@ object Components {
     IDBValue,
   }
   import crestedbutte.pwa.Persistence
-  def Plan(
+  def PlanElement(
             plan: Plan,
             db: Var[Option[IDBDatabase]],
           ) =

@@ -148,7 +148,7 @@ object LaminarTripPlanner {
           case Right(value) =>
             Components.RouteLegEnds(value, $plan),
       ),
-      child <-- $plan.signal.map(Components.Plan(_, db)),
+      child <-- $plan.signal.map(Components.PlanElement(_, db)),
       EventStream.unit() --> changeBus.writer,
     )
   }
