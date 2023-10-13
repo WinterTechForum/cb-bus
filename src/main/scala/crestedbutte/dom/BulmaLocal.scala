@@ -4,6 +4,7 @@ import crestedbutte.*
 import com.raquo.laminar.api.L.*
 import crestedbutte.laminar.{Components, Experimental}
 import org.scalajs.dom
+import org.scalajs.dom.IDBDatabase
 import org.scalajs.dom.experimental.Notification
 
 object BulmaLocal {
@@ -18,6 +19,7 @@ object BulmaLocal {
     $active: Var[Boolean],
     $mode: Var[ModalMode],
     namedRoute: NamedRoute,
+    db: Var[Option[IDBDatabase]]
   ) =
     div(
       cls := "modal",
@@ -45,7 +47,7 @@ object BulmaLocal {
                 onClick.mapTo(ModalMode.UpcomingStops) --> $mode,
                 "Back to Upcoming Arrivals",
               ),
-              Components.RouteLegElement("Route", routeLeg),
+              Components.RouteLegElementInteractive(routeLeg, db, $active),
             ),
       ),
       button(

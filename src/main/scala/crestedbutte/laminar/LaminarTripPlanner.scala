@@ -34,7 +34,7 @@ object LaminarTripPlanner {
       app,
     )
   }
-
+  
   def TripPlannerLaminar(
     initialTime: WallTime,
     db: Var[Option[IDBDatabase]],
@@ -103,19 +103,7 @@ object LaminarTripPlanner {
                 )
 
     div(
-      button(
-        cls := "button",
-        "Get saved plan",
-        onClick --> Persistence.retrieveDailyPlan($plan, db),
-      ),
-      button(
-        cls := "button",
-        "Delete saved plan",
-        onClick --> Persistence.saveDailyPlan(
-          crestedbutte.Plan(Seq.empty),
-          db,
-        ),
-      ),
+      onMountCallback( _ => Persistence.retrieveDailyPlan($plan, db)),
       valuesDuringChangeZ --> submissionZ,
       $startingPoint.signal
         .combineWith($destination,
@@ -148,7 +136,20 @@ object LaminarTripPlanner {
           case Right(value) =>
             Components.RouteLegEnds(value, $plan),
       ),
-      child <-- $plan.signal.map(Components.PlanElement(_, db)),
+      child <-- $plan.signal.map( plan =>
+        div(
+          Components.SavePlanButton(plan, db),
+          button(
+            cls := "button",
+            "Delete saved plan",
+            onClick --> Persistence.saveDailyPlan(
+              crestedbutte.Plan(Seq.empty),
+              db,
+            ),
+          ),
+          Components.PlanElement(plan, db)
+        )
+      ),
       EventStream.unit() --> changeBus.writer,
     )
   }

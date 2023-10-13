@@ -258,13 +258,12 @@ object Components {
       ),
     )
 
-  def RouteLegElement(
-    label: String,
+  def RouteLegElementInteractive(
     routeLeg: RouteLeg,
+    db: Var[Option[IDBDatabase]],
+    $active: Var[Boolean]
   ) =
     div(
-//      routeLeg.stops.head. + " to ",
-
       routeLeg.stops.head match
 
         case LocationWithTime(
@@ -289,17 +288,43 @@ object Components {
               ),
               button(
                 cls := "button",
-                onClick.mapTo(
+                onClick.preventDefault.mapTo(
                   RouteLeg(Seq(routeLeg.stops.head, stop)),
-                ) --> Observer { (e: RouteLeg) =>
+                ).map { (e: RouteLeg) =>
 
                   val plan = Plan(Seq(e))
                   dom.window.navigator.clipboard
                     .writeText(plan.plainTextRepresentation)
-                  println("Should copy this to paste buffer: " + e)
-                },
+                  Persistence.updateDailyPlan(e, db)
+                  println("Should copy this to paste buffer!: " + e)
+                  org.scalajs.dom.document
+                    .querySelector("html")
+                    .classList
+                    .remove("is-clipped")
+                  println("Clicked modal close")
+                  false
+                } --> $active,
                 "+",
               ),
+            ),
+          ),
+        ),
+      ),
+    )
+
+  def RouteLegElementViewOnly(
+                       label: String,
+                       routeLeg: RouteLeg,
+                       db: Var[Option[IDBDatabase]]
+                     ) =
+    div(
+      div(label),
+      div(
+        routeLeg.stops.map(stop =>
+          createBusTimeElementOnLeg(
+            stop.location,
+            div(
+                stop.busTime.toDumbAmericanString,
             ),
           ),
         ),
@@ -345,6 +370,20 @@ object Components {
     IDBValue,
   }
   import crestedbutte.pwa.Persistence
+
+  def SavePlanButton(
+                      plan: Plan,
+                      db: Var[Option[IDBDatabase]],
+                    ) =
+    if (plan.legs.nonEmpty)
+      button(
+        cls := "button",
+        "Save Plan",
+        onClick --> Persistence.saveDailyPlan(plan, db),
+      )
+    else
+      div()
+
   def PlanElement(
     plan: Plan,
     db: Var[Option[IDBDatabase]],
@@ -355,7 +394,6 @@ object Components {
         button(
           cls := "button",
           "Copy to Clipboard",
-          onClick --> Persistence.saveDailyPlan(plan, db),
           onClick --> Observer { _ =>
             dom.window.navigator.clipboard
               .writeText(plan.plainTextRepresentation)
@@ -363,9 +401,10 @@ object Components {
         ),
         plan.legs.zipWithIndex.map { case (routeLeg, idx) =>
           div(
-            RouteLegElement(
+            RouteLegElementViewOnly(
               "Trip " + (idx + 1),
               routeLeg,
+              db
             ),
           )
         },
@@ -490,7 +529,7 @@ object Components {
             .classList
             .remove("is-clipped")
           componentData match {
-            case PlanViewer           => ???
+            case PlanViewer           => TripViewerLaminar(initialTime, db)
             case TripPlannerComponent => planner
             case namedRoute: NamedRoute =>
               TopLevelRouteView(
@@ -501,6 +540,7 @@ object Components {
                   ),
                 $enabledFeatures,
                 gpsPosition,
+                db
               )
           }
         }
@@ -600,6 +640,8 @@ object Components {
     busScheduleAtStop: BusScheduleAtStop,
     $enabledFeatures: Signal[FeatureSets],
     namedRoute: NamedRoute,
+    db: Var[Option[IDBDatabase]]
+
   ) = {
     val modalActive = Var(false)
     val modalMode: Var[ModalMode] = Var(ModalMode.UpcomingStops)
@@ -626,6 +668,7 @@ object Components {
           modalActive,
           modalMode,
           namedRoute,
+          db
         ),
       ),
     )
@@ -647,6 +690,7 @@ object Components {
     upcomingArrivalComponentData: UpcomingArrivalComponentData,
     $enabledFeatures: Signal[FeatureSets],
     gpsPosition: Var[Option[GpsCoordinates]],
+    db: Var[Option[IDBDatabase]]
   ) =
     div(
       RouteHeader(upcomingArrivalComponentData.routeName),
@@ -666,6 +710,7 @@ object Components {
                     fullScheduleAtStop,
                     $enabledFeatures,
                     namedRoute,
+                    db
                   )
                 case Right(safeRideRecommendation) =>
                   Components.SafeRideLink(safeRideRecommendation)
@@ -678,4 +723,29 @@ object Components {
             )
         },
     )
+
+  def TripViewerLaminar(
+                         initialTime: WallTime,
+                         db: Var[Option[IDBDatabase]],
+                       ) =
+
+    val $plan = Var(Plan(Seq.empty))
+    div(
+      onMountCallback(_ => Persistence.retrieveDailyPlan($plan, db)),
+      child <-- $plan.signal.map(plan =>
+        div(
+          Components.SavePlanButton(plan, db),
+          button(
+            cls := "button",
+            "Delete saved plan",
+            onClick --> Persistence.saveDailyPlan(
+              crestedbutte.Plan(Seq.empty),
+              db,
+            ),
+          ),
+          Components.PlanElement(plan, db)
+        )
+      )
+    )
+
 }

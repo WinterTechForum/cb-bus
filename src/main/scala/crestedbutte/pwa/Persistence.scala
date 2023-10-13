@@ -53,6 +53,29 @@ object Persistence:
         tripDb.set(Some(db.target.result))
         println("created object store")
 
+  def updateDailyPlan(
+                       routeLeg: RouteLeg,
+                       tripDb: Var[Option[IDBDatabase]],
+                     ) =
+        tripDb
+          .now()
+          .foreach: tripDbLocal =>
+            val transaction =
+              tripDbLocal.transaction("dailyPlans",
+                IDBTransactionMode.readwrite,
+              )
+            val objectStore = transaction.objectStore("dailyPlans")
+            val request = objectStore.get("today")
+            request.onsuccess = (dbEvent: IDBEvent[IDBValue]) =>
+
+              val retrieved = dbEvent.target.result.toString.fromJson[Plan]
+              val plan = retrieved.getOrElse(???)
+              val updatedPlan = plan.copy(plan.legs :+ routeLeg)
+              println("Successfully retrieved saved plan: " + plan)
+              saveDailyPlanOnly(updatedPlan, tripDb)
+              println("Saved new plan: " + updatedPlan)
+
+
   def saveDailyPlan(
     plan: Plan,
     tripDb: Var[Option[IDBDatabase]],
@@ -78,11 +101,32 @@ object Persistence:
 
     }
 
+  def saveDailyPlanOnly(
+                     plan: Plan,
+                     tripDb: Var[Option[IDBDatabase]],
+                   ) =
+      println("Saving daily plan")
+
+      tripDb
+        .now()
+        .foreach: tripDbLocal =>
+          println("non-null DB. Let's try and save!")
+          val transaction =
+            tripDbLocal.transaction("dailyPlans",
+              IDBTransactionMode.readwrite,
+            )
+          println("Persistence A")
+          val objectStore = transaction.objectStore("dailyPlans")
+          println("Persistence B")
+          val request = objectStore.put(plan.toJson, "today")
+          println("Persistence C")
+          request.onsuccess = (event: dom.Event) =>
+            println("Successfully added plan to dailyPlans")
+
   def retrieveDailyPlan(
     $plan: Var[Plan],
     tripDb: Var[Option[IDBDatabase]],
   ) =
-    Observer { _ =>
       println("Retrieving daily plan")
       println("tripDb.now(): " + tripDb.now())
 
@@ -105,4 +149,3 @@ object Persistence:
             println("Retrieved item: " + retrieved)
           }
 
-    }
