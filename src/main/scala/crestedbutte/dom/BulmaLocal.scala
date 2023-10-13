@@ -39,10 +39,11 @@ object BulmaLocal {
             )
           case ModalMode.SelectedLeg(routeLeg) =>
             div(
+              cls := "selected-leg-header",
               button(
                 cls := "button",
                 onClick.mapTo(ModalMode.UpcomingStops) --> $mode,
-                "Back",
+                "Back to Upcoming Arrivals",
               ),
               Components.RouteLegElement("Route", routeLeg),
             ),

@@ -36,6 +36,10 @@ body {
     /*display: table-cell;*/
 }
 
+.selected-leg-header {
+    text-align: center;
+}
+
 .button {
     font-size: 80%;
     font-weight: bold;

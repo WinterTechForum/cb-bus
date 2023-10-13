@@ -284,6 +284,9 @@ object Components {
           createBusTimeElementOnLeg(
             stop.location,
             div(
+              span(
+                stop.busTime.toDumbAmericanString,
+              ),
               button(
                 cls := "button",
                 onClick.mapTo(
@@ -296,9 +299,6 @@ object Components {
                   println("Should copy this to paste buffer: " + e)
                 },
                 "+",
-              ),
-              div(
-                stop.busTime.toDumbAmericanString,
               ),
             ),
           ),
