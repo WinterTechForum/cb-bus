@@ -392,7 +392,6 @@ object Components {
   ) =
     if (plan.legs.nonEmpty)
       div(
-        "Plan: ",
         button(
           cls := "button",
           "Copy to Clipboard",
@@ -457,7 +456,7 @@ object Components {
     val initialTime =
       currentWallTime:
         javaClock
-      .roundToNextFiveMutable()
+      .roundToNextTenMutable()
 
     val timeStamps: Signal[WallTime] = clockTicks.events
       .filter(_ =>

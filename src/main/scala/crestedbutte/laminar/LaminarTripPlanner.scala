@@ -58,7 +58,7 @@ object LaminarTripPlanner {
     )
 
     val TimePicker(timePicker, arrivalTimeS) =
-      TimePicker(initialTime.toDumbAmericanString)
+      TimePicker(initialTime.toDumbAmericanString, 10)
 
     val changeBus = new EventBus[Unit]
 
