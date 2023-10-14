@@ -14,24 +14,29 @@ object BulmaLocal {
     case SelectedLeg(
       routeLeg: RouteLeg)
 
-  def notification(text: String) =
+  def notification(
+    text: String,
+  ) =
     div(
-      cls:="notification is-link is-light",
-      button(cls:="delete"),
+      cls := "notification is-link is-light",
+      button(cls := "delete"),
       text,
-      a("TODO* Link to TripViewer *TODO*")
+      a("TODO* Link to TripViewer *TODO*"),
     )
 
-  def notificationWithHomeLink(text: String, componentSelector: Observer[ComponentData]) =
+  def notificationWithHomeLink(
+    text: String,
+    componentSelector: Observer[ComponentData],
+  ) =
     div(
       cls := "notification is-link is-light",
       button(cls := "delete"),
       text,
       button(
-        cls:="button",
+        cls := "button",
         "View current Trip",
-        onClick.mapTo(PlanViewer) --> componentSelector
-      )
+        onClick.mapTo(PlanViewer) --> componentSelector,
+      ),
     )
 
   def bulmaModal(
@@ -41,7 +46,7 @@ object BulmaLocal {
     $mode: Var[ModalMode],
     namedRoute: NamedRoute,
     db: Var[Option[IDBDatabase]],
-    componentSelector: Observer[ComponentData]
+    componentSelector: Observer[ComponentData],
   ) =
     val notificationBus = EventBus[ReactiveHtmlElement[_]]()
     div(
@@ -76,7 +81,7 @@ object BulmaLocal {
                 db,
                 $active,
                 notificationBus.writer,
-                componentSelector
+                componentSelector,
               ),
             ),
       ),

@@ -263,7 +263,7 @@ object Components {
     db: Var[Option[IDBDatabase]],
     $active: Var[Boolean],
     $notifications: Observer[ReactiveHtmlElement[_]],
-    componentSelector: Observer[ComponentData]
+    componentSelector: Observer[ComponentData],
   ) =
     val clickBus = EventBus[RouteLeg]()
     div(
@@ -283,27 +283,27 @@ object Components {
       div(
         cls := "scrollable-route-leg",
         clickBus.events.map(routeLeg =>
-          BulmaLocal.notificationWithHomeLink("Trip Plan Updated.", componentSelector),
+          BulmaLocal.notificationWithHomeLink("Trip Plan Updated.",
+                                              componentSelector,
+          ),
         ) --> $notifications,
         clickBus.events
-
           .map { (e: RouteLeg) =>
 
-              val plan = Plan(Seq(e))
-              dom.window.navigator.clipboard
-                .writeText(plan.plainTextRepresentation)
-              Persistence.updateDailyPlan(e, db)
-              println("copy to buffer!: " + e)
-              // TODO Activate notification
+            val plan = Plan(Seq(e))
+            dom.window.navigator.clipboard
+              .writeText(plan.plainTextRepresentation)
+            Persistence.updateDailyPlan(e, db)
+            println("copy to buffer!: " + e)
+            // TODO Activate notification
 
 //              org.scalajs.dom.document
 //                .querySelector("html")
 //                .classList
 //                .remove("is-clipped")
-              true // keep modal open
-            } --> $active
-  ,
-  routeLeg.stops.tail.map(stop =>
+            true // keep modal open
+          } --> $active,
+        routeLeg.stops.tail.map(stop =>
           createBusTimeElementOnLeg(
             stop.location,
             div(
@@ -424,7 +424,6 @@ object Components {
 
   import com.raquo.laminar.api.L._
 
-
   def FullApp(
     pageMode: AppMode,
     initialComponent: Option[ComponentName],
@@ -532,7 +531,8 @@ object Components {
       .TripPlannerLaminar(initialTime, db)
 
     val upcomingArrivalData =
-      $selectedComponent.signal.combineWith(timeStamps)
+      $selectedComponent.signal
+        .combineWith(timeStamps)
         .map { case (componentData, timestamp) =>
           // This is a super janky way to avoid being unable to scroll
           // after we refresh the page and close the model
@@ -553,7 +553,7 @@ object Components {
                 $enabledFeatures,
                 gpsPosition,
                 db,
-                $selectedComponent.writer
+                $selectedComponent.writer,
               )
           }
         }
@@ -654,7 +654,7 @@ object Components {
     $enabledFeatures: Signal[FeatureSets],
     namedRoute: NamedRoute,
     db: Var[Option[IDBDatabase]],
-    componentSelector: Observer[ComponentData]
+    componentSelector: Observer[ComponentData],
   ) = {
     val modalActive = Var(false)
     val modalMode: Var[ModalMode] = Var(ModalMode.UpcomingStops)
@@ -682,7 +682,7 @@ object Components {
           modalMode,
           namedRoute,
           db,
-          componentSelector
+          componentSelector,
         ),
       ),
     )
@@ -705,7 +705,7 @@ object Components {
     $enabledFeatures: Signal[FeatureSets],
     gpsPosition: Var[Option[GpsCoordinates]],
     db: Var[Option[IDBDatabase]],
-    componentSelector: Observer[ComponentData]
+    componentSelector: Observer[ComponentData],
   ) =
     div(
       RouteHeader(upcomingArrivalComponentData.routeName),
@@ -726,7 +726,7 @@ object Components {
                     $enabledFeatures,
                     namedRoute,
                     db,
-                    componentSelector
+                    componentSelector,
                   )
                 case Right(safeRideRecommendation) =>
                   Components.SafeRideLink(safeRideRecommendation)
