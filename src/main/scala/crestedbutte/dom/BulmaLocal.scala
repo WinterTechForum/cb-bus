@@ -34,7 +34,7 @@ object BulmaLocal {
       text,
       button(
         cls := "button",
-        "View current Trip",
+        "View Current Trip",
         onClick.mapTo(PlanViewer) --> componentSelector,
       ),
     )
