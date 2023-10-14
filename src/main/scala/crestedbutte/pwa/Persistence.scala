@@ -97,7 +97,7 @@ object Persistence:
           val request = objectStore.put(plan.toJson, "today")
           println("Persistence C")
           request.onsuccess = (event: dom.Event) =>
-            println("Successfully added plan to dailyPlans")
+            println("Successfully added plan to dailyPlans!")
 
     }
 
@@ -121,7 +121,7 @@ object Persistence:
         val request = objectStore.put(plan.toJson, "today")
         println("Persistence C")
         request.onsuccess = (event: dom.Event) =>
-          println("Successfully added plan to dailyPlans")
+          println("Successfully added plan to dailyPlans!")
 
   def retrieveDailyPlan(
     $plan: Var[Plan],

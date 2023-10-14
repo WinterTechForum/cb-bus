@@ -93,7 +93,6 @@ object BulmaLocal {
             .querySelector("html")
             .classList
             .remove("is-clipped")
-          println("Clicked modal close")
           false
         } --> $active,
       ),
