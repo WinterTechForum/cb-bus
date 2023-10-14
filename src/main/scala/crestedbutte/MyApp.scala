@@ -47,25 +47,20 @@ object MyApp extends ZIOAppDefault {
           browser.window().navigator,
         ).serviceWorker
 
-        serviceWorker
-          .getRegistrations()
-          .`then`(registrations =>
-            println("Deleting old serviceWorkers")
-            registrations.foreach(_.unregister())
+        println("Deleting old serviceWorkers")
 
-            serviceWorker
-              .register("./sw-opt.js")
-              .toFuture
-              .onComplete {
-                case Success(registration) =>
-                  println("Registered SW: " + registration.scope)
-                  registration.update()
-                case Failure(error) =>
-                  println(
-                    s"registerServiceWorker: service worker registration failed > ${error.printStackTrace()}",
-                  )
-              },
-          )
+        serviceWorker
+          .register("./sw-opt.js")
+          .toFuture
+          .onComplete {
+            case Success(registration) =>
+              println("Registered SW: " + registration.scope)
+              registration.update()
+            case Failure(error) =>
+              println(
+                s"registerServiceWorker: service worker registration failed > ${error.printStackTrace()}",
+              )
+          }
 
 //        toServiceWorkerNavigator(
 //          browser.window().navigator,
