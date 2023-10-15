@@ -762,11 +762,23 @@ object Components {
           else
             div(
               div("No saved plan"),
-              button(
+              div(button(
                 cls := "button",
                 "Make a new plan",
                 onClick.mapTo(TripPlannerComponent) --> componentSelector,
+              )),
+              div(button(
+                cls := "button",
+                "View Northbound Schedule",
+                onClick.mapTo(RtaNorthbound.fullSchedule) --> componentSelector,
+              )),
+              div(
+              button(
+                cls := "button",
+                "View Southbound Schedule",
+                onClick.mapTo(RtaSouthbound.fullSchedule) --> componentSelector,
               ),
+              )
             )
         ),
       ),
