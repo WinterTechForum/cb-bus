@@ -23,8 +23,11 @@ object ServiceWorker {
 //    "/index_dev.html",
     "/manifest.webmanifest",
 //    "/sw-opt.js",
-    "/compiledJavascript/main.js",
-    "/compiledJavascript/main.js.map",
+
+    // TODO Restore these sometime soon?
+//    "/compiledJavascript/main.js",
+//    "/compiledJavascript/main.js.map",
+
     "/favicon.ico",
     "/images/BILLDING_LogoMark-256.png",
     "/styling/style.css",
@@ -51,7 +54,8 @@ object ServiceWorker {
         println(
           s"activate: service worker activated > ${event.toString}"
         )
-//        invalidateCache() // TODO Do I need this at all?
+        println("Invalidating cache")
+        invalidateCache() // TODO Do I need this at all?
 //      event.waitUntil(toCache().toJSPromise)
         self.clients.claim()
       }
