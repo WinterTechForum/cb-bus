@@ -387,35 +387,35 @@ object Components {
     plan: Plan,
     db: Var[Option[IDBDatabase]],
   ) =
-      button(
-        cls := "button",
-        "Save Plan",
-        onClick --> Persistence.saveDailyPlan(plan, db),
-      )
+    button(
+      cls := "button",
+      "Save Plan",
+      onClick --> Persistence.saveDailyPlan(plan, db),
+    )
 
   def PlanElement(
     plan: Plan,
     db: Var[Option[IDBDatabase]],
   ) =
-      div(
-        button(
-          cls := "button",
-          "Copy to Clipboard",
-          onClick --> Observer { _ =>
-            dom.window.navigator.clipboard
-              .writeText(plan.plainTextRepresentation)
-          },
-        ),
-        plan.legs.zipWithIndex.map { case (routeLeg, idx) =>
-          div(
-            RouteLegElementViewOnly(
-              "Trip " + (idx + 1),
-              routeLeg,
-              db,
-            ),
-          )
+    div(
+      button(
+        cls := "button",
+        "Copy to Clipboard",
+        onClick --> Observer { _ =>
+          dom.window.navigator.clipboard
+            .writeText(plan.plainTextRepresentation)
         },
-      )
+      ),
+      plan.legs.zipWithIndex.map { case (routeLeg, idx) =>
+        div(
+          RouteLegElementViewOnly(
+            "Trip " + (idx + 1),
+            routeLeg,
+            db,
+          ),
+        )
+      },
+    )
 
   import com.raquo.laminar.api.L._
 
@@ -536,7 +536,11 @@ object Components {
             .classList
             .remove("is-clipped")
           componentData match {
-            case PlanViewer => TripViewerLaminar(initialTime, db, $selectedComponent.writer)
+            case PlanViewer =>
+              TripViewerLaminar(initialTime,
+                                db,
+                                $selectedComponent.writer,
+              )
             case TripPlannerComponent => planner
             case namedRoute: NamedRoute =>
               TopLevelRouteView(
@@ -762,24 +766,34 @@ object Components {
           else
             div(
               div("No saved plan"),
-              div(button(
-                cls := "button",
-                "Make a new plan",
-                onClick.mapTo(TripPlannerComponent) --> componentSelector,
-              )),
-              div(button(
-                cls := "button",
-                "View Northbound Schedule",
-                onClick.mapTo(RtaNorthbound.fullSchedule) --> componentSelector,
-              )),
               div(
-              button(
-                cls := "button",
-                "View Southbound Schedule",
-                onClick.mapTo(RtaSouthbound.fullSchedule) --> componentSelector,
+                button(
+                  cls := "button",
+                  "Make a new plan",
+                  onClick.mapTo(
+                    TripPlannerComponent,
+                  ) --> componentSelector,
+                ),
               ),
-              )
-            )
+              div(
+                button(
+                  cls := "button",
+                  "View Northbound Schedule",
+                  onClick.mapTo(
+                    RtaNorthbound.fullSchedule,
+                  ) --> componentSelector,
+                ),
+              ),
+              div(
+                button(
+                  cls := "button",
+                  "View Southbound Schedule",
+                  onClick.mapTo(
+                    RtaSouthbound.fullSchedule,
+                  ) --> componentSelector,
+                ),
+              ),
+            ),
         ),
       ),
     )
