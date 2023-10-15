@@ -387,20 +387,16 @@ object Components {
     plan: Plan,
     db: Var[Option[IDBDatabase]],
   ) =
-    if (plan.legs.nonEmpty)
       button(
         cls := "button",
         "Save Plan",
         onClick --> Persistence.saveDailyPlan(plan, db),
       )
-    else
-      div()
 
   def PlanElement(
     plan: Plan,
     db: Var[Option[IDBDatabase]],
   ) =
-    if (plan.legs.nonEmpty)
       div(
         button(
           cls := "button",
@@ -420,7 +416,6 @@ object Components {
           )
         },
       )
-    else div()
 
   import com.raquo.laminar.api.L._
 
@@ -541,7 +536,7 @@ object Components {
             .classList
             .remove("is-clipped")
           componentData match {
-            case PlanViewer => TripViewerLaminar(initialTime, db)
+            case PlanViewer => TripViewerLaminar(initialTime, db, $selectedComponent.writer)
             case TripPlannerComponent => planner
             case namedRoute: NamedRoute =>
               TopLevelRouteView(
@@ -743,6 +738,7 @@ object Components {
   def TripViewerLaminar(
     initialTime: WallTime,
     db: Var[Option[IDBDatabase]],
+    componentSelector: Observer[ComponentData],
   ) =
 
     val $plan = Var(Plan(Seq.empty))
@@ -750,16 +746,28 @@ object Components {
       onMountCallback(_ => Persistence.retrieveDailyPlan($plan, db)),
       child <-- $plan.signal.map(plan =>
         div(
-          Components.SavePlanButton(plan, db),
-          button(
-            cls := "button",
-            "Delete saved plan",
-            onClick --> Persistence.saveDailyPlan(
-              crestedbutte.Plan(Seq.empty),
-              db,
-            ),
-          ),
-          Components.PlanElement(plan, db),
+          if (plan.legs.nonEmpty)
+            div(
+              Components.SavePlanButton(plan, db),
+              button(
+                cls := "button",
+                "Delete saved plan",
+                onClick --> Persistence.saveDailyPlan(
+                  crestedbutte.Plan(Seq.empty),
+                  db,
+                ),
+              ),
+              Components.PlanElement(plan, db),
+            )
+          else
+            div(
+              div("No saved plan"),
+              button(
+                cls := "button",
+                "Make a new plan",
+                onClick.mapTo(TripPlannerComponent) --> componentSelector,
+              ),
+            )
         ),
       ),
     )
