@@ -25,8 +25,8 @@ object ServiceWorker {
 //    "/sw-opt.js",
 
     // TODO Restore these sometime soon?
-//    "/compiledJavascript/main.js",
-//    "/compiledJavascript/main.js.map",
+    "/compiledJavascript/main.js",
+    "/compiledJavascript/main.js.map",
 
     "/favicon.ico",
     "/images/BILLDING_LogoMark-256.png",
