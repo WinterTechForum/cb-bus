@@ -55,13 +55,11 @@ class Persistence(
   def retrieveDailyPlan(
     $plan: Var[Plan],
   ) =
-    println("Retrieving daily plan")
-    println("tripDb.now(): " + tripDb.now())
+    println("Retrieving daily plan: " + tripDb.now())
 
     tripDb
       .now()
       .foreach: tripDbLocal =>
-        println("non-null DB. Let's try and save")
         val transaction =
           tripDbLocal.transaction("dailyPlans",
                                   IDBTransactionMode.readwrite,
@@ -69,12 +67,10 @@ class Persistence(
         val objectStore = transaction.objectStore("dailyPlans")
         val request = objectStore.get("today")
         request.onsuccess = (db: IDBEvent[IDBValue]) => {
-          println("Retrieved item: " + db.target.result)
           val retrieved = db.target.result.toString.fromJson[Plan]
           $plan.set(
             retrieved.getOrElse(crestedbutte.Plan(Seq.empty)),
           )
-          println("Retrieved item: " + retrieved)
         }
 
   def updateDailyPlan(
@@ -103,43 +99,31 @@ class Persistence(
     plan: Plan,
   ) =
     Observer { _ =>
-      println("Saving daily plan")
-
       tripDb
         .now()
         .foreach: tripDbLocal =>
-          println("non-null DB. Let's try and save!")
           val transaction =
             tripDbLocal.transaction("dailyPlans",
                                     IDBTransactionMode.readwrite,
             )
-          println("Persistence A")
           val objectStore = transaction.objectStore("dailyPlans")
-          println("Persistence B")
           val request = objectStore.put(plan.toJson, "today")
-          println("Persistence C")
           request.onsuccess = (event: dom.Event) =>
-            println("Successfully added plan to dailyPlans!")
+            println("Successfully saved plan!")
 
     }
 
   def saveDailyPlanOnly(
     plan: Plan,
   ) =
-    println("Saving daily plan")
-
     tripDb
       .now()
       .foreach: tripDbLocal =>
-        println("non-null DB. Let's try and save!")
         val transaction =
           tripDbLocal.transaction("dailyPlans",
                                   IDBTransactionMode.readwrite,
           )
-        println("Persistence A")
         val objectStore = transaction.objectStore("dailyPlans")
-        println("Persistence B")
         val request = objectStore.put(plan.toJson, "today")
-        println("Persistence C")
         request.onsuccess = (event: dom.Event) =>
-          println("Successfully added plan to dailyPlans!")
+          println("Successfully saved plan!")
