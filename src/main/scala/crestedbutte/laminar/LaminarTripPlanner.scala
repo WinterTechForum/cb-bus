@@ -27,7 +27,9 @@ object LaminarTripPlanner {
       None,
     ) // TODO Give a real DB value to restore functionality
     val app = div(
-      LaminarTripPlanner.TripPlannerLaminar(WallTime("2:00 PM"), Persistence(db)),
+      LaminarTripPlanner.TripPlannerLaminar(WallTime("2:00 PM"),
+                                            Persistence(db),
+      ),
     )
     render(
       dom.document.getElementById(componentName.name),

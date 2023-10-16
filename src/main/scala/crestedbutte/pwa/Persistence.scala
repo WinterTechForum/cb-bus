@@ -29,8 +29,7 @@ import com.raquo.laminar.api.L._
 import zio.json._
 
 class Persistence(
-                   tripDb: Var[Option[IDBDatabase]],
-                 ):
+  tripDb: Var[Option[IDBDatabase]]):
 
   def createDb() =
     if (tripDb.now().isEmpty)
@@ -54,8 +53,8 @@ class Persistence(
         println("created object store")
 
   def retrieveDailyPlan(
-                         $plan: Var[Plan],
-                       ) =
+    $plan: Var[Plan],
+  ) =
     println("Retrieving daily plan")
     println("tripDb.now(): " + tripDb.now())
 
@@ -65,7 +64,7 @@ class Persistence(
         println("non-null DB. Let's try and save")
         val transaction =
           tripDbLocal.transaction("dailyPlans",
-            IDBTransactionMode.readwrite,
+                                  IDBTransactionMode.readwrite,
           )
         val objectStore = transaction.objectStore("dailyPlans")
         val request = objectStore.get("today")
@@ -78,16 +77,15 @@ class Persistence(
           println("Retrieved item: " + retrieved)
         }
 
-
   def updateDailyPlan(
-                       routeLeg: RouteLeg,
-                     ) =
+    routeLeg: RouteLeg,
+  ) =
     tripDb
       .now()
       .foreach: tripDbLocal =>
         val transaction =
           tripDbLocal.transaction("dailyPlans",
-            IDBTransactionMode.readwrite,
+                                  IDBTransactionMode.readwrite,
           )
         val objectStore = transaction.objectStore("dailyPlans")
         val request = objectStore.get("today")
@@ -102,8 +100,8 @@ class Persistence(
           println("Saved new plan: " + updatedPlan)
 
   def saveDailyPlan(
-                     plan: Plan,
-                   ) =
+    plan: Plan,
+  ) =
     Observer { _ =>
       println("Saving daily plan")
 
@@ -113,7 +111,7 @@ class Persistence(
           println("non-null DB. Let's try and save!")
           val transaction =
             tripDbLocal.transaction("dailyPlans",
-              IDBTransactionMode.readwrite,
+                                    IDBTransactionMode.readwrite,
             )
           println("Persistence A")
           val objectStore = transaction.objectStore("dailyPlans")
@@ -126,8 +124,8 @@ class Persistence(
     }
 
   def saveDailyPlanOnly(
-                         plan: Plan,
-                       ) =
+    plan: Plan,
+  ) =
     println("Saving daily plan")
 
     tripDb
@@ -136,7 +134,7 @@ class Persistence(
         println("non-null DB. Let's try and save!")
         val transaction =
           tripDbLocal.transaction("dailyPlans",
-            IDBTransactionMode.readwrite,
+                                  IDBTransactionMode.readwrite,
           )
         println("Persistence A")
         val objectStore = transaction.objectStore("dailyPlans")
