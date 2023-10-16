@@ -260,7 +260,7 @@ object Components {
 
   def RouteLegElementInteractive(
     routeLeg: RouteLeg,
-    db: Var[Option[IDBDatabase]],
+    db: Persistence,
     $active: Var[Boolean],
     $notifications: Observer[ReactiveHtmlElement[_]],
     componentSelector: Observer[ComponentData],
@@ -293,7 +293,7 @@ object Components {
             val plan = Plan(Seq(e))
             dom.window.navigator.clipboard
               .writeText(plan.plainTextRepresentation)
-            Persistence.updateDailyPlan(e, db)
+            db.updateDailyPlan(e)
             println("copy to buffer!: " + e)
             // TODO Activate notification
 
@@ -327,7 +327,7 @@ object Components {
   def RouteLegElementViewOnly(
     label: String,
     routeLeg: RouteLeg,
-    db: Var[Option[IDBDatabase]],
+    db: Persistence,
   ) =
     div(
       div(label),
@@ -385,17 +385,17 @@ object Components {
 
   def SavePlanButton(
     plan: Plan,
-    db: Var[Option[IDBDatabase]],
+    db: Persistence,
   ) =
     button(
       cls := "button",
       "Save Plan",
-      onClick --> Persistence.saveDailyPlan(plan, db),
+      onClick --> db.saveDailyPlan(plan),
     )
 
   def PlanElement(
     plan: Plan,
-    db: Var[Option[IDBDatabase]],
+    db: Persistence,
   ) =
     div(
       button(
@@ -424,9 +424,11 @@ object Components {
     initialComponent: Option[ComponentName],
     javaClock: Clock,
   ) = {
-    val db: Var[Option[IDBDatabase]] = Var(
+    val $db: Var[Option[IDBDatabase]] = Var(
       None,
     )
+
+    val db = Persistence($db)
 
     val clockTicks = new EventBus[Int]
 
@@ -482,7 +484,7 @@ object Components {
 
     div(
       onMountCallback: context =>
-        Persistence.createDb(db),
+        db.createDb(),
       Bulma.menu(selectedComponent, components),
       RepeatingElement()
         .repeatWithInterval( // This acts like a Dune thumper
@@ -504,7 +506,7 @@ object Components {
     timeStamps: Signal[WallTime],
     pageMode: AppMode,
     initialTime: WallTime,
-    db: Var[Option[IDBDatabase]],
+    db: Persistence,
   ) = {
     // TODO Turn this into a Signal. The EventBus should be contained within the Experimental/FeatureControlCenter
     val featureUpdates = new EventBus[FeatureStatus]
@@ -652,7 +654,7 @@ object Components {
     busScheduleAtStop: BusScheduleAtStop,
     $enabledFeatures: Signal[FeatureSets],
     namedRoute: NamedRoute,
-    db: Var[Option[IDBDatabase]],
+    db: Persistence,
     componentSelector: Observer[ComponentData],
   ) = {
     val modalActive = Var(false)
@@ -703,7 +705,7 @@ object Components {
     upcomingArrivalComponentData: UpcomingArrivalComponentData,
     $enabledFeatures: Signal[FeatureSets],
     gpsPosition: Var[Option[GpsCoordinates]],
-    db: Var[Option[IDBDatabase]],
+    db: Persistence,
     componentSelector: Observer[ComponentData],
   ) =
     div(
@@ -741,13 +743,13 @@ object Components {
 
   def TripViewerLaminar(
     initialTime: WallTime,
-    db: Var[Option[IDBDatabase]],
+    db: Persistence,
     componentSelector: Observer[ComponentData],
   ) =
 
     val $plan = Var(Plan(Seq.empty))
     div(
-      onMountCallback(_ => Persistence.retrieveDailyPlan($plan, db)),
+      onMountCallback(_ => db.retrieveDailyPlan($plan)),
       child <-- $plan.signal.map(plan =>
         div(
           if (plan.legs.nonEmpty)
@@ -756,9 +758,8 @@ object Components {
               button(
                 cls := "button",
                 "Delete saved plan",
-                onClick --> Persistence.saveDailyPlan(
+                onClick --> db.saveDailyPlan(
                   crestedbutte.Plan(Seq.empty),
-                  db,
                 ),
               ),
               Components.PlanElement(plan, db),

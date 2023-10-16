@@ -27,7 +27,7 @@ object LaminarTripPlanner {
       None,
     ) // TODO Give a real DB value to restore functionality
     val app = div(
-      LaminarTripPlanner.TripPlannerLaminar(WallTime("2:00 PM"), db),
+      LaminarTripPlanner.TripPlannerLaminar(WallTime("2:00 PM"), Persistence(db)),
     )
     render(
       dom.document.getElementById(componentName.name),
@@ -37,7 +37,7 @@ object LaminarTripPlanner {
 
   def TripPlannerLaminar(
     initialTime: WallTime,
-    db: Var[Option[IDBDatabase]],
+    db: Persistence,
   ) = {
     val routes =
       List(RtaNorthbound.fullSchedule, RtaSouthbound.fullSchedule)
@@ -103,7 +103,7 @@ object LaminarTripPlanner {
                 )
 
     div(
-      onMountCallback(_ => Persistence.retrieveDailyPlan($plan, db)),
+      onMountCallback(_ => db.retrieveDailyPlan($plan)),
       valuesDuringChangeZ --> submissionZ,
       $startingPoint.signal
         .combineWith($destination,
@@ -142,9 +142,8 @@ object LaminarTripPlanner {
           button(
             cls := "button",
             "Delete saved plan",
-            onClick --> Persistence.saveDailyPlan(
+            onClick --> db.saveDailyPlan(
               crestedbutte.Plan(Seq.empty),
-              db,
             ),
           ),
           Components.PlanElement(plan, db),

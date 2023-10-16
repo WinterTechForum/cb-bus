@@ -24,15 +24,15 @@ import org.scalajs.dom.{
   IDBTransactionMode,
   IDBValue,
 }
+import com.raquo.laminar.api.L._
 
-object Persistence:
-  import com.raquo.laminar.api.L._
+import zio.json._
 
-  import zio.json._
+class Persistence(
+                   tripDb: Var[Option[IDBDatabase]],
+                 ):
 
-  def createDb(
-    tripDb: Var[Option[IDBDatabase]],
-  ) =
+  def createDb() =
     if (tripDb.now().isEmpty)
       val dbRequest =
         window.indexedDB.get.open("CbBus", 6L)
@@ -53,16 +53,41 @@ object Persistence:
         tripDb.set(Some(db.target.result))
         println("created object store")
 
+  def retrieveDailyPlan(
+                         $plan: Var[Plan],
+                       ) =
+    println("Retrieving daily plan")
+    println("tripDb.now(): " + tripDb.now())
+
+    tripDb
+      .now()
+      .foreach: tripDbLocal =>
+        println("non-null DB. Let's try and save")
+        val transaction =
+          tripDbLocal.transaction("dailyPlans",
+            IDBTransactionMode.readwrite,
+          )
+        val objectStore = transaction.objectStore("dailyPlans")
+        val request = objectStore.get("today")
+        request.onsuccess = (db: IDBEvent[IDBValue]) => {
+          println("Retrieved item: " + db.target.result)
+          val retrieved = db.target.result.toString.fromJson[Plan]
+          $plan.set(
+            retrieved.getOrElse(crestedbutte.Plan(Seq.empty)),
+          )
+          println("Retrieved item: " + retrieved)
+        }
+
+
   def updateDailyPlan(
-    routeLeg: RouteLeg,
-    tripDb: Var[Option[IDBDatabase]],
-  ) =
+                       routeLeg: RouteLeg,
+                     ) =
     tripDb
       .now()
       .foreach: tripDbLocal =>
         val transaction =
           tripDbLocal.transaction("dailyPlans",
-                                  IDBTransactionMode.readwrite,
+            IDBTransactionMode.readwrite,
           )
         val objectStore = transaction.objectStore("dailyPlans")
         val request = objectStore.get("today")
@@ -70,16 +95,15 @@ object Persistence:
 
           val retrieved =
             dbEvent.target.result.toString.fromJson[Plan]
-          val plan = retrieved.getOrElse(???)
+          val plan = retrieved.getOrElse(Plan(Seq.empty))
           val updatedPlan = plan.copy(plan.legs :+ routeLeg)
           println("Successfully retrieved saved plan: " + plan)
-          saveDailyPlanOnly(updatedPlan, tripDb)
+          saveDailyPlanOnly(updatedPlan)
           println("Saved new plan: " + updatedPlan)
 
   def saveDailyPlan(
-    plan: Plan,
-    tripDb: Var[Option[IDBDatabase]],
-  ) =
+                     plan: Plan,
+                   ) =
     Observer { _ =>
       println("Saving daily plan")
 
@@ -89,7 +113,7 @@ object Persistence:
           println("non-null DB. Let's try and save!")
           val transaction =
             tripDbLocal.transaction("dailyPlans",
-                                    IDBTransactionMode.readwrite,
+              IDBTransactionMode.readwrite,
             )
           println("Persistence A")
           val objectStore = transaction.objectStore("dailyPlans")
@@ -102,9 +126,8 @@ object Persistence:
     }
 
   def saveDailyPlanOnly(
-    plan: Plan,
-    tripDb: Var[Option[IDBDatabase]],
-  ) =
+                         plan: Plan,
+                       ) =
     println("Saving daily plan")
 
     tripDb
@@ -113,7 +136,7 @@ object Persistence:
         println("non-null DB. Let's try and save!")
         val transaction =
           tripDbLocal.transaction("dailyPlans",
-                                  IDBTransactionMode.readwrite,
+            IDBTransactionMode.readwrite,
           )
         println("Persistence A")
         val objectStore = transaction.objectStore("dailyPlans")
@@ -122,29 +145,3 @@ object Persistence:
         println("Persistence C")
         request.onsuccess = (event: dom.Event) =>
           println("Successfully added plan to dailyPlans!")
-
-  def retrieveDailyPlan(
-    $plan: Var[Plan],
-    tripDb: Var[Option[IDBDatabase]],
-  ) =
-    println("Retrieving daily plan")
-    println("tripDb.now(): " + tripDb.now())
-
-    tripDb
-      .now()
-      .foreach: tripDbLocal =>
-        println("non-null DB. Let's try and save")
-        val transaction =
-          tripDbLocal.transaction("dailyPlans",
-                                  IDBTransactionMode.readwrite,
-          )
-        val objectStore = transaction.objectStore("dailyPlans")
-        val request = objectStore.get("today")
-        request.onsuccess = (db: IDBEvent[IDBValue]) => {
-          println("Retrieved item: " + db.target.result)
-          val retrieved = db.target.result.toString.fromJson[Plan]
-          $plan.set(
-            retrieved.getOrElse(crestedbutte.Plan(Seq.empty)),
-          )
-          println("Retrieved item: " + retrieved)
-        }

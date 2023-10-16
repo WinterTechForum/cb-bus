@@ -4,6 +4,7 @@ import crestedbutte.*
 import com.raquo.laminar.api.L.*
 import com.raquo.laminar.nodes.ReactiveHtmlElement
 import crestedbutte.laminar.{Components, Experimental}
+import crestedbutte.pwa.Persistence
 import org.scalajs.dom
 import org.scalajs.dom.IDBDatabase
 import org.scalajs.dom.experimental.Notification
@@ -45,7 +46,7 @@ object BulmaLocal {
     $active: Var[Boolean],
     $mode: Var[ModalMode],
     namedRoute: NamedRoute,
-    db: Var[Option[IDBDatabase]],
+    db: Persistence,
     componentSelector: Observer[ComponentData],
   ) =
     val notificationBus = EventBus[ReactiveHtmlElement[_]]()
