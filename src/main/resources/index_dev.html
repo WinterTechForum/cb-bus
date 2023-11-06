@@ -15,6 +15,11 @@
         OneSignalDeferred.push(function(OneSignal) {
             OneSignal.init({
                 appId: "71326ce8-7c5b-4e52-a993-cd32c0605ba9",
+                notifyButton: {
+                    enable: true
+                },
+                serviceWorkerParam: { scope: "/push/onesignal/myCustomScope/" },
+                serviceWorkerPath: "/push/onesignal/OneSignalSDKWorker.js",
             });
         });
     </script>
