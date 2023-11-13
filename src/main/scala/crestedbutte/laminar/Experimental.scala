@@ -61,21 +61,21 @@ object Experimental {
 
     val clickObserver = Observer[dom.MouseEvent](
       onNext = ev =>
-        if (Notification.permission == "default")
-          Notification.requestPermission(response =>
+        if (dom.Notification.permission == "default")
+          dom.Notification.requestPermission(response =>
             println(
               "Notification requestPermission response: " + response,
             ),
           )
-        else if (Notification.permission == "denied")
+        else if (dom.Notification.permission == "denied")
           println(
             "They denied permission to notifications. Give it up.",
           )
-        else if (Notification.permission == "granted")
+        else if (dom.Notification.permission == "granted")
           println("we already have permission.")
         else
           println(
-            "Uknown permission state: " + Notification.permission,
+            "Uknown permission state: " + dom.Notification.permission,
           ),
     )
 
@@ -149,7 +149,8 @@ object Experimental {
     )
     div(
       idAttr := "sandbox",
-      timeStamps.map(_ => getLocation($gpsPosition),
+      timeStamps.map(_ =>
+        getLocation($gpsPosition),
       ) --> $gpsPosition.writer,
       Components.FeatureControlCenter(featureUpdates.writer),
       button(
@@ -169,6 +170,7 @@ object Experimental {
         idAttr := ElementNames.Notifications.submitMessageToServiceWorker,
         cls := "button",
         "SubmitMessage to SW",
+        onClick --> Notifications.sendNotification,
       ),
       newTimePicker.component,
     )

@@ -20,11 +20,8 @@ object ServiceWorker {
   val todoAssets: js.Array[RequestInfo] = List[RequestInfo](
     "/",
     "/index.html",
-//    "/index_dev.html",
     "/manifest.webmanifest",
-//    "/sw-opt.js",
 
-    // TODO Restore these sometime soon?
     "/compiledJavascript/main.js",
     "/compiledJavascript/main.js.map",
 
@@ -56,7 +53,6 @@ object ServiceWorker {
         )
         println("Invalidating cache")
         invalidateCache() // TODO Do I need this at all?
-//      event.waitUntil(toCache().toJSPromise)
         self.clients.claim()
       }
     )
@@ -66,61 +62,19 @@ object ServiceWorker {
       "message",
       (event: MessageEvent) => {
 
-//        navigator.serviceWorker.getRegistration().`then`(registration => {
-//          registration.toOption.get.active.postMessage("Hello from the service worker!")
-//        }
-//        )
-
-        //        self.registration
-        //        self.registration.showNotification(
-        //          s"This is a notification from the service worker!",
-        //          NotificationOptions(
-        //            vibrate = js.Array(100d)
-        //          )
-        //        )
       }
     )
 
 
     self.addEventListener(
       "fetch",
-      (event: FetchEvent) => {
-//        println("Fetching: " + event.request.url)
+      (event: FetchEvent) =>
         event.respondWith(
           fromCache(event.request)
             .recoverWith{ case error => fetch(event.request).toFuture}
             .toJSPromise
         )
 
-        /*
-        if (event.request.cache == RequestCache.`only-if-cached`
-            && event.request.mode != RequestMode.`same-origin`) {
-          println(
-            s"fetch: Bug [823392] cache === only-if-cached && mode !== same-orgin' > ${event.request.url}"
-          )
-        } else {
-          fromCache(event.request).onComplete {
-            case Success(response) =>
-              println(s"fetch: in cache > ${event.request.url}")
-              response
-            case Failure(error) =>
-              println(
-                s"fetch: not in cache, calling server... > ${event.request.url} > ${error.printStackTrace()}"
-              )
-              fetch(event.request).toFuture
-                .onComplete {
-                  case Success(response) => response
-                  case Failure(finalError) =>
-                    println(
-                      s"fetch: final fetch failed > ${finalError.printStackTrace()}"
-                    )
-                }
-          }
-          3
-        }
-
-         */
-      }
     )
 
     println("main: ServiceWorker installing...")
@@ -139,8 +93,6 @@ object ServiceWorker {
       .toFuture
         .flatMap {
           case response: Response =>
-//            if ( request.url.contains("index"))
-//            println(s"fromCache: matched request > ${request.url}")
             Future.successful(response)
           case other =>
             println(s"fromCache: missed request > ${request.url}")
@@ -148,18 +100,15 @@ object ServiceWorker {
         }
       ).get
 
-  def invalidateCache(): Unit = {
+  def invalidateCache(): Unit =
     self.caches
       .map(_.delete(busCache)
       .toFuture
       .map { invalidatedCache =>
         if (invalidatedCache) {
-//          println(
-//            s"invalidateCache: cache invalidated!', $invalidatedCache"
-//          )
           toCache()
         }
       }
     ).get
-  }
+
 }

@@ -5,6 +5,7 @@ import crestedbutte.Browser.Browser
 import crestedbutte.laminar.{AppMode, Components}
 import org.scalajs.dom
 import org.scalajs.dom.experimental.serviceworkers._
+import org.scalajs.dom.ServiceWorkerRegistrationOptions
 import urldsl.errors.DummyError
 import urldsl.language.QueryParameters
 import zio.{ZIO, ZLayer}
@@ -14,8 +15,6 @@ import scala.util.{Failure, Success}
 import zio.ZIOAppDefault
 
 object MyApp extends ZIOAppDefault {
-  TimePicker
-
   override def run = {
     val myEnvironment =
       ZLayer.succeed(BrowserLive.browser)
@@ -47,7 +46,12 @@ object MyApp extends ZIOAppDefault {
           browser.window().navigator,
         ).serviceWorker
 
-        println("Deleting old serviceWorkers")
+        serviceWorker.register(
+          "./push/onesignal/OneSignalSDKWorker.js",
+          new ServiceWorkerRegistrationOptions {
+            scope = "/push/onesignal/myCustomScope"
+          },
+        )
 
         serviceWorker
           .register("./sw-opt.js")
@@ -55,27 +59,13 @@ object MyApp extends ZIOAppDefault {
           .onComplete {
             case Success(registration) =>
               println("Registered SW: " + registration.scope)
-              registration.update()
+              registration.update() // TODO When do I need this?
+
             case Failure(error) =>
               println(
                 s"registerServiceWorker: service worker registration failed > ${error.printStackTrace()}",
               )
           }
-
-//        toServiceWorkerNavigator(
-//          browser.window().navigator,
-//        ).serviceWorker
-//          .register("./sw-opt.js")
-//          .toFuture
-//          .onComplete {
-//            case Success(registration) =>
-//              println("Registered SW: " + registration.scope)
-//              registration.update()
-//            case Failure(error) =>
-//              println(
-//                s"registerServiceWorker: service worker registration failed > ${error.printStackTrace()}",
-//              )
-//          }
 
       }
 

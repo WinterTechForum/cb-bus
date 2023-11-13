@@ -38,9 +38,8 @@ object Components {
   ) =
     button(
       idAttr := "Get position",
-      onClick --> Observer[dom.MouseEvent](
-        onNext = ev => getLocation(gpsPosition),
-      ),
+      onClick --> Observer[dom.MouseEvent]: ev =>
+        getLocation(gpsPosition),
       "Get GPS coords",
     )
 
@@ -135,13 +134,13 @@ object Components {
       label,
       child <--
         $currentRoute.signal
-          .map(_.allStops)
-          .map(route =>
+          .map:
+            _.allStops
+          .map: route =>
             Selector(
               route,
               $selection,
             ),
-          ),
     )
 
   case class SelectValue(
@@ -157,9 +156,8 @@ object Components {
 
     val valueMap: Map[SelectValue, T] =
       route
-        .map(selectValue =>
-          (converterThatCouldBeATypeClass(selectValue), selectValue),
-        )
+        .map: selectValue =>
+          (converterThatCouldBeATypeClass(selectValue), selectValue)
         .toMap
     val selectValues = route.map(converterThatCouldBeATypeClass)
     span(
@@ -167,12 +165,12 @@ object Components {
       select(
         inContext { thisNode =>
           onChange
-            .mapTo(thisNode.ref.value)
-            .map(uniqueValue =>
+            .mapTo:
+              thisNode.ref.value
+            .map: uniqueValue =>
               selectValues
                 .find(_.uniqueValue == uniqueValue)
-                .get,
-            )
+                .get
             .map(
               valueMap.getOrElse(_,
                                  throw new RuntimeException(
@@ -296,11 +294,6 @@ object Components {
             db.updateDailyPlan(e)
             println("copy to buffer!: " + e)
             // TODO Activate notification
-
-//              org.scalajs.dom.document
-//                .querySelector("html")
-//                .classList
-//                .remove("is-clipped")
             true // keep modal open
           } --> $active,
         routeLeg.stops.tail.map(stop =>

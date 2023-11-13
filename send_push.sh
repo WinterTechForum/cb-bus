@@ -10,8 +10,8 @@ curl --request POST \
     "Total Subscriptions"
   ],
   "contents": {
-    "en": "Generated from command line",
-    "es": "Generated from command line in Spanish"
+    "en": "Generated from command line script",
+    "es": "Generated from command line script in Spanish"
   },
   "name": "INTERNAL_CAMPAIGN_NAME"
 }

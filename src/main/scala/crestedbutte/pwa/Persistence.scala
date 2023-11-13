@@ -108,8 +108,8 @@ class Persistence(
             )
           val objectStore = transaction.objectStore("dailyPlans")
           val request = objectStore.put(plan.toJson, "today")
-          request.onsuccess = (event: dom.Event) =>
-            println("Successfully saved plan!")
+          request.onsuccess =
+            (event: dom.Event) => println("Successfully saved plan!")
 
     }
 
@@ -125,5 +125,5 @@ class Persistence(
           )
         val objectStore = transaction.objectStore("dailyPlans")
         val request = objectStore.put(plan.toJson, "today")
-        request.onsuccess = (event: dom.Event) =>
-          println("Successfully saved plan!")
+        request.onsuccess =
+          (event: dom.Event) => println("Successfully saved plan!")
