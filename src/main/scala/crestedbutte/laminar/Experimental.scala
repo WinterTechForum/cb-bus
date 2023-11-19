@@ -166,12 +166,6 @@ object Experimental {
         "Request Notifications Permission",
         onClick --> Notifications.clickObserver,
       ),
-      button(
-        idAttr := ElementNames.Notifications.submitMessageToServiceWorker,
-        cls := "button",
-        "SubmitMessage to SW",
-        onClick --> Notifications.sendNotification,
-      ),
       newTimePicker.component,
     )
   }

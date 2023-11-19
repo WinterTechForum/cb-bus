@@ -122,72 +122,74 @@ object Components {
       alt := "Thanks for riding the bus!",
     )
 
-  implicit val location2selectorValue: Location => SelectValue =
-    (location: Location) => SelectValue(location.name, location.name)
-
   def StopSelector(
     label: String,
     $selection: Var[Location],
     $currentRoute: Var[NamedRoute],
   ) =
-    div(
-      label,
-      child <--
-        $currentRoute.signal
-          .map:
-            _.allStops
-          .map: route =>
-            Selector(
-              route,
-              $selection,
+
+    case class SelectValue(
+                              uniqueValue: String,
+                              humanFriendlyName: String)
+
+    implicit val location2selectorValue: Location => SelectValue =
+      (location: Location) => SelectValue(location.name, location.name)
+
+
+    // TODO Lot of ugly code to work through in this method
+    def Selector[T](
+                     route: Seq[T],
+                     stopSelection: Var[T],
+                   )(implicit converterThatCouldBeATypeClass: T => SelectValue,
+                   ) = {
+
+      val valueMap: Map[SelectValue, T] =
+        route
+          .map: selectValue =>
+            (converterThatCouldBeATypeClass(selectValue), selectValue)
+          .toMap
+      val selectValues = route.map(converterThatCouldBeATypeClass)
+      span(
+        cls := "select is-rounded",
+        select(
+          inContext { thisNode =>
+            onChange
+              .mapTo:
+                thisNode.ref.value
+              .map: uniqueValue =>
+                selectValues
+                  .find(_.uniqueValue == uniqueValue)
+                  .get
+              .map(
+                valueMap.getOrElse(_,
+                  throw new RuntimeException(
+                    "can't find the value!",
+                  ),
+                ),
+              ) --> stopSelection.writer
+          },
+          selectValues.map(stop =>
+            option(selected := valueMap(stop) == stopSelection.now(),
+              value(stop.uniqueValue),
+              stop.humanFriendlyName,
             ),
-    )
-
-  case class SelectValue(
-    uniqueValue: String,
-    humanFriendlyName: String)
-
-  // TODO Lot of ugly code to work through in this method
-  def Selector[T](
-    route: Seq[T],
-    stopSelection: Var[T],
-  )(implicit converterThatCouldBeATypeClass: T => SelectValue,
-  ) = {
-
-    val valueMap: Map[SelectValue, T] =
-      route
-        .map: selectValue =>
-          (converterThatCouldBeATypeClass(selectValue), selectValue)
-        .toMap
-    val selectValues = route.map(converterThatCouldBeATypeClass)
-    span(
-      cls := "select is-rounded",
-      select(
-        inContext { thisNode =>
-          onChange
-            .mapTo:
-              thisNode.ref.value
-            .map: uniqueValue =>
-              selectValues
-                .find(_.uniqueValue == uniqueValue)
-                .get
-            .map(
-              valueMap.getOrElse(_,
-                                 throw new RuntimeException(
-                                   "can't find the value!",
-                                 ),
-              ),
-            ) --> stopSelection.writer
-        },
-        selectValues.map(stop =>
-          option(selected := valueMap(stop) == stopSelection.now(),
-                 value(stop.uniqueValue),
-                 stop.humanFriendlyName,
           ),
         ),
-      ),
-    )
-  }
+      )
+    }
+
+    div(
+        label,
+        child <--
+          $currentRoute.signal
+            .map:
+              _.allStops
+            .map: route =>
+              Selector(
+                route,
+                $selection,
+              ),
+      )
 
   def RouteSelector(
     $currentRoute: Var[NamedRoute],
