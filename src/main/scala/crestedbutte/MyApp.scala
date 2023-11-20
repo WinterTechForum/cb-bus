@@ -192,6 +192,8 @@ object RoutingStuff {
       ),
     )
 
+  // TODO:
+  //    router.currentPageSignal.combineWith(Future.ofCurrentDailyPlanQueryResult)
   private val splitter =
     SplitRender[BusPage, HtmlElement](router.currentPageSignal)
       .collectSignal[BusPage](renderMyPage)

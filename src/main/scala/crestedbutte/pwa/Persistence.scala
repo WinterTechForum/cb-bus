@@ -72,6 +72,20 @@ class Persistence(
             retrieved.getOrElse(crestedbutte.Plan(Seq.empty)),
           )
         }
+        
+  def hasATripPlanned =
+    tripDb
+      .now()
+      .foreach(
+        tripDbLocal =>
+          val transaction =
+            tripDbLocal.transaction("dailyPlans",
+              IDBTransactionMode.readwrite,
+            )
+          val objectStore = transaction.objectStore("dailyPlans")
+          val request = objectStore.get("today")
+        
+      )
 
   def updateDailyPlan(
     routeLeg: RouteLeg,

@@ -5,32 +5,22 @@ import crestedbutte.*
 import crestedbutte.routes.{RtaNorthbound, RtaSouthbound}
 import org.scalajs.dom
 import crestedbutte.laminar.Experimental.getLocation
-
 import crestedbutte.pwa.Persistence
 import com.billding.time.{MinuteDuration, WallTime}
 import com.raquo.laminar.nodes.ReactiveHtmlElement
 import crestedbutte.NotificationStuff.desiredAlarms
 import crestedbutte.*
 import crestedbutte.dom.BulmaLocal
-import crestedbutte.routes.{
-  AllRoutes,
-  RtaSouthbound,
-  SpringFallLoop,
-  TownShuttleTimes,
-}
+import crestedbutte.routes.{AllRoutes, RtaSouthbound, SpringFallLoop, TownShuttleTimes}
 import org.scalajs.dom
 
 import java.time.format.{DateTimeFormatter, FormatStyle}
 import java.time.{Clock, OffsetDateTime}
 import scala.concurrent.duration.FiniteDuration
 import crestedbutte.dom.BulmaLocal.ModalMode
-import org.scalajs.dom.{
-  window,
-  IDBDatabase,
-  IDBEvent,
-  IDBTransactionMode,
-  IDBValue,
-}
+import org.scalajs.dom.{IDBDatabase, IDBEvent, IDBTransactionMode, IDBValue, window}
+
+import scala.util.Failure
 
 object Components {
   def GPS(
@@ -41,24 +31,6 @@ object Components {
       onClick --> Observer[dom.MouseEvent]: ev =>
         getLocation(gpsPosition),
       "Get GPS coords",
-    )
-
-  def distanceFromCurrentLocationToStop(
-    gpsPosition: Signal[Option[GpsCoordinates]],
-    location: Location,
-  ) =
-    gpsPosition.map(
-      _.flatMap(userCords =>
-        location.gpsCoordinates.map(stopCoords =>
-          div(
-            GpsCalculations
-              .distanceInKmBetweenEarthCoordinatesT(
-                userCords,
-                stopCoords,
-              ),
-          ),
-        ),
-      ).getOrElse(div()),
     )
 
   def FeatureControlCenter(
@@ -122,63 +94,65 @@ object Components {
       alt := "Thanks for riding the bus!",
     )
 
-  def StopSelector(
-    label: String,
-    $selection: Var[Location],
-    $currentRoute: Var[NamedRoute],
-  ) =
-
+  object StopSelector:
     case class SelectValue(
-                              uniqueValue: String,
-                              humanFriendlyName: String)
+                            uniqueValue: String,
+                            humanFriendlyName: String)
 
     implicit val location2selectorValue: Location => SelectValue =
       (location: Location) => SelectValue(location.name, location.name)
 
 
-    // TODO Lot of ugly code to work through in this method
-    def Selector[T](
-                     route: Seq[T],
-                     stopSelection: Var[T],
-                   )(implicit converterThatCouldBeATypeClass: T => SelectValue,
-                   ) = {
+    def apply(
+      label: String,
+      $selection: Var[Location],
+      $currentRoute: Var[NamedRoute],
+    ) = {
 
-      val valueMap: Map[SelectValue, T] =
-        route
-          .map: selectValue =>
-            (converterThatCouldBeATypeClass(selectValue), selectValue)
-          .toMap
-      val selectValues = route.map(converterThatCouldBeATypeClass)
-      span(
-        cls := "select is-rounded",
-        select(
-          inContext { thisNode =>
-            onChange
-              .mapTo:
-                thisNode.ref.value
-              .map: uniqueValue =>
-                selectValues
-                  .find(_.uniqueValue == uniqueValue)
-                  .get
-              .map(
-                valueMap.getOrElse(_,
-                  throw new RuntimeException(
-                    "can't find the value!",
+
+      // TODO Lot of ugly code to work through in this method
+      def Selector[T](
+                       route: Seq[T],
+                       stopSelection: Var[T],
+                     )(implicit converterThatCouldBeATypeClass: T => SelectValue,
+                     ) = {
+
+        val valueMap: Map[SelectValue, T] =
+          route
+            .map: selectValue =>
+              (converterThatCouldBeATypeClass(selectValue), selectValue)
+            .toMap
+        val selectValues = route.map(converterThatCouldBeATypeClass)
+        span(
+          cls := "select is-rounded",
+          select(
+            inContext { thisNode =>
+              onChange
+                .mapTo:
+                  thisNode.ref.value
+                .map: uniqueValue =>
+                  selectValues
+                    .find(_.uniqueValue == uniqueValue)
+                    .get
+                .map(
+                  valueMap.getOrElse(_,
+                    throw new RuntimeException(
+                      "can't find the value!",
+                    ),
                   ),
-                ),
-              ) --> stopSelection.writer
-          },
-          selectValues.map(stop =>
-            option(selected := valueMap(stop) == stopSelection.now(),
-              value(stop.uniqueValue),
-              stop.humanFriendlyName,
+                ) --> stopSelection.writer
+            },
+            selectValues.map(stop =>
+              option(selected := valueMap(stop) == stopSelection.now(),
+                value(stop.uniqueValue),
+                stop.humanFriendlyName,
+              ),
             ),
           ),
-        ),
-      )
-    }
+        )
+      }
 
-    div(
+      div(
         label,
         child <--
           $currentRoute.signal
@@ -190,6 +164,7 @@ object Components {
                 $selection,
               ),
       )
+    }
 
   def RouteSelector(
     $currentRoute: Var[NamedRoute],
@@ -273,7 +248,7 @@ object Components {
               location,
               busTime,
             ) =>
-          createBusTimeElementOnLeg(
+          UpcomingStopInfo(
             location,
             div(
               busTime.toDumbAmericanString,
@@ -299,7 +274,7 @@ object Components {
             true // keep modal open
           } --> $active,
         routeLeg.stops.tail.map(stop =>
-          createBusTimeElementOnLeg(
+          UpcomingStopInfo(
             stop.location,
             div(
               span(
@@ -313,25 +288,6 @@ object Components {
                   ) --> clickBus,
                 "+",
               ),
-            ),
-          ),
-        ),
-      ),
-    )
-
-  def RouteLegElementViewOnly(
-    label: String,
-    routeLeg: RouteLeg,
-    db: Persistence,
-  ) =
-    div(
-      div(label),
-      div(
-        routeLeg.stops.map(stop =>
-          createBusTimeElementOnLeg(
-            stop.location,
-            div(
-              stop.busTime.toDumbAmericanString,
             ),
           ),
         ),
@@ -362,7 +318,7 @@ object Components {
           routeLeg.stops.head,
           routeLeg.stops.last,
         ).map: stop =>
-          createBusTimeElementOnLeg(
+          UpcomingStopInfo(
             stop.location,
             div:
               stop.busTime.toDumbAmericanString,
@@ -392,6 +348,25 @@ object Components {
     plan: Plan,
     db: Persistence,
   ) =
+    def RouteLegElementViewOnly(
+                                 label: String,
+                                 routeLeg: RouteLeg,
+                                 db: Persistence,
+                               ) =
+      div(
+        div(label),
+        div(
+          routeLeg.stops.map(stop =>
+            UpcomingStopInfo(
+              stop.location,
+              div(
+                stop.busTime.toDumbAmericanString,
+              ),
+            ),
+          ),
+        ),
+      )
+
     div(
       button(
         cls := "button",
@@ -584,26 +559,36 @@ object Components {
     )
   }
 
-  def renderWaitTime(
-    duration: MinuteDuration,
-  ) =
-    if (duration.toMinutes == 0)
-      "Leaving!"
-    else
-      duration.toMinutes + " min."
-
   def GeoBits(
     $mapLinksEnabled: Signal[Boolean],
     location: Location,
     $gpsPosition: Signal[Option[GpsCoordinates]],
-  ) =
+  ) = {
+    def distanceFromCurrentLocationToStop(
+                                           gpsPosition: Signal[Option[GpsCoordinates]],
+                                           location: Location,
+                                         ) =
+      gpsPosition.map(
+        _.flatMap(userCords =>
+          location.gpsCoordinates.map(stopCoords =>
+            div(
+              GpsCalculations
+                .distanceInKmBetweenEarthCoordinatesT(
+                  userCords,
+                  stopCoords,
+                ),
+            ),
+          ),
+        ).getOrElse(div()),
+      )
+
     div(
       child <-- $mapLinksEnabled.map(mapLinksEnabled =>
         if (mapLinksEnabled)
           div(
             cls := "map-link",
-            child <-- Components
-              .distanceFromCurrentLocationToStop($gpsPosition,
+            child <--
+              distanceFromCurrentLocationToStop($gpsPosition,
                                                  location,
               ),
             location.gpsCoordinates.map(Components.GeoLink),
@@ -612,33 +597,22 @@ object Components {
           div(),
       ),
     )
+  }
 
-  def createBusTimeElement(
+  def UpcomingStopInfo(
     location: Location,
     content: ReactiveHtmlElement[_],
-    $mapLinksEnabled: Signal[Boolean],
+    $mapLinksEnabled: Signal[Boolean] = Signal.fromValue(false),
+    // TODO Should this be an `Option[Signal[GpsCoordinates]` instead?
     $gpsPosition: Signal[
       Option[GpsCoordinates],
-    ], // TODO Should this be an `Option[Signal[GpsCoordinates]` instead?
+    ] = Signal.fromValue(None),
     /* TODO: waitDuration: Duration*/
   ) =
     div(
       width := "100%",
       cls := "stop-information",
       GeoBits($mapLinksEnabled, location, $gpsPosition),
-      div(cls := "stop-name", div(location.name)),
-      div(cls := "stop-alt-name", div(location.altName)),
-      div(cls := "upcoming-information", content),
-    )
-
-  // TODO Dedup with above
-  def createBusTimeElementOnLeg(
-    location: Location,
-    content: ReactiveHtmlElement[_],
-  ) =
-    div(
-      width := "100%",
-      cls := "stop-information",
       div(cls := "stop-name", div(location.name)),
       div(cls := "stop-alt-name", div(location.altName)),
       div(cls := "upcoming-information", content),
@@ -652,6 +626,15 @@ object Components {
     db: Persistence,
     componentSelector: Observer[ComponentData],
   ) = {
+
+    def renderWaitTime(
+                        duration: MinuteDuration,
+                      ) =
+      if (duration.toMinutes == 0)
+        "Leaving!"
+      else
+        duration.toMinutes + " min."
+
     val modalActive = Var(false)
     val modalMode: Var[ModalMode] = Var(ModalMode.UpcomingStops)
     div(
@@ -684,18 +667,6 @@ object Components {
     )
   }
 
-  def RouteHeader(
-    routeName: ComponentName,
-  ) =
-    div(
-      cls := "route-header",
-      span(
-        cls := "route-header_name",
-        routeName.userFriendlyName + " Departures",
-      ),
-      Components.SvgIcon("glyphicons-basic-32-bus.svg"),
-    )
-
   def TopLevelRouteView(
     upcomingArrivalComponentData: UpcomingArrivalComponentData,
     $enabledFeatures: Signal[FeatureSets],
@@ -703,6 +674,19 @@ object Components {
     db: Persistence,
     componentSelector: Observer[ComponentData],
   ) =
+
+    def RouteHeader(
+                     routeName: ComponentName,
+                   ) =
+      div(
+        cls := "route-header",
+        span(
+          cls := "route-header_name",
+          routeName.userFriendlyName + " Departures",
+        ),
+        Components.SvgIcon("glyphicons-basic-32-bus.svg"),
+      )
+
     div(
       RouteHeader(upcomingArrivalComponentData.routeName),
       upcomingArrivalComponentData.upcomingArrivalInfoForAllRoutes
@@ -712,7 +696,7 @@ object Components {
                 fullScheduleAtStop,
                 namedRoute,
               ) =>
-            createBusTimeElement(
+            UpcomingStopInfo(
               location,
               content match {
                 case Left(stopTimeInfo) =>
