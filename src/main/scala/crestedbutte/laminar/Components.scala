@@ -387,7 +387,7 @@ object Components {
               )
             case TripPlannerComponent => planner
             case namedRoute: NamedRoute =>
-              TopLevelRouteView(
+              TopLevelRoute(
                 TimeCalculations
                   .getUpComingArrivalsWithFullScheduleNonZio(
                     timestamp,
@@ -431,77 +431,135 @@ object Components {
     )
   }
 
-  def GeoBits(
-    $mapLinksEnabled: Signal[Boolean],
-    location: Location,
-    $gpsPosition: Signal[Option[GpsCoordinates]],
-  ) = {
-    def distanceFromCurrentLocationToStop(
-      gpsPosition: Signal[Option[GpsCoordinates]],
-      location: Location,
-    ) =
-      gpsPosition.map(
-        _.flatMap(userCords =>
-          location.gpsCoordinates.map(stopCoords =>
-            div(
-              GpsCalculations
-                .distanceInKmBetweenEarthCoordinatesT(
-                  userCords,
-                  stopCoords,
-                ),
-            ),
-          ),
-        ).getOrElse(div()),
+  object UpcomingStopInfo {
+    def apply(
+                          location: Location,
+                          content: ReactiveHtmlElement[_],
+                          $mapLinksEnabled: Signal[Boolean] = Signal.fromValue(false),
+                          // TODO Should this be an `Option[Signal[GpsCoordinates]` instead?
+                          $gpsPosition: Signal[
+                            Option[GpsCoordinates],
+                          ] = Signal.fromValue(None),
+                          /* TODO: waitDuration: Duration*/
+                        ) =
+      div(
+        width := "100%",
+        cls := "stop-information",
+        GeoBits($mapLinksEnabled, location, $gpsPosition),
+        div(cls := "stop-name", div(location.name)),
+        div(cls := "stop-alt-name", div(location.altName)),
+        div(cls := "upcoming-information", content),
       )
 
-    div(
-      child <-- $mapLinksEnabled.map(mapLinksEnabled =>
-        if (mapLinksEnabled)
-          div(
-            cls := "map-link",
-            child <--
-              distanceFromCurrentLocationToStop($gpsPosition,
-                                                location,
+    private def GeoBits(
+                 $mapLinksEnabled: Signal[Boolean],
+                 location: Location,
+                 $gpsPosition: Signal[Option[GpsCoordinates]],
+               ) = {
+      def distanceFromCurrentLocationToStop(
+                                             gpsPosition: Signal[Option[GpsCoordinates]],
+                                             location: Location,
+                                           ) =
+        gpsPosition.map(
+          _.flatMap(userCords =>
+            location.gpsCoordinates.map(stopCoords =>
+              div(
+                GpsCalculations
+                  .distanceInKmBetweenEarthCoordinatesT(
+                    userCords,
+                    stopCoords,
+                  ),
               ),
-            location.gpsCoordinates.map(Components.GeoLink),
-          )
-        else
-          div(),
-      ),
-    )
+            ),
+          ).getOrElse(div()),
+        )
+
+      div(
+        child <-- $mapLinksEnabled.map(mapLinksEnabled =>
+          if (mapLinksEnabled)
+            div(
+              cls := "map-link",
+              child <--
+                distanceFromCurrentLocationToStop($gpsPosition,
+                  location,
+                ),
+              location.gpsCoordinates.map(Components.GeoLink),
+            )
+          else
+            div(),
+        ),
+      )
+    }
+
   }
 
-  def UpcomingStopInfo(
-    location: Location,
-    content: ReactiveHtmlElement[_],
-    $mapLinksEnabled: Signal[Boolean] = Signal.fromValue(false),
-    // TODO Should this be an `Option[Signal[GpsCoordinates]` instead?
-    $gpsPosition: Signal[
-      Option[GpsCoordinates],
-    ] = Signal.fromValue(None),
-    /* TODO: waitDuration: Duration*/
-  ) =
-    div(
-      width := "100%",
-      cls := "stop-information",
-      GeoBits($mapLinksEnabled, location, $gpsPosition),
-      div(cls := "stop-name", div(location.name)),
-      div(cls := "stop-alt-name", div(location.altName)),
-      div(cls := "upcoming-information", content),
-    )
 
-  def StopTimeInfoForLocation(
-    stopTimeInfo: StopTimeInfo,
-    busScheduleAtStop: BusScheduleAtStop,
-    $enabledFeatures: Signal[FeatureSets],
-    namedRoute: NamedRoute,
-    db: Persistence,
-    componentSelector: Observer[ComponentData],
-  ) = {
+  object TopLevelRoute {
+    def apply(
+                           upcomingArrivalComponentData: UpcomingArrivalComponentData,
+                           $enabledFeatures: Signal[FeatureSets],
+                           gpsPosition: Var[Option[GpsCoordinates]],
+                           db: Persistence,
+                           componentSelector: Observer[ComponentData],
+                         ) =
+
+      def RouteHeader(
+                       routeName: ComponentName,
+                     ) =
+        div(
+          cls := "route-header",
+          span(
+            cls := "route-header_name",
+            routeName.userFriendlyName + " Departures",
+          ),
+          Components.SvgIcon("glyphicons-basic-32-bus.svg"),
+        )
+
+      div(
+        RouteHeader(upcomingArrivalComponentData.routeName),
+        upcomingArrivalComponentData.upcomingArrivalInfoForAllRoutes
+          .map {
+            case UpcomingArrivalInfoWithFullSchedule(
+            UpcomingArrivalInfo(location, content),
+            fullScheduleAtStop,
+            namedRoute,
+            ) =>
+              UpcomingStopInfo(
+                location,
+                content match {
+                  case Left(stopTimeInfo) =>
+                    StopTimeInfoForLocation(
+                      stopTimeInfo,
+                      fullScheduleAtStop,
+                      $enabledFeatures,
+                      namedRoute,
+                      db,
+                      componentSelector,
+                    )
+                  case Right(safeRideRecommendation) =>
+                    Components.SafeRideLink(safeRideRecommendation)
+                },
+                $enabledFeatures.map(
+                  //                _.isEnabled(Feature.MapLinks),
+                  _ => true, // Maps always enabled now
+                ),
+                gpsPosition.signal,
+              )
+          },
+      )
+
+    def StopTimeInfoForLocation(
+                               stopTimeInfo: StopTimeInfo,
+                               busScheduleAtStop: BusScheduleAtStop,
+                               $enabledFeatures: Signal[FeatureSets],
+                               namedRoute: NamedRoute,
+                               db: Persistence,
+                               componentSelector: Observer[ComponentData],
+                             ) = {
 
     def renderWaitTime(
-      duration: MinuteDuration,
-    ) =
+                        duration: MinuteDuration,
+                      ) =
       if (duration.toMinutes == 0)
         "Leaving!"
       else
@@ -538,59 +596,7 @@ object Components {
       ),
     )
   }
-
-  def TopLevelRouteView(
-    upcomingArrivalComponentData: UpcomingArrivalComponentData,
-    $enabledFeatures: Signal[FeatureSets],
-    gpsPosition: Var[Option[GpsCoordinates]],
-    db: Persistence,
-    componentSelector: Observer[ComponentData],
-  ) =
-
-    def RouteHeader(
-      routeName: ComponentName,
-    ) =
-      div(
-        cls := "route-header",
-        span(
-          cls := "route-header_name",
-          routeName.userFriendlyName + " Departures",
-        ),
-        Components.SvgIcon("glyphicons-basic-32-bus.svg"),
-      )
-
-    div(
-      RouteHeader(upcomingArrivalComponentData.routeName),
-      upcomingArrivalComponentData.upcomingArrivalInfoForAllRoutes
-        .map {
-          case UpcomingArrivalInfoWithFullSchedule(
-                UpcomingArrivalInfo(location, content),
-                fullScheduleAtStop,
-                namedRoute,
-              ) =>
-            UpcomingStopInfo(
-              location,
-              content match {
-                case Left(stopTimeInfo) =>
-                  StopTimeInfoForLocation(
-                    stopTimeInfo,
-                    fullScheduleAtStop,
-                    $enabledFeatures,
-                    namedRoute,
-                    db,
-                    componentSelector,
-                  )
-                case Right(safeRideRecommendation) =>
-                  Components.SafeRideLink(safeRideRecommendation)
-              },
-              $enabledFeatures.map(
-                //                _.isEnabled(Feature.MapLinks),
-                _ => true, // Maps always enabled now
-              ),
-              gpsPosition.signal,
-            )
-        },
-    )
+  }
 
   def TripViewerLaminar(
     initialTime: WallTime,
