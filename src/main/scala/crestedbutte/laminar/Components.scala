@@ -11,14 +11,25 @@ import com.raquo.laminar.nodes.ReactiveHtmlElement
 import crestedbutte.NotificationStuff.desiredAlarms
 import crestedbutte.*
 import crestedbutte.dom.BulmaLocal
-import crestedbutte.routes.{AllRoutes, RtaSouthbound, SpringFallLoop, TownShuttleTimes}
+import crestedbutte.routes.{
+  AllRoutes,
+  RtaSouthbound,
+  SpringFallLoop,
+  TownShuttleTimes,
+}
 import org.scalajs.dom
 
 import java.time.format.{DateTimeFormatter, FormatStyle}
 import java.time.{Clock, OffsetDateTime}
 import scala.concurrent.duration.FiniteDuration
 import crestedbutte.dom.BulmaLocal.ModalMode
-import org.scalajs.dom.{IDBDatabase, IDBEvent, IDBTransactionMode, IDBValue, window}
+import org.scalajs.dom.{
+  window,
+  IDBDatabase,
+  IDBEvent,
+  IDBTransactionMode,
+  IDBValue,
+}
 
 import scala.util.Failure
 
@@ -96,12 +107,12 @@ object Components {
 
   object StopSelector:
     case class SelectValue(
-                            uniqueValue: String,
-                            humanFriendlyName: String)
+      uniqueValue: String,
+      humanFriendlyName: String)
 
     implicit val location2selectorValue: Location => SelectValue =
-      (location: Location) => SelectValue(location.name, location.name)
-
+      (location: Location) =>
+        SelectValue(location.name, location.name)
 
     def apply(
       label: String,
@@ -109,18 +120,19 @@ object Components {
       $currentRoute: Var[NamedRoute],
     ) = {
 
-
       // TODO Lot of ugly code to work through in this method
       def Selector[T](
-                       route: Seq[T],
-                       stopSelection: Var[T],
-                     )(implicit converterThatCouldBeATypeClass: T => SelectValue,
-                     ) = {
+        route: Seq[T],
+        stopSelection: Var[T],
+      )(implicit converterThatCouldBeATypeClass: T => SelectValue,
+      ) = {
 
         val valueMap: Map[SelectValue, T] =
           route
             .map: selectValue =>
-              (converterThatCouldBeATypeClass(selectValue), selectValue)
+              (converterThatCouldBeATypeClass(selectValue),
+               selectValue,
+              )
             .toMap
         val selectValues = route.map(converterThatCouldBeATypeClass)
         span(
@@ -136,14 +148,15 @@ object Components {
                     .get
                 .map(
                   valueMap.getOrElse(_,
-                    throw new RuntimeException(
-                      "can't find the value!",
-                    ),
+                                     throw new RuntimeException(
+                                       "can't find the value!",
+                                     ),
                   ),
                 ) --> stopSelection.writer
             },
             selectValues.map(stop =>
-              option(selected := valueMap(stop) == stopSelection.now(),
+              option(
+                selected := valueMap(stop) == stopSelection.now(),
                 value(stop.uniqueValue),
                 stop.humanFriendlyName,
               ),
@@ -349,10 +362,10 @@ object Components {
     db: Persistence,
   ) =
     def RouteLegElementViewOnly(
-                                 label: String,
-                                 routeLeg: RouteLeg,
-                                 db: Persistence,
-                               ) =
+      label: String,
+      routeLeg: RouteLeg,
+      db: Persistence,
+    ) =
       div(
         div(label),
         div(
@@ -565,9 +578,9 @@ object Components {
     $gpsPosition: Signal[Option[GpsCoordinates]],
   ) = {
     def distanceFromCurrentLocationToStop(
-                                           gpsPosition: Signal[Option[GpsCoordinates]],
-                                           location: Location,
-                                         ) =
+      gpsPosition: Signal[Option[GpsCoordinates]],
+      location: Location,
+    ) =
       gpsPosition.map(
         _.flatMap(userCords =>
           location.gpsCoordinates.map(stopCoords =>
@@ -589,7 +602,7 @@ object Components {
             cls := "map-link",
             child <--
               distanceFromCurrentLocationToStop($gpsPosition,
-                                                 location,
+                                                location,
               ),
             location.gpsCoordinates.map(Components.GeoLink),
           )
@@ -628,8 +641,8 @@ object Components {
   ) = {
 
     def renderWaitTime(
-                        duration: MinuteDuration,
-                      ) =
+      duration: MinuteDuration,
+    ) =
       if (duration.toMinutes == 0)
         "Leaving!"
       else
@@ -676,8 +689,8 @@ object Components {
   ) =
 
     def RouteHeader(
-                     routeName: ComponentName,
-                   ) =
+      routeName: ComponentName,
+    ) =
       div(
         cls := "route-header",
         span(
