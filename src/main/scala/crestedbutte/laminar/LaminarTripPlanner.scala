@@ -7,12 +7,7 @@ import crestedbutte.pwa.Persistence
 import crestedbutte.routes.{RtaNorthbound, RtaSouthbound}
 import org.scalajs.dom
 import org.scalajs.dom.{
-  window,
   IDBDatabase,
-  IDBEvent,
-  IDBOpenDBRequest,
-  IDBTransactionMode,
-  MouseEvent,
 }
 import website.webcomponents.material.{Button, SmartTimePicker}
 
@@ -115,20 +110,20 @@ object LaminarTripPlanner {
         )
         .changes
         .map(_ => ()) --> changeBus.writer,
-      Components.RouteSelector($currentRoute,
+      RouteSelector($currentRoute,
                                $startingPoint,
                                $destination,
       ),
-      Components.StopSelector("Starting from: ",
+      StopSelector("Starting from: ",
                               $startingPoint,
                               $currentRoute,
       ),
       // TODO Fix: this should have a later stop selected by default
-      Components.StopSelector("Reaching: ",
+      StopSelector("Reaching: ",
                               $destination,
                               $currentRoute,
       ),
-      Components.TripBoundarySelector($tripBoundary),
+      TripBoundarySelector($tripBoundary),
       timePicker,
       div(
         child <-- tripResult.map:
@@ -154,5 +149,146 @@ object LaminarTripPlanner {
       EventStream.unit() --> changeBus.writer,
     )
   }
+
+  def TripBoundarySelector(
+                            $tripBoundary: Var[TripBoundary],
+                          ) =
+    div(
+      cls := "control",
+      label(
+        cls := "radio",
+        input(
+          typ := "radio",
+          nameAttr := "tripBoundarySelection",
+          defaultChecked := $tripBoundary.now() == TripBoundary.ArrivingBy,
+          onClick.mapTo(TripBoundary.ArrivingBy) --> $tripBoundary,
+        ),
+        "Arriving By",
+      ),
+      label(
+        cls := "radio",
+        input(
+          typ := "radio",
+          nameAttr := "tripBoundarySelection",
+          defaultChecked := $tripBoundary.now() == TripBoundary.StartingAfter,
+          onClick.mapTo(TripBoundary.StartingAfter) --> $tripBoundary,
+        ),
+        "Leaving After",
+      ),
+    )
+
+  private object StopSelector:
+    case class SelectValue(
+                            uniqueValue: String,
+                            humanFriendlyName: String)
+
+    implicit val location2selectorValue: Location => SelectValue =
+      (location: Location) =>
+        SelectValue(location.name, location.name)
+
+    def apply(
+               label: String,
+               $selection: Var[Location],
+               $currentRoute: Var[NamedRoute],
+             ) = {
+
+      // TODO Lot of ugly code to work through in this method
+      def Selector[T](
+                       route: Seq[T],
+                       stopSelection: Var[T],
+                     )(implicit converterThatCouldBeATypeClass: T => SelectValue,
+                     ) = {
+
+        val valueMap: Map[SelectValue, T] =
+          route
+            .map: selectValue =>
+              (converterThatCouldBeATypeClass(selectValue),
+                selectValue,
+              )
+            .toMap
+        val selectValues = route.map(converterThatCouldBeATypeClass)
+        span(
+          cls := "select is-rounded",
+          select(
+            inContext { thisNode =>
+              onChange
+                .mapTo:
+                  thisNode.ref.value
+                .map: uniqueValue =>
+                  selectValues
+                    .find(_.uniqueValue == uniqueValue)
+                    .get
+                .map(
+                  valueMap.getOrElse(_,
+                    throw new RuntimeException(
+                      "can't find the value!",
+                    ),
+                  ),
+                ) --> stopSelection.writer
+            },
+            selectValues.map(stop =>
+              option(
+                selected := valueMap(stop) == stopSelection.now(),
+                value(stop.uniqueValue),
+                stop.humanFriendlyName,
+              ),
+            ),
+          ),
+        )
+      }
+
+      div(
+        label,
+        child <--
+          $currentRoute.signal
+            .map:
+              _.allStops
+            .map: route =>
+              Selector(
+                route,
+                $selection,
+              ),
+      )
+    }
+
+  def RouteSelector(
+                     $currentRoute: Var[NamedRoute],
+                     $startingPoint: Var[Location],
+                     $destination: Var[Location],
+                   ) =
+    val fullRouteAndStopsUpdater =
+      Observer[NamedRoute](
+        onNext = route => {
+          $startingPoint.set($destination.now())
+          $destination.set(route.allStops.last)
+          $currentRoute.update(_ => route)
+        },
+      )
+    div(
+      cls := "control",
+      label(
+        cls := "radio",
+        input(
+          typ := "radio",
+          nameAttr := "routeSelection",
+          onClick.mapTo(
+            RtaNorthbound.fullSchedule,
+          ) --> fullRouteAndStopsUpdater,
+        ),
+        RtaNorthbound.fullSchedule.routeName.userFriendlyName,
+      ),
+      label(
+        cls := "radio",
+        input(
+          typ := "radio",
+          nameAttr := "routeSelection",
+          defaultChecked := true,
+          onClick.mapTo(
+            RtaSouthbound.fullSchedule,
+          ) --> fullRouteAndStopsUpdater,
+        ),
+        RtaSouthbound.fullSchedule.routeName.userFriendlyName,
+      ),
+    )
 
 }
