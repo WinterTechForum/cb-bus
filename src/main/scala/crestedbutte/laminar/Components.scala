@@ -78,24 +78,6 @@ object Components {
       SvgIcon("glyphicons-basic-592-map.svg"),
     )
 
-  def SafeRideLink(
-    safeRideRecommendation: LateNightRecommendation,
-  ) =
-    div(
-      cls := "late-night-call-button",
-      a(
-        href := s"tel:${safeRideRecommendation.phoneNumber}",
-        cls := "link",
-        button(
-          cls := "button",
-          SvgIcon("glyphicons-basic-465-call.svg").amend(
-            alt := "Call Late Night Shuttle!",
-          ),
-          safeRideRecommendation.message,
-        ),
-      ),
-    )
-
   def SvgIcon(
     name: String,
   ) =
@@ -168,35 +150,6 @@ object Components {
 
   import com.raquo.laminar.nodes.ReactiveHtmlElement
 
-  def RouteLegEnds(
-    routeLeg: RouteLeg,
-    $plan: Var[Plan],
-  ) =
-    div(
-      div(
-        button(
-          cls := "button",
-          "Add to Plan",
-          onClick --> Observer { _ =>
-            $plan.update(plan =>
-              plan.copy(legs = plan.legs :+ routeLeg.ends),
-            )
-            println("New plan: " + $plan.now())
-          },
-        ),
-      ),
-      div:
-        List(
-          routeLeg.stops.head,
-          routeLeg.stops.last,
-        ).map: stop =>
-          UpcomingStopInfo(
-            stop.location,
-            div:
-              stop.busTime.toDumbAmericanString,
-          ),
-    )
-
   import org.scalajs.dom.{
     window,
     IDBDatabase,
@@ -205,16 +158,6 @@ object Components {
     IDBValue,
   }
   import crestedbutte.pwa.Persistence
-
-  def SavePlanButton(
-    plan: Plan,
-    db: Persistence,
-  ) =
-    button(
-      cls := "button",
-      "Save Plan",
-      onClick --> db.saveDailyPlan(plan),
-    )
 
   def PlanElement(
     plan: Plan,
@@ -495,13 +438,14 @@ object Components {
 
 
   object TopLevelRoute {
+
     def apply(
-                           upcomingArrivalComponentData: UpcomingArrivalComponentData,
-                           $enabledFeatures: Signal[FeatureSets],
-                           gpsPosition: Var[Option[GpsCoordinates]],
-                           db: Persistence,
-                           componentSelector: Observer[ComponentData],
-                         ) =
+               upcomingArrivalComponentData: UpcomingArrivalComponentData,
+               $enabledFeatures: Signal[FeatureSets],
+               gpsPosition: Var[Option[GpsCoordinates]],
+               db: Persistence,
+               componentSelector: Observer[ComponentData],
+             ) =
 
       def RouteHeader(
                        routeName: ComponentName,
@@ -512,7 +456,7 @@ object Components {
             cls := "route-header_name",
             routeName.userFriendlyName + " Departures",
           ),
-          Components.SvgIcon("glyphicons-basic-32-bus.svg"),
+          SvgIcon("glyphicons-basic-32-bus.svg"),
         )
 
       div(
@@ -537,7 +481,7 @@ object Components {
                       componentSelector,
                     )
                   case Right(safeRideRecommendation) =>
-                    Components.SafeRideLink(safeRideRecommendation)
+                    SafeRideLink(safeRideRecommendation)
                 },
                 $enabledFeatures.map(
                   //                _.isEnabled(Feature.MapLinks),
@@ -549,53 +493,71 @@ object Components {
       )
 
     def StopTimeInfoForLocation(
-                               stopTimeInfo: StopTimeInfo,
-                               busScheduleAtStop: BusScheduleAtStop,
-                               $enabledFeatures: Signal[FeatureSets],
-                               namedRoute: NamedRoute,
-                               db: Persistence,
-                               componentSelector: Observer[ComponentData],
-                             ) = {
+                                 stopTimeInfo: StopTimeInfo,
+                                 busScheduleAtStop: BusScheduleAtStop,
+                                 $enabledFeatures: Signal[FeatureSets],
+                                 namedRoute: NamedRoute,
+                                 db: Persistence,
+                                 componentSelector: Observer[ComponentData],
+                               ) = {
 
-    def renderWaitTime(
-                        duration: MinuteDuration,
-                      ) =
-      if (duration.toMinutes == 0)
-        "Leaving!"
-      else
-        duration.toMinutes + " min."
+      def renderWaitTime(
+                          duration: MinuteDuration,
+                        ) =
+        if (duration.toMinutes == 0)
+          "Leaving!"
+        else
+          duration.toMinutes + " min."
 
-    val modalActive = Var(false)
-    val modalMode: Var[ModalMode] = Var(ModalMode.UpcomingStops)
-    div(
-      button(
-        cls := "arrival-time button open-arrival-time-modal",
-        onClick.preventDefault.map { _ =>
-          org.scalajs.dom.document
-            .querySelector("html")
-            .classList
-            .add("is-clipped")
-          true
-        } --> modalActive,
-        stopTimeInfo.time.toDumbAmericanString,
-      ),
+      val modalActive = Var(false)
+      val modalMode: Var[ModalMode] = Var(ModalMode.UpcomingStops)
       div(
-        cls := "wait-time",
-        renderWaitTime(stopTimeInfo.waitingDuration),
-        BulmaLocal.bulmaModal(
-          busScheduleAtStop,
-          $enabledFeatures.map(
-            _.isEnabled(Feature.BusAlarms),
-          ),
-          modalActive,
-          modalMode,
-          namedRoute,
-          db,
-          componentSelector,
+        button(
+          cls := "arrival-time button open-arrival-time-modal",
+          onClick.preventDefault.map { _ =>
+            org.scalajs.dom.document
+              .querySelector("html")
+              .classList
+              .add("is-clipped")
+            true
+          } --> modalActive,
+          stopTimeInfo.time.toDumbAmericanString,
         ),
-      ),
-    )
-  }
+        div(
+          cls := "wait-time",
+          renderWaitTime(stopTimeInfo.waitingDuration),
+          BulmaLocal.bulmaModal(
+            busScheduleAtStop,
+            $enabledFeatures.map(
+              _.isEnabled(Feature.BusAlarms),
+            ),
+            modalActive,
+            modalMode,
+            namedRoute,
+            db,
+            componentSelector,
+          ),
+        ),
+      )
+    }
+
+    private def SafeRideLink(
+                              safeRideRecommendation: LateNightRecommendation,
+                            ) =
+      div(
+        cls := "late-night-call-button",
+        a(
+          href := s"tel:${safeRideRecommendation.phoneNumber}",
+          cls := "link",
+          button(
+            cls := "button",
+            SvgIcon("glyphicons-basic-465-call.svg").amend(
+              alt := "Call Late Night Shuttle!",
+            ),
+            safeRideRecommendation.message,
+          ),
+        ),
+      )
   }
 
   def TripViewerLaminar(
@@ -611,7 +573,6 @@ object Components {
         div(
           if (plan.legs.nonEmpty)
             div(
-              Components.SavePlanButton(plan, db),
               button(
                 cls := "button",
                 "Delete saved plan",

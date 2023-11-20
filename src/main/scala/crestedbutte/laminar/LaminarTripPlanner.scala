@@ -16,7 +16,7 @@ object LaminarTripPlanner {
 
   val componentName = ComponentName("TripPlanner")
 
-  def app() = {
+  def demo() = {
     import org.scalajs.dom
     val db: Var[Option[IDBDatabase]] = Var(
       None,
@@ -131,11 +131,11 @@ object LaminarTripPlanner {
             div:
               value.msg
           case Right(value) =>
-            Components.RouteLegEnds(value, $plan),
+            RouteLegEnds(value, $plan),
       ),
       child <-- $plan.signal.map(plan =>
         div(
-          Components.SavePlanButton(plan, db),
+          SavePlanButton(plan, db),
           button(
             cls := "button",
             "Delete saved plan",
@@ -251,7 +251,7 @@ object LaminarTripPlanner {
       )
     }
 
-  def RouteSelector(
+  private def RouteSelector(
                      $currentRoute: Var[NamedRoute],
                      $startingPoint: Var[Location],
                      $destination: Var[Location],
@@ -289,6 +289,45 @@ object LaminarTripPlanner {
         ),
         RtaSouthbound.fullSchedule.routeName.userFriendlyName,
       ),
+    )
+
+  private def SavePlanButton(
+                      plan: Plan,
+                      db: Persistence,
+                    ) =
+    button(
+      cls := "button",
+      "Save Plan",
+      onClick --> db.saveDailyPlan(plan),
+    )
+
+  private def RouteLegEnds(
+                    routeLeg: RouteLeg,
+                    $plan: Var[Plan],
+                  ) =
+    div(
+      div(
+        button(
+          cls := "button",
+          "Add to Plan",
+          onClick --> Observer { _ =>
+            $plan.update(plan =>
+              plan.copy(legs = plan.legs :+ routeLeg.ends),
+            )
+            println("New plan: " + $plan.now())
+          },
+        ),
+      ),
+      div:
+        List(
+          routeLeg.stops.head,
+          routeLeg.stops.last,
+        ).map: stop =>
+          Components.UpcomingStopInfo(
+            stop.location,
+            div:
+              stop.busTime.toDumbAmericanString,
+          ),
     )
 
 }

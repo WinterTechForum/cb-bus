@@ -9,8 +9,6 @@ import crestedbutte.{
 }
 import com.billding.time.WallTime
 
-// todo I need to start building this out of RouteLegs.
-//    If I correctly construct those, the express issue should go away.
 case class RouteWithTimes(
   legs: Seq[RouteLeg]) {
 
