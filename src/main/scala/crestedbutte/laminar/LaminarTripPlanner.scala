@@ -275,7 +275,7 @@ object LaminarTripPlanner {
             RtaNorthbound.fullSchedule,
           ) --> fullRouteAndStopsUpdater,
         ),
-        RtaNorthbound.fullSchedule.routeName.userFriendlyName,
+        RtaNorthbound.fullSchedule.componentName.userFriendlyName,
       ),
       label(
         cls := "radio",
@@ -287,7 +287,7 @@ object LaminarTripPlanner {
             RtaSouthbound.fullSchedule,
           ) --> fullRouteAndStopsUpdater,
         ),
-        RtaSouthbound.fullSchedule.routeName.userFriendlyName,
+        RtaSouthbound.fullSchedule.componentName.userFriendlyName,
       ),
     )
 

@@ -104,7 +104,7 @@ object TimeCalculations {
             localTime,
             busRoute,
           ),
-        busRoute.routeName,
+        busRoute.componentName,
       )
     }
 
@@ -118,6 +118,6 @@ object TimeCalculations {
           localTime,
           busRoute,
         ),
-      busRoute.routeName,
+      busRoute.componentName,
     )
 }

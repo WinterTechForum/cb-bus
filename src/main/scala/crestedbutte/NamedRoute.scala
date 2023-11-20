@@ -24,11 +24,9 @@ case object TripPlannerComponent extends ComponentData {
 import crestedbutte.{ComponentName, Location}
 
 case class NamedRoute(
-  routeName: ComponentName,
+                       componentName: ComponentName,
   routeWithTimes: RouteWithTimes)
     extends ComponentData {
-  val componentName =
-    routeName // TODO rm this and depend on routeName. Too much indirection going on!
 
   def stopsRemainingAfter(
     startPoint: Location,
