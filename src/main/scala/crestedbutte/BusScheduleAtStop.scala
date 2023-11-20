@@ -6,15 +6,6 @@ case class BusScheduleAtStop(
   location: Location,
   times: Seq[WallTime]) {
 
-  def timesDelayedBy(
-    busDuration: MinuteDuration,
-    locationIn: Location,
-  ) = BusScheduleAtStop(locationIn, times.map(_.plus(busDuration)))
-
-  def delayedBy(
-    busDuration: MinuteDuration,
-  ) = BusScheduleAtStop(location, times.map(_.plus(busDuration)))
-
   def at(
     locationIn: Location,
   ) = BusScheduleAtStop(locationIn, times)
