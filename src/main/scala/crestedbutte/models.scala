@@ -58,6 +58,7 @@ case class UpcomingArrivalInfoWithFullSchedule(
   upcomingArrivalInfo: UpcomingArrivalInfo,
   busScheduleAtStop: BusScheduleAtStop,
   namedRoute: NamedRoute, // TODO
+  location: Location, // TODO Use this location value instead of the ones available in other fields
 ) {}
 
 case class UpcomingArrivalInfo(

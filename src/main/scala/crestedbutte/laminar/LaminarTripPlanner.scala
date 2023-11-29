@@ -6,9 +6,7 @@ import crestedbutte.TripBoundary
 import crestedbutte.pwa.Persistence
 import crestedbutte.routes.{RtaNorthbound, RtaSouthbound}
 import org.scalajs.dom
-import org.scalajs.dom.{
-  IDBDatabase,
-}
+import org.scalajs.dom.IDBDatabase
 import website.webcomponents.material.{Button, SmartTimePicker}
 
 object LaminarTripPlanner {
@@ -110,19 +108,10 @@ object LaminarTripPlanner {
         )
         .changes
         .map(_ => ()) --> changeBus.writer,
-      RouteSelector($currentRoute,
-                               $startingPoint,
-                               $destination,
-      ),
-      StopSelector("Starting from: ",
-                              $startingPoint,
-                              $currentRoute,
-      ),
+      RouteSelector($currentRoute, $startingPoint, $destination),
+      StopSelector("Starting from: ", $startingPoint, $currentRoute),
       // TODO Fix: this should have a later stop selected by default
-      StopSelector("Reaching: ",
-                              $destination,
-                              $currentRoute,
-      ),
+      StopSelector("Reaching: ", $destination, $currentRoute),
       TripBoundarySelector($tripBoundary),
       timePicker,
       div(
@@ -151,8 +140,8 @@ object LaminarTripPlanner {
   }
 
   def TripBoundarySelector(
-                            $tripBoundary: Var[TripBoundary],
-                          ) =
+    $tripBoundary: Var[TripBoundary],
+  ) =
     div(
       cls := "control",
       label(
@@ -179,31 +168,31 @@ object LaminarTripPlanner {
 
   private object StopSelector:
     case class SelectValue(
-                            uniqueValue: String,
-                            humanFriendlyName: String)
+      uniqueValue: String,
+      humanFriendlyName: String)
 
     implicit val location2selectorValue: Location => SelectValue =
       (location: Location) =>
         SelectValue(location.name, location.name)
 
     def apply(
-               label: String,
-               $selection: Var[Location],
-               $currentRoute: Var[NamedRoute],
-             ) = {
+      label: String,
+      $selection: Var[Location],
+      $currentRoute: Var[NamedRoute],
+    ) = {
 
       // TODO Lot of ugly code to work through in this method
       def Selector[T](
-                       route: Seq[T],
-                       stopSelection: Var[T],
-                     )(implicit converterThatCouldBeATypeClass: T => SelectValue,
-                     ) = {
+        route: Seq[T],
+        stopSelection: Var[T],
+      )(implicit converterThatCouldBeATypeClass: T => SelectValue,
+      ) = {
 
         val valueMap: Map[SelectValue, T] =
           route
             .map: selectValue =>
               (converterThatCouldBeATypeClass(selectValue),
-                selectValue,
+               selectValue,
               )
             .toMap
         val selectValues = route.map(converterThatCouldBeATypeClass)
@@ -220,9 +209,9 @@ object LaminarTripPlanner {
                     .get
                 .map(
                   valueMap.getOrElse(_,
-                    throw new RuntimeException(
-                      "can't find the value!",
-                    ),
+                                     throw new RuntimeException(
+                                       "can't find the value!",
+                                     ),
                   ),
                 ) --> stopSelection.writer
             },
@@ -252,10 +241,10 @@ object LaminarTripPlanner {
     }
 
   private def RouteSelector(
-                     $currentRoute: Var[NamedRoute],
-                     $startingPoint: Var[Location],
-                     $destination: Var[Location],
-                   ) =
+    $currentRoute: Var[NamedRoute],
+    $startingPoint: Var[Location],
+    $destination: Var[Location],
+  ) =
     val fullRouteAndStopsUpdater =
       Observer[NamedRoute](
         onNext = route => {
@@ -292,9 +281,9 @@ object LaminarTripPlanner {
     )
 
   private def SavePlanButton(
-                      plan: Plan,
-                      db: Persistence,
-                    ) =
+    plan: Plan,
+    db: Persistence,
+  ) =
     button(
       cls := "button",
       "Save Plan",
@@ -302,9 +291,9 @@ object LaminarTripPlanner {
     )
 
   private def RouteLegEnds(
-                    routeLeg: RouteLeg,
-                    $plan: Var[Plan],
-                  ) =
+    routeLeg: RouteLeg,
+    $plan: Var[Plan],
+  ) =
     div(
       div(
         button(

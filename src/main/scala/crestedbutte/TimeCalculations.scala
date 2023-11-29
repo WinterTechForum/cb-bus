@@ -61,13 +61,16 @@ object TimeCalculations {
     now: WallTime,
     busRoute: NamedRoute,
   ): Seq[UpcomingArrivalInfoWithFullSchedule] =
-    busRoute.routeWithTimes.allStops.map(scheduleAtStop =>
+    busRoute.routeWithTimes.allStops.map { scheduleAtStop =>
+      val upcomingArrivalInfo =
+        getUpcomingArrivalInfo(scheduleAtStop, now)
       UpcomingArrivalInfoWithFullSchedule(
-        getUpcomingArrivalInfo(scheduleAtStop, now),
+        upcomingArrivalInfo,
         scheduleAtStop.scheduleAfter(now),
         busRoute,
-      ),
-    )
+        upcomingArrivalInfo.location,
+      )
+    }
 
   def getUpComingArrivals(
     busRoute: NamedRoute,

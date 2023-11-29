@@ -376,15 +376,15 @@ object Components {
 
   object UpcomingStopInfo {
     def apply(
-                          location: Location,
-                          content: ReactiveHtmlElement[_],
-                          $mapLinksEnabled: Signal[Boolean] = Signal.fromValue(false),
-                          // TODO Should this be an `Option[Signal[GpsCoordinates]` instead?
-                          $gpsPosition: Signal[
-                            Option[GpsCoordinates],
-                          ] = Signal.fromValue(None),
-                          /* TODO: waitDuration: Duration*/
-                        ) =
+      location: Location,
+      content: ReactiveHtmlElement[_],
+      $mapLinksEnabled: Signal[Boolean] = Signal.fromValue(false),
+      // TODO Should this be an `Option[Signal[GpsCoordinates]` instead?
+      $gpsPosition: Signal[
+        Option[GpsCoordinates],
+      ] = Signal.fromValue(None),
+      /* TODO: waitDuration: Duration*/
+    ) =
       div(
         width := "100%",
         cls := "stop-information",
@@ -395,14 +395,14 @@ object Components {
       )
 
     private def GeoBits(
-                 $mapLinksEnabled: Signal[Boolean],
-                 location: Location,
-                 $gpsPosition: Signal[Option[GpsCoordinates]],
-               ) = {
+      $mapLinksEnabled: Signal[Boolean],
+      location: Location,
+      $gpsPosition: Signal[Option[GpsCoordinates]],
+    ) = {
       def distanceFromCurrentLocationToStop(
-                                             gpsPosition: Signal[Option[GpsCoordinates]],
-                                             location: Location,
-                                           ) =
+        gpsPosition: Signal[Option[GpsCoordinates]],
+        location: Location,
+      ) =
         gpsPosition.map(
           _.flatMap(userCords =>
             location.gpsCoordinates.map(stopCoords =>
@@ -424,7 +424,7 @@ object Components {
               cls := "map-link",
               child <--
                 distanceFromCurrentLocationToStop($gpsPosition,
-                  location,
+                                                  location,
                 ),
               location.gpsCoordinates.map(Components.GeoLink),
             )
@@ -436,20 +436,19 @@ object Components {
 
   }
 
-
   object TopLevelRoute {
 
     def apply(
-               upcomingArrivalComponentData: UpcomingArrivalComponentData,
-               $enabledFeatures: Signal[FeatureSets],
-               gpsPosition: Var[Option[GpsCoordinates]],
-               db: Persistence,
-               componentSelector: Observer[ComponentData],
-             ) =
+      upcomingArrivalComponentData: UpcomingArrivalComponentData,
+      $enabledFeatures: Signal[FeatureSets],
+      gpsPosition: Var[Option[GpsCoordinates]],
+      db: Persistence,
+      componentSelector: Observer[ComponentData],
+    ) =
 
       def RouteHeader(
-                       routeName: ComponentName,
-                     ) =
+        routeName: ComponentName,
+      ) =
         div(
           cls := "route-header",
           span(
@@ -464,10 +463,11 @@ object Components {
         upcomingArrivalComponentData.upcomingArrivalInfoForAllRoutes
           .map {
             case UpcomingArrivalInfoWithFullSchedule(
-            UpcomingArrivalInfo(location, content),
-            fullScheduleAtStop,
-            namedRoute,
-            ) =>
+                  UpcomingArrivalInfo(_, content),
+                  fullScheduleAtStop,
+                  namedRoute,
+                  location,
+                ) =>
               UpcomingStopInfo(
                 location,
                 content match {
@@ -493,17 +493,17 @@ object Components {
       )
 
     def StopTimeInfoForLocation(
-                                 stopTimeInfo: StopTimeInfo,
-                                 busScheduleAtStop: BusScheduleAtStop,
-                                 $enabledFeatures: Signal[FeatureSets],
-                                 namedRoute: NamedRoute,
-                                 db: Persistence,
-                                 componentSelector: Observer[ComponentData],
-                               ) = {
+      stopTimeInfo: StopTimeInfo,
+      busScheduleAtStop: BusScheduleAtStop,
+      $enabledFeatures: Signal[FeatureSets],
+      namedRoute: NamedRoute,
+      db: Persistence,
+      componentSelector: Observer[ComponentData],
+    ) = {
 
       def renderWaitTime(
-                          duration: MinuteDuration,
-                        ) =
+        duration: MinuteDuration,
+      ) =
         if (duration.toMinutes == 0)
           "Leaving!"
         else
@@ -542,8 +542,8 @@ object Components {
     }
 
     private def SafeRideLink(
-                              safeRideRecommendation: LateNightRecommendation,
-                            ) =
+      safeRideRecommendation: LateNightRecommendation,
+    ) =
       div(
         cls := "late-night-call-button",
         a(

@@ -24,7 +24,7 @@ case object TripPlannerComponent extends ComponentData {
 import crestedbutte.{ComponentName, Location}
 
 case class NamedRoute(
-                       componentName: ComponentName,
+  componentName: ComponentName,
   routeWithTimes: RouteWithTimes)
     extends ComponentData {
 
