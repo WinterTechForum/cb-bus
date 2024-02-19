@@ -12,13 +12,15 @@ class Persistence():
 
   def createDb() =
     try {
-      val retrieved = 
+      val retrieved =
         localStorage.getItem("today")
           .fromJson[Option[Plan]]
           .getOrElse(throw new Exception("Bad plan in localStorage"))
     } catch {
       case e: Exception =>
         println("Error retrieving existing plan: " + e)
+        println("Going to nuke all saved data")
+        localStorage.clear()
         val opt: Option[Plan] = None
         localStorage.setItem("today", opt.toJson)
     }
@@ -39,7 +41,7 @@ class Persistence():
     routeLeg: RouteLeg,
   ) =
 
-    val retrieved = 
+    val retrieved =
       localStorage
         .getItem("today")
         .fromJson[Option[Plan]]
