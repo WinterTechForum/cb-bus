@@ -564,6 +564,7 @@ object Components {
   ) =
 
     val $plan: Var[Option[Plan]] = Var(db.retrieveDailyPlanOnly)
+    println("Building new trip viewer")
     div(
 //      onMountCallback(_ => ),
       child <-- $plan.signal.map(plan =>

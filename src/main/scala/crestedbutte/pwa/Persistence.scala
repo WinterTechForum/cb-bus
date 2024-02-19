@@ -39,7 +39,6 @@ class Persistence():
     result
 
   def retrieveDailyPlanOnly =
-    println("retrieveDailyPlanOnly")
     localStorage
       .getItem("today")
       .fromJson[Option[Plan]]
@@ -60,7 +59,6 @@ class Persistence():
           value.copy(value.legs :+ routeLeg)
         case None => Plan(Seq(routeLeg))
     saveDailyPlanOnly(updated)
-    println("Saved new plan: " + updated)
 
   def saveDailyPlan(
     plan: Plan,
@@ -77,11 +75,3 @@ class Persistence():
   ) =
     val newPlan: Option[Plan] = Some(plan)
     localStorage.setItem("today", newPlan.toJson)
-
-    val retrieved =
-      localStorage
-        .getItem("today")
-        .fromJson[Option[Plan]]
-        .getOrElse(throw new Exception("Bad plan in localStorage"))
-    println("Saved new plan: " + retrieved)
-    retrieved
