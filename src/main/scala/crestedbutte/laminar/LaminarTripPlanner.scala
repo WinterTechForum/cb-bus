@@ -95,7 +95,7 @@ object LaminarTripPlanner {
                 )
 
     div(
-      onMountCallback(_ => db.retrieveDailyPlan($plan)),
+//      onMountCallback(_ => db.retrieveDailyPlan($plan)),
       valuesDuringChangeZ --> submissionZ,
       $startingPoint.signal
         .combineWith($destination,
@@ -122,22 +122,23 @@ object LaminarTripPlanner {
       child <-- $plan.signal.map(plan =>
         div(
           plan match
-            case Some(value) => SavePlanButton(value, db)
+            case Some(value) => SavePlanButton(value, db, $plan)
             case None => span()
           ,
-            
+
           button(
             cls := "button",
             "Delete saved plan",
             onClick --> db.saveDailyPlan(
               crestedbutte.Plan(Seq.empty),
+              $plan
             ),
           ),
           plan match
-            case Some(value) => Components.PlanElement(value, db)
+            case Some(value) => Components.PlanElement(value, db, $plan)
             case None => div()
           ,
-            
+
         ),
       ),
       EventStream.unit() --> changeBus.writer,
@@ -288,11 +289,12 @@ object LaminarTripPlanner {
   private def SavePlanButton(
     plan: Plan,
     db: Persistence,
+    $plan: Var[Option[Plan]]
   ) =
     button(
       cls := "button",
       "Save Plan",
-      onClick --> db.saveDailyPlan(plan),
+      onClick --> db.saveDailyPlan(plan, $plan),
     )
 
   private def RouteLegEnds(

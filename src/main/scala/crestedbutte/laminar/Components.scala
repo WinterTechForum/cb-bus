@@ -23,15 +23,6 @@ import java.time.format.{DateTimeFormatter, FormatStyle}
 import java.time.{Clock, OffsetDateTime}
 import scala.concurrent.duration.FiniteDuration
 import crestedbutte.dom.BulmaLocal.ModalMode
-import org.scalajs.dom.{
-  window,
-  IDBDatabase,
-  IDBEvent,
-  IDBTransactionMode,
-  IDBValue,
-}
-
-import scala.util.Failure
 
 object Components {
   def GPS(
@@ -150,18 +141,13 @@ object Components {
 
   import com.raquo.laminar.nodes.ReactiveHtmlElement
 
-  import org.scalajs.dom.{
-    window,
-    IDBDatabase,
-    IDBEvent,
-    IDBTransactionMode,
-    IDBValue,
-  }
+  import org.scalajs.dom.window
   import crestedbutte.pwa.Persistence
 
   def PlanElement(
     plan: Plan,
     db: Persistence,
+    $plan: Var[Option[Plan]]
   ) =
     def RouteLegElementViewOnly(
       label: String,
@@ -173,6 +159,17 @@ object Components {
         div(
           // TODO Make a way to delete leg of a trip here
           "Delete leg",
+
+          button(
+            cls := "button",
+            "Delete",
+            onClick --> Observer { _ =>
+              val newPlan = plan.copy(legs = plan.legs.filterNot(_ == routeLeg))
+              println("newPlan: " + newPlan)
+              db.saveDailyPlanOnly(newPlan)
+              $plan.set(Some(newPlan))
+            },
+          ),
           routeLeg.stops.map(stop =>
             UpcomingStopInfo(
               stop.location,
@@ -226,8 +223,8 @@ object Components {
               .elementNameMatches(initialRoute.name),
         )
         .getOrElse(
-//          TripPlannerComponent,
-          RtaSouthbound.fullSchedule,
+          PlanViewer,
+//          RtaSouthbound.fullSchedule,
         ),
     )
 
@@ -266,8 +263,8 @@ object Components {
       )
 
     div(
-      onMountCallback: context =>
-        db.createDb(),
+//      onMountCallback: context =>
+//        db.initializeOrResetStorage(),
       Bulma.menu(selectedComponent, components),
       RepeatingElement()
         .repeatWithInterval( // This acts like a Dune thumper
@@ -564,9 +561,9 @@ object Components {
     componentSelector: Observer[ComponentData],
   ) =
 
-    val $plan: Var[Option[Plan]] = Var(None)
+    val $plan: Var[Option[Plan]] = Var(db.retrieveDailyPlanOnly)
     div(
-      onMountCallback(_ => db.retrieveDailyPlan($plan)),
+//      onMountCallback(_ => ),
       child <-- $plan.signal.map(plan =>
         div(
           if (plan.nonEmpty)
@@ -576,9 +573,10 @@ object Components {
                 "Delete saved plan",
                 onClick --> db.saveDailyPlan(
                   crestedbutte.Plan(Seq.empty),
+                  $plan
                 ),
               ),
-              Components.PlanElement(plan.get, db),
+              Components.PlanElement(plan.get, db, $plan),
             )
           else
             div(
