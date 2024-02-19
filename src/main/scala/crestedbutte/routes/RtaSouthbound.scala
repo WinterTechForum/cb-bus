@@ -95,10 +95,19 @@ object RtaSouthbound {
       "23:30",
     )
 
+
+  def terminatingRoute(busTime: WallTime): Boolean =
+    val res = busTime.minutes == WallTime("5:35 PM").minutes
+    println("walltime: " + WallTime("17:35"))
+    if (res)
+      println("terminatingRoute: " + busTime)
+    res
+
   def constructNormalRoute(
     routeLeg: RouteLeg,
   ): RouteLeg = {
-    val basicRoute =
+    val shortRoute =
+
       routeLeg
         .plus(Location.FourwayGunnison, 8.minutes)
         .plus(Location.Riverbend, 2.minutes)
@@ -108,16 +117,22 @@ object RtaSouthbound {
         .plus(Location.Almont, 14.minutes)
         .plus(Location.OhioCreek, 8.minutes)
         .plus(Location.TallTexan, 1.minutes)
-        .plus(Location.RecCenter, 3.minutes)
-        .plus(Location.GunnisonLibrary, 3.minutes)
-        .plus(Location.GunnisonCommunitySchools, 1.minutes)
-        .plus(Location.EleventhAndVirginia, 2.minutes)
-        .plus(Location.Safeway, 2.minutes)
-        .plus(Location.TellerAndHighwayFifty, 3.minutes)
-        .plus(Location.Western, 2.minutes)
+    val basicRoute =
+      if (terminatingRoute(routeLeg.stops.head.busTime))
+        shortRoute
+      else
+        shortRoute
+          .plus(Location.RecCenter, 3.minutes)
+          .plus(Location.GunnisonLibrary, 3.minutes)
+          .plus(Location.GunnisonCommunitySchools, 1.minutes)
+          .plus(Location.EleventhAndVirginia, 2.minutes)
+          .plus(Location.Safeway, 2.minutes)
+          .plus(Location.TellerAndHighwayFifty, 3.minutes)
+          .plus(Location.Western, 2.minutes)
 
     // late buses actually terminate at the community school. The others loop through Gunni
-    if (routeLeg.stops.head.busTime.isBefore(WallTime("22:00")))
+    println("RouteLeg.stops.head:" + routeLeg.stops.head.busTime)
+    if (routeLeg.stops.head.busTime.isBefore(WallTime("22:00")) && !terminatingRoute(routeLeg.stops.head.busTime))
       // Deviating from the PDFs, for usability's sake!
       basicRoute
         .plus(Location.EleventhAndVirginia, 2.minutes)
