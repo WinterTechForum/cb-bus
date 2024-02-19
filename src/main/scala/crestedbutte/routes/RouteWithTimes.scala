@@ -1,6 +1,13 @@
 package crestedbutte.routes
 
-import crestedbutte.{BusSchedule, BusScheduleAtStop, ComponentName, Location, LocationWithTime, RouteLeg}
+import crestedbutte.{
+  BusSchedule,
+  BusScheduleAtStop,
+  ComponentName,
+  Location,
+  LocationWithTime,
+  RouteLeg,
+}
 import com.billding.time.WallTime
 
 case class RouteWithTimes(
@@ -14,13 +21,16 @@ case class RouteWithTimes(
             // TODO Confirm where we are getting routeName
             case BusScheduleAtStop(location, times, routeName)
                 if location == stop.location =>
-              BusScheduleAtStop(location, times :+ stop.busTime, leg.routeName)
+              BusScheduleAtStop(location,
+                                times :+ stop.busTime,
+                                leg.routeName,
+              )
             case other => other
           }
         else
           innerAcc :+ BusScheduleAtStop(stop.location,
                                         Seq(stop.busTime),
-            leg.routeName
+                                        leg.routeName,
           )
       }
     }
@@ -36,7 +46,7 @@ case class RouteWithTimes(
             stop.times.toList(index),
           ),
         ),
-      allStops.head.routeName // TODO Unsafe
+      allStops.head.routeName, // TODO Unsafe
     )
 
   def combinedWith(
@@ -63,20 +73,26 @@ object RouteWithTimes {
   ): RouteWithTimes =
     RouteWithTimes(
       stopTimes
-        .map(time => RouteLeg(Seq(LocationWithTime(location, time)), routeName))
+        .map(time =>
+          RouteLeg(Seq(LocationWithTime(location, time)), routeName),
+        )
         .map(routeConstructor),
     )
 
   def schedTyped(
-                  routeName: ComponentName,
+    routeName: ComponentName,
     location: Location,
     routeConstructor: RouteLeg => RouteLeg,
     busSchedule: BusSchedule,
   ): RouteWithTimes =
-    schedTyped(routeName, location, routeConstructor, busSchedule.stopTimes: _*)
+    schedTyped(routeName,
+               location,
+               routeConstructor,
+               busSchedule.stopTimes: _*,
+    )
 
   def sched(
-             routeName: ComponentName,
+    routeName: ComponentName,
     location: Location,
     routeConstructor: RouteLeg => RouteLeg,
     stopTimes: String*,

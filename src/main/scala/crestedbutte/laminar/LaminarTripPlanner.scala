@@ -123,22 +123,20 @@ object LaminarTripPlanner {
         div(
           plan match
             case Some(value) => SavePlanButton(value, db, $plan)
-            case None => span()
+            case None        => span()
           ,
-
           button(
             cls := "button",
             "Delete saved plan",
             onClick --> db.saveDailyPlan(
               crestedbutte.Plan(Seq.empty),
-              $plan
+              $plan,
             ),
           ),
           plan match
-            case Some(value) => Components.PlanElement(value, db, $plan)
-            case None => div()
-          ,
-
+            case Some(value) =>
+              Components.PlanElement(value, db, $plan)
+            case None => div(),
         ),
       ),
       EventStream.unit() --> changeBus.writer,
@@ -289,7 +287,7 @@ object LaminarTripPlanner {
   private def SavePlanButton(
     plan: Plan,
     db: Persistence,
-    $plan: Var[Option[Plan]]
+    $plan: Var[Option[Plan]],
   ) =
     button(
       cls := "button",
@@ -308,7 +306,8 @@ object LaminarTripPlanner {
           "Add to Plan",
           onClick --> Observer { _ =>
             $plan.update {
-              case Some(value) => Some(value.copy(legs = value.legs :+ routeLeg.ends))
+              case Some(value) =>
+                Some(value.copy(legs = value.legs :+ routeLeg.ends))
               case None => None
             }
             println("New plan: " + $plan.now())

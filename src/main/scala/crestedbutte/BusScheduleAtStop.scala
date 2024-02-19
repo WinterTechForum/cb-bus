@@ -17,7 +17,7 @@ case class BusScheduleAtStop(
     BusScheduleAtStop(
       location,
       times.dropWhile(!TimeCalculations.catchableBus(busTime, _)),
-      routeName
+      routeName,
     )
 
 }
@@ -26,6 +26,6 @@ object BusScheduleAtStop:
   def apply(
     location: Location,
     scheduleAtStop: BusSchedule,
-    routeName: ComponentName
+    routeName: ComponentName,
   ): BusScheduleAtStop =
     BusScheduleAtStop(location, scheduleAtStop.stopTimes, routeName)

@@ -24,7 +24,8 @@ case class PhoneNumber(
 
 // TODO General name
 case class ComponentName(
-  userFriendlyName: String) derives JsonCodec {
+  userFriendlyName: String)
+    derives JsonCodec {
 
   val name: String =
     userFriendlyName

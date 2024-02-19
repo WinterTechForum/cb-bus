@@ -13,10 +13,12 @@ class Persistence():
   def initializeOrResetStorage() =
     try {
       val retrieved =
-        localStorage.getItem("today")
+        localStorage
+          .getItem("today")
           .fromJson[Option[Plan]]
           .getOrElse(throw new Exception("Bad plan in localStorage"))
-    } catch {
+    }
+    catch {
       case e: Exception =>
         println("Error retrieving existing plan: " + e)
         println("Going to nuke all saved data")
@@ -26,18 +28,21 @@ class Persistence():
     }
     ()
 
-
   def retrieveDailyPlan(
     $plan: Var[Option[Plan]],
   ) =
-    val result = localStorage.getItem("today").fromJson[Option[Plan]]
+    val result = localStorage
+      .getItem("today")
+      .fromJson[Option[Plan]]
       .getOrElse(throw new Exception("Bad plan in localStorage"))
     $plan.set(result)
     result
 
   def retrieveDailyPlanOnly =
     println("retrieveDailyPlanOnly")
-    localStorage.getItem("today").fromJson[Option[Plan]]
+    localStorage
+      .getItem("today")
+      .fromJson[Option[Plan]]
       .getOrElse(throw new Exception("Bad plan in localStorage"))
 
   def updateDailyPlan(

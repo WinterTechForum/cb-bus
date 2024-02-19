@@ -24,7 +24,9 @@ case class RouteLeg(
   def trimToStartAt(
     location: Location,
   ): RouteLeg =
-    RouteLeg(stops.dropWhile(!_.location.matches(location)), routeName)
+    RouteLeg(stops.dropWhile(!_.location.matches(location)),
+             routeName,
+    )
 
   def trimToEndAt(
     location: Location,
@@ -43,7 +45,7 @@ case class RouteLeg(
       stops :+ LocationWithTime(location,
                                 stops.last.busTime.plus(busDuration),
       ),
-      routeName
+      routeName,
     )
 
   def ends =
@@ -52,6 +54,6 @@ case class RouteLeg(
         stops.head,
         stops.last,
       ),
-      routeName
+      routeName,
     )
 }

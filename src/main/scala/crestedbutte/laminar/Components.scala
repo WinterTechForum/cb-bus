@@ -129,7 +129,9 @@ object Components {
                 cls := "button",
                 onClick.preventDefault
                   .mapTo(
-                    RouteLeg(Seq(routeLeg.stops.head, stop), routeLeg.routeName),
+                    RouteLeg(Seq(routeLeg.stops.head, stop),
+                             routeLeg.routeName,
+                    ),
                   ) --> clickBus,
                 "+",
               ),
@@ -147,7 +149,7 @@ object Components {
   def PlanElement(
     plan: Plan,
     db: Persistence,
-    $plan: Var[Option[Plan]]
+    $plan: Var[Option[Plan]],
   ) =
     def RouteLegElementViewOnly(
       label: String,
@@ -159,12 +161,12 @@ object Components {
         div(
           // TODO Make a way to delete leg of a trip here
           "Delete leg",
-
           button(
             cls := "button",
             "Delete",
             onClick --> Observer { _ =>
-              val newPlan = plan.copy(legs = plan.legs.filterNot(_ == routeLeg))
+              val newPlan =
+                plan.copy(legs = plan.legs.filterNot(_ == routeLeg))
               println("newPlan: " + newPlan)
               db.saveDailyPlanOnly(newPlan)
               $plan.set(Some(newPlan))
@@ -573,7 +575,7 @@ object Components {
                 "Delete saved plan",
                 onClick --> db.saveDailyPlan(
                   crestedbutte.Plan(Seq.empty),
-                  $plan
+                  $plan,
                 ),
               ),
               Components.PlanElement(plan.get, db, $plan),
