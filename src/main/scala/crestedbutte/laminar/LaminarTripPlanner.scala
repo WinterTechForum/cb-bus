@@ -16,12 +16,9 @@ object LaminarTripPlanner {
 
   def demo() = {
     import org.scalajs.dom
-    val db: Var[Option[IDBDatabase]] = Var(
-      None,
-    ) // TODO Give a real DB value to restore functionality
     val app = div(
       LaminarTripPlanner.TripPlannerLaminar(WallTime("2:00 PM"),
-                                            Persistence(db),
+                                            Persistence(),
       ),
     )
     render(

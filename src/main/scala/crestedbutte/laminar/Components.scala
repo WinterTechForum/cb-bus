@@ -171,6 +171,8 @@ object Components {
       div(
         div(label),
         div(
+          // TODO Make a way to delete leg of a trip here
+          "Delete leg",
           routeLeg.stops.map(stop =>
             UpcomingStopInfo(
               stop.location,
@@ -209,11 +211,7 @@ object Components {
     initialComponent: Option[ComponentName],
     javaClock: Clock,
   ) = {
-    val $db: Var[Option[IDBDatabase]] = Var(
-      None,
-    )
-
-    val db = Persistence($db)
+    val db = Persistence()
 
     val clockTicks = new EventBus[Int]
 
