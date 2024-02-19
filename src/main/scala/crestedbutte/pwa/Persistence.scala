@@ -11,6 +11,17 @@ class Persistence():
   val localStorage = window.localStorage
 
   def createDb() =
+    try {
+      val retrieved = 
+        localStorage.getItem("today")
+          .fromJson[Option[Plan]]
+          .getOrElse(throw new Exception("Bad plan in localStorage"))
+    } catch {
+      case e: Exception =>
+        println("Error retrieving existing plan: " + e)
+        val opt: Option[Plan] = None
+        localStorage.setItem("today", opt.toJson)
+    }
 //    localStorage.setItem("today", null)
 //    if (localStorage.getItem("today") == null)
 //      localStorage.setItem("today", crestedbutte.Plan(Seq.empty).toJson)
@@ -18,9 +29,9 @@ class Persistence():
 
 
   def retrieveDailyPlan(
-    $plan: Var[Plan],
+    $plan: Var[Option[Plan]],
   ) =
-    val result = localStorage.getItem("today").fromJson[Plan]
+    val result = localStorage.getItem("today").fromJson[Option[Plan]]
       .getOrElse(throw new Exception("Bad plan in localStorage"))
     $plan.set(result)
 
@@ -28,7 +39,12 @@ class Persistence():
     routeLeg: RouteLeg,
   ) =
 
-    val retrieved = localStorage.getItem("today").fromJson[Plan].getOrElse(throw new Exception("Bad plan in localStorage"))
+    val retrieved = 
+      localStorage
+        .getItem("today")
+        .fromJson[Option[Plan]]
+        .getOrElse(throw new Exception("Bad plan in localStorage"))
+        .getOrElse(throw new Exception("No plan in localStorage"))
     val updatedPlan = retrieved.copy(retrieved.legs :+ routeLeg)
     saveDailyPlanOnly(updatedPlan)
     println("Saved new plan: " + updatedPlan)

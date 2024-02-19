@@ -564,12 +564,12 @@ object Components {
     componentSelector: Observer[ComponentData],
   ) =
 
-    val $plan = Var(Plan(Seq.empty))
+    val $plan: Var[Option[Plan]] = Var(None)
     div(
       onMountCallback(_ => db.retrieveDailyPlan($plan)),
       child <-- $plan.signal.map(plan =>
         div(
-          if (plan.legs.nonEmpty)
+          if (plan.nonEmpty)
             div(
               button(
                 cls := "button",
@@ -578,7 +578,7 @@ object Components {
                   crestedbutte.Plan(Seq.empty),
                 ),
               ),
-              Components.PlanElement(plan, db),
+              Components.PlanElement(plan.get, db),
             )
           else
             div(

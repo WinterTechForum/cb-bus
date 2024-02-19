@@ -59,7 +59,7 @@ object LaminarTripPlanner {
     val tripResult: EventStream[Either[TripPlannerError, RouteLeg]] =
       submissionZ.events
         .map(_.evaluate())
-    val $plan = Var(Plan(Seq.empty))
+    val $plan: Var[Option[Plan]] = Var(None)
 
     val valuesDuringChangeZ: EventStream[TripParamZ] =
       changeBus.events
@@ -121,7 +121,11 @@ object LaminarTripPlanner {
       ),
       child <-- $plan.signal.map(plan =>
         div(
-          SavePlanButton(plan, db),
+          plan match
+            case Some(value) => SavePlanButton(value, db)
+            case None => span()
+          ,
+            
           button(
             cls := "button",
             "Delete saved plan",
@@ -129,7 +133,11 @@ object LaminarTripPlanner {
               crestedbutte.Plan(Seq.empty),
             ),
           ),
-          Components.PlanElement(plan, db),
+          plan match
+            case Some(value) => Components.PlanElement(value, db)
+            case None => div()
+          ,
+            
         ),
       ),
       EventStream.unit() --> changeBus.writer,
@@ -289,7 +297,7 @@ object LaminarTripPlanner {
 
   private def RouteLegEnds(
     routeLeg: RouteLeg,
-    $plan: Var[Plan],
+    $plan: Var[Option[Plan]],
   ) =
     div(
       div(
@@ -297,9 +305,10 @@ object LaminarTripPlanner {
           cls := "button",
           "Add to Plan",
           onClick --> Observer { _ =>
-            $plan.update(plan =>
-              plan.copy(legs = plan.legs :+ routeLeg.ends),
-            )
+            $plan.update {
+              case Some(value) => Some(value.copy(legs = value.legs :+ routeLeg.ends))
+              case None => None
+            }
             println("New plan: " + $plan.now())
           },
         ),
