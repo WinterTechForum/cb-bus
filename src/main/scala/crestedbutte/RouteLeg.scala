@@ -4,7 +4,8 @@ import com.billding.time.MinuteDuration
 import zio.json._
 
 case class RouteLeg(
-  stops: Seq[LocationWithTime])
+  stops: Seq[LocationWithTime],
+  routeName: ComponentName)
     derives JsonCodec {
   val plainTextRepresentation =
     val start = stops.head
@@ -23,14 +24,14 @@ case class RouteLeg(
   def trimToStartAt(
     location: Location,
   ): RouteLeg =
-    RouteLeg(stops.dropWhile(!_.location.matches(location)))
+    RouteLeg(stops.dropWhile(!_.location.matches(location)), routeName)
 
   def trimToEndAt(
     location: Location,
   ): RouteLeg = {
     val indexOfLastStop =
       stops.indexWhere(_.location.matches(location))
-    RouteLeg(stops.take(indexOfLastStop + 1))
+    RouteLeg(stops.take(indexOfLastStop + 1), routeName)
   }
 
   // Assumes non-empty
@@ -42,6 +43,7 @@ case class RouteLeg(
       stops :+ LocationWithTime(location,
                                 stops.last.busTime.plus(busDuration),
       ),
+      routeName
     )
 
   def ends =
@@ -50,5 +52,6 @@ case class RouteLeg(
         stops.head,
         stops.last,
       ),
+      routeName
     )
 }

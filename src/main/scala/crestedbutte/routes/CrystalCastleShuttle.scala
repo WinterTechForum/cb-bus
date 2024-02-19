@@ -27,6 +27,7 @@ object CrystalCastleShuttle
     extends NamedRoute(
       ComponentName("Crystal/Castle"),
       RouteWithTimes.schedTyped(
+        ComponentName("Crystal/Castle"),
         Location.MountaineerSquare,
         _.plus(Location.Pitchfork, 2.minutes)
           .plus(Location.CrystalRoad, 1.minutes)

@@ -25,6 +25,7 @@ object TownShuttleTimes
     extends NamedRoute(
       ComponentName("Town Loop"),
       RouteWithTimes.schedTyped(
+        ComponentName("Town Loop"),
         Location.OldTownHall,
         _.plus(Location.Clarks, 4.minutes)
           .plus(Location.FourWayUphill, 1.minutes)

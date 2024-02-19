@@ -49,6 +49,7 @@ object RtaSouthbound {
 
   val normalRouteWithTimes =
     RouteWithTimes.sched(
+      ComponentName("Rta Southbound"),
       Location.MountaineerSquare,
       constructNormalRoute,
       "06:40",

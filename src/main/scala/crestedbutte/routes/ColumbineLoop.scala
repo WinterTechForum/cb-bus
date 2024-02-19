@@ -28,6 +28,7 @@ object ColumbineLoop
     extends NamedRoute(
       ComponentName("Columbine Loop"),
       RouteWithTimes.schedTyped(
+        ComponentName("Columbine Loop"),
         Location.MountaineerSquare,
         _.plus(Location.Whetstone, 1.minutes)
           .plus(Location.ColumbineCondo, 2.minutes)

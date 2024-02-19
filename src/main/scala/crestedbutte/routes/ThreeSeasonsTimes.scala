@@ -18,6 +18,7 @@ object ThreeSeasonsTimes
     extends NamedRoute(
       ComponentName("Three Seasons Loop"),
       RouteWithTimes.schedTyped(
+        ComponentName("Three Seasons Loop"),
         Location.MountaineerSquare,
         _.plus(Location.ThreeSeasons, 1.minutes)
           .plus(Location.MountainSunrise, 1.minutes)

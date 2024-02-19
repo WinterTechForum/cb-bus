@@ -11,8 +11,11 @@ class Persistence():
   val localStorage = window.localStorage
 
   def createDb() =
-    if (localStorage.getItem("today") == null)
-      localStorage.setItem("today", crestedbutte.Plan(Seq.empty).toJson)
+//    localStorage.setItem("today", null)
+//    if (localStorage.getItem("today") == null)
+//      localStorage.setItem("today", crestedbutte.Plan(Seq.empty).toJson)
+    ()
+
 
   def retrieveDailyPlan(
     $plan: Var[Plan],

@@ -1,12 +1,6 @@
 package crestedbutte.routes
 
-import crestedbutte.{
-  BusSchedule,
-  BusScheduleAtStop,
-  Location,
-  LocationWithTime,
-  RouteLeg,
-}
+import crestedbutte.{BusSchedule, BusScheduleAtStop, ComponentName, Location, LocationWithTime, RouteLeg}
 import com.billding.time.WallTime
 
 case class RouteWithTimes(
@@ -17,14 +11,16 @@ case class RouteWithTimes(
       leg.stops.foldLeft(acc) { case (innerAcc, stop) =>
         if (innerAcc.exists(_.location == stop.location))
           innerAcc.map {
-            case BusScheduleAtStop(location, times)
+            // TODO Confirm where we are getting routeName
+            case BusScheduleAtStop(location, times, routeName)
                 if location == stop.location =>
-              BusScheduleAtStop(location, times :+ stop.busTime)
+              BusScheduleAtStop(location, times :+ stop.busTime, leg.routeName)
             case other => other
           }
         else
           innerAcc :+ BusScheduleAtStop(stop.location,
                                         Seq(stop.busTime),
+            leg.routeName
           )
       }
     }
@@ -40,6 +36,7 @@ case class RouteWithTimes(
             stop.times.toList(index),
           ),
         ),
+      allStops.head.routeName // TODO Unsafe
     )
 
   def combinedWith(
@@ -59,31 +56,36 @@ case class RouteWithTimes(
 object RouteWithTimes {
 
   def schedTyped(
+    routeName: ComponentName,
     location: Location,
     routeConstructor: RouteLeg => RouteLeg,
     stopTimes: WallTime*,
   ): RouteWithTimes =
     RouteWithTimes(
       stopTimes
-        .map(time => RouteLeg(Seq(LocationWithTime(location, time))))
+        .map(time => RouteLeg(Seq(LocationWithTime(location, time)), routeName))
         .map(routeConstructor),
     )
 
   def schedTyped(
+                  routeName: ComponentName,
     location: Location,
     routeConstructor: RouteLeg => RouteLeg,
     busSchedule: BusSchedule,
   ): RouteWithTimes =
-    schedTyped(location, routeConstructor, busSchedule.stopTimes: _*)
+    schedTyped(routeName, location, routeConstructor, busSchedule.stopTimes: _*)
 
   def sched(
+             routeName: ComponentName,
     location: Location,
     routeConstructor: RouteLeg => RouteLeg,
     stopTimes: String*,
   ): RouteWithTimes =
-    schedTyped(location,
-               routeConstructor,
-               stopTimes.toList.map(WallTime(_)): _*,
+    schedTyped(
+      routeName,
+      location,
+      routeConstructor,
+      stopTimes.toList.map(WallTime(_)): _*,
     ) // ugh
 
 }

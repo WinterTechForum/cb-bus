@@ -13,6 +13,7 @@ object SpringFallLoop
     extends NamedRoute(
       ComponentName("Off-season Loop"),
       RouteWithTimes.schedTyped(
+        ComponentName("Off-season Loop"),
         Location.OldTownHall,
         _.plus(Location.Clarks, 5.minutes)
           .plus(Location.FourWayUphill, 1.minutes)

@@ -1,6 +1,7 @@
 package crestedbutte
 
 import com.billding.time.*
+import zio.json.JsonCodec
 
 case class StopTimeInfo(
   time: WallTime,
@@ -23,7 +24,7 @@ case class PhoneNumber(
 
 // TODO General name
 case class ComponentName(
-  userFriendlyName: String) {
+  userFriendlyName: String) derives JsonCodec {
 
   val name: String =
     userFriendlyName

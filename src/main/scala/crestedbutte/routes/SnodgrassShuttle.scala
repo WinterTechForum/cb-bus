@@ -27,6 +27,7 @@ object SnodgrassShuttle
     extends NamedRoute(
       ComponentName("Snodgrass Shuttle"),
       RouteWithTimes.schedTyped(
+        ComponentName("Snodgrass Shuttle"),
         Location.MountaineerSquare,
         _.plus(Location.CinnamonMtnGothicToSnodgrass, 1.minutes)
           .plus(Location.GothicWintersetTosnodgrass, 2.minutes)

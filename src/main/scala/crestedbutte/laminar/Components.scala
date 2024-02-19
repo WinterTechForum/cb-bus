@@ -138,7 +138,7 @@ object Components {
                 cls := "button",
                 onClick.preventDefault
                   .mapTo(
-                    RouteLeg(Seq(routeLeg.stops.head, stop)),
+                    RouteLeg(Seq(routeLeg.stops.head, stop), routeLeg.routeName),
                   ) --> clickBus,
                 "+",
               ),

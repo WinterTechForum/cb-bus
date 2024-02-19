@@ -67,6 +67,7 @@ object RtaNorthbound {
 
   val normalRouteWithTimes =
     RouteWithTimes.sched(
+      ComponentName("Rta Northbound"),
       Location.RecCenter,
       constructNormalRoute,
       "05:21",
