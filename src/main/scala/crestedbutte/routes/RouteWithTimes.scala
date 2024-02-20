@@ -26,24 +26,30 @@ case class RouteWithTimes(
   def nextAfter(
     original: RouteLeg,
   ): Option[RouteLeg] =
-    indexOfLegThatContains(original)
-      .flatMap(index =>
+    for 
+      index <- indexOfLegThatContains(original)
+      newIndex <- 
         Option.when(index + 1 <= legs.size - 1)(
-          legs(index + 1)
-            .withSameStopsAs(original),
-        ),
-      )
+          index + 1
+        )
+      newRoute <- legs(newIndex)
+            .withSameStopsAs(original)
+            .toOption
+    yield newRoute
 
   def nextBefore(
     original: RouteLeg,
   ): Option[RouteLeg] =
-    indexOfLegThatContains(original)
-      .flatMap(index =>
+    for
+      index <- indexOfLegThatContains(original)
+      newIndex <-
         Option.when(index - 1 >= 0)(
-          legs(index - 1)
-            .withSameStopsAs(original),
-        ),
-      )
+          index - 1
+        )
+      newRoute <- legs(newIndex)
+        .withSameStopsAs(original)
+        .toOption
+    yield newRoute
 
   val allStops: Seq[BusScheduleAtStop] =
     legs.foldLeft(Seq[BusScheduleAtStop]()) { case (acc, leg) =>
@@ -67,19 +73,19 @@ case class RouteWithTimes(
       }
     }
 
-  def routeLeg(
-    index: Int,
+  def firstRouteLeg(
+
   ): RouteLeg =
     RouteLeg(
       allStops
         .map(stop =>
           LocationWithTime(
             stop.location,
-            stop.times.toList(index),
+            stop.times.toList(0),
           ),
         ),
       allStops.head.routeName, // TODO Unsafe
-    )
+    ).getOrElse(throw new IllegalStateException("No stops in route"))
 
   def combinedWith(
     routeWithTimes: RouteWithTimes,
@@ -105,8 +111,8 @@ object RouteWithTimes {
   ): RouteWithTimes =
     RouteWithTimes(
       stopTimes
-        .map(time =>
-          RouteLeg(Seq(LocationWithTime(location, time)), routeName),
+        .flatMap(time =>
+          RouteLeg(Seq(LocationWithTime(location, time)), routeName).toOption,
         )
         .map(routeConstructor),
     )

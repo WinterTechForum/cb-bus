@@ -307,7 +307,8 @@ object LaminarTripPlanner {
           onClick --> Observer { _ =>
             $plan.update {
               case Some(value) =>
-                Some(value.copy(legs = value.legs :+ routeLeg.ends))
+                val ends = routeLeg.ends.getOrElse(throw new IllegalStateException("No ends for empty routeLeg"))
+                Some(value.copy(legs = value.legs :+ ends))
               case None => None
             }
             println("New plan: " + $plan.now())

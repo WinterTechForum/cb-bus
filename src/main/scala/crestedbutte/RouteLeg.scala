@@ -3,9 +3,21 @@ package crestedbutte
 import com.billding.time.MinuteDuration
 import zio.json._
 
-case class RouteLeg(
-  stops: Seq[LocationWithTime],
-  routeName: ComponentName)
+object RouteLeg:
+  def apply(
+             stops: Seq[LocationWithTime],
+             routeName: ComponentName
+  ): Either[String, RouteLeg] =
+    for 
+      head <- stops.headOption.toRight("Empty Route")
+      last <- stops.lastOption.toRight("Empty Route")
+    yield RouteLeg(stops, routeName, head, last)
+
+case class RouteLeg private (
+                     stops: Seq[LocationWithTime],
+                     routeName: ComponentName,
+                     head: LocationWithTime,
+                     last: LocationWithTime)
     derives JsonCodec {
   lazy val plainTextRepresentation =
     val start = stops.head
@@ -23,7 +35,7 @@ case class RouteLeg(
 
   def withSameStopsAs(
     other: RouteLeg,
-  ): RouteLeg =
+  ): Either[String, RouteLeg] =
     RouteLeg(
       stops.filter(stop =>
         other.stops.exists(locationWithTime =>
@@ -35,14 +47,14 @@ case class RouteLeg(
 
   def trimToStartAt(
     location: Location,
-  ): RouteLeg =
+  ): Either[String, RouteLeg] =
     RouteLeg(stops.dropWhile(!_.location.matches(location)),
              routeName,
     )
 
   def trimToEndAt(
     location: Location,
-  ): RouteLeg = {
+  ): Either[String, RouteLeg] = {
     val indexOfLastStop =
       stops.indexWhere(_.location.matches(location))
     RouteLeg(stops.take(indexOfLastStop + 1), routeName)
@@ -52,12 +64,11 @@ case class RouteLeg(
   def plus(
     location: Location,
     busDuration: MinuteDuration,
-  ) =
-    RouteLeg(
-      stops :+ LocationWithTime(location,
+  ): RouteLeg =
+    copy(
+      stops = stops :+ LocationWithTime(location,
                                 stops.last.busTime.plus(busDuration),
       ),
-      routeName,
     )
 
   def ends =

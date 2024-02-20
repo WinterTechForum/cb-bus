@@ -112,13 +112,7 @@ object Components {
         clickBus.events
           .map { (e: RouteLeg) =>
             println("routeLeg before the explosion: " + e)
-
-            val plan = Plan(Seq(e))
-            dom.window.navigator.clipboard
-              .writeText(plan.plainTextRepresentation)
             db.updateDailyPlan(e)
-            println("copy to buffer!: " + e)
-            // TODO Activate notification
             true // keep modal open
           } --> $active,
         routeLeg.stops.tail.map(stop =>
@@ -132,13 +126,10 @@ object Components {
                 cls := "button",
                 onClick.preventDefault
                   .mapTo {
-                    routeLeg.stops match
-                      case head :: other =>
-                        RouteLeg(Seq(head, stop), routeLeg.routeName)
-                      case empty =>
-                        throw new RuntimeException(
-                          "Cannot make routeLeg out of empty collection",
-                        )
+                    val head =
+                      routeLeg.stops.headOption.getOrElse(throw new IllegalStateException("Can't add a leg with a missing head."))
+
+                    RouteLeg(Seq(head, stop), routeLeg.routeName).getOrElse(throw new IllegalStateException("Failed to create new route leg"))
                   } --> clickBus,
                 "+",
               ),
@@ -392,7 +383,7 @@ object Components {
             .remove("is-clipped")
           componentData match {
             case PlanViewer =>
-              TripViewerLaminar(initialTime,
+              TripViewerLaminar(
                                 db,
                                 $selectedComponent.writer,
               )
@@ -629,7 +620,6 @@ object Components {
   }
 
   def TripViewerLaminar(
-    initialTime: WallTime,
     db: Persistence,
     componentSelector: Observer[ComponentData],
   ) =

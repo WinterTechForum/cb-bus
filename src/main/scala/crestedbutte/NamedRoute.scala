@@ -40,16 +40,14 @@ case class NamedRoute(
 
   val firstStopOnRoute: Location =
     routeWithTimes
-      .routeLeg(0)
-      .stops
-      .head // todo unsafe
+      .firstRouteLeg()
+      .head
       .location
 
   val lastStopOnRoute: Location =
     routeWithTimes
-      .routeLeg(0)
-      .stops
-      .last // todo unsafe
+      .firstRouteLeg()
+      .last
       .location
 
   val allStops: Seq[Location] =

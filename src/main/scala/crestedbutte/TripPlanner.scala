@@ -45,10 +45,12 @@ enum TripParamZ {
                 ) && stop.busTime >= s.arrivalTime,
             ),
           )
-          .map: routeLeg =>
-            routeLeg
-              .trimToStartAt(s.start)
-              .trimToEndAt(s.destination)
+          .flatMap: routeLeg =>
+            (for
+              trimmedStart <- routeLeg.trimToStartAt(s.start)
+              trimmedEnd <- trimmedStart.trimToEndAt(s.destination)
+            yield trimmedEnd)
+            .toOption
           .toRight(
             TripPlannerError(
               "Could not find a return leg after: " + s.arrivalTime.toDumbAmericanString,
@@ -64,10 +66,12 @@ enum TripParamZ {
                 ) && stop.busTime <= b.arrivalTime,
             ),
           )
-          .map(routeLeg =>
-            routeLeg
-              .trimToStartAt(b.start)
-              .trimToEndAt(b.destination),
+          .flatMap(routeLeg =>
+            (for
+              trimmedStart <- routeLeg.trimToStartAt(b.start)
+              trimmedEnd <- trimmedStart.trimToEndAt(b.destination)
+            yield trimmedEnd)
+              .toOption
           )
           .toRight(
             TripPlannerError(
