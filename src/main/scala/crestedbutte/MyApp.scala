@@ -41,19 +41,18 @@ object MyApp extends ZIOAppDefault {
         // TODO Ew. Try to get this removed after first version of PWA is working
         import scala.concurrent.ExecutionContext.Implicits.global
 
-//         TODO Any good way to wield this?
+
         val serviceWorker = toServiceWorkerNavigator(
           browser.window().navigator,
         ).serviceWorker
 
-        if (browser.url().getHost != "localhost") {
-          serviceWorker.register(
-            "./push/onesignal/OneSignalSDKWorker.js",
-            new ServiceWorkerRegistrationOptions {
-              scope = "/push/onesignal/myCustomScope"
-            },
-          )
-        }
+
+        serviceWorker.register(
+          "./push/onesignal/OneSignalSDKWorker.js",
+          new ServiceWorkerRegistrationOptions {
+            scope = "/push/onesignal/myCustomScope"
+          },
+        )
 
         serviceWorker
           .register("./sw-opt.js")
