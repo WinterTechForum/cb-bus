@@ -12,30 +12,38 @@ import com.billding.time.WallTime
 
 case class RouteWithTimes(
   legs: Seq[RouteLeg]) {
-  
-  def indexOfLegThatContains(other: RouteLeg) =
-    val res = legs.indexWhere(leg => leg.stops.exists(locationWithTime => locationWithTime.busTime.localTime.value == other.stops.head.busTime.localTime.value && locationWithTime.location == other.stops.head.location))
+
+  def indexOfLegThatContains(
+    other: RouteLeg,
+  ) =
+    val res = legs.indexWhere(leg =>
+      leg.stops.exists(locationWithTime =>
+        locationWithTime.busTime.localTime.value == other.stops.head.busTime.localTime.value && locationWithTime.location == other.stops.head.location,
+      ),
+    )
     Option.when(res != -1)(res)
 
-  def nextAfter(original: RouteLeg): Option[RouteLeg] =
-      indexOfLegThatContains(original)
-        .flatMap(index =>
-          Option.when(index + 1 <= legs.size - 1)(
-            legs(index + 1)
-              .withSameStopsAs(original)
-          )
-        )
+  def nextAfter(
+    original: RouteLeg,
+  ): Option[RouteLeg] =
+    indexOfLegThatContains(original)
+      .flatMap(index =>
+        Option.when(index + 1 <= legs.size - 1)(
+          legs(index + 1)
+            .withSameStopsAs(original),
+        ),
+      )
 
-    
-  def nextBefore(original: RouteLeg): Option[RouteLeg] =
-      indexOfLegThatContains(original)
-        .flatMap(index =>
-          Option.when(index - 1 >= 0)(
-            legs(index - 1)
-              .withSameStopsAs(original)
-          )
-        )
-
+  def nextBefore(
+    original: RouteLeg,
+  ): Option[RouteLeg] =
+    indexOfLegThatContains(original)
+      .flatMap(index =>
+        Option.when(index - 1 >= 0)(
+          legs(index - 1)
+            .withSameStopsAs(original),
+        ),
+      )
 
   val allStops: Seq[BusScheduleAtStop] =
     legs.foldLeft(Seq[BusScheduleAtStop]()) { case (acc, leg) =>

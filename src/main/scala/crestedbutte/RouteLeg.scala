@@ -20,12 +20,16 @@ case class RouteLeg(
   assert(stops.nonEmpty,
          "Empty Route",
   ) // TODO Upgrade into a true effect
-  
+
   def withSameStopsAs(
     other: RouteLeg,
   ): RouteLeg =
     RouteLeg(
-      stops.filter(stop => other.stops.exists(locationWithTime => locationWithTime.location == stop.location)),
+      stops.filter(stop =>
+        other.stops.exists(locationWithTime =>
+          locationWithTime.location == stop.location,
+        ),
+      ),
       routeName,
     )
 

@@ -96,15 +96,14 @@ object RtaSouthbound {
       "23:30",
     )
 
-
-  def terminatingRoute(busTime: WallTime): Boolean =
-    busTime.minutes == WallTime("5:35 PM").minutes
+  def terminatingRoute(
+    busTime: WallTime,
+  ): Boolean = busTime.minutes == WallTime("5:35 PM").minutes
 
   def constructNormalRoute(
     routeLeg: RouteLeg,
   ): RouteLeg = {
     val shortRoute =
-
       routeLeg
         .plus(Location.FourwayGunnison, 8.minutes)
         .plus(Location.Riverbend, 2.minutes)
@@ -128,7 +127,11 @@ object RtaSouthbound {
           .plus(Location.Western, 2.minutes)
 
     // late buses actually terminate at the community school. The others loop through Gunni
-    if (routeLeg.stops.head.busTime.isBefore(WallTime("22:00")) && !terminatingRoute(routeLeg.stops.head.busTime))
+    if (
+      routeLeg.stops.head.busTime.isBefore(
+        WallTime("22:00"),
+      ) && !terminatingRoute(routeLeg.stops.head.busTime)
+    )
       // Deviating from the PDFs, for usability's sake!
       basicRoute
         .plus(Location.EleventhAndVirginia, 2.minutes)

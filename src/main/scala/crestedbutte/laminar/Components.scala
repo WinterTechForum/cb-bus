@@ -167,17 +167,17 @@ object Components {
           case _ => None
       val nextAfter =
         for
-            routeWithTimes <- routeWithTimesO
-            nextAfter <- routeWithTimes.nextAfter(routeLeg)
+          routeWithTimes <- routeWithTimesO
+          nextAfter      <- routeWithTimes.nextAfter(routeLeg)
         yield nextAfter
       val nextBefore =
         for
           routeWithTimes <- routeWithTimesO
-          nextAfter <- routeWithTimes.nextBefore(routeLeg)
+          nextAfter      <- routeWithTimes.nextBefore(routeLeg)
         yield nextAfter
       println("routeLeg: " + routeLeg)
       println("Next after: " + nextAfter)
-        
+
       div(
         div(label),
         div(
@@ -191,7 +191,11 @@ object Components {
                   routeWithTimesO match
                     case Some(value) =>
                       val newPlan =
-                        plan.copy(legs = plan.legs.updated(planIndex, nextBeforeValue))
+                        plan.copy(legs =
+                          plan.legs.updated(planIndex,
+                                            nextBeforeValue,
+                          ),
+                        )
                       $plan.set(Some(newPlan))
                       db.saveDailyPlanOnly(newPlan)
                     case None => ???
@@ -219,7 +223,9 @@ object Components {
                   routeWithTimesO match
                     case Some(value) =>
                       val newPlan =
-                        plan.copy(legs = plan.legs.updated(planIndex, nextAfterValue))
+                        plan.copy(legs =
+                          plan.legs.updated(planIndex, nextAfterValue),
+                        )
                       $plan.set(Some(newPlan))
                       db.saveDailyPlanOnly(newPlan)
                     case None => ???
