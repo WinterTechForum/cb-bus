@@ -170,7 +170,11 @@ object Components {
             routeWithTimes <- routeWithTimesO
             nextAfter <- routeWithTimes.nextAfter(routeLeg)
         yield nextAfter
-      pprint.pprintln("routeWithTimes0: " + routeWithTimesO)
+      val nextBefore =
+        for
+          routeWithTimes <- routeWithTimesO
+          nextAfter <- routeWithTimes.nextBefore(routeLeg)
+        yield nextAfter
       println("routeLeg: " + routeLeg)
       println("Next after: " + nextAfter)
         
@@ -178,7 +182,23 @@ object Components {
         div(label),
         div(
           // TODO Make a way to delete leg of a trip here
-          "Delete leg",
+          nextBefore match
+            case Some(nextBeforeValue) =>
+              button(
+                cls := "button",
+                "<",
+                onClick --> Observer { _ =>
+                  routeWithTimesO match
+                    case Some(value) =>
+                      val newPlan =
+                        plan.copy(legs = plan.legs.updated(planIndex, nextBeforeValue))
+                      $plan.set(Some(newPlan))
+                      db.saveDailyPlanOnly(newPlan)
+                    case None => ???
+                },
+              )
+            case None => span()
+          ,
           button(
             cls := "button",
             "Delete",
@@ -198,19 +218,11 @@ object Components {
                 onClick --> Observer { _ =>
                   routeWithTimesO match
                     case Some(value) =>
-                      println("idx to replace: " + value.indexOfLegThatContains(routeLeg))
                       val newPlan =
-                        // TODO better unsafe .get
                         plan.copy(legs = plan.legs.updated(planIndex, nextAfterValue))
                       $plan.set(Some(newPlan))
                       db.saveDailyPlanOnly(newPlan)
                     case None => ???
-                  
-                  //              val newPlan =
-                  //                plan.copy(legs = plan.legs.filterNot(_ == routeLeg))
-                  //              println("newPlan: " + newPlan)
-                  //              db.saveDailyPlanOnly(newPlan)
-                  //              $plan.set(Some(newPlan))
                 },
               )
             case None => span()

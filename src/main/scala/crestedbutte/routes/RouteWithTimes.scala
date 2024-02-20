@@ -14,7 +14,7 @@ case class RouteWithTimes(
   legs: Seq[RouteLeg]) {
   
   def indexOfLegThatContains(other: RouteLeg) =
-    val res = legs.indexWhere(leg => leg.stops.exists(locationWithTime => locationWithTime.busTime.minutes == other.stops.head.busTime.minutes && locationWithTime.location == other.stops.head.location))
+    val res = legs.indexWhere(leg => leg.stops.exists(locationWithTime => locationWithTime.busTime.localTime.value == other.stops.head.busTime.localTime.value && locationWithTime.location == other.stops.head.location))
     Option.when(res != -1)(res)
 
   def nextAfter(original: RouteLeg): Option[RouteLeg] =
