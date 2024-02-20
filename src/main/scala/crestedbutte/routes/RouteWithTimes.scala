@@ -26,15 +26,15 @@ case class RouteWithTimes(
   def nextAfter(
     original: RouteLeg,
   ): Option[RouteLeg] =
-    for 
+    for
       index <- indexOfLegThatContains(original)
-      newIndex <- 
+      newIndex <-
         Option.when(index + 1 <= legs.size - 1)(
-          index + 1
+          index + 1,
         )
       newRoute <- legs(newIndex)
-            .withSameStopsAs(original)
-            .toOption
+        .withSameStopsAs(original)
+        .toOption
     yield newRoute
 
   def nextBefore(
@@ -44,7 +44,7 @@ case class RouteWithTimes(
       index <- indexOfLegThatContains(original)
       newIndex <-
         Option.when(index - 1 >= 0)(
-          index - 1
+          index - 1,
         )
       newRoute <- legs(newIndex)
         .withSameStopsAs(original)
@@ -74,7 +74,6 @@ case class RouteWithTimes(
     }
 
   def firstRouteLeg(
-
   ): RouteLeg =
     RouteLeg(
       allStops
@@ -112,7 +111,9 @@ object RouteWithTimes {
     RouteWithTimes(
       stopTimes
         .flatMap(time =>
-          RouteLeg(Seq(LocationWithTime(location, time)), routeName).toOption,
+          RouteLeg(Seq(LocationWithTime(location, time)),
+                   routeName,
+          ).toOption,
         )
         .map(routeConstructor),
     )

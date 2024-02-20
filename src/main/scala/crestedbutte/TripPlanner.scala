@@ -48,9 +48,8 @@ enum TripParamZ {
           .flatMap: routeLeg =>
             (for
               trimmedStart <- routeLeg.trimToStartAt(s.start)
-              trimmedEnd <- trimmedStart.trimToEndAt(s.destination)
-            yield trimmedEnd)
-            .toOption
+              trimmedEnd   <- trimmedStart.trimToEndAt(s.destination)
+            yield trimmedEnd).toOption
           .toRight(
             TripPlannerError(
               "Could not find a return leg after: " + s.arrivalTime.toDumbAmericanString,
@@ -69,9 +68,8 @@ enum TripParamZ {
           .flatMap(routeLeg =>
             (for
               trimmedStart <- routeLeg.trimToStartAt(b.start)
-              trimmedEnd <- trimmedStart.trimToEndAt(b.destination)
-            yield trimmedEnd)
-              .toOption
+              trimmedEnd   <- trimmedStart.trimToEndAt(b.destination)
+            yield trimmedEnd).toOption,
           )
           .toRight(
             TripPlannerError(

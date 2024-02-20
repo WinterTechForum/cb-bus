@@ -126,7 +126,11 @@ object BulmaLocal {
                         ),
                       ),
                     )
-                    .flatMap(_.trimToStartAt(scheduleAtStop.location).toOption)
+                    .flatMap(
+                      _.trimToStartAt(
+                        scheduleAtStop.location,
+                      ).toOption,
+                    )
                     .get, // Unsafe
                 ),
               ) --> $mode,

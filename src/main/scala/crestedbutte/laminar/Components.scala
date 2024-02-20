@@ -127,9 +127,18 @@ object Components {
                 onClick.preventDefault
                   .mapTo {
                     val head =
-                      routeLeg.stops.headOption.getOrElse(throw new IllegalStateException("Can't add a leg with a missing head."))
+                      routeLeg.stops.headOption.getOrElse(
+                        throw new IllegalStateException(
+                          "Can't add a leg with a missing head.",
+                        ),
+                      )
 
-                    RouteLeg(Seq(head, stop), routeLeg.routeName).getOrElse(throw new IllegalStateException("Failed to create new route leg"))
+                    RouteLeg(Seq(head, stop), routeLeg.routeName)
+                      .getOrElse(
+                        throw new IllegalStateException(
+                          "Failed to create new route leg",
+                        ),
+                      )
                   } --> clickBus,
                 "+",
               ),
@@ -384,8 +393,8 @@ object Components {
           componentData match {
             case PlanViewer =>
               TripViewerLaminar(
-                                db,
-                                $selectedComponent.writer,
+                db,
+                $selectedComponent.writer,
               )
             case TripPlannerComponent => planner
             case namedRoute: NamedRoute =>

@@ -41,11 +41,9 @@ object MyApp extends ZIOAppDefault {
         // TODO Ew. Try to get this removed after first version of PWA is working
         import scala.concurrent.ExecutionContext.Implicits.global
 
-
         val serviceWorker = toServiceWorkerNavigator(
           browser.window().navigator,
         ).serviceWorker
-
 
         serviceWorker.register(
           "./push/onesignal/OneSignalSDKWorker.js",
@@ -71,5 +69,3 @@ object MyApp extends ZIOAppDefault {
       }
 
 }
-
-

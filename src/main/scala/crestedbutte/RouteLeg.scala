@@ -5,19 +5,19 @@ import zio.json._
 
 object RouteLeg:
   def apply(
-             stops: Seq[LocationWithTime],
-             routeName: ComponentName
+    stops: Seq[LocationWithTime],
+    routeName: ComponentName,
   ): Either[String, RouteLeg] =
-    for 
+    for
       head <- stops.headOption.toRight("Empty Route")
       last <- stops.lastOption.toRight("Empty Route")
     yield RouteLeg(stops, routeName, head, last)
 
 case class RouteLeg private (
-                     stops: Seq[LocationWithTime],
-                     routeName: ComponentName,
-                     head: LocationWithTime,
-                     last: LocationWithTime)
+  stops: Seq[LocationWithTime],
+  routeName: ComponentName,
+  head: LocationWithTime,
+  last: LocationWithTime)
     derives JsonCodec {
   lazy val plainTextRepresentation =
     val start = stops.head
@@ -66,9 +66,10 @@ case class RouteLeg private (
     busDuration: MinuteDuration,
   ): RouteLeg =
     copy(
-      stops = stops :+ LocationWithTime(location,
-                                stops.last.busTime.plus(busDuration),
-      ),
+      stops =
+        stops :+ LocationWithTime(location,
+                                  stops.last.busTime.plus(busDuration),
+        ),
     )
 
   def ends =
