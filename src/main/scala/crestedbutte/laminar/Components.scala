@@ -274,7 +274,7 @@ object Components {
   ) = {
     val db = Persistence()
 
-    val clockTicks = new EventBus[Int]
+    val clockTicks = new EventBus[Unit]
 
     val components = AllRoutes.components(pageMode)
 
@@ -332,7 +332,7 @@ object Components {
       Bulma.menu(selectedComponent, components),
       RepeatingElement()
         .repeatWithInterval( // This acts like a Dune thumper
-          1,
+          (),
           new FiniteDuration(5, scala.concurrent.duration.SECONDS),
         ) --> clockTicks,
       overallPageLayout(
