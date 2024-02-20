@@ -24,6 +24,8 @@ import java.time.{Clock, OffsetDateTime}
 import scala.concurrent.duration.FiniteDuration
 import crestedbutte.dom.BulmaLocal.ModalMode
 
+import scala.collection.immutable.{AbstractSeq, LinearSeq}
+
 object Components {
   def GPS(
     gpsPosition: Var[Option[GpsCoordinates]],
@@ -129,11 +131,15 @@ object Components {
               button(
                 cls := "button",
                 onClick.preventDefault
-                  .mapTo(
-                    RouteLeg(Seq(routeLeg.stops.head, stop),
-                             routeLeg.routeName,
-                    ),
-                  ) --> clickBus,
+                  .mapTo {
+                    routeLeg.stops match
+                      case head :: other =>
+                        RouteLeg(Seq(head, stop), routeLeg.routeName)
+                      case empty =>
+                        throw new RuntimeException(
+                          "Cannot make routeLeg out of empty collection",
+                        )
+                  } --> clickBus,
                 "+",
               ),
             ),
