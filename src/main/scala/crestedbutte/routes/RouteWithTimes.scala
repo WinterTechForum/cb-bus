@@ -12,24 +12,29 @@ import com.billding.time.WallTime
 
 case class RouteWithTimes(
   legs: Seq[RouteLeg]) {
+  
+  def indexOfLegThatContains(other: RouteLeg) =
+    val res = legs.indexWhere(leg => leg.stops.exists(locationWithTime => locationWithTime.busTime.minutes == other.stops.head.busTime.minutes && locationWithTime.location == other.stops.head.location))
+    Option.when(res != -1)(res)
 
   def nextAfter(original: RouteLeg): Option[RouteLeg] =
-    val index =
-      legs.indexWhere(_.stops.head.busTime.minutes == original.stops.head.busTime.minutes)
+      indexOfLegThatContains(original)
+        .flatMap(index =>
+          Option.when(index + 1 <= legs.size - 1)(
+            legs(index + 1)
+              .withSameStopsAs(original)
+          )
+        )
 
-    Option.when(index + 1 <= legs.size - 1)(
-      legs(index + 1)
-        .withSameStopsAs(original)
-    )
     
   def nextBefore(original: RouteLeg): Option[RouteLeg] =
-    val index =
-      legs.indexWhere(_.stops.head.busTime.minutes == original.stops.head.busTime.minutes)
-
-    Option.when(index - 1 >= 0)(
-      legs(index - 1)
-        .withSameStopsAs(original)
-    )
+      indexOfLegThatContains(original)
+        .flatMap(index =>
+          Option.when(index - 1 >= 0)(
+            legs(index - 1)
+              .withSameStopsAs(original)
+          )
+        )
 
 
   val allStops: Seq[BusScheduleAtStop] =

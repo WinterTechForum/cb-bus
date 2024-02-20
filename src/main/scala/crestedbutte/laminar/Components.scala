@@ -154,8 +154,26 @@ object Components {
     def RouteLegElementViewOnly(
       label: String,
       routeLeg: RouteLeg,
+      planIndex: Int,
       db: Persistence,
     ) =
+
+      val routeWithTimesO =
+        routeLeg.routeName match
+          case RtaSouthbound.componentName =>
+            Some(RtaSouthbound.fullSchedule.routeWithTimes)
+          case RtaNorthbound.componentName =>
+            Some(RtaNorthbound.fullSchedule.routeWithTimes)
+          case _ => None
+      val nextAfter =
+        for
+            routeWithTimes <- routeWithTimesO
+            nextAfter <- routeWithTimes.nextAfter(routeLeg)
+        yield nextAfter
+      pprint.pprintln("routeWithTimes0: " + routeWithTimesO)
+      println("routeLeg: " + routeLeg)
+      println("Next after: " + nextAfter)
+        
       div(
         div(label),
         div(
@@ -172,21 +190,31 @@ object Components {
               $plan.set(Some(newPlan))
             },
           ),
-          button(
-            cls := "button",
-            "Next Option",
-            onClick --> Observer { _ =>
-              if (routeLeg.routeName == RtaSouthbound.componentName)
-                println("Next option: " + RtaSouthbound.fullSchedule.routeWithTimes.nextAfter(routeLeg))
-              else
-                ()
-//              val newPlan =
-//                plan.copy(legs = plan.legs.filterNot(_ == routeLeg))
-//              println("newPlan: " + newPlan)
-//              db.saveDailyPlanOnly(newPlan)
-//              $plan.set(Some(newPlan))
-            },
-          ),
+          nextAfter match
+            case Some(nextAfterValue) =>
+              button(
+                cls := "button",
+                ">",
+                onClick --> Observer { _ =>
+                  routeWithTimesO match
+                    case Some(value) =>
+                      println("idx to replace: " + value.indexOfLegThatContains(routeLeg))
+                      val newPlan =
+                        // TODO better unsafe .get
+                        plan.copy(legs = plan.legs.updated(planIndex, nextAfterValue))
+                      $plan.set(Some(newPlan))
+                      db.saveDailyPlanOnly(newPlan)
+                    case None => ???
+                  
+                  //              val newPlan =
+                  //                plan.copy(legs = plan.legs.filterNot(_ == routeLeg))
+                  //              println("newPlan: " + newPlan)
+                  //              db.saveDailyPlanOnly(newPlan)
+                  //              $plan.set(Some(newPlan))
+                },
+              )
+            case None => span()
+          ,
           routeLeg.stops.map(stop =>
             UpcomingStopInfo(
               stop.location,
@@ -212,6 +240,7 @@ object Components {
           RouteLegElementViewOnly(
             "Trip " + (idx + 1),
             routeLeg,
+            idx,
             db,
           ),
         )
