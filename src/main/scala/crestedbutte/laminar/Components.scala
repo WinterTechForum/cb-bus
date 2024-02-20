@@ -224,7 +224,9 @@ object Components {
                     case Some(value) =>
                       val newPlan =
                         plan.copy(legs =
-                          plan.legs.updated(planIndex, nextAfterValue),
+                          plan.legs.updated(planIndex,
+                                            nextAfterValue,
+                          ),
                         )
                       $plan.set(Some(newPlan))
                       db.saveDailyPlanOnly(newPlan)
@@ -287,8 +289,8 @@ object Components {
               .elementNameMatches(initialRoute.name),
         )
         .getOrElse(
-          PlanViewer,
-//          RtaSouthbound.fullSchedule,
+//          PlanViewer,
+          RtaSouthbound.fullSchedule,
         ),
     )
 

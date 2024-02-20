@@ -16,6 +16,8 @@ import scala.util.{Failure, Success}
 
 object ServiceWorker {
   val busCache = "cb-bus"
+  val pointless = "does this make the sw js file change?"
+  assert(pointless != null)
 
   val todoAssets: js.Array[RequestInfo] = List[RequestInfo](
     "/",
@@ -51,7 +53,7 @@ object ServiceWorker {
         println(
           s"activate: service worker activated > ${event.toString}"
         )
-        println("Invalidating cache")
+        println("Invalidating cache!")
         invalidateCache() // TODO Do I need this at all?
         self.clients.claim()
       }
