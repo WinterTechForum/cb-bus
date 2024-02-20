@@ -109,6 +109,7 @@ object Components {
         ) --> $notifications,
         clickBus.events
           .map { (e: RouteLeg) =>
+            println("routeLeg before the explosion: " + e)
 
             val plan = Plan(Seq(e))
             dom.window.navigator.clipboard
