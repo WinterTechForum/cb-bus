@@ -172,6 +172,21 @@ object Components {
               $plan.set(Some(newPlan))
             },
           ),
+          button(
+            cls := "button",
+            "Next Option",
+            onClick --> Observer { _ =>
+              if (routeLeg.routeName == RtaSouthbound.componentName)
+                println("Next option: " + RtaSouthbound.fullSchedule.routeWithTimes.nextAfter(routeLeg))
+              else
+                ()
+//              val newPlan =
+//                plan.copy(legs = plan.legs.filterNot(_ == routeLeg))
+//              println("newPlan: " + newPlan)
+//              db.saveDailyPlanOnly(newPlan)
+//              $plan.set(Some(newPlan))
+            },
+          ),
           routeLeg.stops.map(stop =>
             UpcomingStopInfo(
               stop.location,

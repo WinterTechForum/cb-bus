@@ -13,6 +13,25 @@ import com.billding.time.WallTime
 case class RouteWithTimes(
   legs: Seq[RouteLeg]) {
 
+  def nextAfter(original: RouteLeg): Option[RouteLeg] =
+    val index =
+      legs.indexWhere(_.stops.head.busTime.minutes == original.stops.head.busTime.minutes)
+
+    Option.when(index + 1 <= legs.size - 1)(
+      legs(index + 1)
+        .withSameStopsAs(original)
+    )
+    
+  def nextBefore(original: RouteLeg): Option[RouteLeg] =
+    val index =
+      legs.indexWhere(_.stops.head.busTime.minutes == original.stops.head.busTime.minutes)
+
+    Option.when(index - 1 >= 0)(
+      legs(index - 1)
+        .withSameStopsAs(original)
+    )
+
+
   val allStops: Seq[BusScheduleAtStop] =
     legs.foldLeft(Seq[BusScheduleAtStop]()) { case (acc, leg) =>
       leg.stops.foldLeft(acc) { case (innerAcc, stop) =>

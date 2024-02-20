@@ -11,6 +11,7 @@ import crestedbutte.{
 }
 
 object RtaNorthbound {
+  val componentName = ComponentName("Rta Northbound")
 
 //  def constructExpressRoute(
 //    routeLeg: RouteLeg,

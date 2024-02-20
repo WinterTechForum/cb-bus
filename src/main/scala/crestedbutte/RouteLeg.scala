@@ -7,7 +7,7 @@ case class RouteLeg(
   stops: Seq[LocationWithTime],
   routeName: ComponentName)
     derives JsonCodec {
-  val plainTextRepresentation =
+  lazy val plainTextRepresentation =
     val start = stops.head
     val end = stops.last
     s"""${start.location.name}
@@ -20,6 +20,14 @@ case class RouteLeg(
   assert(stops.nonEmpty,
          "Empty Route",
   ) // TODO Upgrade into a true effect
+  
+  def withSameStopsAs(
+    other: RouteLeg,
+  ): RouteLeg =
+    RouteLeg(
+      stops.filter(stop => other.stops.exists(locationWithTime => locationWithTime.location == stop.location)),
+      routeName,
+    )
 
   def trimToStartAt(
     location: Location,

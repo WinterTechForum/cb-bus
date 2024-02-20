@@ -5,8 +5,9 @@ import com.billding.time.WallTime
 import crestedbutte.*
 
 object RtaSouthbound {
+  val componentName = ComponentName("Rta Southbound")
 
-//  def constructExpressRoute(
+  //  def constructExpressRoute(
 //    routeLeg: RouteLeg,
 //  ): RouteLeg = {
 //    val basicRoute =
@@ -49,7 +50,7 @@ object RtaSouthbound {
 
   val normalRouteWithTimes =
     RouteWithTimes.sched(
-      ComponentName("Rta Southbound"),
+      RtaSouthbound.componentName,
       Location.MountaineerSquare,
       constructNormalRoute,
       "06:40",
@@ -97,11 +98,7 @@ object RtaSouthbound {
 
 
   def terminatingRoute(busTime: WallTime): Boolean =
-    val res = busTime.minutes == WallTime("5:35 PM").minutes
-    println("walltime: " + WallTime("17:35"))
-    if (res)
-      println("terminatingRoute: " + busTime)
-    res
+    busTime.minutes == WallTime("5:35 PM").minutes
 
   def constructNormalRoute(
     routeLeg: RouteLeg,
@@ -131,7 +128,6 @@ object RtaSouthbound {
           .plus(Location.Western, 2.minutes)
 
     // late buses actually terminate at the community school. The others loop through Gunni
-    println("RouteLeg.stops.head:" + routeLeg.stops.head.busTime)
     if (routeLeg.stops.head.busTime.isBefore(WallTime("22:00")) && !terminatingRoute(routeLeg.stops.head.busTime))
       // Deviating from the PDFs, for usability's sake!
       basicRoute
