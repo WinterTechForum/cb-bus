@@ -159,8 +159,8 @@ object Components {
     $plan: Var[Plan],
     initialTime: WallTime,
   ) =
-    val nextLegDirection: Var[NamedRoute] = Var(
-      RtaNorthbound.fullSchedule,
+    val nextLegDirection: Var[Option[NamedRoute]] = Var(
+      None
     )
     def RouteLegElementViewOnly(
       label: String,
@@ -269,25 +269,46 @@ object Components {
         )
       },
       div(
-        div(cls:="route-header", "Where to next?"),
-        child <-- nextLegDirection.signal.map(s =>
-          span(cls:="m-2 b h3", "Route: " + s.componentName.userFriendlyName),
-        ),
-        button(
-          cls := "button",
-          "Switch Direction",
-          onClick --> Observer { _ =>
-            nextLegDirection.update {
-              case RtaNorthbound.fullSchedule =>
-                RtaSouthbound.fullSchedule
-              case RtaSouthbound.fullSchedule =>
-                RtaNorthbound.fullSchedule
-            }
-          },
-        ),
-        child <-- nextLegDirection.signal.map { direction =>
-          smallStopSelector(direction, $plan, db, initialTime)
-        },
+        div(cls:="route-header mt-6", "Where to next?"),
+        child <-- nextLegDirection.signal.map {
+          case None =>
+            div(
+              cls:="route-header",
+              button(
+                cls:="button m-2",
+                onClick --> Observer { _ =>
+                  nextLegDirection.set (Some(RtaSouthbound.fullSchedule))
+                },
+                "Crested Butte --> Gunnison"
+              ),
+              button(
+                cls:="button m-2",
+                onClick --> Observer { _ =>
+                  nextLegDirection.set (Some(RtaNorthbound.fullSchedule))
+                },
+                "Gunnison --> Crested Butte"
+              )
+            )
+          case Some(value) =>
+            div(
+
+              span(cls:="m-2 b h3", "Route: " + value.componentName.userFriendlyName),
+              button(
+                cls := "button",
+                "Switch Direction",
+                onClick --> Observer { _ =>
+                  nextLegDirection.update {
+                    case Some(RtaNorthbound.fullSchedule) =>
+                      Some(RtaSouthbound.fullSchedule)
+                    case Some(RtaSouthbound.fullSchedule) =>
+                      Some(RtaNorthbound.fullSchedule)
+                    case _ => None
+                  }
+                },
+              ),
+              smallStopSelector(value, $plan, db, initialTime, nextLegDirection),
+            )
+        }
       ),
     )
 
@@ -681,6 +702,7 @@ object Components {
     $plan: Var[Plan],
     db: Persistence,
     initialTime: WallTime,
+    nextLegDirection: Var[Option[NamedRoute]] // TODO Smaller type
   ) =
     val startingPoint: Var[Option[Location]] = Var(None)
     val destinations: Signal[Option[Seq[Location]]] =
@@ -757,6 +779,7 @@ object Components {
                             oldPlan.legs :+ matchingLeg,
                           )
                         db.saveDailyPlanOnly(newPlan)
+                        nextLegDirection.set(None)
                         newPlan
                       }
                     },
