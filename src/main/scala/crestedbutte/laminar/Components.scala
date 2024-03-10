@@ -711,6 +711,7 @@ object Components {
           )
         case None => None
       }
+
     val allStops = namedRoute.routeWithTimes.allStops
     val startingPoints =
       div(
@@ -749,7 +750,15 @@ object Components {
                             .ends
                             .getOrElse(???)
                         }
-                        .head
+                        .find{l =>
+                          val lastArrivalTime = $plan.now() match {
+                            case Some(value) =>
+                              Some(value.legs.last.last.busTime)
+                            case None => None
+                          }
+                          val cutoff = lastArrivalTime.getOrElse(WallTime("00:00"))
+                          l.head.busTime.isAfter(cutoff)
+                        }.getOrElse(???)
                     $plan.update {
                       case Some(oldPlan) =>
                         val newPlan =
