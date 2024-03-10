@@ -160,7 +160,7 @@ object Components {
     initialTime: WallTime,
   ) =
     val nextLegDirection: Var[Option[NamedRoute]] = Var(
-      None
+      None,
     )
     def RouteLegElementViewOnly(
       label: String,
@@ -243,9 +243,9 @@ object Components {
                       throw new Exception("no routeWithTimesO... 2")
                 },
               )
-            case None => span()
+            case None => span(),
         ),
-          div(
+        div(
           routeLeg.stops.map(stop =>
             UpcomingStopInfo(
               stop.location,
@@ -269,30 +269,35 @@ object Components {
         )
       },
       div(
-        div(cls:="route-header mt-6", "Where to next?"),
+        div(cls := "route-header mt-6", "Where to next?"),
         child <-- nextLegDirection.signal.map {
           case None =>
             div(
-              cls:="route-header",
+              cls := "route-header",
               button(
-                cls:="button m-2",
+                cls := "button m-2",
                 onClick --> Observer { _ =>
-                  nextLegDirection.set (Some(RtaSouthbound.fullSchedule))
+                  nextLegDirection.set(
+                    Some(RtaSouthbound.fullSchedule),
+                  )
                 },
-                "Crested Butte --> Gunnison"
+                "Crested Butte --> Gunnison",
               ),
               button(
-                cls:="button m-2",
+                cls := "button m-2",
                 onClick --> Observer { _ =>
-                  nextLegDirection.set (Some(RtaNorthbound.fullSchedule))
+                  nextLegDirection.set(
+                    Some(RtaNorthbound.fullSchedule),
+                  )
                 },
-                "Gunnison --> Crested Butte"
-              )
+                "Gunnison --> Crested Butte",
+              ),
             )
           case Some(value) =>
             div(
-
-              span(cls:="m-2 b h3", "Route: " + value.componentName.userFriendlyName),
+              span(cls := "m-2 b h3",
+                   "Route: " + value.componentName.userFriendlyName,
+              ),
               button(
                 cls := "button",
                 "Switch Direction",
@@ -306,9 +311,14 @@ object Components {
                   }
                 },
               ),
-              smallStopSelector(value, $plan, db, initialTime, nextLegDirection),
+              smallStopSelector(value,
+                                $plan,
+                                db,
+                                initialTime,
+                                nextLegDirection,
+              ),
             )
-        }
+        },
       ),
     )
 
@@ -702,7 +712,7 @@ object Components {
     $plan: Var[Plan],
     db: Persistence,
     initialTime: WallTime,
-    nextLegDirection: Var[Option[NamedRoute]] // TODO Smaller type
+    nextLegDirection: Var[Option[NamedRoute]], // TODO Smaller type
   ) =
     val startingPoint: Var[Option[Location]] = Var(None)
     val destinations: Signal[Option[Seq[Location]]] =
@@ -724,10 +734,10 @@ object Components {
         allStops.init.map(stop =>
           div(
             button(
-              cls:="button m-2",
+              cls := "button m-2",
               stop.location.name,
               onClick.mapTo(Some(stop.location)) --> startingPoint,
-            )
+            ),
           ),
         ),
       )
@@ -749,14 +759,19 @@ object Components {
                     onClick --> Observer { _ =>
                       val start = startingPoint
                         .now()
-                        .getOrElse(throw Exception("No starting point"))
+                        .getOrElse(
+                          throw Exception("No starting point"),
+                        )
 
                       val matchingLeg =
                         namedRoute.routeWithTimes.legs
                           .flatMap { leg =>
                             (for
-                              trimmedToStart <- leg .trimToStartAt(start)
-                              trimmedToEnd <- trimmedToStart.trimToEndAt(destination)
+                              trimmedToStart <- leg.trimToStartAt(
+                                start,
+                              )
+                              trimmedToEnd <- trimmedToStart
+                                .trimToEndAt(destination)
                               ends <- trimmedToEnd.ends
                             yield ends).toOption
                           }
