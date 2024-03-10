@@ -726,24 +726,12 @@ object Components {
 
                     val matchingLeg =
                       namedRoute.routeWithTimes.legs
-                        .map { leg =>
-                          leg
-                            .trimToStartAt(start)
-                            .getOrElse(
-                              throw Exception(
-                                "Start not available in leg: " + start,
-                              ),
-                            )
-                            .trimToEndAt(destination)
-                            .getOrElse(
-                              throw Exception(
-                                "destination not available in leg: " + destination,
-                              ),
-                            )
-                            .ends
-                            .getOrElse(
-                              throw Exception("Ends not available"),
-                            )
+                        .flatMap { leg =>
+                          (for
+                            trimmedToStart <- leg .trimToStartAt(start)
+                            trimmedToEnd <- trimmedToStart.trimToEndAt(destination)
+                            ends <- trimmedToEnd.ends
+                          yield ends).toOption
                         }
                         .find { l =>
                           val lastArrivalTime =
@@ -766,8 +754,6 @@ object Components {
                       db.saveDailyPlanOnly(newPlan)
                       newPlan
                     }
-                    println(s"Should add leg: $start -> $destination")
-                    println("Matching leg: " + matchingLeg)
                   },
                 ),
               ),
