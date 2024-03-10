@@ -1,6 +1,5 @@
 package crestedbutte
 
-import crestedbutte.laminar.LaminarTripPlanner
 import crestedbutte.routes.RouteWithTimes
 import crestedbutte.{ComponentName, Location}
 
@@ -13,12 +12,6 @@ sealed trait ComponentData {
 
 case object PlanViewer extends ComponentData {
   val componentName = ComponentName("PlanViewer")
-}
-
-case object TripPlannerComponent extends ComponentData {
-
-  val componentName =
-    LaminarTripPlanner.componentName
 }
 
 import crestedbutte.{ComponentName, Location}

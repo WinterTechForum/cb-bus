@@ -28,15 +28,17 @@ class Persistence():
     }
     ()
 
-  def retrieveDailyPlan(
-    $plan: Var[Option[Plan]],
-  ) =
-    val result = localStorage
-      .getItem("today")
-      .fromJson[Option[Plan]]
-      .getOrElse(throw new Exception("Bad plan in localStorage"))
-    $plan.set(result)
-    result
+  // TODO Delete after de-option'ing Plan everywhere
+//  def retrieveDailyPlan(
+//    $plan: Var[Plan],
+//  ) =
+//    val result = localStorage
+//      .getItem("today")
+//      .fromJson[Option[Plan]]
+//      .getOrElse(throw new Exception("Bad plan in localStorage"))
+//      .getOrElse(Plan(Seq.empty))
+//    $plan.set(result)
+//    result
 
   def retrieveDailyPlanOnly =
     localStorage
@@ -49,29 +51,22 @@ class Persistence():
   ) =
 
     val retrieved =
-      localStorage
-        .getItem("today")
-        .fromJson[Option[Plan]]
-        .getOrElse(throw new Exception("Bad plan in localStorage"))
+        retrieveDailyPlanOnly
+        .getOrElse(Plan(Seq.empty))
     val updated =
-      retrieved match
-        case Some(value) =>
-          value.copy(value.legs :+ routeLeg)
-        case None => Plan(Seq(routeLeg))
+      retrieved.copy(retrieved.legs :+ routeLeg)
     saveDailyPlanOnly(updated)
 
   def saveDailyPlan(
     plan: Plan,
-    $plan: Var[Option[Plan]],
+    $plan: Var[Plan],
   ) =
     Observer { _ =>
-      val newPlan: Option[Plan] = Some(plan)
-      localStorage.setItem("today", newPlan.toJson)
-      $plan.set(newPlan)
+      localStorage.setItem("today", plan.toJson)
+      $plan.set(plan)
     }
 
   def saveDailyPlanOnly(
     plan: Plan,
   ) =
-    val newPlan: Option[Plan] = Some(plan)
-    localStorage.setItem("today", newPlan.toJson)
+    localStorage.setItem("today", plan.toJson)

@@ -156,7 +156,7 @@ object Components {
   def PlanElement(
     plan: Plan,
     db: Persistence,
-    $plan: Var[Option[Plan]],
+    $plan: Var[Plan],
     initialTime: WallTime,
   ) =
     val nextLegDirection: Var[NamedRoute] = Var(
@@ -205,9 +205,10 @@ object Components {
                                             nextBeforeValue,
                           ),
                         )
-                      $plan.set(Some(newPlan))
+                      $plan.set(newPlan)
                       db.saveDailyPlanOnly(newPlan)
-                    case None => ???
+                    case None =>
+                      throw new Exception("no routeWithTimesO")
                 },
               )
             case None => span()
@@ -219,7 +220,7 @@ object Components {
               val newPlan =
                 plan.copy(legs = plan.legs.filterNot(_ == routeLeg))
               db.saveDailyPlanOnly(newPlan)
-              $plan.set(Some(newPlan))
+              $plan.set(newPlan)
             },
           ),
           nextAfter match
@@ -236,9 +237,9 @@ object Components {
                                             nextAfterValue,
                           ),
                         )
-                      $plan.set(Some(newPlan))
+                      $plan.set(newPlan)
                       db.saveDailyPlanOnly(newPlan)
-                    case None => ???
+                    case None => throw new Exception("no routeWithTimesO... 2")
                 },
               )
             case None => span()
@@ -399,9 +400,6 @@ object Components {
 
     val gpsPosition: Var[Option[GpsCoordinates]] = Var(None)
 
-    val planner = LaminarTripPlanner
-      .TripPlannerLaminar(initialTime, db)
-
     val upcomingArrivalData =
       $selectedComponent.signal
         .combineWith(timeStamps)
@@ -419,7 +417,6 @@ object Components {
                 $selectedComponent.writer,
                 initialTime,
               )
-            case TripPlannerComponent => planner
             case namedRoute: NamedRoute =>
               TopLevelRoute(
                 TimeCalculations
@@ -657,12 +654,11 @@ object Components {
     initialTime: WallTime,
   ) =
 
-    val $plan: Var[Option[Plan]] = Var(db.retrieveDailyPlanOnly)
+    val $plan: Var[Plan] = Var(db.retrieveDailyPlanOnly.getOrElse(Plan(Seq.empty)))
     div(
 //      onMountCallback(_ => ),
       child <-- $plan.signal.map(plan =>
         div(
-          if (plan.nonEmpty)
             div(
               button(
                 cls := "button",
@@ -672,46 +668,15 @@ object Components {
                   $plan,
                 ),
               ),
-              Components.PlanElement(plan.get, db, $plan, initialTime),
+              Components.PlanElement(plan, db, $plan, initialTime),
             )
-          else
-            div(
-              div("No saved plan"),
-              div(
-                button(
-                  cls := "button",
-                  "Make a new plan",
-                  onClick.mapTo(
-                    TripPlannerComponent,
-                  ) --> componentSelector,
-                ),
-              ),
-              div(
-                button(
-                  cls := "button",
-                  "View Northbound Schedule",
-                  onClick.mapTo(
-                    RtaNorthbound.fullSchedule,
-                  ) --> componentSelector,
-                ),
-              ),
-              div(
-                button(
-                  cls := "button",
-                  "View Southbound Schedule",
-                  onClick.mapTo(
-                    RtaSouthbound.fullSchedule,
-                  ) --> componentSelector,
-                ),
-              ),
-            ),
         ),
       ),
     )
 
   def smallStopSelector(
     namedRoute: NamedRoute,
-    $plan: Var[Option[Plan]],
+    $plan: Var[Plan],
     db: Persistence,
     initialTime: WallTime,
   ) =
@@ -761,37 +726,31 @@ object Components {
                         .map { leg =>
                           leg
                             .trimToStartAt(start)
-                            .getOrElse(???)
+                            .getOrElse(throw Exception("Start not available in leg: " + start))
                             .trimToEndAt(destination)
-                            .getOrElse(???)
+                            .getOrElse(throw Exception("destination not available in leg: " + destination))
                             .ends
-                            .getOrElse(???)
+                            .getOrElse(throw Exception("Ends not available"))
                         }
                         .find { l =>
-                          val lastArrivalTime = $plan.now() match {
-                            case Some(value) =>
-                              value.legs.lastOption
-                                .map(_.last.busTime)
-                            case None => Some(initialTime)
-                          }
+                          val lastArrivalTime =
+                            $plan.now()
+                              .legs
+                              .lastOption
+                              .map(_.last.busTime)
                           val cutoff =
                             lastArrivalTime.getOrElse(initialTime)
                           l.head.busTime.isAfter(cutoff)
                         }
-                        .getOrElse(???)
+                        .getOrElse(throw new Exception("Not route leg found with locations"))
                     $plan.update {
-                      case Some(oldPlan) =>
+                      case oldPlan =>
                         val newPlan =
                           oldPlan.copy(legs =
                             oldPlan.legs :+ matchingLeg,
                           )
                         db.saveDailyPlanOnly(newPlan)
-                        Some(newPlan)
-                      case None =>
-                        val newPlan =
-                          Plan(Seq(matchingLeg))
-                        db.saveDailyPlanOnly(newPlan)
-                        Some(newPlan)
+                        newPlan
                     }
                     println(s"Should add leg: $start -> $destination")
                     println("Matching leg: " + matchingLeg)
