@@ -188,13 +188,13 @@ object Components {
         yield nextAfter
 
       div(
-        div(label),
-        div(
+        span(label),
+        span(
           // TODO Make a way to delete leg of a trip here
           nextBefore match
             case Some(nextBeforeValue) =>
               button(
-                cls := "button",
+                cls := "button m-2",
                 "<",
                 onClick --> Observer { _ =>
                   routeWithTimesO match
@@ -214,7 +214,7 @@ object Components {
             case None => span()
           ,
           button(
-            cls := "button",
+            cls := "button is-danger m-2",
             "Delete",
             onClick --> Observer { _ =>
               val newPlan =
@@ -226,7 +226,7 @@ object Components {
           nextAfter match
             case Some(nextAfterValue) =>
               button(
-                cls := "button",
+                cls := "button m-2",
                 ">",
                 onClick --> Observer { _ =>
                   routeWithTimesO match
@@ -244,7 +244,8 @@ object Components {
                 },
               )
             case None => span()
-          ,
+        ),
+          div(
           routeLeg.stops.map(stop =>
             UpcomingStopInfo(
               stop.location,
@@ -257,14 +258,6 @@ object Components {
       )
 
     div(
-      button(
-        cls := "button",
-        "Copy to Clipboard",
-        onClick --> Observer { _ =>
-          dom.window.navigator.clipboard
-            .writeText(plan.plainTextRepresentation)
-        },
-      ),
       plan.legs.zipWithIndex.map { case (routeLeg, idx) =>
         div(
           RouteLegElementViewOnly(
@@ -276,8 +269,9 @@ object Components {
         )
       },
       div(
+        div(cls:="route-header", "Where to next?"),
         child <-- nextLegDirection.signal.map(s =>
-          span(s.componentName.userFriendlyName),
+          span(cls:="m-2 b h3", "Route: " + s.componentName.userFriendlyName),
         ),
         button(
           cls := "button",
@@ -664,12 +658,20 @@ object Components {
         div(
           div(
             button(
-              cls := "button",
+              cls := "button is-danger m-2",
               "Delete saved plan",
               onClick --> db.saveDailyPlan(
                 crestedbutte.Plan(Seq.empty),
                 $plan,
               ),
+            ),
+            button(
+              cls := "button m-2",
+              "Copy to Clipboard",
+              onClick --> Observer { _ =>
+                dom.window.navigator.clipboard
+                  .writeText(plan.plainTextRepresentation)
+              },
             ),
             Components.PlanElement(plan, db, $plan, initialTime),
           ),
@@ -699,10 +701,14 @@ object Components {
     val allStops = namedRoute.routeWithTimes.allStops
     val startingPoints =
       div(
+        "Select starting point: ",
         allStops.init.map(stop =>
           div(
-            stop.location.name,
-            onClick.mapTo(Some(stop.location)) --> startingPoint,
+            button(
+              cls:="button m-2",
+              stop.location.name,
+              onClick.mapTo(Some(stop.location)) --> startingPoint,
+            )
           ),
         ),
       )
@@ -717,7 +723,8 @@ object Components {
           case Some(destinations) =>
             div(
               destinations.map(destination =>
-                div(
+                button(
+                  cls := "button m-2",
                   destination.name,
                   onClick --> Observer { _ =>
                     val start = startingPoint
