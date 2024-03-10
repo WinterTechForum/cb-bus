@@ -277,7 +277,7 @@ object Components {
             println("Should add a leg!!")
           },
         ),
-        smallStopSelector(RtaNorthbound.fullSchedule)
+        smallStopSelector(RtaNorthbound.fullSchedule, $plan, db)
       ),
     )
 
@@ -693,7 +693,10 @@ object Components {
       ),
     )
 
-  def smallStopSelector(namedRoute: NamedRoute) =
+  def smallStopSelector(namedRoute: NamedRoute,
+                        $plan: Var[Option[Plan]],
+                        db: Persistence
+                       ) =
     val startingPoint: Var[Option[Location]] = Var(None)
     val destinations: Signal[Option[Seq[Location]]] =
       startingPoint.signal.map {
@@ -733,12 +736,32 @@ object Components {
                 div(
                   destination.name,
                   onClick --> Observer { _ =>
-                    val start = startingPoint.now().getOrElse("No starting point")
+                    val start = startingPoint.now().getOrElse(throw Exception("No starting point"))
 
                     val matchingLeg =
                       namedRoute.routeWithTimes.legs
-                        .map(leg => leg.stops.filter(l => l.location == start || l.location == destination))
+                        .map { leg =>
+                          leg
+                            .trimToStartAt(start)
+                            .getOrElse(???)
+                            .trimToEndAt(destination)
+                            .getOrElse(???)
+                            .ends
+                            .getOrElse(???)
+                        }
                         .head
+                    $plan.update {
+                      case Some(oldPlan) =>
+                        val newPlan =
+                          oldPlan.copy(legs = oldPlan.legs :+ matchingLeg)
+                        db.saveDailyPlanOnly(newPlan)
+                        Some(newPlan)
+                      case None =>
+                        val newPlan =
+                          Plan(Seq(matchingLeg))
+                        db.saveDailyPlanOnly(newPlan)
+                        Some(newPlan)
+                    }
                     println(s"Should add leg: $start -> $destination")
                     println("Matching leg: " + matchingLeg)
                   },
