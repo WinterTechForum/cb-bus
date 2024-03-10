@@ -157,7 +157,9 @@ object Components {
     plan: Plan,
     db: Persistence,
     $plan: Var[Option[Plan]],
+    initialTime: WallTime,
   ) =
+    val nextLegDirection: Var[NamedRoute] = Var(RtaNorthbound.fullSchedule)
     def RouteLegElementViewOnly(
       label: String,
       routeLeg: RouteLeg,
@@ -270,15 +272,21 @@ object Components {
         )
       },
       div(
+        child <-- nextLegDirection.signal.map(s => span(s.componentName.userFriendlyName)),
         button(
           cls := "button",
-          "Add a leg",
+          "Switch Direction",
           onClick --> Observer { _ =>
-            println("Should add a leg!!")
+            nextLegDirection.update {
+              case RtaNorthbound.fullSchedule => RtaSouthbound.fullSchedule
+              case RtaSouthbound.fullSchedule => RtaNorthbound.fullSchedule
+            }
           },
         ),
-        smallStopSelector(RtaNorthbound.fullSchedule, $plan, db)
-      ),
+        child <-- nextLegDirection.signal.map { direction =>
+          smallStopSelector(direction, $plan, db, initialTime)
+        }
+    )
     )
 
   import com.raquo.laminar.api.L._
@@ -403,6 +411,7 @@ object Components {
               TripViewerLaminar(
                 db,
                 $selectedComponent.writer,
+                initialTime
               )
             case TripPlannerComponent => planner
             case namedRoute: NamedRoute =>
@@ -639,6 +648,7 @@ object Components {
   def TripViewerLaminar(
     db: Persistence,
     componentSelector: Observer[ComponentData],
+    initialTime: WallTime,
   ) =
 
     val $plan: Var[Option[Plan]] = Var(db.retrieveDailyPlanOnly)
@@ -656,7 +666,7 @@ object Components {
                   $plan,
                 ),
               ),
-              Components.PlanElement(plan.get, db, $plan),
+              Components.PlanElement(plan.get, db, $plan, initialTime),
             )
           else
             div(
@@ -695,7 +705,8 @@ object Components {
 
   def smallStopSelector(namedRoute: NamedRoute,
                         $plan: Var[Option[Plan]],
-                        db: Persistence
+                        db: Persistence,
+                        initialTime: WallTime,
                        ) =
     val startingPoint: Var[Option[Location]] = Var(None)
     val destinations: Signal[Option[Seq[Location]]] =
@@ -753,10 +764,10 @@ object Components {
                         .find{l =>
                           val lastArrivalTime = $plan.now() match {
                             case Some(value) =>
-                              Some(value.legs.last.last.busTime)
-                            case None => None
+                              value.legs.lastOption.map(_.last.busTime)
+                            case None => Some(initialTime)
                           }
-                          val cutoff = lastArrivalTime.getOrElse(WallTime("00:00"))
+                          val cutoff = lastArrivalTime.getOrElse(initialTime)
                           l.head.busTime.isAfter(cutoff)
                         }.getOrElse(???)
                     $plan.update {

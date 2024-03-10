@@ -135,7 +135,7 @@ object LaminarTripPlanner {
           ),
           plan match
             case Some(value) =>
-              Components.PlanElement(value, db, $plan)
+              Components.PlanElement(value, db, $plan, WallTime("00:00")) // TODO This WallTime is another indicator that I should kill the trip planner entirely.
             case None => div(),
         ),
       ),
