@@ -657,22 +657,19 @@ object Components {
       child <-- $plan.signal.map(plan =>
         div(
           div(
-            button(
-              cls := "button is-danger m-2",
-              "Delete saved plan",
-              onClick --> db.saveDailyPlan(
-                crestedbutte.Plan(Seq.empty),
-                $plan,
+            if (plan.legs.isEmpty)
+              div()
+            else
+              div(
+                button(
+                  cls := "button m-2",
+                  "Copy to Clipboard",
+                  onClick --> Observer { _ =>
+                    dom.window.navigator.clipboard
+                      .writeText(plan.plainTextRepresentation)
+                  },
+                ),
               ),
-            ),
-            button(
-              cls := "button m-2",
-              "Copy to Clipboard",
-              onClick --> Observer { _ =>
-                dom.window.navigator.clipboard
-                  .writeText(plan.plainTextRepresentation)
-              },
-            ),
             Components.PlanElement(plan, db, $plan, initialTime),
           ),
         ),
@@ -723,45 +720,47 @@ object Components {
           case Some(destinations) =>
             div(
               destinations.map(destination =>
-                button(
-                  cls := "button m-2",
-                  destination.name,
-                  onClick --> Observer { _ =>
-                    val start = startingPoint
-                      .now()
-                      .getOrElse(throw Exception("No starting point"))
+                div(
+                  button(
+                    cls := "button m-2",
+                    destination.name,
+                    onClick --> Observer { _ =>
+                      val start = startingPoint
+                        .now()
+                        .getOrElse(throw Exception("No starting point"))
 
-                    val matchingLeg =
-                      namedRoute.routeWithTimes.legs
-                        .flatMap { leg =>
-                          (for
-                            trimmedToStart <- leg .trimToStartAt(start)
-                            trimmedToEnd <- trimmedToStart.trimToEndAt(destination)
-                            ends <- trimmedToEnd.ends
-                          yield ends).toOption
-                        }
-                        .find { l =>
-                          val lastArrivalTime =
-                            $plan.now().legs.lastOption
-                              .map(_.last.busTime)
-                          val cutoff =
-                            lastArrivalTime.getOrElse(initialTime)
-                          l.head.busTime.isAfter(cutoff)
-                        }
-                        .getOrElse(
-                          throw new Exception(
-                            "Not route leg found with locations",
-                          ),
-                        )
-                    $plan.update { case oldPlan =>
-                      val newPlan =
-                        oldPlan.copy(legs =
-                          oldPlan.legs :+ matchingLeg,
-                        )
-                      db.saveDailyPlanOnly(newPlan)
-                      newPlan
-                    }
-                  },
+                      val matchingLeg =
+                        namedRoute.routeWithTimes.legs
+                          .flatMap { leg =>
+                            (for
+                              trimmedToStart <- leg .trimToStartAt(start)
+                              trimmedToEnd <- trimmedToStart.trimToEndAt(destination)
+                              ends <- trimmedToEnd.ends
+                            yield ends).toOption
+                          }
+                          .find { l =>
+                            val lastArrivalTime =
+                              $plan.now().legs.lastOption
+                                .map(_.last.busTime)
+                            val cutoff =
+                              lastArrivalTime.getOrElse(initialTime)
+                            l.head.busTime.isAfter(cutoff)
+                          }
+                          .getOrElse(
+                            throw new Exception(
+                              "Not route leg found with locations",
+                            ),
+                          )
+                      $plan.update { case oldPlan =>
+                        val newPlan =
+                          oldPlan.copy(legs =
+                            oldPlan.legs :+ matchingLeg,
+                          )
+                        db.saveDailyPlanOnly(newPlan)
+                        newPlan
+                      }
+                    },
+                  ),
                 ),
               ),
             )
