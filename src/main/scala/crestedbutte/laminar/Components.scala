@@ -182,8 +182,6 @@ object Components {
           routeWithTimes <- routeWithTimesO
           nextAfter      <- routeWithTimes.nextBefore(routeLeg)
         yield nextAfter
-      println("routeLeg: " + routeLeg)
-      println("Next after: " + nextAfter)
 
       div(
         div(label),
@@ -216,7 +214,6 @@ object Components {
             onClick --> Observer { _ =>
               val newPlan =
                 plan.copy(legs = plan.legs.filterNot(_ == routeLeg))
-              println("newPlan: " + newPlan)
               db.saveDailyPlanOnly(newPlan)
               $plan.set(Some(newPlan))
             },
@@ -272,6 +269,16 @@ object Components {
           ),
         )
       },
+      div(
+        button(
+          cls := "button",
+          "Add a leg",
+          onClick --> Observer { _ =>
+            println("Should add a leg!!")
+          },
+        ),
+        smallStopSelector(RtaNorthbound.fullSchedule)
+      ),
     )
 
   import com.raquo.laminar.api.L._
@@ -296,8 +303,8 @@ object Components {
               .elementNameMatches(initialRoute.name),
         )
         .getOrElse(
-//          PlanViewer,
-          RtaSouthbound.fullSchedule,
+          PlanViewer,
+//          RtaSouthbound.fullSchedule,
         ),
     )
 
@@ -320,6 +327,7 @@ object Components {
 
     val timeStamps: Signal[WallTime] = clockTicks.events
       .filter(_ =>
+        selectedComponent.now() != PlanViewer &&
         // Don't reset content if we're in the middle of a modal
         !org.scalajs.dom.document
           .querySelector("html")
@@ -634,7 +642,6 @@ object Components {
   ) =
 
     val $plan: Var[Option[Plan]] = Var(db.retrieveDailyPlanOnly)
-    println("Building new trip viewer")
     div(
 //      onMountCallback(_ => ),
       child <-- $plan.signal.map(plan =>
@@ -686,4 +693,62 @@ object Components {
       ),
     )
 
+  def smallStopSelector(namedRoute: NamedRoute) =
+    val startingPoint: Var[Option[Location]] = Var(None)
+    val destinations: Signal[Option[Seq[Location]]] =
+      startingPoint.signal.map {
+        case Some(value) =>
+          Some(
+            namedRoute
+              .routeWithTimes
+              .allStops
+              .dropWhile(_.location != value)
+              .drop(1)
+              .map(_.location)
+          )
+        case None => None
+      }
+    val allStops = namedRoute.routeWithTimes.allStops
+    val startingPoints =
+      div(
+        allStops.init.map(stop =>
+          div(
+            stop.location.name,
+            onClick.mapTo(Some(stop.location)) --> startingPoint
+          ),
+        ),
+      )
+    div(
+      child <-- startingPoint.signal.map {
+        case Some(value) => "Starting at: " + value
+        case None => startingPoints
+      },
+
+      div(
+        "Destination",
+        child <-- destinations.signal.map {
+          case Some(destinations) =>
+            div(
+              destinations.map(destination =>
+                div(
+                  destination.name,
+                  onClick --> Observer { _ =>
+                    val start = startingPoint.now().getOrElse("No starting point")
+
+                    val matchingLeg =
+                      namedRoute.routeWithTimes.legs
+                        .map(leg => leg.stops.filter(l => l.location == start || l.location == destination))
+                        .head
+                    println(s"Should add leg: $start -> $destination")
+                    println("Matching leg: " + matchingLeg)
+                  },
+                ),
+              ),
+            )
+          case None => div()
+        },
+
+
+      )
+    )
 }

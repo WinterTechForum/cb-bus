@@ -28,16 +28,6 @@ case class NamedRoute(
   routeWithTimes: RouteWithTimes)
     extends ComponentData {
 
-  def stopsRemainingAfter(
-    startPoint: Location,
-  ): Seq[Location] =
-    routeWithTimes.allInvolvedStops.drop(
-      routeWithTimes.allInvolvedStops
-        .indexWhere(involvedStop =>
-          involvedStop.name == startPoint.name,
-        ) + 1, // Only include stops beyond the current stop
-    )
-
   val firstStopOnRoute: Location =
     routeWithTimes
       .firstRouteLeg()
