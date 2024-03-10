@@ -239,7 +239,8 @@ object Components {
                         )
                       $plan.set(newPlan)
                       db.saveDailyPlanOnly(newPlan)
-                    case None => throw new Exception("no routeWithTimesO... 2")
+                    case None =>
+                      throw new Exception("no routeWithTimesO... 2")
                 },
               )
             case None => span()
@@ -654,22 +655,24 @@ object Components {
     initialTime: WallTime,
   ) =
 
-    val $plan: Var[Plan] = Var(db.retrieveDailyPlanOnly.getOrElse(Plan(Seq.empty)))
+    val $plan: Var[Plan] = Var(
+      db.retrieveDailyPlanOnly.getOrElse(Plan(Seq.empty)),
+    )
     div(
 //      onMountCallback(_ => ),
       child <-- $plan.signal.map(plan =>
         div(
-            div(
-              button(
-                cls := "button",
-                "Delete saved plan",
-                onClick --> db.saveDailyPlan(
-                  crestedbutte.Plan(Seq.empty),
-                  $plan,
-                ),
+          div(
+            button(
+              cls := "button",
+              "Delete saved plan",
+              onClick --> db.saveDailyPlan(
+                crestedbutte.Plan(Seq.empty),
+                $plan,
               ),
-              Components.PlanElement(plan, db, $plan, initialTime),
-            )
+            ),
+            Components.PlanElement(plan, db, $plan, initialTime),
+          ),
         ),
       ),
     )
@@ -726,31 +729,42 @@ object Components {
                         .map { leg =>
                           leg
                             .trimToStartAt(start)
-                            .getOrElse(throw Exception("Start not available in leg: " + start))
+                            .getOrElse(
+                              throw Exception(
+                                "Start not available in leg: " + start,
+                              ),
+                            )
                             .trimToEndAt(destination)
-                            .getOrElse(throw Exception("destination not available in leg: " + destination))
+                            .getOrElse(
+                              throw Exception(
+                                "destination not available in leg: " + destination,
+                              ),
+                            )
                             .ends
-                            .getOrElse(throw Exception("Ends not available"))
+                            .getOrElse(
+                              throw Exception("Ends not available"),
+                            )
                         }
                         .find { l =>
                           val lastArrivalTime =
-                            $plan.now()
-                              .legs
-                              .lastOption
+                            $plan.now().legs.lastOption
                               .map(_.last.busTime)
                           val cutoff =
                             lastArrivalTime.getOrElse(initialTime)
                           l.head.busTime.isAfter(cutoff)
                         }
-                        .getOrElse(throw new Exception("Not route leg found with locations"))
-                    $plan.update {
-                      case oldPlan =>
-                        val newPlan =
-                          oldPlan.copy(legs =
-                            oldPlan.legs :+ matchingLeg,
-                          )
-                        db.saveDailyPlanOnly(newPlan)
-                        newPlan
+                        .getOrElse(
+                          throw new Exception(
+                            "Not route leg found with locations",
+                          ),
+                        )
+                    $plan.update { case oldPlan =>
+                      val newPlan =
+                        oldPlan.copy(legs =
+                          oldPlan.legs :+ matchingLeg,
+                        )
+                      db.saveDailyPlanOnly(newPlan)
+                      newPlan
                     }
                     println(s"Should add leg: $start -> $destination")
                     println("Matching leg: " + matchingLeg)

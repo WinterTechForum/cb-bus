@@ -51,7 +51,7 @@ class Persistence():
   ) =
 
     val retrieved =
-        retrieveDailyPlanOnly
+      retrieveDailyPlanOnly
         .getOrElse(Plan(Seq.empty))
     val updated =
       retrieved.copy(retrieved.legs :+ routeLeg)
@@ -68,5 +68,4 @@ class Persistence():
 
   def saveDailyPlanOnly(
     plan: Plan,
-  ) =
-    localStorage.setItem("today", plan.toJson)
+  ) = localStorage.setItem("today", plan.toJson)
