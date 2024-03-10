@@ -159,7 +159,9 @@ object Components {
     $plan: Var[Option[Plan]],
     initialTime: WallTime,
   ) =
-    val nextLegDirection: Var[NamedRoute] = Var(RtaNorthbound.fullSchedule)
+    val nextLegDirection: Var[NamedRoute] = Var(
+      RtaNorthbound.fullSchedule,
+    )
     def RouteLegElementViewOnly(
       label: String,
       routeLeg: RouteLeg,
@@ -272,21 +274,25 @@ object Components {
         )
       },
       div(
-        child <-- nextLegDirection.signal.map(s => span(s.componentName.userFriendlyName)),
+        child <-- nextLegDirection.signal.map(s =>
+          span(s.componentName.userFriendlyName),
+        ),
         button(
           cls := "button",
           "Switch Direction",
           onClick --> Observer { _ =>
             nextLegDirection.update {
-              case RtaNorthbound.fullSchedule => RtaSouthbound.fullSchedule
-              case RtaSouthbound.fullSchedule => RtaNorthbound.fullSchedule
+              case RtaNorthbound.fullSchedule =>
+                RtaSouthbound.fullSchedule
+              case RtaSouthbound.fullSchedule =>
+                RtaNorthbound.fullSchedule
             }
           },
         ),
         child <-- nextLegDirection.signal.map { direction =>
           smallStopSelector(direction, $plan, db, initialTime)
-        }
-    )
+        },
+      ),
     )
 
   import com.raquo.laminar.api.L._
@@ -336,11 +342,11 @@ object Components {
     val timeStamps: Signal[WallTime] = clockTicks.events
       .filter(_ =>
         selectedComponent.now() != PlanViewer &&
-        // Don't reset content if we're in the middle of a modal
-        !org.scalajs.dom.document
-          .querySelector("html")
-          .classList
-          .contains("is-clipped"),
+          // Don't reset content if we're in the middle of a modal
+          !org.scalajs.dom.document
+            .querySelector("html")
+            .classList
+            .contains("is-clipped"),
       )
       .foldLeft(
         initialTime,
@@ -411,7 +417,7 @@ object Components {
               TripViewerLaminar(
                 db,
                 $selectedComponent.writer,
-                initialTime
+                initialTime,
               )
             case TripPlannerComponent => planner
             case namedRoute: NamedRoute =>
@@ -703,22 +709,21 @@ object Components {
       ),
     )
 
-  def smallStopSelector(namedRoute: NamedRoute,
-                        $plan: Var[Option[Plan]],
-                        db: Persistence,
-                        initialTime: WallTime,
-                       ) =
+  def smallStopSelector(
+    namedRoute: NamedRoute,
+    $plan: Var[Option[Plan]],
+    db: Persistence,
+    initialTime: WallTime,
+  ) =
     val startingPoint: Var[Option[Location]] = Var(None)
     val destinations: Signal[Option[Seq[Location]]] =
       startingPoint.signal.map {
         case Some(value) =>
           Some(
-            namedRoute
-              .routeWithTimes
-              .allStops
+            namedRoute.routeWithTimes.allStops
               .dropWhile(_.location != value)
               .drop(1)
-              .map(_.location)
+              .map(_.location),
           )
         case None => None
       }
@@ -729,16 +734,15 @@ object Components {
         allStops.init.map(stop =>
           div(
             stop.location.name,
-            onClick.mapTo(Some(stop.location)) --> startingPoint
+            onClick.mapTo(Some(stop.location)) --> startingPoint,
           ),
         ),
       )
     div(
       child <-- startingPoint.signal.map {
         case Some(value) => "Starting at: " + value
-        case None => startingPoints
+        case None        => startingPoints
       },
-
       div(
         "Destination",
         child <-- destinations.signal.map {
@@ -748,7 +752,9 @@ object Components {
                 div(
                   destination.name,
                   onClick --> Observer { _ =>
-                    val start = startingPoint.now().getOrElse(throw Exception("No starting point"))
+                    val start = startingPoint
+                      .now()
+                      .getOrElse(throw Exception("No starting point"))
 
                     val matchingLeg =
                       namedRoute.routeWithTimes.legs
@@ -761,19 +767,24 @@ object Components {
                             .ends
                             .getOrElse(???)
                         }
-                        .find{l =>
+                        .find { l =>
                           val lastArrivalTime = $plan.now() match {
                             case Some(value) =>
-                              value.legs.lastOption.map(_.last.busTime)
+                              value.legs.lastOption
+                                .map(_.last.busTime)
                             case None => Some(initialTime)
                           }
-                          val cutoff = lastArrivalTime.getOrElse(initialTime)
+                          val cutoff =
+                            lastArrivalTime.getOrElse(initialTime)
                           l.head.busTime.isAfter(cutoff)
-                        }.getOrElse(???)
+                        }
+                        .getOrElse(???)
                     $plan.update {
                       case Some(oldPlan) =>
                         val newPlan =
-                          oldPlan.copy(legs = oldPlan.legs :+ matchingLeg)
+                          oldPlan.copy(legs =
+                            oldPlan.legs :+ matchingLeg,
+                          )
                         db.saveDailyPlanOnly(newPlan)
                         Some(newPlan)
                       case None =>
@@ -790,8 +801,6 @@ object Components {
             )
           case None => div()
         },
-
-
-      )
+      ),
     )
 }
