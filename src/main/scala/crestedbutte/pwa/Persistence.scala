@@ -47,7 +47,7 @@ class Persistence():
       .getOrElse(throw new Exception("Bad plan in localStorage"))
 
   def updateDailyPlan(
-    routeLeg: RouteLeg,
+    routeLeg: RouteSegment,
   ) =
 
     val retrieved =

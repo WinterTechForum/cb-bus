@@ -81,15 +81,15 @@ object Components {
     )
 
   def RouteLegElementInteractive(
-    routeLeg: RouteLeg,
+    routeSegment: RouteSegment,
     db: Persistence,
     $active: Var[Boolean],
     $notifications: Observer[ReactiveHtmlElement[_]],
     componentSelector: Observer[ComponentData],
   ) =
-    val clickBus = EventBus[RouteLeg]()
+    val clickBus = EventBus[RouteSegment]()
     div(
-      routeLeg.stops.head match
+      routeSegment.start match
 
         case LocationWithTime(
               location,
@@ -104,46 +104,33 @@ object Components {
       ,
       div(
         cls := "scrollable-route-leg",
-        clickBus.events.map(routeLeg =>
+        clickBus.events.map(routeSegment =>
           BulmaLocal.notificationWithHomeLink("Trip Plan Updated.",
                                               componentSelector,
           ),
         ) --> $notifications,
         clickBus.events
-          .map { (e: RouteLeg) =>
-            println("routeLeg before the explosion: " + e)
+          .map { (e: RouteSegment) =>
+            println("routeSegment before the explosion: " + e)
             db.updateDailyPlan(e)
             true // keep modal open
           } --> $active,
-        routeLeg.stops.tail.map(stop =>
           UpcomingStopInfo(
-            stop.location,
+            routeSegment.end.location,
             div(
               span(
-                stop.busTime.toDumbAmericanString,
+                routeSegment.end.busTime.toDumbAmericanString,
               ),
               button(
                 cls := "button",
                 onClick.preventDefault
                   .mapTo {
-                    val head =
-                      routeLeg.stops.headOption.getOrElse(
-                        throw new IllegalStateException(
-                          "Can't add a leg with a missing head.",
-                        ),
-                      )
 
-                    RouteLeg(Seq(head, stop), routeLeg.routeName)
-                      .getOrElse(
-                        throw new IllegalStateException(
-                          "Failed to create new route leg",
-                        ),
-                      )
+                    RouteSegment(routeSegment.routeName, routeSegment.start, routeSegment.end)
                   } --> clickBus,
                 "+",
               ),
             ),
-          ),
         ),
       ),
     )
@@ -164,13 +151,13 @@ object Components {
     )
     def RouteLegElementViewOnly(
       label: String,
-      routeLeg: RouteLeg,
+      routeSegment: RouteSegment,
       planIndex: Int,
       db: Persistence,
     ) =
 
       val routeWithTimesO =
-        routeLeg.routeName match
+        routeSegment.routeName match
           case RtaSouthbound.componentName =>
             Some(RtaSouthbound.fullSchedule.routeWithTimes)
           case RtaNorthbound.componentName =>
@@ -179,12 +166,12 @@ object Components {
       val nextAfter =
         for
           routeWithTimes <- routeWithTimesO
-          nextAfter      <- routeWithTimes.nextAfter(routeLeg)
+          nextAfter      <- routeWithTimes.nextAfter(routeSegment)
         yield nextAfter
       val nextBefore =
         for
           routeWithTimes <- routeWithTimesO
-          nextAfter      <- routeWithTimes.nextBefore(routeLeg)
+          nextAfter      <- routeWithTimes.nextBefore(routeSegment)
         yield nextAfter
 
       div(
@@ -218,7 +205,7 @@ object Components {
             "Delete",
             onClick --> Observer { _ =>
               val newPlan =
-                plan.copy(legs = plan.legs.filterNot(_ == routeLeg))
+                plan.copy(legs = plan.legs.filterNot(_ == routeSegment))
               db.saveDailyPlanOnly(newPlan)
               $plan.set(newPlan)
             },
@@ -246,7 +233,7 @@ object Components {
             case None => span(),
         ),
         div(
-          routeLeg.stops.map(stop =>
+          Seq(routeSegment.start, routeSegment.end).map(stop =>
             UpcomingStopInfo(
               stop.location,
               div(
@@ -258,11 +245,11 @@ object Components {
       )
 
     div(
-      plan.legs.zipWithIndex.map { case (routeLeg, idx) =>
+      plan.legs.zipWithIndex.map { case (routeSegment, idx) =>
         div(
           RouteLegElementViewOnly(
             "Trip " + (idx + 1),
-            routeLeg,
+            routeSegment,
             idx,
             db,
           ),
@@ -775,15 +762,17 @@ object Components {
                               trimmedToEnd <- trimmedToStart
                                 .trimToEndAt(destination)
                               ends <- trimmedToEnd.ends
-                            yield ends).toOption
+                            yield RouteSegment
+                              .fromRouteLeg(ends)) // TODO Can we just do this in the start?
+                              .toOption
                           }
                           .find { l =>
                             val lastArrivalTime =
                               $plan.now().legs.lastOption
-                                .map(_.last.busTime)
+                                .map(_.end.busTime)
                             val cutoff =
                               lastArrivalTime.getOrElse(initialTime)
-                            l.head.busTime.isAfter(cutoff)
+                            l.start.busTime.isAfter(cutoff)
                           }
                           .getOrElse(
                             throw new Exception(

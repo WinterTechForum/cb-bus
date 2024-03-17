@@ -3,6 +3,31 @@ package crestedbutte
 import com.billding.time.MinuteDuration
 import zio.json._
 
+case class RouteSegment(
+                         routeName: ComponentName,
+                         start: LocationWithTime,
+                         end: LocationWithTime
+                       ) derives JsonCodec {
+
+  lazy val plainTextRepresentation =
+    s"""${start.location.name}
+       |${start.busTime.toDumbAmericanString}
+       |
+       |${end.location.name}
+       |${end.busTime.toDumbAmericanString}
+       |""".stripMargin
+}
+
+object RouteSegment {
+  def fromRouteLeg(routeLeg: RouteLeg): RouteSegment =
+    RouteSegment(
+      routeLeg.routeName,
+      routeLeg.head,
+      routeLeg.last,
+    )
+}
+
+
 object RouteLeg:
   def apply(
     stops: Seq[LocationWithTime],
@@ -34,11 +59,12 @@ case class RouteLeg private (
   ) // TODO Upgrade into a true effect
 
   def withSameStopsAs(
-    other: RouteLeg,
+    other: RouteSegment,
   ): Either[String, RouteLeg] =
     RouteLeg(
       stops.filter(stop =>
-        other.stops.exists(locationWithTime =>
+        // This List is a weird funky artifact from the switch to RouteSegment to RouteLeg
+        List(other.start, other.end).exists(locationWithTime =>
           locationWithTime.location == stop.location,
         ),
       ),

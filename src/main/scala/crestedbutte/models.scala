@@ -109,7 +109,7 @@ implicit val hourNotationCodec: JsonCodec[HourNotation] =
   DeriveJsonCodec.gen[HourNotation]
 
 case class Plan(
-  legs: Seq[RouteLeg])
+  legs: Seq[RouteSegment])
     derives JsonCodec:
   val plainTextRepresentation: String =
     legs.zipWithIndex

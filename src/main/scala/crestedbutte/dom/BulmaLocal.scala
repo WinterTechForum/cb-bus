@@ -78,7 +78,7 @@ object BulmaLocal {
                 "Back to Upcoming Arrivals",
               ),
               Components.RouteLegElementInteractive(
-                routeLeg,
+                RouteSegment.fromRouteLeg(routeLeg),
                 db,
                 $active,
                 notificationBus.writer,

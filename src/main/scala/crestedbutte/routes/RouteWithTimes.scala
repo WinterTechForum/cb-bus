@@ -7,6 +7,7 @@ import crestedbutte.{
   Location,
   LocationWithTime,
   RouteLeg,
+  RouteSegment,
 }
 import com.billding.time.WallTime
 
@@ -14,18 +15,18 @@ case class RouteWithTimes(
   legs: Seq[RouteLeg]) {
 
   def indexOfLegThatContains(
-    other: RouteLeg,
+    other: RouteSegment,
   ) =
     val res = legs.indexWhere(leg =>
       leg.stops.exists(locationWithTime =>
-        locationWithTime.busTime.localTime.value == other.stops.head.busTime.localTime.value && locationWithTime.location == other.stops.head.location,
+        locationWithTime.busTime.localTime.value == other.start.busTime.localTime.value && locationWithTime.location == other.start.location,
       ),
     )
     Option.when(res != -1)(res)
 
   def nextAfter(
-    original: RouteLeg,
-  ): Option[RouteLeg] =
+    original: RouteSegment,
+  ): Option[RouteSegment] =
     for
       index <- indexOfLegThatContains(original)
       newIndex <-
@@ -35,11 +36,11 @@ case class RouteWithTimes(
       newRoute <- legs(newIndex)
         .withSameStopsAs(original)
         .toOption
-    yield newRoute
+    yield RouteSegment.fromRouteLeg(newRoute)
 
   def nextBefore(
-    original: RouteLeg,
-  ): Option[RouteLeg] =
+    original: RouteSegment,
+  ): Option[RouteSegment] =
     for
       index <- indexOfLegThatContains(original)
       newIndex <-
@@ -49,7 +50,7 @@ case class RouteWithTimes(
       newRoute <- legs(newIndex)
         .withSameStopsAs(original)
         .toOption
-    yield newRoute
+    yield RouteSegment.fromRouteLeg(newRoute)
 
   val allStops: Seq[BusScheduleAtStop] =
     legs.foldLeft(Seq[BusScheduleAtStop]()) { case (acc, leg) =>
