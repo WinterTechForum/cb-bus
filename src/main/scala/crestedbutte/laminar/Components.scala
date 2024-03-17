@@ -696,6 +696,8 @@ object Components {
                   cls := "button m-2",
                   "Copy to Clipboard",
                   onClick --> Observer { _ =>
+                    import zio.json._
+                    println(plan.toJson)
                     dom.window.navigator.clipboard
                       .writeText(plan.plainTextRepresentation)
                   },
