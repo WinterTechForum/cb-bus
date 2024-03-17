@@ -184,9 +184,13 @@ object Location {
     JsonCodec.string.transform(Location.fromFriendlyName, _.name)
 //    DeriveJsonCodec.gen[Location]
 
-  def fromFriendlyName(s: String): Location = {
+  def fromFriendlyName(
+    s: String,
+  ): Location = {
     val name = s.toLowerCase
-    Location.values.find(_.name.toLowerCase == name).getOrElse(throw Exception("Unrecognized location: " + s))
+    Location.values
+      .find(_.name.toLowerCase == name)
+      .getOrElse(throw Exception("Unrecognized location: " + s))
   }
 
 }
