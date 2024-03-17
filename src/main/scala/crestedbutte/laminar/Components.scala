@@ -119,14 +119,14 @@ object Components {
           routeSegment.end.location,
           div(
             span(
-              routeSegment.end.busTime.toDumbAmericanString,
+              routeSegment.end.t.toDumbAmericanString,
             ),
             button(
               cls := "button",
               onClick.preventDefault
                 .mapTo {
 
-                  RouteSegment(routeSegment.routeName,
+                  RouteSegment(routeSegment.route,
                                routeSegment.start,
                                routeSegment.end,
                   )
@@ -160,7 +160,7 @@ object Components {
     ) =
 
       val routeWithTimesO =
-        routeSegment.routeName match
+        routeSegment.route match
           case RtaSouthbound.componentName =>
             Some(RtaSouthbound.fullSchedule.routeWithTimes)
           case RtaNorthbound.componentName =>
@@ -242,7 +242,7 @@ object Components {
             UpcomingStopInfo(
               stop.location,
               div(
-                stop.busTime.toDumbAmericanString,
+                stop.t.toDumbAmericanString,
               ),
             ),
           ),
@@ -774,10 +774,10 @@ object Components {
                           .find { l =>
                             val lastArrivalTime =
                               $plan.now().legs.lastOption
-                                .map(_.end.busTime)
+                                .map(_.end.t)
                             val cutoff =
                               lastArrivalTime.getOrElse(initialTime)
-                            l.start.busTime.isAfter(cutoff)
+                            l.start.t.isAfter(cutoff)
                           }
                           .getOrElse(
                             throw new Exception(

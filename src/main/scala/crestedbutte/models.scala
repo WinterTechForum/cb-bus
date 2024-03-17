@@ -22,10 +22,13 @@ case class PhoneNumber(
   number: String,
   name: String)
 
+object ComponentName {
+  implicit val codec: JsonCodec[ComponentName] =
+    JsonCodec.string.transform(ComponentName.apply, _.userFriendlyName)
+}
 // TODO General name
 case class ComponentName(
-  userFriendlyName: String)
-    derives JsonCodec {
+  userFriendlyName: String) {
 
   val name: String =
     userFriendlyName

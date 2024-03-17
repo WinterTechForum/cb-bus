@@ -11,8 +11,8 @@ case class TripPlannerError(
   msg: String)
 
 case class LocationWithTime(
-  location: Location,
-  busTime: WallTime)
+                             location: Location,
+                             t: WallTime)
     derives JsonCodec
 
 enum TripBoundary:
@@ -42,7 +42,7 @@ enum TripParamZ {
               stop.location
                 .matches(
                   s.start,
-                ) && stop.busTime >= s.arrivalTime,
+                ) && stop.t >= s.arrivalTime,
             ),
           )
           .flatMap: routeLeg =>
@@ -62,7 +62,7 @@ enum TripParamZ {
               stop.location
                 .matches(
                   b.destination,
-                ) && stop.busTime <= b.arrivalTime,
+                ) && stop.t <= b.arrivalTime,
             ),
           )
           .flatMap(routeLeg =>

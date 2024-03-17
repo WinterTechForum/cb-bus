@@ -114,7 +114,7 @@ object RtaSouthbound {
         .plus(Location.OhioCreek, 8.minutes)
         .plus(Location.TallTexan, 1.minutes)
     val basicRoute =
-      if (terminatingRoute(routeLeg.stops.head.busTime))
+      if (terminatingRoute(routeLeg.stops.head.t))
         shortRoute
       else
         shortRoute
@@ -128,9 +128,9 @@ object RtaSouthbound {
 
     // late buses actually terminate at the community school. The others loop through Gunni
     if (
-      routeLeg.stops.head.busTime.isBefore(
+      routeLeg.stops.head.t.isBefore(
         WallTime("22:00"),
-      ) && !terminatingRoute(routeLeg.stops.head.busTime)
+      ) && !terminatingRoute(routeLeg.stops.head.t)
     )
       // Deviating from the PDFs, for usability's sake!
       basicRoute

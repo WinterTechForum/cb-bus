@@ -19,7 +19,7 @@ object TripPlannerTest extends ZIOSpecDefault:
               leaveSchedule = RtaSouthbound.fullSchedule.routeWithTimes
           ).evaluate().getOrElse(???)
           assertTrue:
-            results.stops.head.busTime == WallTime("06:51")
+            results.stops.head.t == WallTime("06:51")
         ,
         test("departure leg tests 2"):
           val results =
@@ -30,7 +30,7 @@ object TripPlannerTest extends ZIOSpecDefault:
               leaveSchedule = RtaSouthbound.fullSchedule.routeWithTimes
             ).evaluate().getOrElse(???)
           assertTrue:
-            results.stops.head.busTime == WallTime("19:10")
+            results.stops.head.t == WallTime("19:10")
         ,
 
         test("Northbound to CB South in the morning, honoring the huge express bus void"):
@@ -41,7 +41,7 @@ object TripPlannerTest extends ZIOSpecDefault:
               destination = Location.CBSouth,
               leaveSchedule = RtaNorthbound.fullSchedule.routeWithTimes
             ).evaluate().getOrElse(???)
-          val startingPoint = results.stops.head.busTime
+          val startingPoint = results.stops.head.t
           assertTrue(startingPoint == WallTime("08:05"))
       ),
 
@@ -54,8 +54,8 @@ object TripPlannerTest extends ZIOSpecDefault:
                 routeWithTimes = RtaSouthbound.fullSchedule.routeWithTimes,
                 destination = Location.RecCenter
             ).evaluate().getOrElse(???)
-          assertTrue(results.stops.head.busTime == WallTime("08:26") &&
-            results.stops.last.busTime == WallTime("09:01"))
+          assertTrue(results.stops.head.t == WallTime("08:26") &&
+            results.stops.last.t == WallTime("09:01"))
         },
         test("departure leg tests 2") {
           val results =
@@ -65,8 +65,8 @@ object TripPlannerTest extends ZIOSpecDefault:
                 routeWithTimes = RtaSouthbound.fullSchedule.routeWithTimes,
                 destination = Location.Almont
             ).evaluate().right.get
-          assertTrue(results.stops.head.busTime == WallTime("15:42") &&
-            results.stops.last.busTime == WallTime("16:04"))
+          assertTrue(results.stops.head.t == WallTime("15:42") &&
+            results.stops.last.t == WallTime("16:04"))
         }
 
       )

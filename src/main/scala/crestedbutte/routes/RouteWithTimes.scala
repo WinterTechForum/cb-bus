@@ -19,7 +19,7 @@ case class RouteWithTimes(
   ) =
     val res = legs.indexWhere(leg =>
       leg.stops.exists(locationWithTime =>
-        locationWithTime.busTime.localTime.value == other.start.busTime.localTime.value && locationWithTime.location == other.start.location,
+        locationWithTime.t.localTime.value == other.start.t.localTime.value && locationWithTime.location == other.start.location,
       ),
     )
     Option.when(res != -1)(res)
@@ -61,14 +61,14 @@ case class RouteWithTimes(
             case BusScheduleAtStop(location, times, routeName)
                 if location == stop.location =>
               BusScheduleAtStop(location,
-                                times :+ stop.busTime,
+                                times :+ stop.t,
                                 leg.routeName,
               )
             case other => other
           }
         else
           innerAcc :+ BusScheduleAtStop(stop.location,
-                                        Seq(stop.busTime),
+                                        Seq(stop.t),
                                         leg.routeName,
           )
       }
@@ -93,7 +93,7 @@ case class RouteWithTimes(
     RouteWithTimes(
       (this.legs ++ routeWithTimes.legs)
         .sortBy(
-          _.stops.head.busTime,
+          _.stops.head.t,
         ), // TODO Is this a good place to handle the sorting?
     )
 

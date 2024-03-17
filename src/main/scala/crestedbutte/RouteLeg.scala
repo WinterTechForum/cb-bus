@@ -4,17 +4,17 @@ import com.billding.time.MinuteDuration
 import zio.json._
 
 case class RouteSegment(
-  routeName: ComponentName,
-  start: LocationWithTime,
-  end: LocationWithTime)
+                         route: ComponentName,
+                         start: LocationWithTime,
+                         end: LocationWithTime)
     derives JsonCodec {
 
   lazy val plainTextRepresentation =
     s"""${start.location.name}
-       |${start.busTime.toDumbAmericanString}
+       |${start.t.toDumbAmericanString}
        |
        |${end.location.name}
-       |${end.busTime.toDumbAmericanString}
+       |${end.t.toDumbAmericanString}
        |""".stripMargin
 }
 
@@ -49,10 +49,10 @@ case class RouteLeg private (
     val start = stops.head
     val end = stops.last
     s"""${start.location.name}
-       |${start.busTime.toDumbAmericanString}
+       |${start.t.toDumbAmericanString}
        |
        |${end.location.name}
-       |${end.busTime.toDumbAmericanString}
+       |${end.t.toDumbAmericanString}
        |""".stripMargin
 
   assert(stops.nonEmpty,
@@ -95,7 +95,7 @@ case class RouteLeg private (
     copy(
       stops =
         stops :+ LocationWithTime(location,
-                                  stops.last.busTime.plus(busDuration),
+                                  stops.last.t.plus(busDuration),
         ),
     )
 
