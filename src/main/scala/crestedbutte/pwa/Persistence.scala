@@ -47,9 +47,11 @@ class Persistence():
 
     previouslyStoredPlan
       .fromJson[Option[Plan]]
-    .getOrElse:
-      println("Bad plan in localStorage. This can happen after serialization changes. \n" + previouslyStoredPlan)
-      Some(Plan(Seq.empty)) // Ugh, wart
+      .getOrElse:
+        println(
+          "Bad plan in localStorage. This can happen after serialization changes. \n" + previouslyStoredPlan,
+        )
+        Some(Plan(Seq.empty)) // Ugh, wart
   }
 
   def updateDailyPlan(

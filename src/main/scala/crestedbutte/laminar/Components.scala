@@ -115,22 +115,25 @@ object Components {
             db.updateDailyPlan(e)
             true // keep modal open
           } --> $active,
-          UpcomingStopInfo(
-            routeSegment.end.location,
-            div(
-              span(
-                routeSegment.end.busTime.toDumbAmericanString,
-              ),
-              button(
-                cls := "button",
-                onClick.preventDefault
-                  .mapTo {
-
-                    RouteSegment(routeSegment.routeName, routeSegment.start, routeSegment.end)
-                  } --> clickBus,
-                "+",
-              ),
+        UpcomingStopInfo(
+          routeSegment.end.location,
+          div(
+            span(
+              routeSegment.end.busTime.toDumbAmericanString,
             ),
+            button(
+              cls := "button",
+              onClick.preventDefault
+                .mapTo {
+
+                  RouteSegment(routeSegment.routeName,
+                               routeSegment.start,
+                               routeSegment.end,
+                  )
+                } --> clickBus,
+              "+",
+            ),
+          ),
         ),
       ),
     )
@@ -205,7 +208,9 @@ object Components {
             "Delete",
             onClick --> Observer { _ =>
               val newPlan =
-                plan.copy(legs = plan.legs.filterNot(_ == routeSegment))
+                plan.copy(legs =
+                  plan.legs.filterNot(_ == routeSegment),
+                )
               db.saveDailyPlanOnly(newPlan)
               $plan.set(newPlan)
             },

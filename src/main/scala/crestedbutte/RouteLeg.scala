@@ -4,10 +4,10 @@ import com.billding.time.MinuteDuration
 import zio.json._
 
 case class RouteSegment(
-                         routeName: ComponentName,
-                         start: LocationWithTime,
-                         end: LocationWithTime
-                       ) derives JsonCodec {
+  routeName: ComponentName,
+  start: LocationWithTime,
+  end: LocationWithTime)
+    derives JsonCodec {
 
   lazy val plainTextRepresentation =
     s"""${start.location.name}
@@ -19,14 +19,15 @@ case class RouteSegment(
 }
 
 object RouteSegment {
-  def fromRouteLeg(routeLeg: RouteLeg): RouteSegment =
+  def fromRouteLeg(
+    routeLeg: RouteLeg,
+  ): RouteSegment =
     RouteSegment(
       routeLeg.routeName,
       routeLeg.head,
       routeLeg.last,
     )
 }
-
 
 object RouteLeg:
   def apply(
