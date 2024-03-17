@@ -111,7 +111,6 @@ object Components {
         ) --> $notifications,
         clickBus.events
           .map { (e: RouteSegment) =>
-            println("routeSegment before the explosion: " + e)
             db.updateDailyPlan(e)
             true // keep modal open
           } --> $active,
@@ -331,7 +330,6 @@ object Components {
       initialComponent
         .flatMap(initialRoute =>
           components.find: component =>
-            println("Component: " + component.componentName.name)
             component.componentName
               .elementNameMatches(initialRoute.name),
         )
@@ -686,12 +684,20 @@ object Components {
               div(
                 button(
                   cls := "button m-2",
-                  "Copy to Clipboard",
+                  "Copy Text",
                   onClick --> Observer { _ =>
-                    import zio.json._
-                    println(plan.toJson)
                     dom.window.navigator.clipboard
                       .writeText(plan.plainTextRepresentation)
+                  },
+                ),
+                button(
+                  cls := "button m-2",
+                  "Copy App Link",
+                  onClick --> Observer { _ =>
+                    val url =
+                      s"http://localhost:8000/index_dev.html?plan=${UrlEncoding.encode(plan)}"
+                    dom.window.navigator.clipboard
+                      .writeText(url)
                   },
                 ),
               ),

@@ -2,10 +2,30 @@ package crestedbutte
 
 import com.billding.time.WallTime
 import crestedbutte.laminar.{AppMode, Components}
+import crestedbutte.pwa.Persistence
 import urldsl.errors.DummyError
 import urldsl.language.QueryParameters
 
 import java.time.{OffsetDateTime, ZoneId}
+
+object UrlEncoding {
+  import java.net.URLEncoder
+  import java.net.URLDecoder
+  import zio.json._
+  import java.nio.charset.StandardCharsets
+
+  def encode(plan: Plan): String = {
+    URLEncoder.encode(plan.toJson, StandardCharsets.UTF_8.toString);
+  }
+
+  def decode(raw: String) = {
+    val res = URLDecoder.decode(raw, StandardCharsets.UTF_8.toString).fromJson[Plan]
+    Persistence().saveDailyPlanOnly(res.getOrElse(???))
+    println("saved plan")
+    res
+  }
+
+}
 
 object RoutingStuff {
   import com.raquo.laminar.api.L
@@ -16,7 +36,8 @@ object RoutingStuff {
   private case class BusPage(
     mode: AppMode,
     time: Option[WallTime], // TODO Make this a WallTime instead
-    component: Option[ComponentName]) {
+    component: Option[ComponentName],
+    plan: Option[Plan]) {
 
     val fixedTime = time
 
@@ -39,39 +60,45 @@ object RoutingStuff {
 
   implicit private val componentNameRw: ReadWriter[ComponentName] =
     macroRW
+
+  implicit val planRw: ReadWriter[Plan] =
+    readwriter[String].bimap[Plan](UrlEncoding.encode, UrlEncoding.decode(_).getOrElse(???))
+
   implicit private val rw: ReadWriter[BusPage] = macroRW
 
   private val encodePage
-    : BusPage => (Option[String], Option[String], Option[String]) =
+    : BusPage => (Option[String], Option[String], Option[String], Option[String] ) =
     page =>
       (Some(page.mode.toString),
-       page.time.map(_.toEUString),
-       page.component.map(_.name),
+        page.time.map(_.toEUString),
+        page.component.map(_.name),
+        page.plan.map(UrlEncoding.encode)
       )
 
   private val decodePage: (
-    (Option[String], Option[String], Option[String]),
-  ) => BusPage = { case (mode, time, component) =>
+    (Option[String], Option[String], Option[String], Option[String]),
+  ) => BusPage = { case (mode, time, component, plan) =>
     BusPage(
       mode = mode.map(AppMode.withName).getOrElse(AppMode.Production),
       time = time.map(WallTime.apply),
       component = component.map(ComponentName.apply),
+      plan = plan.flatMap(UrlEncoding.decode(_).toOption)
     )
   }
 
   val params: QueryParameters[
-    (Option[String], Option[String], Option[String]),
+    (Option[String], Option[String], Option[String], Option[String]),
     DummyError,
   ] =
     param[
       String,
     ]("mode").? & param[String]("time").? & param[String](
       "component",
-    ).?
+    ).? & param[String]( "plan").?
 
   private val devRoute =
     Route.onlyQuery[BusPage,
-                    (Option[String], Option[String], Option[String]),
+                    (Option[String], Option[String], Option[String], Option[String]),
     ](
       encode = encodePage,
       decode = decodePage,
@@ -80,7 +107,7 @@ object RoutingStuff {
 
   private val prodRoute =
     Route.onlyQuery[BusPage,
-                    (Option[String], Option[String], Option[String]),
+                    (Option[String], Option[String], Option[String], Option[String]),
     ](
       encode = encodePage,
       decode = decodePage,
@@ -105,6 +132,7 @@ object RoutingStuff {
         mode = AppMode.Production,
         time = None, // TODO Make this a WallTime instead
         component = None,
+        plan = None
       ),
   )(
     popStateEvents = L.windowEvents(
