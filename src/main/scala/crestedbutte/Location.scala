@@ -180,10 +180,6 @@ enum Location(
 }
 
 object Location {
-  implicit val codec: JsonCodec[Location] =
-    JsonCodec.string.transform(Location.fromFriendlyName, _.name)
-//    DeriveJsonCodec.gen[Location]
-
   def fromFriendlyName(
     s: String,
   ): Location = {
@@ -192,5 +188,16 @@ object Location {
       .find(_.name.toLowerCase == name)
       .getOrElse(throw Exception("Unrecognized location: " + s))
   }
+
+  val locationsAndIdxs = Location.values.zipWithIndex
+  def encodeLocation(location: Location): Int =
+    locationsAndIdxs.find(_._1 == location).get._2
+
+  def decodeLocation(locationIdx: Int): Location =
+    locationsAndIdxs.find(_._2 == locationIdx).get._1
+
+  implicit val codec: JsonCodec[Location] =
+    JsonCodec.int.transform(Location.decodeLocation, Location.encodeLocation)
+  //    DeriveJsonCodec.gen[Location]
 
 }

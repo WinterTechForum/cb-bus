@@ -104,12 +104,12 @@ case class UpcomingArrivalComponentData(
   routeName: ComponentName)
 
 import zio.json._
-
 implicit val wallTimeCodec: JsonCodec[WallTime] =
-  JsonCodec.string.transform(WallTime.apply, _.toDumbAmericanString)
+  JsonCodec.int.transform(WallTime.fromMinutes, _.localTime.value)
+  
 //  DeriveJsonCodec.gen[WallTime]
-implicit val minutesCodec: JsonCodec[Minutes] =
-  DeriveJsonCodec.gen[Minutes]
+//implicit val minutesCodec: JsonCodec[Minutes] =
+//  DeriveJsonCodec.gen[Minutes]
 implicit val hourNotationCodec: JsonCodec[HourNotation] =
   DeriveJsonCodec.gen[HourNotation]
 

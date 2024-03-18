@@ -354,7 +354,6 @@ object Components {
     val initialTime =
       currentWallTime:
         javaClock
-      .roundToNextTenMutable()
 
     val timeStamps: Signal[WallTime] = clockTicks.events
       .filter(_ =>
@@ -695,7 +694,11 @@ object Components {
                   "Copy App Link",
                   onClick --> Observer { _ =>
                     val url =
+                    if(dom.document.URL.contains("localhost"))
                       s"http://localhost:8000/index_dev.html?plan=${UrlEncoding.encode(plan)}"
+                    else
+                      s"https://cbbus.netlify.app/?plan=${UrlEncoding.encode(plan)}"
+
                     dom.window.navigator.clipboard
                       .writeText(url)
                   },

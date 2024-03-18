@@ -8,31 +8,6 @@ import urldsl.language.QueryParameters
 
 import java.time.{OffsetDateTime, ZoneId}
 
-object UrlEncoding {
-  import java.net.URLEncoder
-  import java.net.URLDecoder
-  import zio.json._
-  import java.nio.charset.StandardCharsets
-
-  def encode(
-    plan: Plan,
-  ): String =
-    println(plan.toJson)
-    URLEncoder.encode(plan.toJson, StandardCharsets.UTF_8.toString);
-
-  def decode(
-    raw: String,
-  ) = {
-    val res = URLDecoder
-      .decode(raw, StandardCharsets.UTF_8.toString)
-      .fromJson[Plan]
-    Persistence().saveDailyPlanOnly(res.getOrElse(???))
-    println("saved plan")
-    res
-  }
-
-}
-
 object RoutingStuff {
   import com.raquo.laminar.api.L
   import com.raquo.laminar.api.L.*
