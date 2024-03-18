@@ -38,7 +38,6 @@ object ComponentName {
   def encode(
                       name: ComponentName,
                     ): Int = {
-    println("Available: " + indexedComponentNames.mkString("\n"))
     indexedComponentNames.find(_._1 == name).get._2
   }
 
