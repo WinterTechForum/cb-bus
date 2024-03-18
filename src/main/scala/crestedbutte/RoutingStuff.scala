@@ -45,7 +45,11 @@ object RoutingStuff {
   implicit val planRw: ReadWriter[Plan] =
     readwriter[String].bimap[Plan](
       UrlEncoding.encode,
-      UrlEncoding.decode(_).getOrElse(???),
+      s =>
+        UrlEncoding.decode(s) match
+          case Left(error) =>
+            throw new Exception(s"Failed to decode Plan: $error")
+          case Right(value) => value,
     )
 
   implicit private val rw: ReadWriter[BusPage] = macroRW

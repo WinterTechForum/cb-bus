@@ -24,10 +24,16 @@ object UrlEncoding {
   ) = {
 //    val base64 = URLDecoder
 //      .decode(raw, StandardCharsets.UTF_8.toString)
+    val rawJson = String(urlDecoder.decode(raw))
+    println("rawJson: " + rawJson)
     val res =
-      String(urlDecoder.decode(raw))
+      rawJson
         .fromJson[Plan]
-    Persistence().saveDailyPlanOnly(res.getOrElse(???))
+    try
+      Persistence().saveDailyPlanOnly(res.getOrElse(???))
+    catch {
+      case ex => println("Probably not running in a browser")
+    }
     println("saved plan")
     res
   }
