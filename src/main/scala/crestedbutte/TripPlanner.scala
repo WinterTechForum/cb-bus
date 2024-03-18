@@ -11,18 +11,18 @@ case class TripPlannerError(
   msg: String)
 
 case class LocationWithTime(
-                             l: Location,
-                             t: WallTime)
+  l: Location,
+  t: WallTime)
     derives JsonCodec
 
 //object LocationWithTime {
-//  implicit val codec: JsonCodec[LocationWithTime] = 
+//  implicit val codec: JsonCodec[LocationWithTime] =
 //    Location.codec.zip(JsonCodec[WallTime]).transform[LocationWithTime](
 //      (str, time) => LocationWithTime(str, time),
 //      locationWithTime => (locationWithTime.location, locationWithTime.t)
 //    )
 //    DeriveJsonCodec.gen[LocationWithTime]
-//  
+//
 //}
 
 enum TripBoundary:

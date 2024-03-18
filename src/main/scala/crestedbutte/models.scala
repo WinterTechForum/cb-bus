@@ -28,23 +28,21 @@ object ComponentName {
 //    JsonCodec.string.transform(ComponentName.apply,
 //                               _.userFriendlyName,
 //    )
-    
+
   private lazy val indexedComponentNames: Seq[(ComponentName, Int)] =
     Seq(
       RtaSouthbound.componentName,
-      RtaNorthbound.componentName
+      RtaNorthbound.componentName,
     ).zipWithIndex
 
   def encode(
-                      name: ComponentName,
-                    ): Int = {
-    indexedComponentNames.find(_._1 == name).get._2
-  }
+    name: ComponentName,
+  ): Int = indexedComponentNames.find(_._1 == name).get._2
 
   def decode(
-                      idx: Int,
-                    ): ComponentName = indexedComponentNames.find(_._2 == idx).get._1
-  
+    idx: Int,
+  ): ComponentName = indexedComponentNames.find(_._2 == idx).get._1
+
   implicit lazy val codec: JsonCodec[ComponentName] =
     JsonCodec.int.transform(decode, encode)
 }
@@ -134,7 +132,7 @@ implicit val hourNotationCodec: JsonCodec[HourNotation] =
   DeriveJsonCodec.gen[HourNotation]
 
 case class Plan(
-                 l: Seq[RouteSegment])
+  l: Seq[RouteSegment])
     derives JsonCodec:
   val plainTextRepresentation: String =
     l.zipWithIndex

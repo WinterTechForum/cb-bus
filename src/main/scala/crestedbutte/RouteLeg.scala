@@ -80,9 +80,7 @@ case class RouteLeg private (
   def trimToStartAt(
     location: Location,
   ): Either[String, RouteLeg] =
-    RouteLeg(stops.dropWhile(!_.l.matches(location)),
-             routeName,
-    )
+    RouteLeg(stops.dropWhile(!_.l.matches(location)), routeName)
 
   def trimToEndAt(
     location: Location,
