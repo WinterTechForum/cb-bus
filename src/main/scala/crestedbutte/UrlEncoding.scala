@@ -15,17 +15,17 @@ object UrlEncoding {
     plan: Plan,
   ): String =
     println(plan.toJson)
-    val base64 =
+//    val base64 =
       urlEncoder.encodeToString(plan.toJson.getBytes())
-    URLEncoder.encode(base64, StandardCharsets.UTF_8.toString);
+//    URLEncoder.encode(base64, StandardCharsets.UTF_8.toString);
 
   def decode(
     raw: String,
   ) = {
-    val base64 = URLDecoder
-      .decode(raw, StandardCharsets.UTF_8.toString)
+//    val base64 = URLDecoder
+//      .decode(raw, StandardCharsets.UTF_8.toString)
     val res =
-      String(urlDecoder.decode(base64))
+      String(urlDecoder.decode(raw))
         .fromJson[Plan]
     Persistence().saveDailyPlanOnly(res.getOrElse(???))
     println("saved plan")
