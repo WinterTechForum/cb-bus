@@ -3,7 +3,10 @@ package todo
 import org.scalajs.dom.experimental.Fetch.*
 import org.scalajs.dom.{NotificationOptions, ServiceWorkerGlobalScope}
 import org.scalajs.dom.ServiceWorkerGlobalScope.self
-import org.scalajs.dom.experimental.serviceworkers.{ExtendableEvent, FetchEvent}
+import org.scalajs.dom.experimental.serviceworkers.{
+  ExtendableEvent,
+  FetchEvent,
+}
 import org.scalajs.dom.experimental.*
 import org.scalajs.dom.raw.MessageEvent
 //import org.scalajs.dom.window.navigator
@@ -23,10 +26,8 @@ object ServiceWorker {
     "/",
     "/index.html",
     "/manifest.webmanifest",
-
     "/compiledJavascript/main.js",
     "/compiledJavascript/main.js.map",
-
     "/favicon.ico",
     "/images/BILLDING_LogoMark-256.png",
     "/styling/style.css",
@@ -36,81 +37,84 @@ object ServiceWorker {
     "/styling/bulma.min.css",
   ).toJSArray
 
-  def main(args: Array[String]): Unit = {
+  def main(
+    args: Array[String],
+  ): Unit = {
     self.addEventListener(
       "install",
       (event: ExtendableEvent) => {
         println(
-          s"install: service worker with message handler installed > ${event.toString}"
+          s"install: service worker with message handler installed > ${event.toString}",
         )
         event.waitUntil(toCache().toJSPromise)
-      }
+      },
     )
 
     self.addEventListener(
       "activate",
       (event: ExtendableEvent) => {
         println(
-          s"activate: service worker activated > ${event.toString}"
+          s"activate: service worker activated > ${event.toString}",
         )
         println("Invalidating cache!")
         invalidateCache() // TODO Do I need this at all?
         self.clients.claim()
-      }
+      },
     )
-
 
     self.addEventListener(
       "message",
-      (event: MessageEvent) => {
-
-      }
+      (event: MessageEvent) => {},
     )
-
 
     self.addEventListener(
       "fetch",
       (event: FetchEvent) =>
         event.respondWith(
-          fromCache(event.request)
-            .recoverWith{ case error => fetch(event.request).toFuture}
-            .toJSPromise
-        )
-
+          fromCache(event.request).recoverWith { case error =>
+            fetch(event.request).toFuture
+          }.toJSPromise,
+        ),
     )
 
     println("main: ServiceWorker installing...")
   }
 
-  def toCache(): Future[Unit] = {
+  def toCache(): Future[Unit] =
     self.caches
-      .flatMap(_.open(busCache).toFuture.flatMap{ cache =>
+      .flatMap(_.open(busCache).toFuture.flatMap { cache =>
         println("toCache: caching assets...")
-        cache.addAll(todoAssets).toFuture})
-  }.get
+        cache.addAll(todoAssets).toFuture
+      }).get
 
-  def fromCache(request: Request): Future[Response] =
+  def fromCache(
+    request: Request,
+  ): Future[Response] =
     self.caches
-      .map(_.`match`(request)
-      .toFuture
-        .flatMap {
-          case response: Response =>
-            Future.successful(response)
-          case other =>
-            println(s"fromCache: missed request > ${request.url}")
-            Future.failed(new Exception("Could not find cached request"))
-        }
-      ).get
+      .map(
+        _.`match`(request).toFuture
+          .flatMap {
+            case response: Response =>
+              Future.successful(response)
+            case other =>
+              println(s"fromCache: missed request > ${request.url}")
+              Future.failed(
+                new Exception("Could not find cached request"),
+              )
+          },
+      )
+      .get
 
   def invalidateCache(): Unit =
     self.caches
-      .map(_.delete(busCache)
-      .toFuture
-      .map { invalidatedCache =>
-        if (invalidatedCache) {
-          toCache()
-        }
-      }
-    ).get
+      .map(
+        _.delete(busCache).toFuture
+          .map { invalidatedCache =>
+            if (invalidatedCache) {
+              toCache()
+            }
+          },
+      )
+      .get
 
 }
