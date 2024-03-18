@@ -694,10 +694,10 @@ object Components {
                   "Copy App Link",
                   onClick --> Observer { _ =>
                     val url =
-                    if(dom.document.URL.contains("localhost"))
-                      s"http://localhost:8000/index_dev.html?plan=${UrlEncoding.encode(plan)}"
-                    else
-                      s"https://cbbus.netlify.app/?plan=${UrlEncoding.encode(plan)}"
+                      if (dom.document.URL.contains("localhost"))
+                        s"http://localhost:8000/index_dev.html?plan=${UrlEncoding.encode(plan)}"
+                      else
+                        s"https://cbbus.netlify.app/?plan=${UrlEncoding.encode(plan)}"
 
                     dom.window.navigator.clipboard
                       .writeText(url)
