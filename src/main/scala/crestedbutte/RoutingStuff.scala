@@ -17,6 +17,7 @@ object UrlEncoding {
   def encode(
     plan: Plan,
   ): String =
+    println(plan.toJson)
     URLEncoder.encode(plan.toJson, StandardCharsets.UTF_8.toString);
 
   def decode(
