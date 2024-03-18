@@ -149,7 +149,8 @@ object Experimental {
     )
     div(
       idAttr := "sandbox",
-      timeStamps.map(_ => getLocation($gpsPosition),
+      timeStamps.map(_ =>
+        getLocation($gpsPosition),
       ) --> $gpsPosition.writer,
       Components.FeatureControlCenter(featureUpdates.writer),
       button(
