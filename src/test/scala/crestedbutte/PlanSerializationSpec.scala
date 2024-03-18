@@ -22,18 +22,17 @@ object PlanSerializationSpec extends ZIOSpecDefault {
     suite("PlanSerializationSpec")(
       suite("encoding")(
         test("is nice and compact") {
-          println(plan.toJsonPretty)
           val expected =
             """|{
-              |  "legs" : [
+              |  "l" : [
               |    {
-              |      "route" : "Rta Southbound",
-              |      "start" : {
-              |        "location" : 24,
+              |      "r" : 0,
+              |      "s" : {
+              |        "l" : 24,
               |        "t" : 1340
               |      },
-              |      "end" : {
-              |        "location" : 28,
+              |      "e" : {
+              |        "l" : 28,
               |        "t" : 1366
               |      }
               |    }
@@ -45,12 +44,12 @@ object PlanSerializationSpec extends ZIOSpecDefault {
           test("is reasonable") {
             val result = UrlEncoding.encode(plan)
             val expected =
-              "eyJsZWdzIjpbeyJyb3V0ZSI6IlJ0YSBTb3V0aGJvdW5kIiwic3RhcnQiOnsibG9jYXRpb24iOjI0LCJ0IjoxMzQwfSwiZW5kIjp7ImxvY2F0aW9uIjoyOCwidCI6MTM2Nn19XX0="
+              "eyJsIjpbeyJyIjowLCJzIjp7ImwiOjI0LCJ0IjoxMzQwfSwiZSI6eyJsIjoyOCwidCI6MTM2Nn19XX0="
             assertTrue(result == expected)
           },
           test("round trips") {
             val input =
-              "eyJsZWdzIjpbeyJyb3V0ZSI6IlJ0YSBTb3V0aGJvdW5kIiwic3RhcnQiOnsibG9jYXRpb24iOjI0LCJ0IjoxMzQwfSwiZW5kIjp7ImxvY2F0aW9uIjoyOCwidCI6MTM2Nn19XX0="
+              "eyJsIjpbeyJyIjowLCJzIjp7ImwiOjI0LCJ0IjoxMzQwfSwiZSI6eyJsIjoyOCwidCI6MTM2Nn19XX0="
 
             assertTrue(
               UrlEncoding.decode(input).getOrElse(???) == plan,

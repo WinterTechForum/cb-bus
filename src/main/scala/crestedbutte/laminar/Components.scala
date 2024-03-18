@@ -115,7 +115,7 @@ object Components {
             true // keep modal open
           } --> $active,
         UpcomingStopInfo(
-          routeSegment.end.location,
+          routeSegment.end.l,
           div(
             span(
               routeSegment.end.t.toDumbAmericanString,
@@ -189,8 +189,8 @@ object Components {
                   routeWithTimesO match
                     case Some(value) =>
                       val newPlan =
-                        plan.copy(legs =
-                          plan.legs.updated(planIndex,
+                        plan.copy(l =
+                          plan.l.updated(planIndex,
                                             nextBeforeValue,
                           ),
                         )
@@ -207,8 +207,8 @@ object Components {
             "Delete",
             onClick --> Observer { _ =>
               val newPlan =
-                plan.copy(legs =
-                  plan.legs.filterNot(_ == routeSegment),
+                plan.copy(l =
+                  plan.l.filterNot(_ == routeSegment),
                 )
               db.saveDailyPlanOnly(newPlan)
               $plan.set(newPlan)
@@ -223,8 +223,8 @@ object Components {
                   routeWithTimesO match
                     case Some(value) =>
                       val newPlan =
-                        plan.copy(legs =
-                          plan.legs.updated(planIndex,
+                        plan.copy(l =
+                          plan.l.updated(planIndex,
                                             nextAfterValue,
                           ),
                         )
@@ -239,7 +239,7 @@ object Components {
         div(
           Seq(routeSegment.start, routeSegment.end).map(stop =>
             UpcomingStopInfo(
-              stop.location,
+              stop.l,
               div(
                 stop.t.toDumbAmericanString,
               ),
@@ -249,7 +249,7 @@ object Components {
       )
 
     div(
-      plan.legs.zipWithIndex.map { case (routeSegment, idx) =>
+      plan.l.zipWithIndex.map { case (routeSegment, idx) =>
         div(
           RouteLegElementViewOnly(
             "Trip " + (idx + 1),
@@ -677,7 +677,7 @@ object Components {
       child <-- $plan.signal.map(plan =>
         div(
           div(
-            if (plan.legs.isEmpty)
+            if (plan.l.isEmpty)
               div()
             else
               div(
@@ -782,7 +782,7 @@ object Components {
                           }
                           .find { l =>
                             val lastArrivalTime =
-                              $plan.now().legs.lastOption
+                              $plan.now().l.lastOption
                                 .map(_.end.t)
                             val cutoff =
                               lastArrivalTime.getOrElse(initialTime)
@@ -795,8 +795,8 @@ object Components {
                           )
                       $plan.update { case oldPlan =>
                         val newPlan =
-                          oldPlan.copy(legs =
-                            oldPlan.legs :+ matchingLeg,
+                          oldPlan.copy(l =
+                            oldPlan.l :+ matchingLeg,
                           )
                         db.saveDailyPlanOnly(newPlan)
                         nextLegDirection.set(None)

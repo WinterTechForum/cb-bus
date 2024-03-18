@@ -1,6 +1,7 @@
 package crestedbutte
 
 import com.billding.time.*
+import crestedbutte.routes.{RtaNorthbound, RtaSouthbound}
 import zio.json.JsonCodec
 
 case class StopTimeInfo(
@@ -23,10 +24,30 @@ case class PhoneNumber(
   name: String)
 
 object ComponentName {
-  implicit val codec: JsonCodec[ComponentName] =
-    JsonCodec.string.transform(ComponentName.apply,
-                               _.userFriendlyName,
-    )
+//  implicit val codec: JsonCodec[ComponentName] =
+//    JsonCodec.string.transform(ComponentName.apply,
+//                               _.userFriendlyName,
+//    )
+    
+  private lazy val indexedComponentNames: Seq[(ComponentName, Int)] =
+    Seq(
+      RtaSouthbound.componentName,
+      RtaNorthbound.componentName
+    ).zipWithIndex
+
+  def encode(
+                      name: ComponentName,
+                    ): Int = {
+    println("Available: " + indexedComponentNames.mkString("\n"))
+    indexedComponentNames.find(_._1 == name).get._2
+  }
+
+  def decode(
+                      idx: Int,
+                    ): ComponentName = indexedComponentNames.find(_._2 == idx).get._1
+  
+  implicit lazy val codec: JsonCodec[ComponentName] =
+    JsonCodec.int.transform(decode, encode)
 }
 // TODO General name
 case class ComponentName(
@@ -114,10 +135,10 @@ implicit val hourNotationCodec: JsonCodec[HourNotation] =
   DeriveJsonCodec.gen[HourNotation]
 
 case class Plan(
-  legs: Seq[RouteSegment])
+                 l: Seq[RouteSegment])
     derives JsonCodec:
   val plainTextRepresentation: String =
-    legs.zipWithIndex
+    l.zipWithIndex
       .map(
         (
           leg,

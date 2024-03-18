@@ -19,7 +19,7 @@ case class RouteWithTimes(
   ) =
     val res = legs.indexWhere(leg =>
       leg.stops.exists(locationWithTime =>
-        locationWithTime.t.localTime.value == other.start.t.localTime.value && locationWithTime.location == other.start.location,
+        locationWithTime.t.localTime.value == other.start.t.localTime.value && locationWithTime.l == other.start.l,
       ),
     )
     Option.when(res != -1)(res)
@@ -55,11 +55,11 @@ case class RouteWithTimes(
   val allStops: Seq[BusScheduleAtStop] =
     legs.foldLeft(Seq[BusScheduleAtStop]()) { case (acc, leg) =>
       leg.stops.foldLeft(acc) { case (innerAcc, stop) =>
-        if (innerAcc.exists(_.location == stop.location))
+        if (innerAcc.exists(_.location == stop.l))
           innerAcc.map {
             // TODO Confirm where we are getting routeName
             case BusScheduleAtStop(location, times, routeName)
-                if location == stop.location =>
+                if location == stop.l =>
               BusScheduleAtStop(location,
                                 times :+ stop.t,
                                 leg.routeName,
@@ -67,7 +67,7 @@ case class RouteWithTimes(
             case other => other
           }
         else
-          innerAcc :+ BusScheduleAtStop(stop.location,
+          innerAcc :+ BusScheduleAtStop(stop.l,
                                         Seq(stop.t),
                                         leg.routeName,
           )
@@ -98,7 +98,7 @@ case class RouteWithTimes(
     )
 
   val allInvolvedStops: Seq[Location] =
-    legs.head.stops.map(_.location)
+    legs.head.stops.map(_.l)
 }
 
 object RouteWithTimes {

@@ -25,16 +25,16 @@ case class NamedRoute(
     routeWithTimes
       .firstRouteLeg()
       .head
-      .location
+      .l
 
   val lastStopOnRoute: Location =
     routeWithTimes
       .firstRouteLeg()
       .last
-      .location
+      .l
 
   val allStops: Seq[Location] =
-    routeWithTimes.legs.head.stops.map(_.location)
+    routeWithTimes.legs.head.stops.map(_.l)
 }
 
 object NamedRoute {

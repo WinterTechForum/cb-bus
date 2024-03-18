@@ -62,7 +62,7 @@ class Persistence():
       retrieveDailyPlanOnly
         .getOrElse(Plan(Seq.empty))
     val updated =
-      retrieved.copy(retrieved.legs :+ routeLeg)
+      retrieved.copy(retrieved.l :+ routeLeg)
     saveDailyPlanOnly(updated)
 
   def saveDailyPlan(

@@ -4,16 +4,21 @@ import com.billding.time.MinuteDuration
 import zio.json._
 
 case class RouteSegment(
-  route: ComponentName,
-  start: LocationWithTime,
-  end: LocationWithTime)
+  r: ComponentName,
+  s: LocationWithTime,
+  e: LocationWithTime)
     derives JsonCodec {
 
+  // These let us use good names for logical operations, while keeping shortest names for serialization
+  val route = r
+  val start = s
+  val end = e
+
   lazy val plainTextRepresentation =
-    s"""${start.location.name}
+    s"""${start.l.name}
        |${start.t.toDumbAmericanString}
        |
-       |${end.location.name}
+       |${end.l.name}
        |${end.t.toDumbAmericanString}
        |""".stripMargin
 }
@@ -48,10 +53,10 @@ case class RouteLeg private (
   lazy val plainTextRepresentation =
     val start = stops.head
     val end = stops.last
-    s"""${start.location.name}
+    s"""${start.l.name}
        |${start.t.toDumbAmericanString}
        |
-       |${end.location.name}
+       |${end.l.name}
        |${end.t.toDumbAmericanString}
        |""".stripMargin
 
@@ -66,7 +71,7 @@ case class RouteLeg private (
       stops.filter(stop =>
         // This List is a weird funky artifact from the switch to RouteSegment to RouteLeg
         List(other.start, other.end).exists(locationWithTime =>
-          locationWithTime.location == stop.location,
+          locationWithTime.l == stop.l,
         ),
       ),
       routeName,
@@ -75,7 +80,7 @@ case class RouteLeg private (
   def trimToStartAt(
     location: Location,
   ): Either[String, RouteLeg] =
-    RouteLeg(stops.dropWhile(!_.location.matches(location)),
+    RouteLeg(stops.dropWhile(!_.l.matches(location)),
              routeName,
     )
 
@@ -83,7 +88,7 @@ case class RouteLeg private (
     location: Location,
   ): Either[String, RouteLeg] = {
     val indexOfLastStop =
-      stops.indexWhere(_.location.matches(location))
+      stops.indexWhere(_.l.matches(location))
     RouteLeg(stops.take(indexOfLastStop + 1), routeName)
   }
 

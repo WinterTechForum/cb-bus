@@ -11,9 +11,19 @@ case class TripPlannerError(
   msg: String)
 
 case class LocationWithTime(
-  location: Location,
-  t: WallTime)
+                             l: Location,
+                             t: WallTime)
     derives JsonCodec
+
+//object LocationWithTime {
+//  implicit val codec: JsonCodec[LocationWithTime] = 
+//    Location.codec.zip(JsonCodec[WallTime]).transform[LocationWithTime](
+//      (str, time) => LocationWithTime(str, time),
+//      locationWithTime => (locationWithTime.location, locationWithTime.t)
+//    )
+//    DeriveJsonCodec.gen[LocationWithTime]
+//  
+//}
 
 enum TripBoundary:
   case StartingAfter, ArrivingBy
@@ -39,7 +49,7 @@ enum TripParamZ {
         s.routeWithTimes.legs
           .find(leg =>
             leg.stops.exists(stop =>
-              stop.location
+              stop.l
                 .matches(
                   s.start,
                 ) && stop.t >= s.arrivalTime,
@@ -59,7 +69,7 @@ enum TripParamZ {
         b.leaveSchedule.legs
           .findLast(leg =>
             leg.stops.exists(stop =>
-              stop.location
+              stop.l
                 .matches(
                   b.destination,
                 ) && stop.t <= b.arrivalTime,
