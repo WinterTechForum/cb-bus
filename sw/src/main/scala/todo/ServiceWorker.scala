@@ -85,7 +85,8 @@ object ServiceWorker {
       .flatMap(_.open(busCache).toFuture.flatMap { cache =>
         println("toCache: caching assets...")
         cache.addAll(todoAssets).toFuture
-      }).get
+      })
+      .get
 
   def fromCache(
     request: Request,
