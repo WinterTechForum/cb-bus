@@ -190,14 +190,18 @@ object Location {
   }
 
   val locationsAndIdxs = Location.values.zipWithIndex
-  def encodeLocation(location: Location): Int =
-    locationsAndIdxs.find(_._1 == location).get._2
+  def encodeLocation(
+    location: Location,
+  ): Int = locationsAndIdxs.find(_._1 == location).get._2
 
-  def decodeLocation(locationIdx: Int): Location =
-    locationsAndIdxs.find(_._2 == locationIdx).get._1
+  def decodeLocation(
+    locationIdx: Int,
+  ): Location = locationsAndIdxs.find(_._2 == locationIdx).get._1
 
   implicit val codec: JsonCodec[Location] =
-    JsonCodec.int.transform(Location.decodeLocation, Location.encodeLocation)
+    JsonCodec.int.transform(Location.decodeLocation,
+                            Location.encodeLocation,
+    )
   //    DeriveJsonCodec.gen[Location]
 
 }

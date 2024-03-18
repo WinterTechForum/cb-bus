@@ -16,7 +16,7 @@ object UrlEncoding {
   ): String =
     println(plan.toJson)
 //    val base64 =
-      urlEncoder.encodeToString(plan.toJson.getBytes())
+    urlEncoder.encodeToString(plan.toJson.getBytes())
 //    URLEncoder.encode(base64, StandardCharsets.UTF_8.toString);
 
   def decode(
