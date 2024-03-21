@@ -212,26 +212,6 @@ object Components {
         span(label),
         span(
           // TODO Make a way to delete leg of a trip here
-          nextBefore match
-            case Some(nextBeforeValue) =>
-              button(
-                cls := "button m-2",
-                "<",
-                onClick --> Observer { _ =>
-                  routeWithTimesO match
-                    case Some(value) =>
-                      val newPlan =
-                        plan.copy(l =
-                          plan.l.updated(planIndex, nextBeforeValue),
-                        )
-                      $plan.set(newPlan)
-                      db.saveDailyPlanOnly(newPlan)
-                    case None =>
-                      throw new Exception("no routeWithTimesO")
-                },
-              )
-            case None => span()
-          ,
           button(
             cls := "button is-danger m-2",
             "Delete",
@@ -242,25 +222,6 @@ object Components {
               $plan.set(newPlan)
             },
           ),
-          nextAfter match
-            case Some(nextAfterValue) =>
-              button(
-                cls := "button m-2",
-                ">",
-                onClick --> Observer { _ =>
-                  routeWithTimesO match
-                    case Some(value) =>
-                      val newPlan =
-                        plan.copy(l =
-                          plan.l.updated(planIndex, nextAfterValue),
-                        )
-                      $plan.set(newPlan)
-                      db.saveDailyPlanOnly(newPlan)
-                    case None =>
-                      throw new Exception("no routeWithTimesO... 2")
-                },
-              )
-            case None => span(),
         ),
         div(
           Seq(routeSegment.start, routeSegment.end).map(stop =>
