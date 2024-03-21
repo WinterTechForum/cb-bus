@@ -2,9 +2,9 @@ package crestedbutte
 
 import com.billding.time.{TimePicker, WallTime}
 import crestedbutte.Browser.Browser
-import crestedbutte.laminar.{AppMode, Components}
+import crestedbutte.laminar.{AppMode, Components, TouchControls}
 import org.scalajs.dom
-import org.scalajs.dom.experimental.serviceworkers._
+import org.scalajs.dom.experimental.serviceworkers.*
 import org.scalajs.dom.ServiceWorkerRegistrationOptions
 import urldsl.errors.DummyError
 import urldsl.language.QueryParameters
@@ -25,6 +25,7 @@ object MyApp extends ZIOAppDefault {
     for {
       _ <- registerServiceWorker()
       _ <- ZIO.attempt {
+        TouchControls.initialize()
         val appHolder = dom.document.getElementById("landing-message")
         appHolder.innerHTML = ""
         com.raquo.laminar.api.L.render(

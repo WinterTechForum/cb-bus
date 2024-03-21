@@ -31,7 +31,7 @@ resolvers += Resolver.githubPackages("swoogles", "ScalaJsZioLibrary")
 resolvers += "Sonatype" at "https://s01.oss.sonatype.org/content/repositories/public"
 
 
-val zioVersion = "2.0.17"
+val zioVersion = "2.0.21"
 
 scalacOptions ++= Seq("-Xmax-inlines", "150")
 
@@ -51,6 +51,7 @@ Compile / npmDependencies ++= Seq(
 [error] npm WARN @material-ui/styles@4.11.2 requires a peer of react-dom@^16.8.0 || ^17.0.0 but none is installed. You must install peer dependencies yourself.                                [error] npm WARN @material-ui/system@4.11.2 requires a peer of react-dom@^16.8.0 || ^17.0.0 but none is installed. You must install peer dependencies yourself.
 [error] npm WARN @material-ui/utils@4.11.2 requires a peer of react-dom@^16.8.0 || ^17.0.0 but none is installed. You must install peer dependencies yourself.
 [error] npm WARN react-transition-group@4.4.1 requires a peer of react-dom@>=16.6.0 but none is installed. You must install peer dependencies yourself.
+
  */
 
 libraryDependencies ++= Seq(
