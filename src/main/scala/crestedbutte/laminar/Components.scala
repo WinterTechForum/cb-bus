@@ -11,18 +11,14 @@ import com.raquo.laminar.nodes.ReactiveHtmlElement
 import crestedbutte.NotificationStuff.desiredAlarms
 import crestedbutte.*
 import crestedbutte.dom.BulmaLocal
-import crestedbutte.routes.{
-  AllRoutes,
-  RtaSouthbound,
-  SpringFallLoop,
-  TownShuttleTimes,
-}
+import crestedbutte.routes.{AllRoutes, RtaSouthbound, SpringFallLoop, TownShuttleTimes}
 import org.scalajs.dom
 
 import java.time.format.{DateTimeFormatter, FormatStyle}
 import java.time.{Clock, OffsetDateTime}
 import scala.concurrent.duration.FiniteDuration
 import crestedbutte.dom.BulmaLocal.ModalMode
+import crestedbutte.laminar.TouchControls.Swipe
 
 import scala.collection.immutable.{AbstractSeq, LinearSeq}
 
@@ -135,7 +131,9 @@ object Components {
           ),
         ),
       ),
+      // put new touch modifier here
     )
+
 
   import com.raquo.laminar.nodes.ReactiveHtmlElement
 
@@ -177,6 +175,40 @@ object Components {
         yield nextAfter
 
       div(
+        TouchControls.swipeProp {
+          case Swipe.Left =>
+            nextBefore match {
+              case Some(nextBeforeValue) =>
+                routeWithTimesO match
+                  case Some(value) =>
+                    val newPlan =
+                      plan.copy(l =
+                        plan.l.updated(planIndex, nextBeforeValue),
+                      )
+                    $plan.set(newPlan)
+                    db.saveDailyPlanOnly(newPlan)
+                  case None =>
+                    throw new Exception("no routeWithTimesO")
+              case None => div
+            }
+          case Swipe.Right =>  {
+
+            nextAfter match
+              case Some(nextAfterValue) =>
+                routeWithTimesO match
+                  case Some(value) =>
+                    val newPlan =
+                      plan.copy(l =
+                        plan.l.updated(planIndex, nextAfterValue),
+                      )
+                    $plan.set(newPlan)
+                    db.saveDailyPlanOnly(newPlan)
+                  case None =>
+                    throw new Exception("no routeWithTimesO... 2")
+              case None => div()
+          }
+        }
+        ,
         span(label),
         span(
           // TODO Make a way to delete leg of a trip here

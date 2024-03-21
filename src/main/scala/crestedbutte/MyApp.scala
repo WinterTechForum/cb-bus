@@ -25,7 +25,7 @@ object MyApp extends ZIOAppDefault {
     for {
       _ <- registerServiceWorker()
       _ <- ZIO.attempt {
-        TouchControls.initialize()
+//        TouchControls.initialize(
         val appHolder = dom.document.getElementById("landing-message")
         appHolder.innerHTML = ""
         com.raquo.laminar.api.L.render(
