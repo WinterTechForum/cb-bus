@@ -205,7 +205,7 @@ object Components {
             "Delete",
             onClick --> Observer { _ =>
               val newPlan =
-                plan.copy(l = plan.l.filterNot(_ == routeSegment), )
+                plan.copy(l = plan.l.filterNot(_ == routeSegment) )
               db.saveDailyPlanOnly(newPlan)
               $plan.set(newPlan)
             },
@@ -789,7 +789,7 @@ object Components {
                           )
                       $plan.update { case oldPlan =>
                         val newPlan =
-                          oldPlan.copy(l = oldPlan.l :+ matchingLeg, )
+                          oldPlan.copy(l = oldPlan.l :+ matchingLeg)
                         db.saveDailyPlanOnly(newPlan)
                         nextLegDirection.set(None)
                         newPlan
