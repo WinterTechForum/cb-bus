@@ -11,14 +11,19 @@ import com.raquo.laminar.nodes.ReactiveHtmlElement
 import crestedbutte.NotificationStuff.desiredAlarms
 import crestedbutte.*
 import crestedbutte.dom.BulmaLocal
-import crestedbutte.routes.{AllRoutes, RtaSouthbound, SpringFallLoop, TownShuttleTimes}
+import crestedbutte.routes.{
+  AllRoutes,
+  RtaSouthbound,
+  SpringFallLoop,
+  TownShuttleTimes,
+}
 import org.scalajs.dom
 
 import java.time.format.{DateTimeFormatter, FormatStyle}
 import java.time.{Clock, OffsetDateTime}
 import scala.concurrent.duration.FiniteDuration
 import crestedbutte.dom.BulmaLocal.ModalMode
-import org.scalajs.dom.{TouchEvent, document}
+import org.scalajs.dom.{document, TouchEvent}
 
 import scala.collection.immutable.{AbstractSeq, LinearSeq}
 import scala.util.Random
@@ -38,49 +43,48 @@ object TouchControls {
   val touchBus = EventBus[dom.TouchEvent]()
 
   val swipeEvents =
-    touchBus.events.flatMap( e =>
+    touchBus.events.flatMap(e =>
       EventStream.fromSeq(
-        Option.when(Random.nextBoolean())(
-          e
-        ).toSeq
-      )
+        Option
+          .when(Random.nextBoolean())(
+            e,
+          )
+          .toSeq,
+      ),
     )
-
 
   val touchstartX: Var[Double] = Var(0)
   val touchendX: Var[Double] = Var(10)
 
 //  val swipeEvent: EventProp[Swipe] =
 
-  def swipeProp(swipeEvent: Swipe => Unit) =
-    Modifier {
-      el =>
-        println("Amending modifiers!")
-        el.amend(
-
-          onTouchStart.map(_.changedTouches(0).screenX) --> touchstartX,
-          onTouchEnd.flatMap{
-            t =>
-              val start = touchstartX.now()
-              val end = t.changedTouches(0).screenX
-              println("Start: " + start + "  End: " + end)
-              val opt = if (start > end)
-                Some(Swipe.Left)
-              else if (end > start)
-                Some(Swipe.Right)
-              else
-                None
-              println("opt: " + opt)
-              EventStream.fromSeq(
-                (opt).toSeq
-              )
-          }--> Observer {
-            swipeEvent
-          }
-
-        )
+  def swipeProp(
+    swipeEvent: Swipe => Unit,
+  ) =
+    Modifier { el =>
+      println("Amending modifiers!")
+      el.amend(
+        onTouchStart.map(_.changedTouches(0).screenX) --> touchstartX,
+        onTouchEnd.flatMap { t =>
+          val start = touchstartX.now()
+          val end = t.changedTouches(0).screenX
+          println("Start: " + start + "  End: " + end)
+          val opt =
+            if (start > end)
+              Some(Swipe.Left)
+            else if (end > start)
+              Some(Swipe.Right)
+            else
+              None
+          println("opt: " + opt)
+          EventStream.fromSeq(
+            opt.toSeq,
+          )
+        } --> Observer {
+          swipeEvent
+        },
+      )
     }
-
 
 //  def initialize() = {
 //

@@ -11,7 +11,12 @@ import com.raquo.laminar.nodes.ReactiveHtmlElement
 import crestedbutte.NotificationStuff.desiredAlarms
 import crestedbutte.*
 import crestedbutte.dom.BulmaLocal
-import crestedbutte.routes.{AllRoutes, RtaSouthbound, SpringFallLoop, TownShuttleTimes}
+import crestedbutte.routes.{
+  AllRoutes,
+  RtaSouthbound,
+  SpringFallLoop,
+  TownShuttleTimes,
+}
 import org.scalajs.dom
 
 import java.time.format.{DateTimeFormatter, FormatStyle}
@@ -134,7 +139,6 @@ object Components {
       // put new touch modifier here
     )
 
-
   import com.raquo.laminar.nodes.ReactiveHtmlElement
 
   import org.scalajs.dom.window
@@ -191,8 +195,7 @@ object Components {
                     throw new Exception("no routeWithTimesO")
               case None => div
             }
-          case Swipe.Right =>  {
-
+          case Swipe.Right =>
             nextAfter match
               case Some(nextAfterValue) =>
                 routeWithTimesO match
@@ -206,9 +209,7 @@ object Components {
                   case None =>
                     throw new Exception("no routeWithTimesO... 2")
               case None => div()
-          }
-        }
-        ,
+        },
         span(label),
         span(
           // TODO Make a way to delete leg of a trip here
@@ -217,7 +218,7 @@ object Components {
             "Delete",
             onClick --> Observer { _ =>
               val newPlan =
-                plan.copy(l = plan.l.filterNot(_ == routeSegment) )
+                plan.copy(l = plan.l.filterNot(_ == routeSegment))
               db.saveDailyPlanOnly(newPlan)
               $plan.set(newPlan)
             },
