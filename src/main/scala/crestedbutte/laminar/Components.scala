@@ -181,6 +181,20 @@ object Components {
       div(
         TouchControls.swipeProp {
           case Swipe.Left =>
+            nextAfter match
+              case Some(nextAfterValue) =>
+                routeWithTimesO match
+                  case Some(value) =>
+                    val newPlan =
+                      plan.copy(l =
+                        plan.l.updated(planIndex, nextAfterValue),
+                      )
+                    $plan.set(newPlan)
+                    db.saveDailyPlanOnly(newPlan)
+                  case None =>
+                    throw new Exception("no routeWithTimesO... 2")
+              case None => div()
+          case Swipe.Right =>
             nextBefore match {
               case Some(nextBeforeValue) =>
                 routeWithTimesO match
@@ -195,20 +209,6 @@ object Components {
                     throw new Exception("no routeWithTimesO")
               case None => div
             }
-          case Swipe.Right =>
-            nextAfter match
-              case Some(nextAfterValue) =>
-                routeWithTimesO match
-                  case Some(value) =>
-                    val newPlan =
-                      plan.copy(l =
-                        plan.l.updated(planIndex, nextAfterValue),
-                      )
-                    $plan.set(newPlan)
-                    db.saveDailyPlanOnly(newPlan)
-                  case None =>
-                    throw new Exception("no routeWithTimesO... 2")
-              case None => div()
         },
         span(label),
         span(
