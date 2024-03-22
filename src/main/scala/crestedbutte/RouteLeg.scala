@@ -51,12 +51,14 @@ case class RouteLeg private (
   last: LocationWithTime)
     derives JsonCodec {
 
-  def segmentFrom(start: Location, destination: Location): Option[RouteSegment] =
+  def segmentFrom(
+    start: Location,
+    destination: Location,
+  ): Option[RouteSegment] =
     for
-      startWithTime <- stops.find(_.l == start)
+      startWithTime       <- stops.find(_.l == start)
       destinationWithTime <- stops.find(_.l == destination)
-    yield
-      RouteSegment(routeName, startWithTime, destinationWithTime)
+    yield RouteSegment(routeName, startWithTime, destinationWithTime)
 
   lazy val plainTextRepresentation =
     val start = stops.head
@@ -84,19 +86,6 @@ case class RouteLeg private (
       ),
       routeName,
     )
-
-  def trimToStartAt(
-    location: Location,
-  ): Either[String, RouteLeg] =
-    RouteLeg(stops.dropWhile(!_.l.matches(location)), routeName)
-
-  def trimToEndAt(
-    location: Location,
-  ): Either[String, RouteLeg] = {
-    val indexOfLastStop =
-      stops.indexWhere(_.l.matches(location))
-    RouteLeg(stops.take(indexOfLastStop + 1), routeName)
-  }
 
   // Assumes non-empty
   def plus(

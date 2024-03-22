@@ -60,7 +60,7 @@ object BulmaLocal {
         UpcomingStops(
           scheduleAtStop,
           $alertsEnabled,
-        )
+        ),
       ),
       button(
         cls := "modal-close is-large",

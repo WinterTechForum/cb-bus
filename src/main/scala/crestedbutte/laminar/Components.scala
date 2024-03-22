@@ -166,7 +166,8 @@ object Components {
             RtaSouthbound.fullSchedule.routeWithTimes
           case RtaNorthbound.componentName =>
             RtaNorthbound.fullSchedule.routeWithTimes
-          case other => throw new Exception("Unrecognized route: " + other)
+          case other =>
+            throw new Exception("Unrecognized route: " + other)
       val nextAfter = routeWithTimes.nextAfter(routeSegment)
       val nextBefore = routeWithTimes.nextBefore(routeSegment)
 
@@ -720,7 +721,6 @@ object Components {
                           throw Exception("No starting point"),
                         )
 
-
                       val matchingLeg =
                         namedRoute.routeWithTimes.legs
                           .flatMap { leg =>
@@ -736,13 +736,13 @@ object Components {
                           }
                           .getOrElse(
                             // TODO Is the best fallback?
-                            namedRoute.routeWithTimes.legs.last.segmentFrom(start, destination).getOrElse(
-
-                              throw new Exception(
-                                "Not route leg found with locations",
-
-                              )
-                            ),
+                            namedRoute.routeWithTimes.legs.last
+                              .segmentFrom(start, destination)
+                              .getOrElse(
+                                throw new Exception(
+                                  "Not route leg found with locations",
+                                ),
+                              ),
                           )
 
                       $plan.update { case oldPlan =>
