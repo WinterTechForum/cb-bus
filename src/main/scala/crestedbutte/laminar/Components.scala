@@ -720,32 +720,11 @@ object Components {
                           throw Exception("No starting point"),
                         )
 
-                      def segmentFrom(leg: RouteLeg, start: Location, desintation: Location): Option[RouteSegment] =
-                          (for
-                            trimmedToStart <- leg.trimToStartAt(
-                              start,
-                            )
-                            trimmedToEnd <- trimmedToStart
-                              .trimToEndAt(destination)
-                            ends <- trimmedToEnd.ends
-                          yield RouteSegment
-                            .fromRouteLeg(ends)) // TODO Can we just do this in the start?
-                            .toOption
-
 
                       val matchingLeg =
                         namedRoute.routeWithTimes.legs
                           .flatMap { leg =>
-                            (for
-                              trimmedToStart <- leg.trimToStartAt(
-                                start,
-                              )
-                              trimmedToEnd <- trimmedToStart
-                                .trimToEndAt(destination)
-                              ends <- trimmedToEnd.ends
-                            yield RouteSegment
-                              .fromRouteLeg(ends)) // TODO Can we just do this in the start?
-                              .toOption
+                            leg.segmentFrom(start, destination)
                           }
                           .find { l =>
                             val lastArrivalTime =
@@ -757,7 +736,7 @@ object Components {
                           }
                           .getOrElse(
                             // TODO Is the best fallback?
-                            segmentFrom(namedRoute.routeWithTimes.legs.last, start, destination).getOrElse(
+                            namedRoute.routeWithTimes.legs.last.segmentFrom(start, destination).getOrElse(
 
                               throw new Exception(
                                 "Not route leg found with locations",

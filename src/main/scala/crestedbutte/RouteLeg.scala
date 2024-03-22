@@ -50,6 +50,14 @@ case class RouteLeg private (
   head: LocationWithTime,
   last: LocationWithTime)
     derives JsonCodec {
+
+  def segmentFrom(start: Location, destination: Location): Option[RouteSegment] =
+    for
+      startWithTime <- stops.find(_.l == start)
+      destinationWithTime <- stops.find(_.l == destination)
+    yield
+      RouteSegment(routeName, startWithTime, destinationWithTime)
+
   lazy val plainTextRepresentation =
     val start = stops.head
     val end = stops.last
