@@ -44,10 +44,6 @@ object BulmaLocal {
     scheduleAtStop: BusScheduleAtStop,
     $alertsEnabled: Signal[Boolean],
     $active: Var[Boolean],
-    $mode: Var[ModalMode],
-    namedRoute: NamedRoute,
-    db: Persistence,
-    componentSelector: Observer[ComponentData],
   ) =
     val notificationBus = EventBus[ReactiveHtmlElement[_]]()
     div(
@@ -61,30 +57,10 @@ object BulmaLocal {
         marginLeft := "45px",
         marginRight := "45px",
         child <-- notificationBus.events.map(element => element),
-        child <-- $mode.signal.map:
-          case ModalMode.UpcomingStops =>
-            UpcomingStops(
-              scheduleAtStop,
-              $alertsEnabled,
-              $mode,
-              namedRoute,
-            )
-          case ModalMode.SelectedLeg(routeLeg) =>
-            div(
-              cls := "selected-leg-header",
-              button(
-                cls := "button",
-                onClick.mapTo(ModalMode.UpcomingStops) --> $mode,
-                "Back to Upcoming Arrivals",
-              ),
-              Components.RouteLegElementInteractive(
-                RouteSegment.fromRouteLeg(routeLeg),
-                db,
-                $active,
-                notificationBus.writer,
-                componentSelector,
-              ),
-            ),
+        UpcomingStops(
+          scheduleAtStop,
+          $alertsEnabled,
+        )
       ),
       button(
         cls := "modal-close is-large",
@@ -102,8 +78,6 @@ object BulmaLocal {
   def UpcomingStops(
     scheduleAtStop: BusScheduleAtStop,
     $alertsEnabled: Signal[Boolean],
-    $mode: Var[ModalMode],
-    namedRoute: NamedRoute,
   ) =
     div(
       h4(textAlign := "center", scheduleAtStop.location.name),
@@ -113,27 +87,7 @@ object BulmaLocal {
           textAlign := "center",
           verticalAlign := "middle",
           paddingBottom := "3px",
-          button(
-            cls := "button",
-            onClick
-              .mapTo(
-                ModalMode.SelectedLeg(
-                  namedRoute.routeWithTimes.legs
-                    .find(leg =>
-                      leg.stops.contains(
-                        LocationWithTime(scheduleAtStop.location,
-                                         time,
-                        ),
-                      ),
-                    )
-                    .flatMap(
-                      _.trimToStartAt(
-                        scheduleAtStop.location,
-                      ).toOption,
-                    )
-                    .get, // Unsafe
-                ),
-              ) --> $mode,
+          span(
             time.toDumbAmericanString,
           ),
           child <-- $alertsEnabled.map(alertsEnabled =>

@@ -401,7 +401,6 @@ object Components {
             case PlanViewer =>
               TripViewerLaminar(
                 db,
-                $selectedComponent.writer,
                 initialTime,
               )
             case namedRoute: NamedRoute =>
@@ -413,8 +412,6 @@ object Components {
                   ),
                 $enabledFeatures,
                 gpsPosition,
-                db,
-                $selectedComponent.writer,
               )
           }
         }
@@ -517,8 +514,6 @@ object Components {
       upcomingArrivalComponentData: UpcomingArrivalComponentData,
       $enabledFeatures: Signal[FeatureSets],
       gpsPosition: Var[Option[GpsCoordinates]],
-      db: Persistence,
-      componentSelector: Observer[ComponentData],
     ) =
 
       def RouteHeader(
@@ -551,9 +546,6 @@ object Components {
                       stopTimeInfo,
                       fullScheduleAtStop,
                       $enabledFeatures,
-                      namedRoute,
-                      db,
-                      componentSelector,
                     )
                   case Right(safeRideRecommendation) =>
                     SafeRideLink(safeRideRecommendation)
@@ -571,9 +563,6 @@ object Components {
       stopTimeInfo: StopTimeInfo,
       busScheduleAtStop: BusScheduleAtStop,
       $enabledFeatures: Signal[FeatureSets],
-      namedRoute: NamedRoute,
-      db: Persistence,
-      componentSelector: Observer[ComponentData],
     ) = {
 
       def renderWaitTime(
@@ -585,7 +574,6 @@ object Components {
           duration.toMinutes + " min."
 
       val modalActive = Var(false)
-      val modalMode: Var[ModalMode] = Var(ModalMode.UpcomingStops)
       div(
         button(
           cls := "arrival-time button open-arrival-time-modal",
@@ -607,10 +595,6 @@ object Components {
               _.isEnabled(Feature.BusAlarms),
             ),
             modalActive,
-            modalMode,
-            namedRoute,
-            db,
-            componentSelector,
           ),
         ),
       )
@@ -637,7 +621,6 @@ object Components {
 
   def TripViewerLaminar(
     db: Persistence,
-    componentSelector: Observer[ComponentData],
     initialTime: WallTime,
   ) =
 
@@ -645,7 +628,6 @@ object Components {
       db.retrieveDailyPlanOnly.getOrElse(Plan(Seq.empty)),
     )
     div(
-//      onMountCallback(_ => ),
       child <-- $plan.signal.map(plan =>
         div(
           div(
@@ -738,6 +720,19 @@ object Components {
                           throw Exception("No starting point"),
                         )
 
+                      def segmentFrom(leg: RouteLeg, start: Location, desintation: Location): Option[RouteSegment] =
+                          (for
+                            trimmedToStart <- leg.trimToStartAt(
+                              start,
+                            )
+                            trimmedToEnd <- trimmedToStart
+                              .trimToEndAt(destination)
+                            ends <- trimmedToEnd.ends
+                          yield RouteSegment
+                            .fromRouteLeg(ends)) // TODO Can we just do this in the start?
+                            .toOption
+
+
                       val matchingLeg =
                         namedRoute.routeWithTimes.legs
                           .flatMap { leg =>
@@ -761,10 +756,16 @@ object Components {
                             l.start.t.isAfter(cutoff)
                           }
                           .getOrElse(
-                            throw new Exception(
-                              "Not route leg found with locations",
+                            // TODO Is the best fallback?
+                            segmentFrom(namedRoute.routeWithTimes.legs.last, start, destination).getOrElse(
+
+                              throw new Exception(
+                                "Not route leg found with locations",
+
+                              )
                             ),
                           )
+
                       $plan.update { case oldPlan =>
                         val newPlan =
                           oldPlan.copy(l = oldPlan.l :+ matchingLeg)
