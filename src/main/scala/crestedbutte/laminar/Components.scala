@@ -160,54 +160,38 @@ object Components {
       db: Persistence,
     ) =
 
-      val routeWithTimesO =
+      val routeWithTimes =
         routeSegment.route match
           case RtaSouthbound.componentName =>
-            Some(RtaSouthbound.fullSchedule.routeWithTimes)
+            RtaSouthbound.fullSchedule.routeWithTimes
           case RtaNorthbound.componentName =>
-            Some(RtaNorthbound.fullSchedule.routeWithTimes)
-          case _ => None
-      val nextAfter =
-        for
-          routeWithTimes <- routeWithTimesO
-          nextAfter      <- routeWithTimes.nextAfter(routeSegment)
-        yield nextAfter
-      val nextBefore =
-        for
-          routeWithTimes <- routeWithTimesO
-          nextAfter      <- routeWithTimes.nextBefore(routeSegment)
-        yield nextAfter
+            RtaNorthbound.fullSchedule.routeWithTimes
+          case other => throw new Exception("Unrecognized route: " + other)
+      val nextAfter = routeWithTimes.nextAfter(routeSegment)
+      val nextBefore = routeWithTimes.nextBefore(routeSegment)
 
       div(
         TouchControls.swipeProp {
           case Swipe.Left =>
             nextAfter match
               case Some(nextAfterValue) =>
-                routeWithTimesO match
-                  case Some(value) =>
-                    val newPlan =
-                      plan.copy(l =
-                        plan.l.updated(planIndex, nextAfterValue),
-                      )
-                    $plan.set(newPlan)
-                    db.saveDailyPlanOnly(newPlan)
-                  case None =>
-                    throw new Exception("no routeWithTimesO... 2")
-              case None => div()
+                val newPlan =
+                  plan.copy(l =
+                    plan.l.updated(planIndex, nextAfterValue),
+                  )
+                $plan.set(newPlan)
+                db.saveDailyPlanOnly(newPlan)
+              case None => ()
           case Swipe.Right =>
             nextBefore match {
               case Some(nextBeforeValue) =>
-                routeWithTimesO match
-                  case Some(value) =>
-                    val newPlan =
-                      plan.copy(l =
-                        plan.l.updated(planIndex, nextBeforeValue),
-                      )
-                    $plan.set(newPlan)
-                    db.saveDailyPlanOnly(newPlan)
-                  case None =>
-                    throw new Exception("no routeWithTimesO")
-              case None => div
+                val newPlan =
+                  plan.copy(l =
+                    plan.l.updated(planIndex, nextBeforeValue),
+                  )
+                $plan.set(newPlan)
+                db.saveDailyPlanOnly(newPlan)
+              case None => ()
             }
         },
         span(label),
