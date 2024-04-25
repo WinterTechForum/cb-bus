@@ -22,6 +22,11 @@ pipelineStages in Assets := Seq(scalaJSPipeline)
 
 scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.CommonJSModule) }
 
+githubTokenSource := TokenSource.Or(
+  TokenSource.Environment("GITHUB_TOKEN"), // Injected during a github workflow for publishing
+  TokenSource.GitConfig("github.token") // local token set in ~/.gitconfig
+)
+
 resolvers += "jitpack" at "https://jitpack.io"
 resolvers += Resolver.url("typesafe", url("https://repo.typesafe.com/typesafe/ivy-releases/"))(Resolver.ivyStylePatterns)
 resolvers += Resolver.githubPackages("swoogles", "BulmaScala")
@@ -29,6 +34,7 @@ resolvers += Resolver.githubPackages("swoogles", "ScalaJsZioLibrary")
 
 // This is only for quick dev turn-around
 resolvers += "Sonatype" at "https://s01.oss.sonatype.org/content/repositories/public"
+
 
 
 val zioVersion = "2.0.21"
@@ -110,7 +116,7 @@ lazy val cbPublish = taskKey[Unit]("Build the files for a real deploment")
 cbPublish := {
   (Compile/fullOptJS).value
   (Compile/scalafmt).value
-  (sw/Compile/fullOptJS).value
+//  (sw/Compile/fullOptJS).value
   import scala.sys.process._
   //  "ls ./target/scala-2.13" !
   (Process("mkdir ./src/main/resources/compiledJavascript") #||
@@ -122,12 +128,12 @@ cbPublish := {
 
 zonesFilter := {(z: String) => z == "America/Denver" || z == "America/Mountain"}
 
-lazy val sw = (project in file("sw"))
-  .enablePlugins(ScalaJSPlugin)
-  .settings(
-    scalaVersion := "3.3.1",
-    scalaJSUseMainModuleInitializer := true,
-    libraryDependencies ++= Seq(
-      "org.scala-js" %%% "scalajs-dom" % "2.8.0"
-    )
-  )
+//lazy val sw = (project in file("sw"))
+//  .enablePlugins(ScalaJSPlugin)
+//  .settings(
+//    scalaVersion := "3.3.1",
+//    scalaJSUseMainModuleInitializer := true,
+//    libraryDependencies ++= Seq(
+//      "org.scala-js" %%% "scalajs-dom" % "2.8.0"
+//    )
+//  )
