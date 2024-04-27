@@ -76,8 +76,8 @@ body {
     grid-template-columns:1fr 6fr 3fr;
     grid-template-rows: auto 1fr ;
     grid-template-areas:
-            "map-link stop-name upcoming-information"
-            "map-link stop-alt-name upcoming-information";
+            "upcoming-information stop-name map-link"
+            "upcoming-information stop-alt-name map-link";
     padding-top: 5px;
     padding-bottom: 5px;
     border-bottom: 1px solid white;
