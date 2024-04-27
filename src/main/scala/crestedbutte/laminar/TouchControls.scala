@@ -68,7 +68,7 @@ object TouchControls {
         onTouchEnd.flatMap { t =>
           val start = touchstartX.now()
           val end = t.changedTouches(0).screenX
-          val significantSwipe = Math.abs(start-end) > 50
+          val significantSwipe = Math.abs(start - end) > 50
           println("Start: " + start + "  End: " + end)
           val opt =
             if (significantSwipe)
