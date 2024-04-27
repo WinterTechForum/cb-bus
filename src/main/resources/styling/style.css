@@ -103,7 +103,7 @@ body {
 }
 .upcoming-information {
     grid-area: upcoming-information;
-    text-align:left;
+    text-align: right;
 }
 
 .route-header {
