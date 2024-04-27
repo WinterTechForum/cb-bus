@@ -64,8 +64,8 @@ object RtaSouthbound {
       "10:50 AM",
       "11:20 AM",
       "11:50 AM",
-      "12:20 PM",
-      "12:55 PM",
+      "12:20", // TODO Fix bad parsing of "12:xx" PM times
+      "12:55",
       "01:25 PM",
       "01:55 PM",
       "02:25 PM",

@@ -84,8 +84,8 @@ object RtaNorthbound {
       "10:31 AM",
       "11:01 AM",
       "11:36 AM",
-      "12:06 PM",
-      "12:36 PM",
+      "12:06", // TODO Fix bad parsing of "12:xx" PM times
+      "12:36",
       "1:06 PM",
       "1:41 PM",
       "2:11 PM",
