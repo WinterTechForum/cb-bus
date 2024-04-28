@@ -158,6 +158,7 @@ object Components {
       div(
         TouchControls.swipeProp {
           case Swipe.Left =>
+            println("Swiping left and updating plan")
             nextAfter match
               case Some(nextAfterValue) =>
                 val newPlan =
@@ -204,7 +205,7 @@ object Components {
                     .map { scheduleAtStop =>
                       TimeCalculations
                         .getUpcomingArrivalInfo(scheduleAtStop,
-                                                timestamp,
+                          stop.t,
                         )
                         .content match
                         case Left(stopTimeInfo: StopTimeInfo) =>
