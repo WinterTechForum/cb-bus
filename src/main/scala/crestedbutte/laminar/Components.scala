@@ -11,12 +11,7 @@ import com.raquo.laminar.nodes.ReactiveHtmlElement
 import crestedbutte.NotificationStuff.desiredAlarms
 import crestedbutte.*
 import crestedbutte.dom.BulmaLocal
-import crestedbutte.routes.{
-  AllRoutes,
-  RtaSouthbound,
-  SpringFallLoop,
-  TownShuttleTimes,
-}
+import crestedbutte.routes.{AllRoutes, RtaSouthbound, SpringFallLoop, TownShuttleTimes}
 import org.scalajs.dom
 
 import java.time.format.{DateTimeFormatter, FormatStyle}
@@ -24,6 +19,7 @@ import java.time.{Clock, Instant, OffsetDateTime}
 import scala.concurrent.duration.FiniteDuration
 import crestedbutte.dom.BulmaLocal.ModalMode
 import crestedbutte.laminar.TouchControls.Swipe
+import org.scalajs.dom.HTMLAnchorElement
 
 import scala.collection.immutable.{AbstractSeq, LinearSeq}
 
@@ -138,7 +134,6 @@ object Components {
       None,
     )
     def RouteLegElement(
-      label: String,
       routeSegment: RouteSegment,
       planIndex: Int,
       db: Persistence,
@@ -155,6 +150,18 @@ object Components {
 
       val nextAfter = routeWithTimes.nextAfter(routeSegment)
       val nextBefore = routeWithTimes.nextBefore(routeSegment)
+      
+      val deleteButton: ReactiveHtmlElement[HTMLAnchorElement] =
+        a(
+          cls := "link",
+          onClick --> Observer { _ =>
+            val newPlan =
+              plan.copy(l = plan.l.filterNot(_ == routeSegment))
+            db.saveDailyPlanOnly(newPlan)
+            $plan.set(newPlan)
+          },
+          SvgIcon("glyphicons-basic-842-square-minus.svg", clsName = "delete"),
+        )
 
       div(
         TouchControls.swipeProp {
@@ -181,36 +188,15 @@ object Components {
               case None => ()
             }
         },
-        span(label),
-        span(
-          // TODO Make a way to delete leg of a trip here
-
-          a(
-            cls := "link",
-//            href := s"https://www.google.com/maps/search/?api=1&query=${gpsCoordinates.latitude},${gpsCoordinates.longitude}",
-            onClick --> Observer { _ =>
-              val newPlan =
-                plan.copy(l = plan.l.filterNot(_ == routeSegment))
-              db.saveDailyPlanOnly(newPlan)
-              $plan.set(newPlan)
-            },
-            SvgIcon("glyphicons-basic-842-square-minus.svg", clsName = "delete"),
-          )
-//          button(
-//            cls := "button is-danger m-2",
-//            "Delete",
-//            onClick --> Observer { _ =>
-//              val newPlan =
-//                plan.copy(l = plan.l.filterNot(_ == routeSegment))
-//              db.saveDailyPlanOnly(newPlan)
-//              $plan.set(newPlan)
-//            },
-//          ),
-        ),
         div(
           Seq(routeSegment.start, routeSegment.end).map(stop =>
             UpcomingStopInfo(
               stop.l,
+              if (stop == routeSegment.start) // Only show delete beside start location
+                deleteButton
+              else 
+                div()
+              ,
               div(
                 div(
                   routeWithTimes.allStops
@@ -258,7 +244,6 @@ object Components {
       plan.l.zipWithIndex.map { case (routeSegment, idx) =>
         div(
           RouteLegElement(
-            "Trip " + (idx + 1),
             routeSegment,
             idx,
             db,
@@ -479,6 +464,7 @@ object Components {
   object UpcomingStopInfo {
     def apply(
       location: Location,
+      deleteButton: ReactiveHtmlElement[_],
       content: ReactiveHtmlElement[_],
     ) =
       div(
@@ -487,6 +473,7 @@ object Components {
         div(cls := "stop-name", div(location.name)),
         div(cls := "stop-alt-name", div(location.altName)),
         div(cls := "upcoming-information", content),
+        div(cls := "map-link", deleteButton),
       )
   }
 
