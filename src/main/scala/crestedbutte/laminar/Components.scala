@@ -18,7 +18,6 @@ import java.time.format.{DateTimeFormatter, FormatStyle}
 import java.time.{Clock, Instant, OffsetDateTime}
 import scala.concurrent.duration.FiniteDuration
 import crestedbutte.dom.BulmaLocal.ModalMode
-import crestedbutte.laminar.Components.TopLevelRoute.StopTimeInfoForLocation
 import crestedbutte.laminar.TouchControls.Swipe
 
 import scala.collection.immutable.{AbstractSeq, LinearSeq}
@@ -146,18 +145,13 @@ object Components {
             RtaNorthbound.fullSchedule.routeWithTimes
           case other =>
             throw new Exception("Unrecognized route: " + other)
+
       val nextAfter = routeWithTimes.nextAfter(routeSegment)
       val nextBefore = routeWithTimes.nextBefore(routeSegment)
-      
-      
+
+
 
       div(
-        // TODO Need to satisfy this to provide other available times smoothly
-//        StopTimeInfoForLocation(
-//          stopTimeInfo,
-//          fullScheduleAtStop,
-//          $enabledFeatures,
-//        ),
         TouchControls.swipeProp {
           case Swipe.Left =>
             nextAfter match
@@ -197,9 +191,30 @@ object Components {
         ),
         div(
           Seq(routeSegment.start, routeSegment.end).map(stop =>
-            UpcomingStopInfo(stop.l, div(
-              stop.t.toDumbAmericanString,
-            )),
+            UpcomingStopInfo(stop.l,
+              div(
+
+                div(
+                  routeWithTimes.allStops
+                    .filter(_.location == stop.l)
+                    .map { scheduleAtStop =>
+
+                                                StopTimeInfoForLocation(
+                                                  StopTimeInfo(stop.t, MinuteDuration.toMinuteDuration(1).minutes),
+                                                  scheduleAtStop,
+                                                )
+//                      scheduleAtStop.times.map(t => div(t.toDumbAmericanString))
+                    }*
+                ),
+
+                // TODO Need to satisfy this to provide other available times smoothly
+                //                StopTimeInfoForLocation(
+                //                  stopTimeInfo, // : StopTimeInfo,
+                //                  busScheduleAtStop // : BusScheduleAtStop,
+                //                ),
+                // I need a UpcomingArrivalInfoWithFullSchedule or some subset of it.
+              )
+            ),
           ),
         ),
       )
@@ -388,16 +403,8 @@ object Components {
                 db,
                 initialTime,
               )
-            case namedRoute: NamedRoute =>
-              TopLevelRoute(
-                TimeCalculations
-                  .getUpComingArrivalsWithFullScheduleNonZio(
-                    timestamp,
-                    namedRoute,
-                  ),
-                $enabledFeatures,
-                gpsPosition,
-              )
+            case _: NamedRoute =>
+              throw new IllegalStateException("Not supported anymore :D :D :D :D :D")
           }
         }
 
@@ -442,110 +449,6 @@ object Components {
         div(cls := "stop-name", div(location.name)),
         div(cls := "stop-alt-name", div(location.altName)),
         div(cls := "upcoming-information", content),
-      )
-  }
-  
-
-
-  @deprecated("really want to scrap this and just hone the 1 view")
-  object TopLevelRoute {
-
-    def apply(
-      upcomingArrivalComponentData: UpcomingArrivalComponentData,
-      $enabledFeatures: Signal[FeatureSets],
-      gpsPosition: Var[Option[GpsCoordinates]],
-    ) =
-
-      def RouteHeader(
-        routeName: ComponentName,
-      ) =
-        div(
-          cls := "route-header",
-          span(
-            cls := "route-header_name",
-            routeName.userFriendlyName + " Departures",
-          ),
-          SvgIcon("glyphicons-basic-32-bus.svg"),
-        )
-
-      div(
-        RouteHeader(upcomingArrivalComponentData.routeName),
-        upcomingArrivalComponentData.upcomingArrivalInfoForAllRoutes
-          .map {
-            case UpcomingArrivalInfoWithFullSchedule(
-                  UpcomingArrivalInfo(_, content),
-                  fullScheduleAtStop,
-                  namedRoute,
-                  location,
-                ) =>
-              UpcomingStopInfo(location, content match {
-                case Left(stopTimeInfo) =>
-                  StopTimeInfoForLocation(
-                    stopTimeInfo,
-                    fullScheduleAtStop,
-                    $enabledFeatures,
-                  )
-                case Right(safeRideRecommendation) =>
-                  SafeRideLink(safeRideRecommendation)
-              })
-          },
-      )
-
-    def renderWaitTime(
-                        duration: MinuteDuration,
-                      ) =
-      if (duration.toMinutes == 0)
-        "Leaving!"
-      else
-        duration.toMinutes + " min."
-
-
-    def StopTimeInfoForLocation(
-      stopTimeInfo: StopTimeInfo,
-      busScheduleAtStop: BusScheduleAtStop,
-      $enabledFeatures: Signal[FeatureSets],
-    ) = {
-
-      val modalActive = Var(false)
-      div(
-        button(
-          cls := "arrival-time button open-arrival-time-modal",
-          onClick.preventDefault.map { _ =>
-            org.scalajs.dom.document
-              .querySelector("html")
-              .classList
-              .add("is-clipped")
-            true
-          } --> modalActive,
-          stopTimeInfo.time.toDumbAmericanString,
-        ),
-        div(
-          cls := "wait-time",
-          renderWaitTime(stopTimeInfo.waitingDuration),
-          BulmaLocal.bulmaModal(
-            busScheduleAtStop,
-            modalActive,
-          ),
-        ),
-      )
-    }
-
-    private def SafeRideLink(
-      safeRideRecommendation: LateNightRecommendation,
-    ) =
-      div(
-        cls := "late-night-call-button",
-        a(
-          href := s"tel:${safeRideRecommendation.phoneNumber}",
-          cls := "link",
-          button(
-            cls := "button",
-            SvgIcon("glyphicons-basic-465-call.svg").amend(
-              alt := "Call Late Night Shuttle!",
-            ),
-            safeRideRecommendation.message,
-          ),
-        ),
       )
   }
 
@@ -690,4 +593,59 @@ object Components {
         },
       ),
     )
+    
+  def renderWaitTime(
+                      duration: MinuteDuration,
+                    ) =
+    if (duration.toMinutes == 0)
+      "Leaving!"
+    else
+      duration.toMinutes + " min."
+
+  def SafeRideLink(
+                    safeRideRecommendation: LateNightRecommendation,
+                  ) =
+    div(
+      cls := "late-night-call-button",
+      a(
+        href := s"tel:${safeRideRecommendation.phoneNumber}",
+        cls := "link",
+        button(
+          cls := "button",
+          SvgIcon("glyphicons-basic-465-call.svg").amend(
+            alt := "Call Late Night Shuttle!",
+          ),
+          safeRideRecommendation.message,
+        ),
+      ),
+    )
+
+  def StopTimeInfoForLocation(
+                               stopTimeInfo: StopTimeInfo,
+                               busScheduleAtStop: BusScheduleAtStop,
+                             ) = {
+
+    val modalActive = Var(false)
+    div(
+      button(
+        cls := "arrival-time button open-arrival-time-modal",
+        onClick.preventDefault.map { _ =>
+          org.scalajs.dom.document
+            .querySelector("html")
+            .classList
+            .add("is-clipped")
+          true
+        } --> modalActive,
+        stopTimeInfo.time.toDumbAmericanString,
+      ),
+      div(
+        cls := "wait-time",
+        renderWaitTime(stopTimeInfo.waitingDuration),
+        BulmaLocal.bulmaModal(
+          busScheduleAtStop,
+          modalActive,
+        ),
+      ),
+    )
+  }
 }

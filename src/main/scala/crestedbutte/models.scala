@@ -6,7 +6,8 @@ import zio.json.JsonCodec
 
 case class StopTimeInfo(
   time: WallTime,
-  waitingDuration: MinuteDuration)
+  waitingDuration: MinuteDuration
+                       )
 
 case class BusTimeWithLocation(
   busTime: WallTime,
@@ -85,6 +86,11 @@ case class UpcomingArrivalInfoWithFullSchedule(
   namedRoute: NamedRoute, // TODO
   location: Location, // TODO Use this location value instead of the ones available in other fields
 ) {}
+
+case class ArrivalTimeSelector(
+                                busScheduleAtStop: BusScheduleAtStop,
+  
+                              )
 
 case class UpcomingArrivalInfo(
   location: Location,

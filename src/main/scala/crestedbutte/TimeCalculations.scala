@@ -57,6 +57,7 @@ object TimeCalculations {
       getUpcomingArrivalInfo(scheduleAtStop, now),
     )
 
+  // TODO Get out of this absolute mess
   def calculateUpcomingArrivalWithFullScheduleAtAllStops(
     now: WallTime,
     busRoute: NamedRoute,
