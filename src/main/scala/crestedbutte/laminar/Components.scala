@@ -126,6 +126,7 @@ object Components {
     db: Persistence,
     $plan: Var[Plan],
     initialTime: WallTime,
+    timestamp: WallTime
   ) =
     val nextLegDirection: Var[Option[NamedRoute]] = Var(
       None,
@@ -193,16 +194,19 @@ object Components {
           Seq(routeSegment.start, routeSegment.end).map(stop =>
             UpcomingStopInfo(stop.l,
               div(
-
                 div(
                   routeWithTimes.allStops
                     .filter(_.location == stop.l)
                     .map { scheduleAtStop =>
+                      TimeCalculations.getUpcomingArrivalInfo(scheduleAtStop, timestamp).content match
+                        case Left(stopTimeInfo: StopTimeInfo) =>
+                          StopTimeInfoForLocation(
+                            stopTimeInfo,
+                            scheduleAtStop,
 
-                                                StopTimeInfoForLocation(
-                                                  StopTimeInfo(stop.t, MinuteDuration.toMinuteDuration(1).minutes),
-                                                  scheduleAtStop,
-                                                )
+                          )
+                        case Right(value) => div("-")
+
 //                      scheduleAtStop.times.map(t => div(t.toDumbAmericanString))
                     }*
                 ),
@@ -402,6 +406,7 @@ object Components {
               TripViewerLaminar(
                 db,
                 initialTime,
+                timestamp
               )
             case _: NamedRoute =>
               throw new IllegalStateException("Not supported anymore :D :D :D :D :D")
@@ -455,6 +460,7 @@ object Components {
   def TripViewerLaminar(
     db: Persistence,
     initialTime: WallTime,
+    timestamp: WallTime
   ) =
 
     val $plan: Var[Plan] = Var(
@@ -491,7 +497,7 @@ object Components {
                   },
                 ),
               ),
-            Components.PlanElement(plan, db, $plan, initialTime),
+            Components.PlanElement(plan, db, $plan, initialTime, timestamp),
           ),
         ),
       ),
@@ -593,7 +599,7 @@ object Components {
         },
       ),
     )
-    
+
   def renderWaitTime(
                       duration: MinuteDuration,
                     ) =
