@@ -179,6 +179,14 @@ object Components {
                   clsName = "delete",
           ),
         )
+        
+      /*
+         Connecting icons for start and end of legs
+        glyphicons-basic-211-arrow-down.svg
+        glyphicons-basic-221-chevron-down.svg
+        glyphicons-basic-796-set-down.svg
+        glyphicons-basic-827-arrow-thin-down.svg
+       */
 
       div(
         TouchControls.swipeProp {
@@ -239,6 +247,7 @@ object Components {
               ),
             ),
           ) :+ div( // TODO Move this separator outside of this, so it's not attached to the last leg of the trip
+            // TODO Possibly use this icon as a separator: glyphicons-basic-947-circle-more.svg
             textAlign := "center",
             div("."),
             div("."),
