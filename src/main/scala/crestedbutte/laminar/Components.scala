@@ -179,14 +179,39 @@ object Components {
                   clsName = "delete",
           ),
         )
-        
-      /*
-         Connecting icons for start and end of legs
-        glyphicons-basic-211-arrow-down.svg
-        glyphicons-basic-221-chevron-down.svg
-        glyphicons-basic-796-set-down.svg
-        glyphicons-basic-827-arrow-thin-down.svg
-       */
+
+      def stopInfo(stop: LocationWithTime, actionSection: ReactiveHtmlElement[_] = div()) =
+          UpcomingStopInfo(
+            stop.l,
+            if (
+              stop == routeSegment.start
+            ) // Only show delete beside start location
+              deleteButton
+            else
+              div(),
+            div(
+              div(
+                routeWithTimes.allStops
+                  .filter(_.location == stop.l)
+                  .map { scheduleAtStop =>
+                    TimeCalculations
+                      .getUpcomingArrivalInfo(scheduleAtStop,
+                        stop.t,
+                      )
+                      .content match
+                      case Left(stopTimeInfo: StopTimeInfo) =>
+                        StopTimeInfoForLocation(
+                          stopTimeInfo,
+                          scheduleAtStop,
+                        )
+                      case Right(value) => div("-")
+
+                    //                      scheduleAtStop.times.map(t => div(t.toDumbAmericanString))
+                  }*,
+              ),
+
+            ),
+          )
 
       div(
         TouchControls.swipeProp {
@@ -214,39 +239,19 @@ object Components {
             }
         },
         div(
-          Seq(routeSegment.start, routeSegment.end).map(stop =>
-            UpcomingStopInfo(
-              stop.l,
-              if (
-                stop == routeSegment.start
-              ) // Only show delete beside start location
-                deleteButton
-              else
-                div(),
-              div(
-                div(
-                  routeWithTimes.allStops
-                    .filter(_.location == stop.l)
-                    .map { scheduleAtStop =>
-                      TimeCalculations
-                        .getUpcomingArrivalInfo(scheduleAtStop,
-                                                stop.t,
-                        )
-                        .content match
-                        case Left(stopTimeInfo: StopTimeInfo) =>
-                          StopTimeInfoForLocation(
-                            stopTimeInfo,
-                            scheduleAtStop,
-                          )
-                        case Right(value) => div("-")
+          cls := "plan-segments",
+          stopInfo(routeSegment.start, deleteButton),
 
-//                      scheduleAtStop.times.map(t => div(t.toDumbAmericanString))
-                    }*,
-                ),
-
-              ),
-            ),
-          ) :+ div( // TODO Move this separator outside of this, so it's not attached to the last leg of the trip
+          /*
+             Connecting icons for start and end of legs
+            glyphicons-basic-211-arrow-down.svg
+            glyphicons-basic-221-chevron-down.svg
+            glyphicons-basic-796-set-down.svg
+            glyphicons-basic-827-arrow-thin-down.svg
+           */
+          SvgIcon("glyphicons-basic-211-arrow-down.svg", "plain-white plan-segment-divider"),
+          stopInfo(routeSegment.end),
+          div( // TODO Move this separator outside of this, so it's not attached to the last leg of the trip
             // TODO Possibly use this icon as a separator: glyphicons-basic-947-circle-more.svg
             textAlign := "center",
             div("."),
@@ -265,7 +270,7 @@ object Components {
           ),
         )
       }.foldLeft(div()){
-        case (acc, next) => 
+        case (acc, next) =>
           acc.amend(next)
       },
       div(
