@@ -1,12 +1,11 @@
 package crestedbutte.dom
 
-import crestedbutte.*
+import com.billding.time.WallTime
 import com.raquo.laminar.api.L.*
 import com.raquo.laminar.nodes.ReactiveHtmlElement
-import crestedbutte.laminar.{Components, Experimental}
-import crestedbutte.pwa.Persistence
+import crestedbutte.*
+import crestedbutte.laminar.Experimental
 import org.scalajs.dom
-import org.scalajs.dom.IDBDatabase
 import org.scalajs.dom.experimental.Notification
 
 object BulmaLocal {
@@ -42,7 +41,6 @@ object BulmaLocal {
 
   def bulmaModal(
     scheduleAtStop: BusScheduleAtStop,
-    $alertsEnabled: Signal[Boolean],
     $active: Var[Boolean],
   ) =
     val notificationBus = EventBus[ReactiveHtmlElement[_]]()
@@ -59,7 +57,6 @@ object BulmaLocal {
         child <-- notificationBus.events.map(element => element),
         UpcomingStops(
           scheduleAtStop,
-          $alertsEnabled,
         ),
       ),
       button(
@@ -75,9 +72,26 @@ object BulmaLocal {
       ),
     )
 
+  def manualClunkyAlerts(
+                          $alertsEnabled: Signal[Boolean],
+                          time: WallTime,
+                        ) =
+    div(
+          child <-- $alertsEnabled.map(alertsEnabled =>
+            if (
+              dom.Notification.permission == "granted" && alertsEnabled
+            )
+              Experimental.Notifications.AlarmIcon(
+                "glyphicons-basic-443-bell-ringing.svg",
+                "arrival-time-alarm",
+                time,
+              )
+            else div(),
+          )
+    )
+
   def UpcomingStops(
     scheduleAtStop: BusScheduleAtStop,
-    $alertsEnabled: Signal[Boolean],
   ) =
     div(
       h4(textAlign := "center", scheduleAtStop.location.name),
@@ -89,17 +103,6 @@ object BulmaLocal {
           paddingBottom := "3px",
           span(
             time.toDumbAmericanString,
-          ),
-          child <-- $alertsEnabled.map(alertsEnabled =>
-            if (
-              dom.Notification.permission == "granted" && alertsEnabled
-            )
-              Experimental.Notifications.AlarmIcon(
-                "glyphicons-basic-443-bell-ringing.svg",
-                "arrival-time-alarm",
-                time,
-              )
-            else div(),
           ),
         ),
       ),

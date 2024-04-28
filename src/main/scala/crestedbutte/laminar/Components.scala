@@ -81,64 +81,6 @@ object Components {
       alt := "Thanks for riding the bus!",
     )
 
-  def RouteLegElementInteractive(
-    routeSegment: RouteSegment,
-    db: Persistence,
-    $active: Var[Boolean],
-    $notifications: Observer[ReactiveHtmlElement[_]],
-    componentSelector: Observer[ComponentData],
-  ) =
-    val clickBus = EventBus[RouteSegment]()
-    div(
-      routeSegment.start match
-
-        case LocationWithTime(
-              location,
-              busTime,
-            ) =>
-          UpcomingStopInfo(
-            location,
-            div(
-              busTime.toDumbAmericanString,
-            ),
-          )
-      ,
-      div(
-        cls := "scrollable-route-leg",
-        clickBus.events.map(routeSegment =>
-          BulmaLocal.notificationWithHomeLink("Trip Plan Updated.",
-                                              componentSelector,
-          ),
-        ) --> $notifications,
-        clickBus.events
-          .map { (e: RouteSegment) =>
-            db.updateDailyPlan(e)
-            true // keep modal open
-          } --> $active,
-        UpcomingStopInfo(
-          routeSegment.end.l,
-          div(
-            span(
-              routeSegment.end.t.toDumbAmericanString,
-            ),
-            button(
-              cls := "button",
-              onClick.preventDefault
-                .mapTo {
-
-                  RouteSegment(routeSegment.route,
-                               routeSegment.start,
-                               routeSegment.end,
-                  )
-                } --> clickBus,
-              "+",
-            ),
-          ),
-        ),
-      ),
-      // put new touch modifier here
-    )
-
   import com.raquo.laminar.nodes.ReactiveHtmlElement
 
   import org.scalajs.dom.window
@@ -153,7 +95,7 @@ object Components {
     val nextLegDirection: Var[Option[NamedRoute]] = Var(
       None,
     )
-    def RouteLegElementViewOnly(
+    def RouteLegElement(
       label: String,
       routeSegment: RouteSegment,
       planIndex: Int,
@@ -224,7 +166,7 @@ object Components {
     div(
       plan.l.zipWithIndex.map { case (routeSegment, idx) =>
         div(
-          RouteLegElementViewOnly(
+          RouteLegElement(
             "Trip " + (idx + 1),
             routeSegment,
             idx,
@@ -592,9 +534,6 @@ object Components {
           renderWaitTime(stopTimeInfo.waitingDuration),
           BulmaLocal.bulmaModal(
             busScheduleAtStop,
-            $enabledFeatures.map(
-              _.isEnabled(Feature.BusAlarms),
-            ),
             modalActive,
           ),
         ),
