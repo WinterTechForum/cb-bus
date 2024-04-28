@@ -165,6 +165,16 @@ object Components {
             db.saveDailyPlanOnly(newPlan)
             $plan.set(newPlan)
           },
+          /*
+          Options:
+            glyphicons-basic-193-circle-empty-remove.svg
+            glyphicons-basic-373-times.svg
+            glyphicons-basic-599-menu-close.svg
+            glyphicons-basic-632-circle-minus.svg
+            glyphicons-basic-639-octagon-remove-empty.svg
+            glyphicons-basic-640-octagon-remove.svg
+            glyphicons-basic-842-square-minus.svg
+           */
           SvgIcon("glyphicons-basic-842-square-minus.svg",
                   clsName = "delete",
           ),
@@ -219,16 +229,6 @@ object Components {
                           StopTimeInfoForLocation(
                             stopTimeInfo,
                             scheduleAtStop,
-                            // Delete button here
-                            /*
-                            glyphicons-basic-193-circle-empty-remove.svg
-                            glyphicons-basic-373-times.svg
-                            glyphicons-basic-599-menu-close.svg
-                            glyphicons-basic-632-circle-minus.svg
-                            glyphicons-basic-639-octagon-remove-empty.svg
-                            glyphicons-basic-640-octagon-remove.svg
-                            glyphicons-basic-842-square-minus.svg
-                             */
                           )
                         case Right(value) => div("-")
 
@@ -236,14 +236,12 @@ object Components {
                     }*,
                 ),
 
-                // TODO Need to satisfy this to provide other available times smoothly
-                //                StopTimeInfoForLocation(
-                //                  stopTimeInfo, // : StopTimeInfo,
-                //                  busScheduleAtStop // : BusScheduleAtStop,
-                //                ),
-                // I need a UpcomingArrivalInfoWithFullSchedule or some subset of it.
               ),
             ),
+          ) :+ div( // TODO Move this separator outside of this, so it's not attached to the last leg of the trip
+            textAlign := "center",
+            div("."),
+            div("."),
           ),
         ),
       )
@@ -257,6 +255,9 @@ object Components {
             db,
           ),
         )
+      }.foldLeft(div()){
+        case (acc, next) => 
+          acc.amend(next)
       },
       div(
         div(cls := "route-header mt-6", "Where to next?"),
