@@ -180,38 +180,38 @@ object Components {
           ),
         )
 
-      def stopInfo(stop: LocationWithTime, actionSection: ReactiveHtmlElement[_] = div()) =
-          UpcomingStopInfo(
-            stop.l,
-            if (
-              stop == routeSegment.start
-            ) // Only show delete beside start location
-              deleteButton
-            else
-              div(),
+      def stopInfo(
+        stop: LocationWithTime,
+        actionSection: ReactiveHtmlElement[_] = div(),
+      ) =
+        UpcomingStopInfo(
+          stop.l,
+          if (
+            stop == routeSegment.start
+          ) // Only show delete beside start location
+            deleteButton
+          else
+            div(),
+          div(
             div(
-              div(
-                routeWithTimes.allStops
-                  .filter(_.location == stop.l)
-                  .map { scheduleAtStop =>
-                    TimeCalculations
-                      .getUpcomingArrivalInfo(scheduleAtStop,
-                        stop.t,
+              routeWithTimes.allStops
+                .filter(_.location == stop.l)
+                .map { scheduleAtStop =>
+                  TimeCalculations
+                    .getUpcomingArrivalInfo(scheduleAtStop, stop.t)
+                    .content match
+                    case Left(stopTimeInfo: StopTimeInfo) =>
+                      StopTimeInfoForLocation(
+                        stopTimeInfo,
+                        scheduleAtStop,
                       )
-                      .content match
-                      case Left(stopTimeInfo: StopTimeInfo) =>
-                        StopTimeInfoForLocation(
-                          stopTimeInfo,
-                          scheduleAtStop,
-                        )
-                      case Right(value) => div("-")
+                    case Right(value) => div("-")
 
                     //                      scheduleAtStop.times.map(t => div(t.toDumbAmericanString))
-                  }*,
-              ),
-
+                }*,
             ),
-          )
+          ),
+        )
 
       div(
         TouchControls.swipeProp {
@@ -249,7 +249,9 @@ object Components {
             glyphicons-basic-796-set-down.svg
             glyphicons-basic-827-arrow-thin-down.svg
            */
-          SvgIcon("glyphicons-basic-211-arrow-down.svg", "plain-white plan-segment-divider"),
+          SvgIcon("glyphicons-basic-211-arrow-down.svg",
+                  "plain-white plan-segment-divider",
+          ),
           stopInfo(routeSegment.end),
           div( // TODO Move this separator outside of this, so it's not attached to the last leg of the trip
             // TODO Possibly use this icon as a separator: glyphicons-basic-947-circle-more.svg
@@ -261,18 +263,19 @@ object Components {
       )
 
     div(
-      plan.l.zipWithIndex.map { case (routeSegment, idx) =>
-        div(
-          RouteLegElement(
-            routeSegment,
-            idx,
-            db,
-          ),
-        )
-      }.foldLeft(div()){
-        case (acc, next) =>
+      plan.l.zipWithIndex
+        .map { case (routeSegment, idx) =>
+          div(
+            RouteLegElement(
+              routeSegment,
+              idx,
+              db,
+            ),
+          )
+        }
+        .foldLeft(div()) { case (acc, next) =>
           acc.amend(next)
-      },
+        },
       div(
         div(cls := "route-header mt-6", "Where to next?"),
         child <-- nextLegDirection.signal.map {
