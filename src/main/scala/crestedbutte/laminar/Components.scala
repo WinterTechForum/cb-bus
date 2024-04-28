@@ -114,9 +114,10 @@ object Components {
 
   def SvgIcon(
     name: String,
+    clsName: String = ""
   ) =
     img(
-      cls := "glyphicon",
+      cls := s"glyphicon $clsName",
       src := s"/glyphicons/svg/individual-svg/$name",
       alt := "Thanks for riding the bus!",
     )
@@ -183,16 +184,28 @@ object Components {
         span(label),
         span(
           // TODO Make a way to delete leg of a trip here
-          button(
-            cls := "button is-danger m-2",
-            "Delete",
+
+          a(
+            cls := "link",
+//            href := s"https://www.google.com/maps/search/?api=1&query=${gpsCoordinates.latitude},${gpsCoordinates.longitude}",
             onClick --> Observer { _ =>
               val newPlan =
                 plan.copy(l = plan.l.filterNot(_ == routeSegment))
               db.saveDailyPlanOnly(newPlan)
               $plan.set(newPlan)
             },
-          ),
+            SvgIcon("glyphicons-basic-842-square-minus.svg", clsName = "delete"),
+          )
+//          button(
+//            cls := "button is-danger m-2",
+//            "Delete",
+//            onClick --> Observer { _ =>
+//              val newPlan =
+//                plan.copy(l = plan.l.filterNot(_ == routeSegment))
+//              db.saveDailyPlanOnly(newPlan)
+//              $plan.set(newPlan)
+//            },
+//          ),
         ),
         div(
           Seq(routeSegment.start, routeSegment.end).map(stop =>
@@ -212,6 +225,16 @@ object Components {
                           StopTimeInfoForLocation(
                             stopTimeInfo,
                             scheduleAtStop,
+                            // Delete button here
+                            /*
+                            glyphicons-basic-193-circle-empty-remove.svg
+                            glyphicons-basic-373-times.svg
+                            glyphicons-basic-599-menu-close.svg
+                            glyphicons-basic-632-circle-minus.svg
+                            glyphicons-basic-639-octagon-remove-empty.svg
+                            glyphicons-basic-640-octagon-remove.svg
+                            glyphicons-basic-842-square-minus.svg
+                             */
                           )
                         case Right(value) => div("-")
 

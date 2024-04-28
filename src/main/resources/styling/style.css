@@ -177,3 +177,7 @@ body {
     display: grid;
     place-items: center;
 }
+
+.delete {
+    filter: brightness(0) saturate(100%) invert(23%) sepia(100%) saturate(7457%) hue-rotate(4deg) brightness(104%) contrast(119%);
+}
