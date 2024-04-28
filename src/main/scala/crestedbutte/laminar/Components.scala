@@ -367,7 +367,7 @@ object Components {
     div(
       onMountCallback: context =>
         db.initializeOrResetStorage(),
-      Bulma.menu(selectedComponent, components),
+//      Bulma.menu(selectedComponent, components),
       RepeatingElement()
         .repeatWithInterval( // This acts like a Dune thumper
           (),
