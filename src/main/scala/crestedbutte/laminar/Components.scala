@@ -205,7 +205,7 @@ object Components {
                     .map { scheduleAtStop =>
                       TimeCalculations
                         .getUpcomingArrivalInfo(scheduleAtStop,
-                          stop.t,
+                                                stop.t,
                         )
                         .content match
                         case Left(stopTimeInfo: StopTimeInfo) =>
