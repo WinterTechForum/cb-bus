@@ -11,7 +11,12 @@ import com.raquo.laminar.nodes.ReactiveHtmlElement
 import crestedbutte.NotificationStuff.desiredAlarms
 import crestedbutte.*
 import crestedbutte.dom.BulmaLocal
-import crestedbutte.routes.{AllRoutes, RtaSouthbound, SpringFallLoop, TownShuttleTimes}
+import crestedbutte.routes.{
+  AllRoutes,
+  RtaSouthbound,
+  SpringFallLoop,
+  TownShuttleTimes,
+}
 import org.scalajs.dom
 
 import java.time.format.{DateTimeFormatter, FormatStyle}
@@ -24,14 +29,14 @@ import scala.collection.immutable.{AbstractSeq, LinearSeq}
 
 object Components {
   def GeoBits(
-               $mapLinksEnabled: Signal[Boolean],
-               location: Location,
-               $gpsPosition: Signal[Option[GpsCoordinates]],
-             ) = {
+    $mapLinksEnabled: Signal[Boolean],
+    location: Location,
+    $gpsPosition: Signal[Option[GpsCoordinates]],
+  ) = {
     def distanceFromCurrentLocationToStop(
-                                           gpsPosition: Signal[Option[GpsCoordinates]],
-                                           location: Location,
-                                         ) =
+      gpsPosition: Signal[Option[GpsCoordinates]],
+      location: Location,
+    ) =
       gpsPosition.map(
         _.flatMap(userCords =>
           location.gpsCoordinates.map(stopCoords =>
@@ -53,7 +58,7 @@ object Components {
             cls := "map-link",
             child <--
               distanceFromCurrentLocationToStop($gpsPosition,
-                location,
+                                                location,
               ),
             location.gpsCoordinates.map(Components.GeoLink),
           )
@@ -126,7 +131,7 @@ object Components {
     db: Persistence,
     $plan: Var[Plan],
     initialTime: WallTime,
-    timestamp: WallTime
+    timestamp: WallTime,
   ) =
     val nextLegDirection: Var[Option[NamedRoute]] = Var(
       None,
@@ -149,8 +154,6 @@ object Components {
 
       val nextAfter = routeWithTimes.nextAfter(routeSegment)
       val nextBefore = routeWithTimes.nextBefore(routeSegment)
-
-
 
       div(
         TouchControls.swipeProp {
@@ -192,23 +195,27 @@ object Components {
         ),
         div(
           Seq(routeSegment.start, routeSegment.end).map(stop =>
-            UpcomingStopInfo(stop.l,
+            UpcomingStopInfo(
+              stop.l,
               div(
                 div(
                   routeWithTimes.allStops
                     .filter(_.location == stop.l)
                     .map { scheduleAtStop =>
-                      TimeCalculations.getUpcomingArrivalInfo(scheduleAtStop, timestamp).content match
+                      TimeCalculations
+                        .getUpcomingArrivalInfo(scheduleAtStop,
+                                                timestamp,
+                        )
+                        .content match
                         case Left(stopTimeInfo: StopTimeInfo) =>
                           StopTimeInfoForLocation(
                             stopTimeInfo,
                             scheduleAtStop,
-
                           )
                         case Right(value) => div("-")
 
 //                      scheduleAtStop.times.map(t => div(t.toDumbAmericanString))
-                    }*
+                    }*,
                 ),
 
                 // TODO Need to satisfy this to provide other available times smoothly
@@ -217,7 +224,7 @@ object Components {
                 //                  busScheduleAtStop // : BusScheduleAtStop,
                 //                ),
                 // I need a UpcomingArrivalInfoWithFullSchedule or some subset of it.
-              )
+              ),
             ),
           ),
         ),
@@ -406,10 +413,12 @@ object Components {
               TripViewerLaminar(
                 db,
                 initialTime,
-                timestamp
+                timestamp,
               )
             case _: NamedRoute =>
-              throw new IllegalStateException("Not supported anymore :D :D :D :D :D")
+              throw new IllegalStateException(
+                "Not supported anymore :D :D :D :D :D",
+              )
           }
         }
 
@@ -443,11 +452,11 @@ object Components {
     )
   }
 
-
-
-
   object UpcomingStopInfo {
-    def apply(location: Location, content: ReactiveHtmlElement[_]) =
+    def apply(
+      location: Location,
+      content: ReactiveHtmlElement[_],
+    ) =
       div(
         width := "100%",
         cls := "stop-information",
@@ -460,7 +469,7 @@ object Components {
   def TripViewerLaminar(
     db: Persistence,
     initialTime: WallTime,
-    timestamp: WallTime
+    timestamp: WallTime,
   ) =
 
     val $plan: Var[Plan] = Var(
@@ -497,7 +506,12 @@ object Components {
                   },
                 ),
               ),
-            Components.PlanElement(plan, db, $plan, initialTime, timestamp),
+            Components.PlanElement(plan,
+                                   db,
+                                   $plan,
+                                   initialTime,
+                                   timestamp,
+            ),
           ),
         ),
       ),
@@ -601,16 +615,16 @@ object Components {
     )
 
   def renderWaitTime(
-                      duration: MinuteDuration,
-                    ) =
+    duration: MinuteDuration,
+  ) =
     if (duration.toMinutes == 0)
       "Leaving!"
     else
       duration.toMinutes + " min."
 
   def SafeRideLink(
-                    safeRideRecommendation: LateNightRecommendation,
-                  ) =
+    safeRideRecommendation: LateNightRecommendation,
+  ) =
     div(
       cls := "late-night-call-button",
       a(
@@ -627,9 +641,9 @@ object Components {
     )
 
   def StopTimeInfoForLocation(
-                               stopTimeInfo: StopTimeInfo,
-                               busScheduleAtStop: BusScheduleAtStop,
-                             ) = {
+    stopTimeInfo: StopTimeInfo,
+    busScheduleAtStop: BusScheduleAtStop,
+  ) = {
 
     val modalActive = Var(false)
     div(

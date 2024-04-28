@@ -6,8 +6,7 @@ import zio.json.JsonCodec
 
 case class StopTimeInfo(
   time: WallTime,
-  waitingDuration: MinuteDuration
-                       )
+  waitingDuration: MinuteDuration)
 
 case class BusTimeWithLocation(
   busTime: WallTime,
@@ -88,9 +87,7 @@ case class UpcomingArrivalInfoWithFullSchedule(
 ) {}
 
 case class ArrivalTimeSelector(
-                                busScheduleAtStop: BusScheduleAtStop,
-  
-                              )
+  busScheduleAtStop: BusScheduleAtStop)
 
 case class UpcomingArrivalInfo(
   location: Location,
