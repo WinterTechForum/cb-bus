@@ -18,6 +18,7 @@ import java.time.format.{DateTimeFormatter, FormatStyle}
 import java.time.{Clock, Instant, OffsetDateTime}
 import scala.concurrent.duration.FiniteDuration
 import crestedbutte.dom.BulmaLocal.ModalMode
+import crestedbutte.laminar.Components.TopLevelRoute.StopTimeInfoForLocation
 import crestedbutte.laminar.TouchControls.Swipe
 
 import scala.collection.immutable.{AbstractSeq, LinearSeq}
@@ -147,8 +148,16 @@ object Components {
             throw new Exception("Unrecognized route: " + other)
       val nextAfter = routeWithTimes.nextAfter(routeSegment)
       val nextBefore = routeWithTimes.nextBefore(routeSegment)
+      
+      
 
       div(
+        // TODO Need to satisfy this to provide other available times smoothly
+//        StopTimeInfoForLocation(
+//          stopTimeInfo,
+//          fullScheduleAtStop,
+//          $enabledFeatures,
+//        ),
         TouchControls.swipeProp {
           case Swipe.Left =>
             nextAfter match
@@ -435,7 +444,10 @@ object Components {
         div(cls := "upcoming-information", content),
       )
   }
+  
 
+
+  @deprecated("really want to scrap this and just hone the 1 view")
   object TopLevelRoute {
 
     def apply(
