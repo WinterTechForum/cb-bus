@@ -11,16 +11,11 @@ import com.raquo.laminar.nodes.ReactiveHtmlElement
 import crestedbutte.NotificationStuff.desiredAlarms
 import crestedbutte.*
 import crestedbutte.dom.BulmaLocal
-import crestedbutte.routes.{
-  AllRoutes,
-  RtaSouthbound,
-  SpringFallLoop,
-  TownShuttleTimes,
-}
+import crestedbutte.routes.{AllRoutes, RtaSouthbound, SpringFallLoop, TownShuttleTimes}
 import org.scalajs.dom
 
 import java.time.format.{DateTimeFormatter, FormatStyle}
-import java.time.{Clock, OffsetDateTime}
+import java.time.{Clock, Instant, OffsetDateTime}
 import scala.concurrent.duration.FiniteDuration
 import crestedbutte.dom.BulmaLocal.ModalMode
 import crestedbutte.laminar.TouchControls.Swipe
@@ -28,6 +23,46 @@ import crestedbutte.laminar.TouchControls.Swipe
 import scala.collection.immutable.{AbstractSeq, LinearSeq}
 
 object Components {
+  def GeoBits(
+               $mapLinksEnabled: Signal[Boolean],
+               location: Location,
+               $gpsPosition: Signal[Option[GpsCoordinates]],
+             ) = {
+    def distanceFromCurrentLocationToStop(
+                                           gpsPosition: Signal[Option[GpsCoordinates]],
+                                           location: Location,
+                                         ) =
+      gpsPosition.map(
+        _.flatMap(userCords =>
+          location.gpsCoordinates.map(stopCoords =>
+            div(
+              GpsCalculations
+                .distanceInKmBetweenEarthCoordinatesT(
+                  userCords,
+                  stopCoords,
+                ),
+            ),
+          ),
+        ).getOrElse(div()),
+      )
+
+    div(
+      child <-- $mapLinksEnabled.map(mapLinksEnabled =>
+        if (mapLinksEnabled)
+          div(
+            cls := "map-link",
+            child <--
+              distanceFromCurrentLocationToStop($gpsPosition,
+                location,
+              ),
+            location.gpsCoordinates.map(Components.GeoLink),
+          )
+        else
+          div(),
+      ),
+    )
+  }
+
   def GPS(
     gpsPosition: Var[Option[GpsCoordinates]],
   ) =
@@ -153,12 +188,9 @@ object Components {
         ),
         div(
           Seq(routeSegment.start, routeSegment.end).map(stop =>
-            UpcomingStopInfo(
-              stop.l,
-              div(
-                stop.t.toDumbAmericanString,
-              ),
-            ),
+            UpcomingStopInfo(stop.l, div(
+              stop.t.toDumbAmericanString,
+            )),
           ),
         ),
       )
@@ -314,6 +346,7 @@ object Components {
     initialTime: WallTime,
     db: Persistence,
   ) = {
+    println(Instant.now())
     // TODO Turn this into a Signal. The EventBus should be contained within the Experimental/FeatureControlCenter
     val featureUpdates = new EventBus[FeatureStatus]
 
@@ -389,66 +422,18 @@ object Components {
     )
   }
 
+
+
+
   object UpcomingStopInfo {
-    def apply(
-      location: Location,
-      content: ReactiveHtmlElement[_],
-      $mapLinksEnabled: Signal[Boolean] = Signal.fromValue(false),
-      // TODO Should this be an `Option[Signal[GpsCoordinates]` instead?
-      $gpsPosition: Signal[
-        Option[GpsCoordinates],
-      ] = Signal.fromValue(None),
-      /* TODO: waitDuration: Duration*/
-    ) =
+    def apply(location: Location, content: ReactiveHtmlElement[_]) =
       div(
         width := "100%",
         cls := "stop-information",
-        GeoBits($mapLinksEnabled, location, $gpsPosition),
         div(cls := "stop-name", div(location.name)),
         div(cls := "stop-alt-name", div(location.altName)),
         div(cls := "upcoming-information", content),
       )
-
-    private def GeoBits(
-      $mapLinksEnabled: Signal[Boolean],
-      location: Location,
-      $gpsPosition: Signal[Option[GpsCoordinates]],
-    ) = {
-      def distanceFromCurrentLocationToStop(
-        gpsPosition: Signal[Option[GpsCoordinates]],
-        location: Location,
-      ) =
-        gpsPosition.map(
-          _.flatMap(userCords =>
-            location.gpsCoordinates.map(stopCoords =>
-              div(
-                GpsCalculations
-                  .distanceInKmBetweenEarthCoordinatesT(
-                    userCords,
-                    stopCoords,
-                  ),
-              ),
-            ),
-          ).getOrElse(div()),
-        )
-
-      div(
-        child <-- $mapLinksEnabled.map(mapLinksEnabled =>
-          if (mapLinksEnabled)
-            div(
-              cls := "map-link",
-              child <--
-                distanceFromCurrentLocationToStop($gpsPosition,
-                                                  location,
-                ),
-              location.gpsCoordinates.map(Components.GeoLink),
-            )
-          else
-            div(),
-        ),
-      )
-    }
-
   }
 
   object TopLevelRoute {
@@ -481,40 +466,33 @@ object Components {
                   namedRoute,
                   location,
                 ) =>
-              UpcomingStopInfo(
-                location,
-                content match {
-                  case Left(stopTimeInfo) =>
-                    StopTimeInfoForLocation(
-                      stopTimeInfo,
-                      fullScheduleAtStop,
-                      $enabledFeatures,
-                    )
-                  case Right(safeRideRecommendation) =>
-                    SafeRideLink(safeRideRecommendation)
-                },
-                $enabledFeatures.map(
-                  //                _.isEnabled(Feature.MapLinks),
-                  _ => true, // Maps always enabled now
-                ),
-                gpsPosition.signal,
-              )
+              UpcomingStopInfo(location, content match {
+                case Left(stopTimeInfo) =>
+                  StopTimeInfoForLocation(
+                    stopTimeInfo,
+                    fullScheduleAtStop,
+                    $enabledFeatures,
+                  )
+                case Right(safeRideRecommendation) =>
+                  SafeRideLink(safeRideRecommendation)
+              })
           },
       )
+
+    def renderWaitTime(
+                        duration: MinuteDuration,
+                      ) =
+      if (duration.toMinutes == 0)
+        "Leaving!"
+      else
+        duration.toMinutes + " min."
+
 
     def StopTimeInfoForLocation(
       stopTimeInfo: StopTimeInfo,
       busScheduleAtStop: BusScheduleAtStop,
       $enabledFeatures: Signal[FeatureSets],
     ) = {
-
-      def renderWaitTime(
-        duration: MinuteDuration,
-      ) =
-        if (duration.toMinutes == 0)
-          "Leaving!"
-        else
-          duration.toMinutes + " min."
 
       val modalActive = Var(false)
       div(
