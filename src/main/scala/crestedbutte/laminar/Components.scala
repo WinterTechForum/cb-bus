@@ -11,7 +11,12 @@ import com.raquo.laminar.nodes.ReactiveHtmlElement
 import crestedbutte.NotificationStuff.desiredAlarms
 import crestedbutte.*
 import crestedbutte.dom.BulmaLocal
-import crestedbutte.routes.{AllRoutes, RtaSouthbound, SpringFallLoop, TownShuttleTimes}
+import crestedbutte.routes.{
+  AllRoutes,
+  RtaSouthbound,
+  SpringFallLoop,
+  TownShuttleTimes,
+}
 import org.scalajs.dom
 
 import java.time.format.{DateTimeFormatter, FormatStyle}
@@ -110,7 +115,7 @@ object Components {
 
   def SvgIcon(
     name: String,
-    clsName: String = ""
+    clsName: String = "",
   ) =
     img(
       cls := s"glyphicon $clsName",
@@ -150,7 +155,7 @@ object Components {
 
       val nextAfter = routeWithTimes.nextAfter(routeSegment)
       val nextBefore = routeWithTimes.nextBefore(routeSegment)
-      
+
       val deleteButton: ReactiveHtmlElement[HTMLAnchorElement] =
         a(
           cls := "link",
@@ -160,7 +165,9 @@ object Components {
             db.saveDailyPlanOnly(newPlan)
             $plan.set(newPlan)
           },
-          SvgIcon("glyphicons-basic-842-square-minus.svg", clsName = "delete"),
+          SvgIcon("glyphicons-basic-842-square-minus.svg",
+                  clsName = "delete",
+          ),
         )
 
       div(
@@ -192,11 +199,12 @@ object Components {
           Seq(routeSegment.start, routeSegment.end).map(stop =>
             UpcomingStopInfo(
               stop.l,
-              if (stop == routeSegment.start) // Only show delete beside start location
+              if (
+                stop == routeSegment.start
+              ) // Only show delete beside start location
                 deleteButton
-              else 
-                div()
-              ,
+              else
+                div(),
               div(
                 div(
                   routeWithTimes.allStops
