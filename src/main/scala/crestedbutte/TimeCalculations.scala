@@ -42,9 +42,9 @@ object TimeCalculations {
       )
 
   private def nextBusArrivalTime(
-                                  timesAtStop: Seq[WallTime],
-                                  now: WallTime,
-                                ): Option[WallTime] =
+    timesAtStop: Seq[WallTime],
+    now: WallTime,
+  ): Option[WallTime] =
     timesAtStop
       .find(stopTime => TimeCalculations.catchableBus(now, stopTime))
       .filter(_ => now.isLikelyEarlyMorningRatherThanLateNight)

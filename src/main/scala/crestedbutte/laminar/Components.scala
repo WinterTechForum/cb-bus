@@ -256,7 +256,7 @@ object Components {
           div( // TODO Move this separator outside of this, so it's not attached to the last leg of the trip
             textAlign := "center",
             SvgIcon("glyphicons-basic-947-circle-more.svg",
-              "plain-white plan-segment-divider",
+                    "plain-white plan-segment-divider",
             ),
             // TODO Possibly use this icon as a separator: glyphicons-basic-947-circle-more.svg
 //            div("."),
@@ -422,19 +422,19 @@ object Components {
     val gpsPosition: Var[Option[GpsCoordinates]] = Var(None)
 
     val upcomingArrivalData = timeStamps
-        .map { timestamp =>
-          // This is a super janky way to avoid being unable to scroll
-          // after we refresh the page and close the model
-          org.scalajs.dom.document
-            .querySelector("html")
-            .classList
-            .remove("is-clipped")
-          TripViewerLaminar(
-            db,
-            initialTime,
-            timestamp,
-          )
-          }
+      .map { timestamp =>
+        // This is a super janky way to avoid being unable to scroll
+        // after we refresh the page and close the model
+        org.scalajs.dom.document
+          .querySelector("html")
+          .classList
+          .remove("is-clipped")
+        TripViewerLaminar(
+          db,
+          initialTime,
+          timestamp,
+        )
+      }
 
     div(
       div(
