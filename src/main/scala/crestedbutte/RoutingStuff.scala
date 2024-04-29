@@ -17,7 +17,6 @@ object RoutingStuff {
   private case class BusPage(
     mode: AppMode,
     time: Option[WallTime], // TODO Make this a WallTime instead
-    component: Option[ComponentName],
     plan: Option[Plan]) {
 
     val fixedTime = time
@@ -58,40 +57,34 @@ object RoutingStuff {
     Option[String],
     Option[String],
     Option[String],
-    Option[String],
   ) =
     page =>
       (Some(page.mode.toString),
        page.time.map(_.toEUString),
-       page.component.map(_.name),
        page.plan.map(UrlEncoding.encode),
       )
 
   private val decodePage: (
-    (Option[String], Option[String], Option[String], Option[String]),
-  ) => BusPage = { case (mode, time, component, plan) =>
+    (Option[String], Option[String], Option[String]),
+  ) => BusPage = { case (mode, time, plan) =>
     BusPage(
       mode = mode.map(AppMode.withName).getOrElse(AppMode.Production),
       time = time.map(WallTime.apply),
-      component = component.map(ComponentName.apply),
       plan = plan.flatMap(UrlEncoding.decode(_).toOption),
     )
   }
 
   val params: QueryParameters[
-    (Option[String], Option[String], Option[String], Option[String]),
+    (Option[String], Option[String], Option[String]),
     DummyError,
   ] =
     param[
       String,
-    ]("mode").? & param[String]("time").? & param[String](
-      "component",
-    ).? & param[String]("plan").?
+    ]("mode").? & param[String]("time").? & param[String]("plan").?
 
   private val devRoute =
     Route.onlyQuery[BusPage,
                     (
-                      Option[String],
                       Option[String],
                       Option[String],
                       Option[String],
@@ -105,7 +98,6 @@ object RoutingStuff {
   private val prodRoute =
     Route.onlyQuery[BusPage,
                     (
-                      Option[String],
                       Option[String],
                       Option[String],
                       Option[String],
@@ -133,7 +125,6 @@ object RoutingStuff {
       BusPage(
         mode = AppMode.Production,
         time = None, // TODO Make this a WallTime instead
-        component = None,
         plan = None,
       ),
   )(
@@ -151,7 +142,6 @@ object RoutingStuff {
       child <-- $loginPage.map(busPageInfo =>
         // TODO Start pulling out route queryParam
         Components.FullApp(busPageInfo.mode,
-                           busPageInfo.component,
                            busPageInfo.javaClock,
         ),
       ),

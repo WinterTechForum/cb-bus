@@ -337,7 +337,6 @@ object Components {
 
   def FullApp(
     pageMode: AppMode,
-    initialComponent: Option[ComponentName],
     javaClock: Clock,
   ) = {
     val db = Persistence()
@@ -346,18 +345,7 @@ object Components {
 
     val components = AllRoutes.components(pageMode)
 
-    val selectedComponent: Var[ComponentData] = Var(
-      initialComponent
-        .flatMap(initialRoute =>
-          components.find: component =>
-            component.componentName
-              .elementNameMatches(initialRoute.name),
-        )
-        .getOrElse(
-          PlanViewer,
-//          RtaSouthbound.fullSchedule,
-        ),
-    )
+    val selectedComponent = PlanViewer
 
     def currentWallTime(
       javaClock: Clock,
@@ -377,7 +365,7 @@ object Components {
 
     val timeStamps: Signal[WallTime] = clockTicks.events
       .filter(_ =>
-        selectedComponent.now() != PlanViewer &&
+        selectedComponent != PlanViewer &&
           // Don't reset content if we're in the middle of a modal
           !org.scalajs.dom.document
             .querySelector("html")
@@ -396,14 +384,12 @@ object Components {
     div(
       onMountCallback: context =>
         db.initializeOrResetStorage(),
-//      Bulma.menu(selectedComponent, components),
       RepeatingElement()
         .repeatWithInterval( // This acts like a Dune thumper
           (),
           new FiniteDuration(5, scala.concurrent.duration.SECONDS),
         ) --> clockTicks,
       overallPageLayout(
-        selectedComponent,
         timeStamps,
         pageMode,
         initialTime,
@@ -413,7 +399,6 @@ object Components {
   }
 
   def overallPageLayout(
-    $selectedComponent: Var[ComponentData],
     timeStamps: Signal[WallTime],
     pageMode: AppMode,
     initialTime: WallTime,
@@ -436,29 +421,20 @@ object Components {
 
     val gpsPosition: Var[Option[GpsCoordinates]] = Var(None)
 
-    val upcomingArrivalData =
-      $selectedComponent.signal
-        .combineWith(timeStamps)
-        .map { case (componentData, timestamp) =>
+    val upcomingArrivalData = timeStamps
+        .map { timestamp =>
           // This is a super janky way to avoid being unable to scroll
           // after we refresh the page and close the model
           org.scalajs.dom.document
             .querySelector("html")
             .classList
             .remove("is-clipped")
-          componentData match {
-            case PlanViewer =>
-              TripViewerLaminar(
-                db,
-                initialTime,
-                timestamp,
-              )
-            case _: NamedRoute =>
-              throw new IllegalStateException(
-                "Not supported anymore :D :D :D :D :D",
-              )
+          TripViewerLaminar(
+            db,
+            initialTime,
+            timestamp,
+          )
           }
-        }
 
     div(
       div(
