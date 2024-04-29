@@ -254,10 +254,13 @@ object Components {
           ),
           stopInfo(routeSegment.end),
           div( // TODO Move this separator outside of this, so it's not attached to the last leg of the trip
-            // TODO Possibly use this icon as a separator: glyphicons-basic-947-circle-more.svg
             textAlign := "center",
-            div("."),
-            div("."),
+            SvgIcon("glyphicons-basic-947-circle-more.svg",
+              "plain-white plan-segment-divider",
+            ),
+            // TODO Possibly use this icon as a separator: glyphicons-basic-947-circle-more.svg
+//            div("."),
+//            div("."),
           ),
         ),
       )
