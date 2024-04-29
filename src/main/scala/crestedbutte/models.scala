@@ -60,15 +60,6 @@ case class ComponentName(
   def elementNameMatches(
     elementName: String,
   ) = name == elementName
-  // TODO Check ordering of all coordinates
-  /*
-  val TownLoop: Val = Val()
-
-  val ThreeSeasonsLoop: Val =
-    Val()
-
-   */
-
 }
 
 case class LateNightRecommendation( // TODO Rename "LateNight" or something
@@ -78,16 +69,6 @@ case class LateNightRecommendation( // TODO Rename "LateNight" or something
 case class GpsCoordinates(
   latitude: Double,
   longitude: Double)
-
-case class UpcomingArrivalInfoWithFullSchedule(
-  upcomingArrivalInfo: UpcomingArrivalInfo,
-  busScheduleAtStop: BusScheduleAtStop,
-  namedRoute: NamedRoute, // TODO
-  location: Location, // TODO Use this location value instead of the ones available in other fields
-) {}
-
-case class ArrivalTimeSelector(
-  busScheduleAtStop: BusScheduleAtStop)
 
 case class UpcomingArrivalInfo(
   location: Location,
@@ -118,19 +99,10 @@ object UpcomingArrivalInfo {
 
 }
 
-case class UpcomingArrivalComponentData(
-  upcomingArrivalInfoForAllRoutes: Seq[
-    UpcomingArrivalInfoWithFullSchedule,
-  ],
-  routeName: ComponentName)
-
 import zio.json._
 implicit val wallTimeCodec: JsonCodec[WallTime] =
   JsonCodec.int.transform(WallTime.fromMinutes, _.localTime.value)
 
-//  DeriveJsonCodec.gen[WallTime]
-//implicit val minutesCodec: JsonCodec[Minutes] =
-//  DeriveJsonCodec.gen[Minutes]
 implicit val hourNotationCodec: JsonCodec[HourNotation] =
   DeriveJsonCodec.gen[HourNotation]
 
