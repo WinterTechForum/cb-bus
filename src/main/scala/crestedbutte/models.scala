@@ -115,6 +115,6 @@ case class Plan(
         (
           leg,
           idx,
-        ) => s"Trip ${idx + 1}\n\n" + leg.plainTextRepresentation,
+        ) => s"${leg.plainTextRepresentation}",
       )
-      .mkString("\n\n")
+      .mkString("\n")

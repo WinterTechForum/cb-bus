@@ -15,11 +15,8 @@ case class RouteSegment(
   val end = e
 
   lazy val plainTextRepresentation =
-    s"""${start.l.name}
-       |${start.t.toDumbAmericanString}
-       |
-       |${end.l.name}
-       |${end.t.toDumbAmericanString}
+    s"""${start.t.toDumbAmericanString}  ${start.l.name}
+       |${end.t.toDumbAmericanString}  ${end.l.name}
        |""".stripMargin
 }
 
@@ -59,16 +56,6 @@ case class RouteLeg private (
       startWithTime       <- stops.find(_.l == start)
       destinationWithTime <- stops.find(_.l == destination)
     yield RouteSegment(routeName, startWithTime, destinationWithTime)
-
-  lazy val plainTextRepresentation =
-    val start = stops.head
-    val end = stops.last
-    s"""${start.l.name}
-       |${start.t.toDumbAmericanString}
-       |
-       |${end.l.name}
-       |${end.t.toDumbAmericanString}
-       |""".stripMargin
 
   assert(stops.nonEmpty,
          "Empty Route",

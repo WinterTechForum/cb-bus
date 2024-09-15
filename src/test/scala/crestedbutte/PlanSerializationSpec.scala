@@ -61,13 +61,26 @@ object PlanSerializationSpec extends ZIOSpecDefault {
         test("single leg"){
           assertTrue(
             plan.plainTextRepresentation  ==
-              """Trip 1
+              """10:20 PM  CB South
+                |10:46 PM  Rec Center
+                |""".stripMargin
+
+          )
+        },
+        test("multi leg"){
+          assertTrue(
+            plan.copy(plan.l :+
+              RouteSegment(
+                RtaSouthbound.componentName,
+                LocationWithTime(Location.SpencerAndHighwayOneThirtyFive, WallTime("03:20 PM")),
+                LocationWithTime(Location.BrushCreek, WallTime("04:00 PM")),
+              ),
+            ).plainTextRepresentation  ==
+              """10:20 PM  CB South
+                |10:46 PM  Rec Center
                 |
-                |CB South
-                |10:20 PM
-                |
-                |Rec Center
-                |10:46 PM
+                |03:20 PM  Spencer & Highway 135
+                |04:00 PM  Brush Creek
                 |""".stripMargin
 
           )
