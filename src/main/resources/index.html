@@ -17,20 +17,25 @@
     <meta name="msapplication-TileImage" content="images/hello-icon-144.png">
     <meta name="msapplication-TileColor" content="#FFFFFF">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<!--    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>-->
-<!--    <script>-->
-<!--        window.OneSignalDeferred = window.OneSignalDeferred || [];-->
-<!--        OneSignalDeferred.push(function(OneSignal) {-->
-<!--            OneSignal.init({-->
-<!--                appId: "71326ce8-7c5b-4e52-a993-cd32c0605ba9",-->
-<!--                notifyButton: {-->
-<!--                    enable: true-->
-<!--                },-->
-<!--                serviceWorkerParam: { scope: "/push/onesignal/myCustomScope/" },-->
-<!--                serviceWorkerPath: "/push/onesignal/OneSignalSDKWorker.js",-->
-<!--            });-->
-<!--        });-->
-<!--    </script>-->
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js"></script>
+    <script>
+        if (window.hasOwnProperty('OneSignalDeferred')) {
+            console.log("OneSignal available. Setting up Push logic.");
+            window.OneSignalDeferred = window.OneSignalDeferred || [];
+            OneSignalDeferred.push(function(OneSignal) {
+                OneSignal.init({
+                    appId: "71326ce8-7c5b-4e52-a993-cd32c0605ba9",
+                    notifyButton: {
+                        enable: true
+                    },
+                    serviceWorkerParam: { scope: "/push/onesignal/myCustomScope/" },
+                    serviceWorkerPath: "/push/onesignal/OneSignalSDKWorker.js",
+                });
+            });
+        } else {
+            console.log("Could not load OneSignal. Skipping push logic.");
+        }
+    </script>
 </head>
 <body>
 <div id="landing-message" class="bill-box">

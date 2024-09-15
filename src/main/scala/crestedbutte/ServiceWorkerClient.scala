@@ -19,12 +19,14 @@ object ServiceWorkerClient {
           browser.window().navigator,
         ).serviceWorker
 
-//        serviceWorker.register(
-//          "./push/onesignal/OneSignalSDKWorker.js",
-//          new ServiceWorkerRegistrationOptions {
-//            scope = "/push/onesignal/myCustomScope"
-//          },
-//        )
+        if (browser.window().hasOwnProperty("OneSignalDeferred")) {
+          serviceWorker.register(
+            "./push/onesignal/OneSignalSDKWorker.js",
+            new ServiceWorkerRegistrationOptions {
+              scope = "/push/onesignal/myCustomScope"
+            },
+          )
+        }
 
         serviceWorker
           .register("./sw-opt.js")
