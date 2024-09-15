@@ -53,8 +53,8 @@ case class RouteLeg private (
     destination: Location,
   ): Option[RouteSegment] =
     for
-      startWithTime       <- stops.find(_.l == start)
-      destinationWithTime <- stops.find(_.l == destination)
+      startWithTime       <- stops.find(_.l.matches( start))
+      destinationWithTime <- stops.find(_.l.matches(destination))
     yield RouteSegment(routeName, startWithTime, destinationWithTime)
 
   assert(stops.nonEmpty,
