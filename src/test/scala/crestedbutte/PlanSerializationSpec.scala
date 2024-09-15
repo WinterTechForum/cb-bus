@@ -57,6 +57,22 @@ object PlanSerializationSpec extends ZIOSpecDefault {
           },
         ),
       ),
+      suite("plain text")(
+        test("single leg"){
+          assertTrue(
+            plan.plainTextRepresentation  ==
+              """Trip 1
+                |
+                |CB South
+                |10:20 PM
+                |
+                |Rec Center
+                |10:46 PM
+                |""".stripMargin
+
+          )
+        }
+      )
     )
 
 }
