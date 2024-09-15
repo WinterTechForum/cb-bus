@@ -2,7 +2,7 @@ package crestedbutte.laminar
 
 import com.raquo.laminar.api.L.*
 import crestedbutte.*
-import crestedbutte.routes.{RtaNorthbound, RtaSouthbound}
+import crestedbutte.routes.{AllRoutes, CompleteStopList, RtaNorthbound, RtaSouthbound, SpringFallLoop, TownShuttleTimes}
 import org.scalajs.dom
 import crestedbutte.laminar.Experimental.getLocation
 import crestedbutte.pwa.Persistence
@@ -11,12 +11,6 @@ import com.raquo.laminar.nodes.ReactiveHtmlElement
 import crestedbutte.NotificationStuff.desiredAlarms
 import crestedbutte.*
 import crestedbutte.dom.BulmaLocal
-import crestedbutte.routes.{
-  AllRoutes,
-  RtaSouthbound,
-  SpringFallLoop,
-  TownShuttleTimes,
-}
 import org.scalajs.dom
 
 import java.time.format.{DateTimeFormatter, FormatStyle}
@@ -322,7 +316,9 @@ object Components {
                   }
                 },
               ),
-              smallStopSelector(value,
+              smallStopSelectorNew(
+                CompleteStopList.values,
+                value,
                                 $plan,
                                 db,
                                 initialTime,
@@ -533,36 +529,78 @@ object Components {
       ),
     )
 
-  def smallStopSelector(
-    namedRoute: NamedRoute,
-    $plan: Var[Plan],
-    db: Persistence,
-    initialTime: WallTime,
-    nextLegDirection: Var[Option[NamedRoute]], // TODO Smaller type
-  ) =
-    val startingPoint: Var[Option[Location]] = Var(None)
-    val destinations: Signal[Option[Seq[Location]]] =
-      startingPoint.signal.map {
-        case Some(value) =>
-          Some(
-            namedRoute.routeWithTimes.allStops
-              .dropWhile(_.location != value)
-              .drop(1)
-              .map(_.location),
-          )
-        case None => None
-      }
 
-    val allStops = namedRoute.routeWithTimes.allStops
+  def rightLegOnRightRoute(
+    start: Location,
+    end: Location,
+    plan: Plan,
+    initialTime: WallTime,
+    namedRoute: NamedRoute
+                          ): RouteSegment = {
+
+    val routeSegments =
+      RtaSouthbound.fullSchedule.segment(start, end)
+        .orElse(RtaNorthbound.fullSchedule.segment(start, end))
+
+
+    routeSegments match
+      case Some(segments) =>
+        segments
+          .find { l =>
+            val lastArrivalTime =
+              plan.l.lastOption
+                .map(_.end.t)
+            val cutoff =
+              lastArrivalTime.getOrElse(initialTime)
+            l.start.t.isAfter(cutoff) && l.end.t.isAfter(cutoff)
+          }
+          .getOrElse{
+            // TODO Confirm I can delete this possibility?
+            println("No valid segment")
+            namedRoute.routeWithTimes.legs.last
+              .segmentFrom(start, end)
+              .getOrElse(
+                throw new Exception(
+                  "No route leg found with locations A:",
+                )
+              )
+          }
+      case None =>
+        throw new Exception(
+          "Not route leg found with locations B:",
+        )
+
+
+  }
+
+  def smallStopSelectorNew(
+    locations: Seq[Location],
+                         namedRoute: NamedRoute,
+                         $plan: Var[Plan],
+                         db: Persistence,
+                         initialTime: WallTime,
+                         nextLegDirection: Var[Option[NamedRoute]], // TODO Smaller type
+                       ) =
+    val startingPoint: Var[Option[Location]] = Var(None)
+
     val startingPoints =
       div(
-        "Select starting point: ",
-        allStops.init.map(stop =>
+        "Choose starting point: ",
+        locations.map(location =>
           div(
             button(
               cls := "button m-2",
-              stop.location.name,
-              onClick.mapTo(Some(stop.location)) --> startingPoint,
+              cls <--
+                startingPoint.signal.map {
+                  case Some(startingPoint) =>
+                    if (startingPoint == location)
+                      "is-primary"
+                    else
+                      "not-same-location"
+                  case None => "no-starting-point-chosen"
+                },
+              location.name,
+              onClick.mapTo(Some(location)) --> startingPoint,
             ),
           ),
         ),
@@ -574,59 +612,50 @@ object Components {
       },
       div(
         "Destination",
-        child <-- destinations.signal.map {
-          case Some(destinations) =>
+        div(
+          locations.map(location =>
             div(
-              destinations.map(destination =>
-                div(
-                  button(
-                    cls := "button m-2",
-                    destination.name,
-                    onClick --> Observer { _ =>
-                      val start = startingPoint
-                        .now()
-                        .getOrElse(
-                          throw Exception("No starting point"),
-                        )
+              button(
+                cls := "button m-2",
+                cls <--
+                  // TODO De-dup with above
+                  startingPoint.signal.map {
+                    case Some(startingPoint) =>
+                      if (startingPoint == location)
+                        "is-primary"
+                      else
+                        "not-same-location"
+                    case None => "no-starting-point-chosen"
+                  },
+                location.name,
+                onClick --> Observer { _ =>
+                  val start = startingPoint
+                    .now()
+                    .getOrElse(
+                      throw Exception("No starting point"),
+                    )
 
-                      val matchingLeg =
-                        namedRoute.routeWithTimes.legs
-                          .flatMap { leg =>
-                            leg.segmentFrom(start, destination)
-                          }
-                          .find { l =>
-                            val lastArrivalTime =
-                              $plan.now().l.lastOption
-                                .map(_.end.t)
-                            val cutoff =
-                              lastArrivalTime.getOrElse(initialTime)
-                            l.start.t.isAfter(cutoff)
-                          }
-                          .getOrElse(
-                            // TODO Is the best fallback?
-                            namedRoute.routeWithTimes.legs.last
-                              .segmentFrom(start, destination)
-                              .getOrElse(
-                                throw new Exception(
-                                  "Not route leg found with locations",
-                                ),
-                              ),
-                          )
+                  val matchingLeg =
+                    rightLegOnRightRoute(
+                      start,
+                      location,
+                      $plan.now(),
+                      initialTime,
+                      namedRoute
+                    )
 
-                      $plan.update { case oldPlan =>
-                        val newPlan =
-                          oldPlan.copy(l = oldPlan.l :+ matchingLeg)
-                        db.saveDailyPlanOnly(newPlan)
-                        nextLegDirection.set(None)
-                        newPlan
-                      }
-                    },
-                  ),
-                ),
+                  $plan.update { case oldPlan =>
+                    val newPlan =
+                      oldPlan.copy(l = oldPlan.l :+ matchingLeg)
+                    db.saveDailyPlanOnly(newPlan)
+                    nextLegDirection.set(None)
+                    newPlan
+                  }
+                },
               ),
-            )
-          case None => div()
-        },
+            ),
+          ),
+        )
       ),
     )
 

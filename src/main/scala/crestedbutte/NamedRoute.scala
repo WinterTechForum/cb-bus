@@ -35,6 +35,16 @@ case class NamedRoute(
 
   val allStops: Seq[Location] =
     routeWithTimes.legs.head.stops.map(_.l)
+    
+  def segment(start: Location, end: Location): Option[Seq[RouteSegment]] =
+    val result = 
+      routeWithTimes.legs
+        .flatMap { leg =>
+          leg.segmentFrom(start, end)
+        }
+    Option.when(result.exists(segment => segment.start.t.isBefore(segment.end.t)))(
+      result
+      )
 }
 
 object NamedRoute {
