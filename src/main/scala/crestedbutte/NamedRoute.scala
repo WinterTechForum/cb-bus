@@ -1,5 +1,6 @@
 package crestedbutte
 
+import com.billding.time.WallTime
 import crestedbutte.routes.RouteWithTimes
 import crestedbutte.{ComponentName, Location}
 
@@ -35,16 +36,26 @@ case class NamedRoute(
 
   val allStops: Seq[Location] =
     routeWithTimes.legs.head.stops.map(_.l)
-    
+
   def segment(start: Location, end: Location): Option[Seq[RouteSegment]] =
-    val result = 
+    val result =
       routeWithTimes.legs
         .flatMap { leg =>
           leg.segmentFrom(start, end)
         }
-    Option.when(result.exists(segment => segment.start.t.isBefore(segment.end.t)))(
+        .filter(segment => 
+          WallTime.ordering.compare(segment.start.t, segment.end.t) <= 0
+        )
+    Option.when{
+//      import math. Ordered. orderingToOrdered
+//      val res =
+//        // TODO Use 0,-1,1
+//        result.find(segment => segment.start.t.compare(segment.end.t))
+//      println("res: " + res)
+      result.nonEmpty
+    }{
       result
-      )
+      }
 }
 
 object NamedRoute {

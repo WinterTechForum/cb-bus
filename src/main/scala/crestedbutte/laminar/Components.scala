@@ -129,8 +129,8 @@ object Components {
     initialTime: WallTime,
     timestamp: WallTime,
   ) =
-    val nextLegDirection: Var[Option[NamedRoute]] = Var(
-      None,
+    val addingNewRoute: Var[Boolean] = Var(
+      false,
     )
     def RouteLegElement(
       routeSegment: RouteSegment,
@@ -274,55 +274,32 @@ object Components {
           acc.amend(next)
         },
       div(
-        div(cls := "route-header mt-6", "Where to next?"),
-        child <-- nextLegDirection.signal.map {
-          case None =>
+        div(cls := "route-header mt-6", "Where to next??"),
+        child <-- addingNewRoute.signal.map {
+          case false =>
+            println("addingNewRoute.false")
             div(
-              cls := "route-header",
-              button(
-                cls := "button m-2",
-                onClick --> Observer { _ =>
-                  nextLegDirection.set(
-                    Some(RtaSouthbound.fullSchedule),
-                  )
-                },
-                "Crested Butte --> Gunnison",
-              ),
-              button(
-                cls := "button m-2",
-                onClick --> Observer { _ =>
-                  nextLegDirection.set(
-                    Some(RtaNorthbound.fullSchedule),
-                  )
-                },
-                "Gunnison --> Crested Butte",
-              ),
-            )
-          case Some(value) =>
-            div(
-              span(cls := "m-2 b h3",
-                   "Route: " + value.componentName.userFriendlyName,
-              ),
+              "Done",
               button(
                 cls := "button",
-                "Switch Direction",
+                "Add new route",
                 onClick --> Observer { _ =>
-                  nextLegDirection.update {
-                    case Some(RtaNorthbound.fullSchedule) =>
-                      Some(RtaSouthbound.fullSchedule)
-                    case Some(RtaSouthbound.fullSchedule) =>
-                      Some(RtaNorthbound.fullSchedule)
-                    case _ => None
+                  addingNewRoute.set {
+                    true
+
                   }
                 },
               ),
+            )
+          case true =>
+            println("addingNewRoute.true")
+            div(
               smallStopSelectorNew(
                 CompleteStopList.values,
-                value,
                                 $plan,
                                 db,
                                 initialTime,
-                                nextLegDirection,
+                                addingNewRoute,
               ),
             )
         },
@@ -535,7 +512,6 @@ object Components {
     end: Location,
     plan: Plan,
     initialTime: WallTime,
-    namedRoute: NamedRoute
                           ): RouteSegment = {
 
     val routeSegments =
@@ -556,31 +532,21 @@ object Components {
           }
           .getOrElse{
             // TODO Confirm I can delete this possibility?
-            println("No valid segment")
-            namedRoute.routeWithTimes.legs.last
-              .segmentFrom(start, end)
-              .getOrElse(
-                throw new Exception(
-                  "No route leg found with locations A:",
-                )
-              )
+              throw new IllegalStateException("No route leg available in either route")
           }
       case None =>
-        throw new Exception(
-          "Not route leg found with locations B:",
-        )
+        throw new IllegalStateException("No route leg available in either route B")
 
 
   }
 
   def smallStopSelectorNew(
-    locations: Seq[Location],
-                         namedRoute: NamedRoute,
-                         $plan: Var[Plan],
-                         db: Persistence,
-                         initialTime: WallTime,
-                         nextLegDirection: Var[Option[NamedRoute]], // TODO Smaller type
-                       ) =
+                            locations: Seq[Location],
+                            $plan: Var[Plan],
+                            db: Persistence,
+                            initialTime: WallTime,
+                            addingNewRoute: Var[Boolean], // TODO Smaller type
+                          ) =
     val startingPoint: Var[Option[Location]] = Var(None)
 
     val startingPoints =
@@ -605,59 +571,84 @@ object Components {
           ),
         ),
       )
-    div(
-      child <-- startingPoint.signal.map {
-        case Some(value) => "Starting at: " + value
-        case None        => startingPoints
-      },
-      div(
-        "Destination",
-        div(
-          locations.map(location =>
+    div (
+      child <-- addingNewRoute.signal.map {
+        case false =>
+          div(
+            "Nothing to add atm",
             div(
+              "Done",
               button(
-                cls := "button m-2",
-                cls <--
-                  // TODO De-dup with above
-                  startingPoint.signal.map {
-                    case Some(startingPoint) =>
-                      if (startingPoint == location)
-                        "is-primary"
-                      else
-                        "not-same-location"
-                    case None => "no-starting-point-chosen"
-                  },
-                location.name,
+                cls := "button",
+                "Add new route",
                 onClick --> Observer { _ =>
-                  val start = startingPoint
-                    .now()
-                    .getOrElse(
-                      throw Exception("No starting point"),
-                    )
+                  addingNewRoute.set {
+                    true
 
-                  val matchingLeg =
-                    rightLegOnRightRoute(
-                      start,
-                      location,
-                      $plan.now(),
-                      initialTime,
-                      namedRoute
-                    )
-
-                  $plan.update { case oldPlan =>
-                    val newPlan =
-                      oldPlan.copy(l = oldPlan.l :+ matchingLeg)
-                    db.saveDailyPlanOnly(newPlan)
-                    nextLegDirection.set(None)
-                    newPlan
                   }
                 },
               ),
+            )
+          )
+
+        case true =>
+          div(
+            child <-- startingPoint.signal.map {
+              case Some(value) => "Starting at: " + value
+              case None        => startingPoints
+            },
+            div(
+              "Destination",
+              div(
+                locations.map(location =>
+                  div(
+                    button(
+                      cls := "button m-2",
+                      cls <--
+                        // TODO De-dup with above
+                        startingPoint.signal.map {
+                          case Some(startingPoint) =>
+                            if (startingPoint == location)
+                              "is-primary"
+                            else
+                              "not-same-location"
+                          case None => "no-starting-point-chosen"
+                        },
+                      location.name,
+                      onClick --> Observer { _ =>
+                        val start = startingPoint
+                          .now()
+                          .getOrElse(
+                            throw Exception("No starting point"),
+                          )
+
+                        val matchingLeg =
+                          rightLegOnRightRoute(
+                            start,
+                            location,
+                            $plan.now(),
+                            initialTime,
+                          )
+
+                        $plan.update { case oldPlan =>
+                          val newPlan =
+                            oldPlan.copy(l = oldPlan.l :+ matchingLeg)
+                          db.saveDailyPlanOnly(newPlan)
+                          println("setting addingNewRoute to false")
+                          addingNewRoute.set(false)
+                          println("Adding new route: " + addingNewRoute.now())
+                          newPlan
+                        }
+                      },
+                    ),
+                  ),
+                ),
+              )
             ),
-          ),
-        )
-      ),
+          )
+      }
     )
+
 
   def renderWaitTime(
     duration: MinuteDuration,
