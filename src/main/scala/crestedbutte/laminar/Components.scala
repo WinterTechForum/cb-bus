@@ -552,6 +552,7 @@ object Components {
     val startingPoints =
       div(
         "Choose starting point: ",
+        div("-----------------------"), // Really just to keep vertical spacing from changing after you select a start point
         locations.map(location =>
           div(
             button(
