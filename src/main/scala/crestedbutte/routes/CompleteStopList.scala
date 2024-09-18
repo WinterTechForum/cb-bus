@@ -23,7 +23,7 @@ object CompleteStopList {
       TellerAndHighwayFifty,
       Western,
       DenverAndHighwayOneThirtyFive,
-      SpencerAndHighwayOneThirtyFive
+      SpencerAndHighwayOneThirtyFive,
     )
 
 }

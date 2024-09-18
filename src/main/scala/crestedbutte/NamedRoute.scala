@@ -37,20 +37,25 @@ case class NamedRoute(
   val allStops: Seq[Location] =
     routeWithTimes.legs.head.stops.map(_.l)
 
-  def segment(start: Location, end: Location): Option[Seq[RouteSegment]] =
+  def segment(
+    start: Location,
+    end: Location,
+  ): Option[Seq[RouteSegment]] =
     val result =
       routeWithTimes.legs
         .flatMap { leg =>
           leg.segmentFrom(start, end)
         }
-        .filter(segment => 
-          WallTime.ordering.compare(segment.start.t, segment.end.t) <= 0
+        .filter(segment =>
+          WallTime.ordering.compare(segment.start.t,
+                                    segment.end.t,
+          ) <= 0,
         )
-    Option.when{
+    Option.when {
       result.nonEmpty
-    }{
+    } {
       result
-      }
+    }
 }
 
 object NamedRoute {

@@ -2,7 +2,14 @@ package crestedbutte.laminar
 
 import com.raquo.laminar.api.L.*
 import crestedbutte.*
-import crestedbutte.routes.{AllRoutes, CompleteStopList, RtaNorthbound, RtaSouthbound, SpringFallLoop, TownShuttleTimes}
+import crestedbutte.routes.{
+  AllRoutes,
+  CompleteStopList,
+  RtaNorthbound,
+  RtaSouthbound,
+  SpringFallLoop,
+  TownShuttleTimes,
+}
 import org.scalajs.dom
 import crestedbutte.laminar.Experimental.getLocation
 import crestedbutte.pwa.Persistence
@@ -18,7 +25,7 @@ import java.time.{Clock, Instant, OffsetDateTime}
 import scala.concurrent.duration.FiniteDuration
 import crestedbutte.dom.BulmaLocal.ModalMode
 import crestedbutte.laminar.TouchControls.Swipe
-import org.scalajs.dom.{HTMLAnchorElement, css}
+import org.scalajs.dom.{css, HTMLAnchorElement}
 
 import scala.collection.immutable.{AbstractSeq, LinearSeq}
 
@@ -128,7 +135,7 @@ object Components {
     $plan: Var[Plan],
     initialTime: WallTime,
     timestamp: WallTime,
-    addingNewRoute: Var[Boolean]
+    addingNewRoute: Var[Boolean],
   ) =
     def RouteLegElement(
       routeSegment: RouteSegment,
@@ -277,12 +284,12 @@ object Components {
           acc.amend(next)
         },
       div(
-        cls:="add-new-route-section",
+        cls := "add-new-route-section",
         child <-- addingNewRoute.signal.map {
           case false =>
             println("addingNewRoute.false")
             div(
-              cls:="centered",
+              cls := "centered",
               button(
                 cls := "button",
                 "Add new route",
@@ -299,10 +306,10 @@ object Components {
             div(
               smallStopSelectorNew(
                 CompleteStopList.values,
-                                $plan,
-                                db,
-                                initialTime,
-                                addingNewRoute,
+                $plan,
+                db,
+                initialTime,
+                addingNewRoute,
               ),
             )
         },
@@ -506,25 +513,24 @@ object Components {
                                    $plan,
                                    initialTime,
                                    timestamp,
-              addingNewRoute
+                                   addingNewRoute,
             ),
           ),
         ),
       ),
     )
 
-
   def rightLegOnRightRoute(
     start: Location,
     end: Location,
     plan: Plan,
     initialTime: WallTime,
-                          ): RouteSegment = {
+  ): RouteSegment = {
 
     val routeSegments =
-      RtaSouthbound.fullSchedule.segment(start, end)
+      RtaSouthbound.fullSchedule
+        .segment(start, end)
         .orElse(RtaNorthbound.fullSchedule.segment(start, end))
-
 
     routeSegments match
       case Some(segments) =>
@@ -537,29 +543,34 @@ object Components {
               lastArrivalTime.getOrElse(initialTime)
             l.start.t.isAfter(cutoff) && l.end.t.isAfter(cutoff)
           }
-          .getOrElse{
+          .getOrElse {
             // TODO Confirm I can delete this possibility?
-              throw new IllegalStateException("No route leg available in either route")
+            throw new IllegalStateException(
+              "No route leg available in either route",
+            )
           }
       case None =>
-        throw new IllegalStateException("No route leg available in either route B")
-
+        throw new IllegalStateException(
+          "No route leg available in either route B",
+        )
 
   }
 
   def smallStopSelectorNew(
-                            locations: Seq[Location],
-                            $plan: Var[Plan],
-                            db: Persistence,
-                            initialTime: WallTime,
-                            addingNewRoute: Var[Boolean], // TODO Smaller type
-                          ) =
+    locations: Seq[Location],
+    $plan: Var[Plan],
+    db: Persistence,
+    initialTime: WallTime,
+    addingNewRoute: Var[Boolean], // TODO Smaller type
+  ) =
     val startingPoint: Var[Option[Location]] = Var(None)
 
     val startingPoints =
       div(
         "Choose starting point: ",
-        div("-----------------------"), // Really just to keep vertical spacing from changing after you select a start point
+        div(
+          "-----------------------",
+        ), // Really just to keep vertical spacing from changing after you select a start point
         locations.map(location =>
           div(
             button(
@@ -579,7 +590,7 @@ object Components {
           ),
         ),
       )
-    div (
+    div(
       child <-- addingNewRoute.signal.map {
         case false =>
           div(
@@ -595,7 +606,7 @@ object Components {
                   }
                 },
               ),
-            )
+            ),
           )
 
         case true =>
@@ -604,7 +615,6 @@ object Components {
               case Some(value) =>
                 div(
                   "Starting at: " + value,
-
                   div(
                     "Destination",
                     div(
@@ -620,7 +630,8 @@ object Components {
                                     "is-primary"
                                   else
                                     "not-same-location"
-                                case None => "no-starting-point-chosen"
+                                case None =>
+                                  "no-starting-point-chosen"
                               },
                             location.name,
                             onClick --> Observer { _ =>
@@ -629,7 +640,7 @@ object Components {
                                 .getOrElse(
                                   throw Exception("No starting point"),
                                 )
-                              
+
                               if (start != location) {
 
                                 val matchingLeg =
@@ -642,11 +653,18 @@ object Components {
 
                                 $plan.update { case oldPlan =>
                                   val newPlan =
-                                    oldPlan.copy(l = oldPlan.l :+ matchingLeg)
+                                    oldPlan.copy(l =
+                                      oldPlan.l :+ matchingLeg,
+                                    )
                                   db.saveDailyPlanOnly(newPlan)
-                                  println("setting addingNewRoute to false")
+                                  println(
+                                    "setting addingNewRoute to false",
+                                  )
                                   addingNewRoute.set(false)
-                                  println("Adding new route: " + addingNewRoute.now())
+                                  println(
+                                    "Adding new route: " + addingNewRoute
+                                      .now(),
+                                  )
                                   newPlan
                                 }
                               }
@@ -654,15 +672,14 @@ object Components {
                           ),
                         ),
                       ),
-                    )
-                  )
+                    ),
+                  ),
                 )
-              case None        => startingPoints
+              case None => startingPoints
             },
           )
-      }
+      },
     )
-
 
   def renderWaitTime(
     duration: MinuteDuration,
