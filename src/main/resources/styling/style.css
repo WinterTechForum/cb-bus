@@ -190,3 +190,9 @@ body {
     display: grid;
     place-items: center;
 }
+
+.add-new-route-section {
+    align-items: center;
+    display: flex;
+    justify-content: center;
+}

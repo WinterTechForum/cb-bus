@@ -18,7 +18,7 @@ import java.time.{Clock, Instant, OffsetDateTime}
 import scala.concurrent.duration.FiniteDuration
 import crestedbutte.dom.BulmaLocal.ModalMode
 import crestedbutte.laminar.TouchControls.Swipe
-import org.scalajs.dom.HTMLAnchorElement
+import org.scalajs.dom.{HTMLAnchorElement, css}
 
 import scala.collection.immutable.{AbstractSeq, LinearSeq}
 
@@ -156,6 +156,11 @@ object Components {
               plan.copy(l = plan.l.filterNot(_ == routeSegment))
             db.saveDailyPlanOnly(newPlan)
             $plan.set(newPlan)
+            if (newPlan.l.isEmpty) {
+              addingNewRoute.set {
+                true
+              }
+            }
           },
           /*
           Options:
@@ -272,12 +277,12 @@ object Components {
           acc.amend(next)
         },
       div(
-        div(cls := "route-header mt-6", "Where to next??"),
+        cls:="add-new-route-section",
         child <-- addingNewRoute.signal.map {
           case false =>
             println("addingNewRoute.false")
             div(
-              "Done",
+              cls:="centered",
               button(
                 cls := "button",
                 "Add new route",
