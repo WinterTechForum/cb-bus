@@ -594,57 +594,64 @@ object Components {
         case true =>
           div(
             child <-- startingPoint.signal.map {
-              case Some(value) => "Starting at: " + value
+              case Some(value) =>
+                div(
+                  "Starting at: " + value,
+
+                  div(
+                    "Destination",
+                    div(
+                      locations.map(location =>
+                        div(
+                          button(
+                            cls := "button m-2",
+                            cls <--
+                              // TODO De-dup with above
+                              startingPoint.signal.map {
+                                case Some(startingPoint) =>
+                                  if (startingPoint == location)
+                                    "is-primary"
+                                  else
+                                    "not-same-location"
+                                case None => "no-starting-point-chosen"
+                              },
+                            location.name,
+                            onClick --> Observer { _ =>
+                              val start = startingPoint
+                                .now()
+                                .getOrElse(
+                                  throw Exception("No starting point"),
+                                )
+                              
+                              if (start != location) {
+
+                                val matchingLeg =
+                                  rightLegOnRightRoute(
+                                    start,
+                                    location,
+                                    $plan.now(),
+                                    initialTime,
+                                  )
+
+                                $plan.update { case oldPlan =>
+                                  val newPlan =
+                                    oldPlan.copy(l = oldPlan.l :+ matchingLeg)
+                                  db.saveDailyPlanOnly(newPlan)
+                                  println("setting addingNewRoute to false")
+                                  addingNewRoute.set(false)
+                                  println("Adding new route: " + addingNewRoute.now())
+                                  newPlan
+                                }
+                              }
+                            },
+                          ),
+                        ),
+                      ),
+                    )
+                  )
+                )
               case None        => startingPoints
             },
-            div(
-              "Destination",
-              div(
-                locations.map(location =>
-                  div(
-                    button(
-                      cls := "button m-2",
-                      cls <--
-                        // TODO De-dup with above
-                        startingPoint.signal.map {
-                          case Some(startingPoint) =>
-                            if (startingPoint == location)
-                              "is-primary"
-                            else
-                              "not-same-location"
-                          case None => "no-starting-point-chosen"
-                        },
-                      location.name,
-                      onClick --> Observer { _ =>
-                        val start = startingPoint
-                          .now()
-                          .getOrElse(
-                            throw Exception("No starting point"),
-                          )
-
-                        val matchingLeg =
-                          rightLegOnRightRoute(
-                            start,
-                            location,
-                            $plan.now(),
-                            initialTime,
-                          )
-
-                        $plan.update { case oldPlan =>
-                          val newPlan =
-                            oldPlan.copy(l = oldPlan.l :+ matchingLeg)
-                          db.saveDailyPlanOnly(newPlan)
-                          println("setting addingNewRoute to false")
-                          addingNewRoute.set(false)
-                          println("Adding new route: " + addingNewRoute.now())
-                          newPlan
-                        }
-                      },
-                    ),
-                  ),
-                ),
-              )
-            ),
           )
       }
     )
