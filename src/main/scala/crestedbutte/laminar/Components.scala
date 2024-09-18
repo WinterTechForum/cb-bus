@@ -128,10 +128,8 @@ object Components {
     $plan: Var[Plan],
     initialTime: WallTime,
     timestamp: WallTime,
+    addingNewRoute: Var[Boolean]
   ) =
-    val addingNewRoute: Var[Boolean] = Var(
-      false,
-    )
     def RouteLegElement(
       routeSegment: RouteSegment,
       planIndex: Int,
@@ -464,6 +462,9 @@ object Components {
     val $plan: Var[Plan] = Var(
       db.retrieveDailyPlanOnly.getOrElse(Plan(Seq.empty)),
     )
+    val addingNewRoute: Var[Boolean] = Var(
+      true,
+    )
     div(
       child <-- $plan.signal.map(plan =>
         div(
@@ -500,6 +501,7 @@ object Components {
                                    $plan,
                                    initialTime,
                                    timestamp,
+              addingNewRoute
             ),
           ),
         ),
@@ -578,7 +580,6 @@ object Components {
           div(
             "Nothing to add atm",
             div(
-              "Done",
               button(
                 cls := "button",
                 "Add new route",
