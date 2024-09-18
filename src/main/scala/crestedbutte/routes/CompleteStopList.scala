@@ -22,10 +22,6 @@ object CompleteStopList {
       Safeway,
       TellerAndHighwayFifty,
       Western,
-      EleventhAndVirginia,
-      Safeway,
-      TellerAndHighwayFifty,
-      Western,
       DenverAndHighwayOneThirtyFive,
       SpencerAndHighwayOneThirtyFive
     )
