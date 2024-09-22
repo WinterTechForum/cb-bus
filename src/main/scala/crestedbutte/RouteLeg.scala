@@ -45,11 +45,19 @@ object RouteSegment {
                s: LocationWithTime,
                e: LocationWithTime
              ) =
-    Either.cond(
-      s.l != e.l,
+    for {
+      firstPass <- Either.cond(
+        s.l != e.l,
       RouteSegment(r,s,e),
       "Either: RouteSegment must start and stop at different locations"
-    )
+      )
+
+      secondPass <- Either.cond(
+        WallTime.ordering.compare(s.t, e.t) <= 0,
+        RouteSegment(r,s,e),
+        "Either: RouteSegment must be in correct order. Start: " + s + "  End: " + e
+      )
+    } yield secondPass
 
   def fromRouteLeg(
     routeLeg: RouteLeg,
@@ -87,7 +95,7 @@ case class RouteLeg private (
       startWithTime       <- stops.find(_.l.matches(start))
       destinationWithTime <- stops.find(_.l.matches(destination))
     yield RouteSegment.attempt(routeName, startWithTime, destinationWithTime).getOrElse(
-      throw new Exception("POW")
+      throw new IllegalStateException("")
     )
 
   assert(stops.nonEmpty,

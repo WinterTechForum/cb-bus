@@ -523,10 +523,10 @@ object Components {
     )
 
   def rightLegOnRightRoute(
-    start: Location,
-    end: Location,
-    plan: Plan,
-    initialTime: WallTime,
+                            start: Location,
+                            end: Location,
+                            plan: Plan,
+                            pageLoadTime: WallTime,
   ): RouteSegment = {
 
     val routeSegments =
@@ -542,8 +542,9 @@ object Components {
               plan.l.lastOption
                 .map(_.end.t)
             val cutoff =
-              lastArrivalTime.getOrElse(initialTime)
-            l.start.t.isAfter(cutoff) && l.end.t.isAfter(cutoff)
+              lastArrivalTime.getOrElse(pageLoadTime)
+            println(s"Looking for start time after $cutoff")
+            l.start.t.isAfter(cutoff)
           }
           .getOrElse {
             // TODO Confirm I can delete this possibility?
@@ -567,6 +568,8 @@ object Components {
   ) =
     val startingPoint: Var[Option[Location]] = Var(None)
 
+    // Do a more unified view in the start/stop selection.
+    // Shouldn't be 2 completely separate groups of elements
     val startingPoints =
       div(
         div("Starting at: "),
@@ -585,10 +588,35 @@ object Components {
                   println("In observer: " + location)
                   startingPoint.update {
                     case Some(startingPointNow) if startingPointNow == location=>
-                      None
-                    case Some(other) => Some(other)
-                    case None =>
                       println("Clearing out startingPoint")
+                      None
+                    case Some(other) =>
+                      val matchingLeg =
+                        rightLegOnRightRoute(
+                          other,
+                          location,
+                          $plan.now(),
+                          initialTime,
+                        )
+
+                      $plan.update { case oldPlan =>
+                        val newPlan =
+                          oldPlan.copy(l =
+                            oldPlan.l :+ matchingLeg,
+                          )
+                        db.saveDailyPlanOnly(newPlan)
+                        println(
+                          "setting addingNewRoute to false",
+                        )
+                        addingNewRoute.set(false)
+                        println(
+                          "Adding new route: " + addingNewRoute
+                            .now(),
+                        )
+                        newPlan
+                      }
+                      Some(other)
+                    case None =>
                       Some(location)
                   }
               },
@@ -602,103 +630,13 @@ object Components {
                       case None => ""
               },
               location.name,
-              onClick.mapTo(Some(location)) --> startingPoint,
+//              onClick.mapTo(Some(location)) --> startingPoint,
             ),
           ),
         ),
       )
     div(
-      child <-- addingNewRoute.signal.map {
-        case false =>
-          div(
-            "Nothing to add atm",
-            div(
-              button(
-                cls := "button",
-                "Add new route",
-                onClick --> Observer { _ =>
-                  addingNewRoute.set {
-                    true
-
-                  }
-                },
-              ),
-            ),
-          )
-
-        case true =>
-          div(
-            child <-- startingPoint.signal.map {
-              case Some(value) =>
-                div(
-                  div("Starting at: "),
-                  div(value.name),
-                  div(
-                    "Ending at:",
-                    div(
-                      locations.map(location =>
-                        div(
-                          button(
-                            cls := "button m-2",
-                            cls <--
-                              // TODO De-dup with above
-                              startingPoint.signal.map {
-                                case Some(startingPoint) =>
-                                  if (startingPoint == location)
-                                    "is-primary"
-                                  else
-                                    "not-same-location"
-                                case None =>
-                                  "no-starting-point-chosen"
-                              },
-                            location.name,
-                            onClick --> Observer { _ =>
-                              val start = startingPoint
-                                .now()
-                                .getOrElse(
-                                  throw Exception("No starting point"),
-                                )
-
-                              if (start != location) {
-
-                                val matchingLeg =
-                                  rightLegOnRightRoute(
-                                    start,
-                                    location,
-                                    $plan.now(),
-                                    initialTime,
-                                  )
-
-                                $plan.update { case oldPlan =>
-                                  val newPlan =
-                                    oldPlan.copy(l =
-                                      oldPlan.l :+ matchingLeg,
-                                    )
-                                  db.saveDailyPlanOnly(newPlan)
-                                  println(
-                                    "setting addingNewRoute to false",
-                                  )
-                                  addingNewRoute.set(false)
-                                  println(
-                                    "Adding new route: " + addingNewRoute
-                                      .now(),
-                                  )
-                                  newPlan
-                                }
-                              } else {
-                                startingPoint.set(None)
-                              }
-                            },
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                )
-              case None => startingPoints
-            },
-          )
-      },
+              startingPoints
     )
 
   def renderWaitTime(
