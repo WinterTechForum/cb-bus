@@ -1,7 +1,7 @@
 package crestedbutte
 
-import com.billding.time.MinuteDuration
-import zio.json._
+import com.billding.time.{MinuteDuration, WallTime}
+import zio.json.*
 
 case class RouteSegment private(
   r: ComponentName,
@@ -26,13 +26,15 @@ case class RouteSegment private(
 
   def updateTimeAtLocation(
                             lwt: LocationWithTime,
+                            previousStartTime: WallTime,
+                            previousEndTime: WallTime
 
                           ): RouteSegment =
 
     lwt.l match
-      case s.l =>
+      case s.l if s.t == previousStartTime =>
         copy(s = s.copy(t = lwt.t))
-      case e.l =>
+      case e.l if e.t == previousEndTime =>
         copy(e = e.copy(t = lwt.t))
       case other => this
 }

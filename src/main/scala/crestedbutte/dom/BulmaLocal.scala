@@ -60,17 +60,30 @@ object BulmaLocal {
       paddingBottom := "3px",
       cls := "time",
 
-      span(
-        cls:="clickable-time",
-        onClick.mapTo(l) --> Observer {
-          _ =>
-            // TODO We need to track the previous state, so we know which one to update here.
-          $plan.update(plan => plan.copy(l = plan.l.map {
-            lwt => lwt.updateTimeAtLocation(l)
-          }))
-          println("$plan" + $plan.now())
-        },
-        l.t.toDumbAmericanString,
+      div(
+        child <-- $plan.signal.map(
+          plan =>
+            div(
+            plan.l.map(
+            segment =>
+              span(
+                cls:="clickable-time",
+                onClick --> Observer {
+                  _ =>
+                    // TODO We need to track the previous state, so we know which one to update here.
+                    $plan.update(plan => plan.copy(l = plan.l.map {
+                      lwt => lwt.updateTimeAtLocation(l, segment.start.t, segment.end.t)
+                    }))
+                    println("$plan maybe.1: " + $plan.now())
+                },
+                l.t.toDumbAmericanString,
+
+            )
+
+          )
+        )
+        )
+
       ),
     )
 
