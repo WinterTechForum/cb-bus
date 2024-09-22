@@ -14,31 +14,6 @@ object BulmaLocal {
     case SelectedLeg(
       routeLeg: RouteLeg)
 
-  def notification(
-    text: String,
-  ) =
-    div(
-      cls := "notification is-link is-light",
-      button(cls := "delete"),
-      text,
-      a("TODO* Link to TripViewer *TODO*"),
-    )
-
-  def notificationWithHomeLink(
-    text: String,
-    componentSelector: Observer[ComponentData],
-  ) =
-    div(
-      cls := "notification is-link is-light",
-      button(cls := "delete"),
-      text,
-      button(
-        cls := "button",
-        "View Current Trip",
-        onClick.mapTo(PlanViewer) --> componentSelector,
-      ),
-    )
-
   def bulmaModal(
     scheduleAtStop: BusScheduleAtStop,
     $active: Var[Boolean],
@@ -72,10 +47,47 @@ object BulmaLocal {
       ),
     )
 
-  def manualClunkyAlerts(
-    $alertsEnabled: Signal[Boolean],
-    time: WallTime,
+  def locationwithTime(
+    l: LocationWithTime
+                      ) =
+    div(
+      textAlign := "center",
+      verticalAlign := "middle",
+      paddingBottom := "3px",
+      cls := "time",
+
+      span(
+        cls:="clickable-time",
+        l.t.toDumbAmericanString,
+      ),
+    )
+
+
+  def UpcomingStops(
+    scheduleAtStop: BusScheduleAtStop,
   ) =
+    div(
+      h4(textAlign := "center", scheduleAtStop.location.name),
+      h5(textAlign := "center", "Upcoming Arrivals"),
+      scheduleAtStop.locationsWithTimes.map(
+        locationwithTime
+      ),
+    )
+
+  def notification(
+                    text: String,
+                  ) =
+    div(
+      cls := "notification is-link is-light",
+      button(cls := "delete"),
+      text,
+      a("TODO* Link to TripViewer *TODO*"),
+    )
+
+  def manualClunkyAlerts(
+                          $alertsEnabled: Signal[Boolean],
+                          time: WallTime,
+                        ) =
     div(
       child <-- $alertsEnabled.map(alertsEnabled =>
         if (dom.Notification.permission == "granted" && alertsEnabled)
@@ -85,24 +97,6 @@ object BulmaLocal {
             time,
           )
         else div(),
-      ),
-    )
-
-  def UpcomingStops(
-    scheduleAtStop: BusScheduleAtStop,
-  ) =
-    div(
-      h4(textAlign := "center", scheduleAtStop.location.name),
-      h5(textAlign := "center", "Upcoming Arrivals"),
-      scheduleAtStop.times.map(time =>
-        div(
-          textAlign := "center",
-          verticalAlign := "middle",
-          paddingBottom := "3px",
-          span(
-            time.toDumbAmericanString,
-          ),
-        ),
       ),
     )
 

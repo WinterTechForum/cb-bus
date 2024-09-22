@@ -723,7 +723,9 @@ object Components {
             .add("is-clipped")
           true
         } --> modalActive,
-        stopTimeInfo.time.toDumbAmericanString,
+//        span(cls := "stop-time-info")(
+//          div(stopTimeInfo.time.toDumbAmericanString),
+//        )
       ),
       div(
         cls := "wait-time",

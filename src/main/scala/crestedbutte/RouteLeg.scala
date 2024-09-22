@@ -9,6 +9,11 @@ case class RouteSegment(
   e: LocationWithTime)
     derives JsonCodec {
 
+  assert(
+    s.l != e.l,
+    "RouteSegment must start and stop at different locations"
+  )
+
   // These let us use good names for logical operations, while keeping shortest names for serialization
   val route = r
   val start = s
@@ -41,6 +46,7 @@ object RouteLeg:
       last <- stops.lastOption.toRight("Empty Route")
     yield RouteLeg(stops, routeName, head, last)
 
+// TODO Ensure no repeat Locations
 case class RouteLeg private (
   stops: Seq[LocationWithTime],
   routeName: ComponentName,

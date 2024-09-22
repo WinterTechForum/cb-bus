@@ -51,6 +51,7 @@ object BulmaBehaviorLocal {
       }
 
   // This isn't really Bulma specific, rather than the .is-active class
+  // Warning - this feels bad for accessibility. Making something that relies on things being "on top" of other elements does not translate well
   def hideOnClickOutside(
     element: Element,
     browser: Browser.Service,

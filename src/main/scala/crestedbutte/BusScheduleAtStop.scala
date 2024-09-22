@@ -6,6 +6,7 @@ case class BusScheduleAtStop(
   location: Location,
   times: Seq[WallTime],
   routeName: ComponentName) {
+  val locationsWithTimes = times.map(t => LocationWithTime(location, t))
 
   def at(
     locationIn: Location,

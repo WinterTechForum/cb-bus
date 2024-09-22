@@ -128,12 +128,12 @@ cbPublish := {
 
 zonesFilter := {(z: String) => z == "America/Denver" || z == "America/Mountain"}
 
-lazy val sw = (project in file("sw"))
-  .enablePlugins(ScalaJSPlugin)
-  .settings(
-    scalaVersion := "3.3.1",
-    scalaJSUseMainModuleInitializer := true,
-    libraryDependencies ++= Seq(
-      "org.scala-js" %%% "scalajs-dom" % "2.8.0"
-    )
-  )
+//lazy val sw = (project in file("sw"))
+//  .enablePlugins(ScalaJSPlugin)
+//  .settings(
+//    scalaVersion := "3.3.1",
+//    scalaJSUseMainModuleInitializer := true,
+//    libraryDependencies ++= Seq(
+//      "org.scala-js" %%% "scalajs-dom" % "2.8.0"
+//    )
+//  )
