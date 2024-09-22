@@ -187,7 +187,6 @@ object Components {
       def stopInfo(
         stop: LocationWithTime,
         $plan: Var[Plan],
-        actionSection: ReactiveHtmlElement[_] = div()
       ) =
         UpcomingStopInfo(
           stop.l,
@@ -247,7 +246,7 @@ object Components {
         div(
           cls := "plan-segments",
           // TODO pass state piece is being updated
-          stopInfo(routeSegment.start, $plan, deleteButton),
+          stopInfo(routeSegment.start, $plan),
 
           /*
              Connecting icons for start and end of legs
@@ -549,7 +548,7 @@ object Components {
           .getOrElse {
             // TODO Confirm I can delete this possibility?
             throw new IllegalStateException(
-              "No route leg available in either route",
+              "No route leg available in either route. Start: " + start + "  End: " + end,
             )
           }
       case None =>
@@ -578,15 +577,25 @@ object Components {
           div(
             button(
               cls := "button m-2",
-              cls <--
-                startingPoint.signal.map {
-                  case Some(startingPoint) =>
-                    if (startingPoint == location)
-                      "is-primary"
-                    else
-                      "not-same-location"
-                  case None => "no-starting-point-chosen"
-                },
+              onClick --> Observer {
+                _ =>
+                  println("In observer: " + location)
+                  startingPoint.update {
+                    case Some(startingPointNow) if startingPointNow == location=>
+                      None
+                    case Some(other) => Some(other)
+                    case None => Some(location)
+                  }
+              },
+              cls <-- startingPoint.signal.map {
+                  sp =>
+                    sp match
+                      case Some(startingPointNow) if startingPointNow == location =>
+                        println("startingPointNow: " + startingPointNow)
+                        "is-primary"
+                      case Some(_) => ""
+                      case None => ""
+              },
               location.name,
               onClick.mapTo(Some(location)) --> startingPoint,
             ),
