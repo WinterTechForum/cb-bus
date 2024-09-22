@@ -19,6 +19,7 @@ case class RouteWithTimes(
   ) =
     val res = legs.indexWhere(leg =>
       leg.stops.exists(locationWithTime =>
+        // TODO Make this more clear
         locationWithTime.t.localTime.value == other.start.t.localTime.value && locationWithTime.l == other.start.l,
       ),
     )

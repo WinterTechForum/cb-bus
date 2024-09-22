@@ -17,6 +17,8 @@ object BulmaLocal {
   def bulmaModal(
     scheduleAtStop: BusScheduleAtStop,
     $active: Var[Boolean],
+    $plan: Var[Plan],
+    // TODO pass state piece is being updated
   ) =
     val notificationBus = EventBus[ReactiveHtmlElement[_]]()
     div(
@@ -32,6 +34,7 @@ object BulmaLocal {
         child <-- notificationBus.events.map(element => element),
         UpcomingStops(
           scheduleAtStop,
+          $plan
         ),
       ),
       button(
@@ -48,7 +51,8 @@ object BulmaLocal {
     )
 
   def locationwithTime(
-    l: LocationWithTime
+    l: LocationWithTime,
+    $plan: Var[Plan],
                       ) =
     div(
       textAlign := "center",
@@ -58,6 +62,14 @@ object BulmaLocal {
 
       span(
         cls:="clickable-time",
+        onClick.mapTo(l) --> Observer {
+          _ =>
+            // TODO We need to track the previous state, so we know which one to update here.
+          $plan.update(plan => plan.copy(l = plan.l.map {
+            lwt => lwt.updateTimeAtLocation(l)
+          }))
+          println("$plan" + $plan.now())
+        },
         l.t.toDumbAmericanString,
       ),
     )
@@ -65,12 +77,14 @@ object BulmaLocal {
 
   def UpcomingStops(
     scheduleAtStop: BusScheduleAtStop,
+    $plan: Var[Plan],
+    // TODO pass state piece is being updated
   ) =
     div(
       h4(textAlign := "center", scheduleAtStop.location.name),
       h5(textAlign := "center", "Upcoming Arrivals"),
       scheduleAtStop.locationsWithTimes.map(
-        locationwithTime
+        l => locationwithTime(l, $plan)
       ),
     )
 

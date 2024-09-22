@@ -186,7 +186,8 @@ object Components {
 
       def stopInfo(
         stop: LocationWithTime,
-        actionSection: ReactiveHtmlElement[_] = div(),
+        $plan: Var[Plan],
+        actionSection: ReactiveHtmlElement[_] = div()
       ) =
         UpcomingStopInfo(
           stop.l,
@@ -208,6 +209,7 @@ object Components {
                       StopTimeInfoForLocation(
                         stopTimeInfo,
                         scheduleAtStop,
+                        $plan
                       )
                     case Right(value) => div("-")
 
@@ -244,7 +246,8 @@ object Components {
         },
         div(
           cls := "plan-segments",
-          stopInfo(routeSegment.start, deleteButton),
+          // TODO pass state piece is being updated
+          stopInfo(routeSegment.start, $plan, deleteButton),
 
           /*
              Connecting icons for start and end of legs
@@ -256,7 +259,7 @@ object Components {
           SvgIcon("glyphicons-basic-211-arrow-down.svg",
                   "plain-white plan-segment-divider",
           ),
-          stopInfo(routeSegment.end),
+          stopInfo(routeSegment.end, $plan),
           div( // TODO Move this separator outside of this, so it's not attached to the last leg of the trip
             textAlign := "center",
             SvgIcon("glyphicons-basic-947-circle-more.svg",
@@ -710,6 +713,8 @@ object Components {
   def StopTimeInfoForLocation(
     stopTimeInfo: StopTimeInfo,
     busScheduleAtStop: BusScheduleAtStop,
+    $plan: Var[Plan],
+    // TODO pass state piece is being updated
   ) = {
 
     val modalActive = Var(false)
@@ -733,6 +738,7 @@ object Components {
         BulmaLocal.bulmaModal(
           busScheduleAtStop,
           modalActive,
+          $plan
         ),
       ),
     )

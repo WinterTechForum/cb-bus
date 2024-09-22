@@ -3,7 +3,7 @@ package crestedbutte
 import com.billding.time.MinuteDuration
 import zio.json._
 
-case class RouteSegment(
+case class RouteSegment private(
   r: ComponentName,
   s: LocationWithTime,
   e: LocationWithTime)
@@ -23,9 +23,32 @@ case class RouteSegment(
     s"""${start.t.toDumbAmericanString}  ${start.l.name}
        |${end.t.toDumbAmericanString}  ${end.l.name}
        |""".stripMargin
+
+  def updateTimeAtLocation(
+                            lwt: LocationWithTime,
+
+                          ): RouteSegment =
+
+    lwt.l match
+      case s.l =>
+        copy(s = s.copy(t = lwt.t))
+      case e.l =>
+        copy(e = e.copy(t = lwt.t))
+      case other => this
 }
 
 object RouteSegment {
+  def attempt(
+               r: ComponentName,
+               s: LocationWithTime,
+               e: LocationWithTime
+             ) =
+    Either.cond(
+      s.l != e.l,
+      RouteSegment(r,s,e),
+      "Either: RouteSegment must start and stop at different locations"
+    )
+
   def fromRouteLeg(
     routeLeg: RouteLeg,
   ): RouteSegment =
@@ -61,7 +84,9 @@ case class RouteLeg private (
     for
       startWithTime       <- stops.find(_.l.matches(start))
       destinationWithTime <- stops.find(_.l.matches(destination))
-    yield RouteSegment(routeName, startWithTime, destinationWithTime)
+    yield RouteSegment.attempt(routeName, startWithTime, destinationWithTime).getOrElse(
+      throw new Exception("POW")
+    )
 
   assert(stops.nonEmpty,
          "Empty Route",
