@@ -569,9 +569,12 @@ object Components {
 
     val startingPoints =
       div(
-        "Choose starting point: ",
+        div("Starting at: "),
+        div("____________________"),
+
         div(
-          "-----------------------",
+          color := "grey",
+          span("|__________________|"),
         ), // Really just to keep vertical spacing from changing after you select a start point
         locations.map(location =>
           div(
@@ -584,7 +587,9 @@ object Components {
                     case Some(startingPointNow) if startingPointNow == location=>
                       None
                     case Some(other) => Some(other)
-                    case None => Some(location)
+                    case None =>
+                      println("Clearing out startingPoint")
+                      Some(location)
                   }
               },
               cls <-- startingPoint.signal.map {
@@ -626,9 +631,10 @@ object Components {
             child <-- startingPoint.signal.map {
               case Some(value) =>
                 div(
-                  "Starting at: " + value,
+                  div("Starting at: "),
+                  div(value.name),
                   div(
-                    "Destination",
+                    "Ending at:",
                     div(
                       locations.map(location =>
                         div(
@@ -679,6 +685,8 @@ object Components {
                                   )
                                   newPlan
                                 }
+                              } else {
+                                startingPoint.set(None)
                               }
                             },
                           ),
