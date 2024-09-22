@@ -544,15 +544,17 @@ object Components {
             val cutoff =
               lastArrivalTime.getOrElse(pageLoadTime)
             println(s"Looking for start time after $cutoff")
-            l.start.t.isAfter(cutoff)
+            l.start.t.isLikelyEarlyMorningRatherThanLateNight || l.start.t.isAfter(cutoff)
           }
           .getOrElse {
+            println("A")
             // TODO Confirm I can delete this possibility?
             throw new IllegalStateException(
               "No route leg available in either route. Start: " + start + "  End: " + end,
             )
           }
       case None =>
+        println("B")
         throw new IllegalStateException(
           "No route leg available in either route B",
         )
@@ -591,31 +593,39 @@ object Components {
                       println("Clearing out startingPoint")
                       None
                     case Some(other) =>
-                      val matchingLeg =
-                        rightLegOnRightRoute(
-                          other,
-                          location,
-                          $plan.now(),
-                          initialTime,
-                        )
-
-                      $plan.update { case oldPlan =>
-                        val newPlan =
-                          oldPlan.copy(l =
-                            oldPlan.l :+ matchingLeg,
+                      try {
+                        println("Trying to connect dots")
+                        val matchingLeg =
+                          rightLegOnRightRoute(
+                            other,
+                            location,
+                            $plan.now(),
+                            initialTime,
                           )
-                        db.saveDailyPlanOnly(newPlan)
-                        println(
-                          "setting addingNewRoute to false",
-                        )
-                        addingNewRoute.set(false)
-                        println(
-                          "Adding new route: " + addingNewRoute
-                            .now(),
-                        )
-                        newPlan
+                        println("Connected dots")
+
+                        $plan.update { case oldPlan =>
+                          val newPlan =
+                            oldPlan.copy(l =
+                              oldPlan.l :+ matchingLeg,
+                            )
+                          db.saveDailyPlanOnly(newPlan)
+                          println(
+                            "setting addingNewRoute to false",
+                          )
+                          addingNewRoute.set(false)
+                          println(
+                            "Adding new route: " + addingNewRoute
+                              .now(),
+                          )
+                          newPlan
+                        }
+                        Some(other)
+                      } catch {
+                        case ex: Throwable =>
+                          println("Illegal state: " + ex)
+                          throw new IllegalStateException(ex.getMessage)
                       }
-                      Some(other)
                     case None =>
                       Some(location)
                   }
@@ -630,7 +640,6 @@ object Components {
                       case None => ""
               },
               location.name,
-//              onClick.mapTo(Some(location)) --> startingPoint,
             ),
           ),
         ),

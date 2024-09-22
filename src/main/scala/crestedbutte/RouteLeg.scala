@@ -94,9 +94,8 @@ case class RouteLeg private (
     for
       startWithTime       <- stops.find(_.l.matches(start))
       destinationWithTime <- stops.find(_.l.matches(destination))
-    yield RouteSegment.attempt(routeName, startWithTime, destinationWithTime).getOrElse(
-      throw new IllegalStateException("")
-    )
+      res <- RouteSegment.attempt(routeName, startWithTime, destinationWithTime).toOption
+    yield res
 
   assert(stops.nonEmpty,
          "Empty Route",
