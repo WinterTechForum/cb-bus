@@ -107,8 +107,10 @@ implicit val hourNotationCodec: JsonCodec[HourNotation] =
   DeriveJsonCodec.gen[HourNotation]
 
 case class Plan(
+  // TODO It kind of sucks that I'm working with the compressed name here.
   l: Seq[RouteSegment])
     derives JsonCodec:
+  
   val plainTextRepresentation: String =
     l.zipWithIndex
       .map(

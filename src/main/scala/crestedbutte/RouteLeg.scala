@@ -24,10 +24,18 @@ case class RouteSegment private(
        |${end.t.toDumbAmericanString}  ${end.l.name}
        |""".stripMargin
 
+  /**
+   * TODO This all feels awkward.
+   * 
+   * @param lwt
+   * @param previousStartTime this ensures we only update one entry
+   * @param previousEndTime
+   * @return
+   */
   def updateTimeAtLocation(
                             lwt: LocationWithTime,
-                            previousStartTime: WallTime,
-                            previousEndTime: WallTime
+                            previousStartTime: WallTime, 
+                            previousEndTime: WallTime,
 
                           ): RouteSegment =
 

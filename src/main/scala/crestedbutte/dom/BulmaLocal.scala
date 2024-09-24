@@ -51,6 +51,7 @@ object BulmaLocal {
     )
 
   def locationwithTime(
+    // pair with other end somehow
     l: LocationWithTime,
     $plan: Var[Plan],
                       ) =
@@ -72,8 +73,10 @@ object BulmaLocal {
                   _ =>
                     // TODO We need to track the previous state, so we know which one to update here.
                     $plan.update(plan => plan.copy(l = plan.l.map {
-                      lwt => lwt.updateTimeAtLocation(l, segment.start.t, segment.end.t)
+                      // TODO BUG - does not update end location
+                      routeSegment => routeSegment.updateTimeAtLocation(l, segment.start.t, segment.end.t)
                     }))
+                    
                     println("$plan maybe.1: " + $plan.now())
                 },
                 l.t.toDumbAmericanString,
@@ -89,7 +92,7 @@ object BulmaLocal {
 
 
   def UpcomingStops(
-    scheduleAtStop: BusScheduleAtStop,
+    scheduleAtStop: BusScheduleAtStop, // TODO This needs to be pairs.
     $plan: Var[Plan],
     // TODO pass state piece is being updated
   ) =

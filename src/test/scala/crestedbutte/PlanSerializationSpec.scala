@@ -10,11 +10,11 @@ object PlanSerializationSpec extends ZIOSpecDefault {
   val plan =
     Plan(
       Seq(
-        RouteSegment(
+        RouteSegment.attempt(
           RtaSouthbound.componentName,
           LocationWithTime(Location.CBSouth, WallTime("10:20 PM")),
           LocationWithTime(Location.RecCenter, WallTime("10:46 PM")),
-        ),
+        ).getOrElse(???),
       ),
     )
 
@@ -70,11 +70,11 @@ object PlanSerializationSpec extends ZIOSpecDefault {
         test("multi leg"){
           assertTrue(
             plan.copy(plan.l :+
-              RouteSegment(
+              RouteSegment.attempt(
                 RtaSouthbound.componentName,
                 LocationWithTime(Location.SpencerAndHighwayOneThirtyFive, WallTime("03:20 PM")),
                 LocationWithTime(Location.BrushCreek, WallTime("04:00 PM")),
-              ),
+              ).getOrElse(???),
             ).plainTextRepresentation  ==
               """10:20 PM  CB South
                 |10:46 PM  Rec Center
