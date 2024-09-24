@@ -693,7 +693,9 @@ object Components {
           true
         } --> modalActive,
 //        span(cls := "stop-time-info")(
-//          div(stopTimeInfo.time.toDumbAmericanString),
+//          div(
+            stopTimeInfo.time.toDumbAmericanString
+//          ),
 //        )
       ),
       div(
