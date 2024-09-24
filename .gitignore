@@ -6,3 +6,7 @@
 /sw/target/
 .env
 .bsp/sbt.json
+/src/main/resources/project/target
+/src/main/resources/target
+hs_err*log
+replay_pid*log
