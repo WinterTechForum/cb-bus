@@ -8,18 +8,6 @@ case class BusScheduleAtStop(
   routeName: RouteName) {
   val locationsWithTimes = times.map(t => LocationWithTime(location, t))
 
-  def at(
-    locationIn: Location,
-  ) = BusScheduleAtStop(locationIn, times, routeName)
-
-  def scheduleAfter(
-    busTime: WallTime,
-  ) =
-    BusScheduleAtStop(
-      location,
-      times.dropWhile(!TimeCalculations.catchableBus(busTime, _)),
-      routeName,
-    )
 
 }
 

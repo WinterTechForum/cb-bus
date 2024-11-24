@@ -23,7 +23,6 @@ import org.scalajs.dom
 import java.time.format.{DateTimeFormatter, FormatStyle}
 import java.time.{Clock, Instant, OffsetDateTime}
 import scala.concurrent.duration.FiniteDuration
-import crestedbutte.dom.BulmaLocal.ModalMode
 import crestedbutte.laminar.TouchControls.Swipe
 import org.scalajs.dom.{css, HTMLAnchorElement}
 

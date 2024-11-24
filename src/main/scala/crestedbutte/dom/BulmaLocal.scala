@@ -9,11 +9,6 @@ import org.scalajs.dom
 import org.scalajs.dom.experimental.Notification
 
 object BulmaLocal {
-  enum ModalMode:
-    case UpcomingStops
-    case SelectedLeg(
-      routeLeg: RouteLeg)
-
   def bulmaModal(
     scheduleAtStop: BusScheduleAtStop,
     $active: Var[Boolean],
@@ -102,16 +97,6 @@ object BulmaLocal {
       scheduleAtStop.locationsWithTimes.map(
         l => locationwithTime(l, $plan)
       ),
-    )
-
-  def notification(
-                    text: String,
-                  ) =
-    div(
-      cls := "notification is-link is-light",
-      button(cls := "delete"),
-      text,
-      a("TODO* Link to TripViewer *TODO*"),
     )
 
   def manualClunkyAlerts(
