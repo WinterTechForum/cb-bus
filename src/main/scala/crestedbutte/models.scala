@@ -46,7 +46,7 @@ object ComponentName {
   implicit lazy val codec: JsonCodec[ComponentName] =
     JsonCodec.int.transform(decode, encode)
 }
-// TODO General name
+
 case class ComponentName(
   userFriendlyName: String) {
 

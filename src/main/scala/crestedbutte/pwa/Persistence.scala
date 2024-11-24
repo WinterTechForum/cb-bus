@@ -28,17 +28,6 @@ class Persistence():
     }
     ()
 
-  // TODO Delete after de-option'ing Plan everywhere
-//  def retrieveDailyPlan(
-//    $plan: Var[Plan],
-//  ) =
-//    val result = localStorage
-//      .getItem("today")
-//      .fromJson[Option[Plan]]
-//      .getOrElse(throw new Exception("Bad plan in localStorage"))
-//      .getOrElse(Plan(Seq.empty))
-//    $plan.set(result)
-//    result
 
   def retrieveDailyPlanOnly = {
     val previouslyStoredPlan =
