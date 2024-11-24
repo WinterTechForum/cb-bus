@@ -8,27 +8,7 @@ case class StopTimeInfo(
   time: WallTime,
   waitingDuration: MinuteDuration)
 
-case class BusTimeWithLocation(
-  busTime: WallTime,
-  location: Location)
-
-enum RouteMode(
-  name: String) {
-  // TODO Check ordering of all coordinates
-  case Active extends RouteMode("Active")
-  case Hidden extends RouteMode("Hidden")
-}
-
-case class PhoneNumber(
-  number: String,
-  name: String)
-
 object RouteName {
-//  implicit val codec: JsonCodec[ComponentName] =
-//    JsonCodec.string.transform(ComponentName.apply,
-//                               _.userFriendlyName,
-//    )
-
   private lazy val indexedComponentNames: Seq[(RouteName, Int)] =
     Seq(
       RtaSouthbound.componentName,
@@ -57,9 +37,6 @@ case class RouteName(
       )
       .mkString
 
-  def elementNameMatches(
-    elementName: String,
-  ) = name == elementName
 }
 
 case class LateNightRecommendation( // TODO Rename "LateNight" or something
