@@ -3,7 +3,7 @@ package crestedbutte.routes
 import crestedbutte.{
   BusSchedule,
   BusScheduleAtStop,
-  ComponentName,
+  RouteName,
   Location,
   NamedRoute,
 }
@@ -11,9 +11,9 @@ import com.billding.time.MinuteDuration.toMinuteDuration
 
 object SpringFallLoop
     extends NamedRoute(
-      ComponentName("Off-season Loop"),
+      RouteName("Off-season Loop"),
       RouteWithTimes.schedTyped(
-        ComponentName("Off-season Loop"),
+        RouteName("Off-season Loop"),
         Location.OldTownHall,
         _.plus(Location.Clarks, 5.minutes)
           .plus(Location.FourWayUphill, 1.minutes)

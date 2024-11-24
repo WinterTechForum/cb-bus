@@ -3,7 +3,7 @@ package crestedbutte.routes
 import crestedbutte.{
   BusSchedule,
   BusScheduleAtStop,
-  ComponentName,
+  RouteName,
   Location,
   NamedRoute,
 }
@@ -23,9 +23,9 @@ import com.billding.time.MinuteDuration.toMinuteDuration
  */
 object TownShuttleTimes
     extends NamedRoute(
-      ComponentName("Town Loop"),
+      RouteName("Town Loop"),
       RouteWithTimes.schedTyped(
-        ComponentName("Town Loop"),
+        RouteName("Town Loop"),
         Location.OldTownHall,
         _.plus(Location.Clarks, 4.minutes)
           .plus(Location.FourWayUphill, 1.minutes)

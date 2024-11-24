@@ -4,14 +4,14 @@ import com.billding.time.MinuteDuration.toMinuteDuration
 import crestedbutte.{
   BusSchedule,
   BusScheduleAtStop,
-  ComponentName,
+  RouteName,
   Location,
   NamedRoute,
   RouteLeg,
 }
 
 object RtaNorthbound {
-  val componentName = ComponentName("Rta Northbound")
+  val componentName = RouteName("Rta Northbound")
 
 //  def constructExpressRoute(
 //    routeLeg: RouteLeg,
@@ -68,7 +68,7 @@ object RtaNorthbound {
 
   val normalRouteWithTimes =
     RouteWithTimes.sched(
-      ComponentName("Rta Northbound"),
+      RouteName("Rta Northbound"),
       Location.RecCenter,
       constructNormalRoute,
       "5:21 AM",
@@ -107,7 +107,7 @@ object RtaNorthbound {
     )
 
   val fullSchedule = NamedRoute(
-    ComponentName("Rta Northbound"),
+    RouteName("Rta Northbound"),
     normalRouteWithTimes,
 //      .combinedWith(expressRouteWithTimes),
   )

@@ -4,9 +4,9 @@ import com.billding.time.{MinuteDuration, WallTime}
 import zio.json.*
 
 case class RouteSegment private(
-  r: ComponentName,
-  s: LocationWithTime,
-  e: LocationWithTime)
+                                 r: RouteName,
+                                 s: LocationWithTime,
+                                 e: LocationWithTime)
     derives JsonCodec {
 
   assert(
@@ -49,7 +49,7 @@ case class RouteSegment private(
 
 object RouteSegment {
   def attempt(
-               r: ComponentName,
+               r: RouteName,
                s: LocationWithTime,
                e: LocationWithTime
              ) =
@@ -79,8 +79,8 @@ object RouteSegment {
 
 object RouteLeg:
   def apply(
-    stops: Seq[LocationWithTime],
-    routeName: ComponentName,
+             stops: Seq[LocationWithTime],
+             routeName: RouteName,
   ): Either[String, RouteLeg] =
     for
       head <- stops.headOption.toRight("Empty Route")
@@ -89,10 +89,10 @@ object RouteLeg:
 
 // TODO Ensure no repeat Locations
 case class RouteLeg private (
-  stops: Seq[LocationWithTime],
-  routeName: ComponentName,
-  head: LocationWithTime,
-  last: LocationWithTime)
+                              stops: Seq[LocationWithTime],
+                              routeName: RouteName,
+                              head: LocationWithTime,
+                              last: LocationWithTime)
     derives JsonCodec {
 
   def segmentFrom(

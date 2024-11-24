@@ -2,24 +2,24 @@ package crestedbutte
 
 import com.billding.time.WallTime
 import crestedbutte.routes.RouteWithTimes
-import crestedbutte.{ComponentName, Location}
+import crestedbutte.{RouteName, Location}
 
 // TODO Where should this ComponentData abstraction *actually* live?
 sealed trait ComponentData {
   //  namedRoute: NamedRoute,
 
-  val componentName: ComponentName
+  val componentName: RouteName
 }
 
 case object PlanViewer extends ComponentData {
-  val componentName = ComponentName("PlanViewer")
+  val componentName = RouteName("PlanViewer")
 }
 
-import crestedbutte.{ComponentName, Location}
+import crestedbutte.{RouteName, Location}
 
 case class NamedRoute(
-  componentName: ComponentName,
-  routeWithTimes: RouteWithTimes)
+                       componentName: RouteName,
+                       routeWithTimes: RouteWithTimes)
     extends ComponentData {
 
   val firstStopOnRoute: Location =
@@ -65,7 +65,7 @@ object NamedRoute {
     routeWithTimes: RouteWithTimes,
   ): NamedRoute =
     NamedRoute(
-      ComponentName(rawRouteName),
+      RouteName(rawRouteName),
       routeWithTimes,
     )
 }

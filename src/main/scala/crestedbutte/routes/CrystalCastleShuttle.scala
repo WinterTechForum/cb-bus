@@ -4,7 +4,7 @@ import com.billding.time.MinuteDuration.toMinuteDuration
 import crestedbutte.{
   BusSchedule,
   BusScheduleAtStop,
-  ComponentName,
+  RouteName,
   Location,
   NamedRoute,
 }
@@ -25,9 +25,9 @@ Every 30 minutes from 8:10 AM to 10:40 PM
  */
 object CrystalCastleShuttle
     extends NamedRoute(
-      ComponentName("Crystal/Castle"),
+      RouteName("Crystal/Castle"),
       RouteWithTimes.schedTyped(
-        ComponentName("Crystal/Castle"),
+        RouteName("Crystal/Castle"),
         Location.MountaineerSquare,
         _.plus(Location.Pitchfork, 2.minutes)
           .plus(Location.CrystalRoad, 1.minutes)

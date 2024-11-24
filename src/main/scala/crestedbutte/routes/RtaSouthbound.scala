@@ -5,7 +5,7 @@ import com.billding.time.WallTime
 import crestedbutte.*
 
 object RtaSouthbound {
-  val componentName = ComponentName("Rta Southbound")
+  val componentName = RouteName("Rta Southbound")
 
   //  def constructExpressRoute(
 //    routeLeg: RouteLeg,
@@ -137,7 +137,7 @@ object RtaSouthbound {
   }
 
   val fullSchedule = NamedRoute(
-    ComponentName("Rta Southbound"),
+    RouteName("Rta Southbound"),
     normalRouteWithTimes,
 //      .combinedWith(expressRouteWithTimes),
   )

@@ -3,7 +3,7 @@ package crestedbutte.routes
 import crestedbutte.{
   BusSchedule,
   BusScheduleAtStop,
-  ComponentName,
+  RouteName,
   Location,
   LocationWithTime,
   RouteLeg,
@@ -106,10 +106,10 @@ case class RouteWithTimes(
 object RouteWithTimes {
 
   def schedTyped(
-    routeName: ComponentName,
-    location: Location,
-    routeConstructor: RouteLeg => RouteLeg,
-    stopTimes: WallTime*,
+                  routeName: RouteName,
+                  location: Location,
+                  routeConstructor: RouteLeg => RouteLeg,
+                  stopTimes: WallTime*,
   ): RouteWithTimes =
     RouteWithTimes(
       stopTimes
@@ -122,10 +122,10 @@ object RouteWithTimes {
     )
 
   def schedTyped(
-    routeName: ComponentName,
-    location: Location,
-    routeConstructor: RouteLeg => RouteLeg,
-    busSchedule: BusSchedule,
+                  routeName: RouteName,
+                  location: Location,
+                  routeConstructor: RouteLeg => RouteLeg,
+                  busSchedule: BusSchedule,
   ): RouteWithTimes =
     schedTyped(routeName,
                location,
@@ -134,10 +134,10 @@ object RouteWithTimes {
     )
 
   def sched(
-    routeName: ComponentName,
-    location: Location,
-    routeConstructor: RouteLeg => RouteLeg,
-    stopTimes: String*,
+             routeName: RouteName,
+             location: Location,
+             routeConstructor: RouteLeg => RouteLeg,
+             stopTimes: String*,
   ): RouteWithTimes =
     schedTyped(
       routeName,

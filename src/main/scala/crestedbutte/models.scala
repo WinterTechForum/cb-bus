@@ -23,31 +23,31 @@ case class PhoneNumber(
   number: String,
   name: String)
 
-object ComponentName {
+object RouteName {
 //  implicit val codec: JsonCodec[ComponentName] =
 //    JsonCodec.string.transform(ComponentName.apply,
 //                               _.userFriendlyName,
 //    )
 
-  private lazy val indexedComponentNames: Seq[(ComponentName, Int)] =
+  private lazy val indexedComponentNames: Seq[(RouteName, Int)] =
     Seq(
       RtaSouthbound.componentName,
       RtaNorthbound.componentName,
     ).zipWithIndex
 
   def encode(
-    name: ComponentName,
+              name: RouteName,
   ): Int = indexedComponentNames.find(_._1 == name).get._2
 
   def decode(
     idx: Int,
-  ): ComponentName = indexedComponentNames.find(_._2 == idx).get._1
+  ): RouteName = indexedComponentNames.find(_._2 == idx).get._1
 
-  implicit lazy val codec: JsonCodec[ComponentName] =
+  implicit lazy val codec: JsonCodec[RouteName] =
     JsonCodec.int.transform(decode, encode)
 }
 
-case class ComponentName(
+case class RouteName(
   userFriendlyName: String) {
 
   val name: String =

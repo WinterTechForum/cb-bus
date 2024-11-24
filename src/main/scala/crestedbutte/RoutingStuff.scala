@@ -38,7 +38,7 @@ object RoutingStuff {
   implicit val wallTimeRw: ReadWriter[WallTime] =
     readwriter[String].bimap[WallTime](_.toEUString, WallTime(_))
 
-  implicit private val componentNameRw: ReadWriter[ComponentName] =
+  implicit private val componentNameRw: ReadWriter[RouteName] =
     macroRW
 
   implicit val planRw: ReadWriter[Plan] =
