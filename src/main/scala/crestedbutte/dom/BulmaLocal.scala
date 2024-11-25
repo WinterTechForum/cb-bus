@@ -31,7 +31,21 @@ object BulmaLocal {
         UpcomingStops(
           scheduleAtStop,
           $plan,
-          selectedSegmentPiece
+          selectedSegmentPiece,$plan.writer.contramap[LocationTimeDirection] { ltd =>
+            println("Better update path...")
+            val plan = $plan.now()
+
+            plan.copy(l = plan.l.map {
+              // TODO BUG - does not update end location
+              routeSegment =>
+                routeSegment.updateTimeAtLocation(
+                  ltd.locationWithTime,
+                  ltd.routeSegment.start.t,
+                  ltd.routeSegment.end.t,
+                )
+            })
+
+          }
         ),
       ),
       button(
@@ -54,7 +68,6 @@ object BulmaLocal {
     selectedSegmentPiece: SelectedSegmentPiece,
     updates: Sink[LocationTimeDirection]
   ) = {
-    println("Repainting stops")
     div(
       textAlign := "center",
       verticalAlign := "middle",
@@ -79,30 +92,19 @@ object BulmaLocal {
   def UpcomingStops(
     scheduleAtStop: BusScheduleAtStop, // TODO This needs to be pairs.
     $plan: Var[Plan],
-    selectedSegmentPiece: SelectedSegmentPiece
+    selectedSegmentPiece: SelectedSegmentPiece,
+    selectedTimeUpdater: Sink[LocationTimeDirection]
     // TODO pass state piece is being updated
-  ) =
+  ) = {
+    println("Repainting UpcomingStops")
     div(
       h4(textAlign := "center", scheduleAtStop.location.name),
       h5(textAlign := "center", "Upcoming Arrivals"),
       scheduleAtStop.locationsWithTimes.map(l =>
-        locationwithTime(l, $plan.now(), selectedSegmentPiece, $plan.writer.contramap[LocationTimeDirection] { ltd =>
-          println("Better update path...")
-          val plan = $plan.now()
-
-          plan.copy(l = plan.l.map {
-            // TODO BUG - does not update end location
-            routeSegment =>
-              routeSegment.updateTimeAtLocation(
-                l,
-                ltd.routeSegment.start.t,
-                ltd.routeSegment.end.t,
-              )
-          })
-
-        }),
+        locationwithTime(l, $plan.now(), selectedSegmentPiece, selectedTimeUpdater),
       ),
     )
+  }
 
   def manualClunkyAlerts(
     $alertsEnabled: Signal[Boolean],
