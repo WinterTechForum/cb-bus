@@ -1,32 +1,19 @@
 package crestedbutte.laminar
 
+import com.billding.time.{MinuteDuration, WallTime}
 import com.raquo.laminar.api.L.*
 import crestedbutte.*
-import crestedbutte.routes.{
-  AllRoutes,
-  CompleteStopList,
-  RtaNorthbound,
-  RtaSouthbound,
-  SpringFallLoop,
-  TownShuttleTimes,
-}
-import org.scalajs.dom
-import crestedbutte.laminar.Experimental.getLocation
-import crestedbutte.pwa.Persistence
-import com.billding.time.{MinuteDuration, WallTime}
-import com.raquo.laminar.nodes.ReactiveHtmlElement
 import crestedbutte.NotificationStuff.desiredAlarms
-import crestedbutte.*
 import crestedbutte.dom.BulmaLocal
+import crestedbutte.laminar.Experimental.getLocation
+import crestedbutte.laminar.TouchControls.Swipe
+import crestedbutte.routes.{CompleteStopList, RtaNorthbound, RtaSouthbound}
 import org.scalajs.dom
+import org.scalajs.dom.HTMLAnchorElement
 
-import java.time.format.{DateTimeFormatter, FormatStyle}
+import java.time.format.DateTimeFormatter
 import java.time.{Clock, Instant, OffsetDateTime}
 import scala.concurrent.duration.FiniteDuration
-import crestedbutte.laminar.TouchControls.Swipe
-import org.scalajs.dom.{css, HTMLAnchorElement}
-
-import scala.collection.immutable.{AbstractSeq, LinearSeq}
 
 object Components {
   def GeoBits(
@@ -124,9 +111,8 @@ object Components {
     )
 
   import com.raquo.laminar.nodes.ReactiveHtmlElement
-
-  import org.scalajs.dom.window
   import crestedbutte.pwa.Persistence
+  import org.scalajs.dom.window
 
   def PlanElement(
     plan: Plan,
@@ -264,8 +250,6 @@ object Components {
                     "plain-white plan-segment-divider",
             ),
             // TODO Possibly use this icon as a separator: glyphicons-basic-947-circle-more.svg
-//            div("."),
-//            div("."),
           ),
         ),
       )
@@ -288,7 +272,6 @@ object Components {
         cls := "add-new-route-section",
         child <-- addingNewRoute.signal.map {
           case false =>
-            println("addingNewRoute.false")
             div(
               cls := "centered",
               button(
@@ -303,7 +286,6 @@ object Components {
               ),
             )
           case true =>
-            println("addingNewRoute.true")
             div(
               smallStopSelectorNew(
                 CompleteStopList.values,
@@ -317,7 +299,7 @@ object Components {
       ),
     )
 
-  import com.raquo.laminar.api.L._
+  import com.raquo.laminar.api.L.*
 
   def FullApp(
     pageMode: AppMode,
@@ -326,8 +308,6 @@ object Components {
     val db = Persistence()
 
     val clockTicks = new EventBus[Unit]
-
-    val components = AllRoutes.components(pageMode)
 
     val selectedComponent = PlanViewer
 
