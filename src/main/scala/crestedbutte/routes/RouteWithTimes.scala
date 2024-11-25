@@ -15,7 +15,7 @@ case class RouteWithTimes(
   // TODO Should be a map representing all the connections.
   legs: Seq[RouteLeg]) {
 
-  def indexOfLegThatContains(
+  private def indexOfLegThatContains(
     other: RouteSegment,
   ) =
     val res = legs.indexWhere(leg =>
@@ -89,18 +89,6 @@ case class RouteWithTimes(
       allStops.head.routeName, // TODO Unsafe
     ).getOrElse(throw new IllegalStateException("No stops in route"))
 
-  def combinedWith(
-    routeWithTimes: RouteWithTimes,
-  ): RouteWithTimes =
-    RouteWithTimes(
-      (this.legs ++ routeWithTimes.legs)
-        .sortBy(
-          _.stops.head.t,
-        ), // TODO Is this a good place to handle the sorting?
-    )
-
-  val allInvolvedStops: Seq[Location] =
-    legs.head.stops.map(_.l)
 }
 
 object RouteWithTimes {
