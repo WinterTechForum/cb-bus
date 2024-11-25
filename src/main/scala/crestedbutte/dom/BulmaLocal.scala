@@ -4,7 +4,7 @@ import com.billding.time.WallTime
 import com.raquo.laminar.api.L.*
 import com.raquo.laminar.nodes.ReactiveHtmlElement
 import crestedbutte.*
-import crestedbutte.laminar.Experimental
+import crestedbutte.laminar.{Experimental, LocationTimeDirection, SelectedSegmentPiece}
 import org.scalajs.dom
 import org.scalajs.dom.experimental.Notification
 
@@ -13,6 +13,7 @@ object BulmaLocal {
     scheduleAtStop: BusScheduleAtStop,
     $active: Var[Boolean],
     $plan: Var[Plan],
+    selectedSegmentPiece: SelectedSegmentPiece
     // TODO pass state piece is being updated
   ) =
     val notificationBus = EventBus[ReactiveHtmlElement[_]]()
@@ -30,6 +31,7 @@ object BulmaLocal {
         UpcomingStops(
           scheduleAtStop,
           $plan,
+          selectedSegmentPiece
         ),
       ),
       button(
@@ -48,53 +50,57 @@ object BulmaLocal {
   def locationwithTime(
     // pair with other end somehow
     l: LocationWithTime,
-    $plan: Var[Plan],
-  ) =
+    plan: Plan, // TODO Instead of passing Plan, we should just emit an event with the new selected time.
+    selectedSegmentPiece: SelectedSegmentPiece,
+    updates: Sink[LocationTimeDirection]
+  ) = {
+    println("Repainting stops")
     div(
       textAlign := "center",
       verticalAlign := "middle",
       paddingBottom := "3px",
       cls := "time",
       div(
-        child <-- $plan.signal.map(plan =>
           div(
             plan.l.map(segment =>
               span(
                 cls := "clickable-time",
-                onClick --> Observer { _ =>
-                  // TODO We need to track the previous state, so we know which one to update here.
-                  $plan.update(plan =>
-                    plan.copy(l = plan.l.map {
-                      // TODO BUG - does not update end location
-                      routeSegment =>
-                        routeSegment.updateTimeAtLocation(
-                          l,
-                          segment.start.t,
-                          segment.end.t,
-                        )
-                    }),
-                  )
-
-                  println("$plan maybe.1: " + $plan.now())
-                },
+                onClick.mapTo {
+                  LocationTimeDirection(l, selectedSegmentPiece, segment)
+                } --> updates,
                 l.t.toDumbAmericanString,
               ),
             ),
-          ),
         ),
       ),
     )
+  }
 
   def UpcomingStops(
     scheduleAtStop: BusScheduleAtStop, // TODO This needs to be pairs.
     $plan: Var[Plan],
+    selectedSegmentPiece: SelectedSegmentPiece
     // TODO pass state piece is being updated
   ) =
     div(
       h4(textAlign := "center", scheduleAtStop.location.name),
       h5(textAlign := "center", "Upcoming Arrivals"),
       scheduleAtStop.locationsWithTimes.map(l =>
-        locationwithTime(l, $plan),
+        locationwithTime(l, $plan.now(), selectedSegmentPiece, $plan.writer.contramap[LocationTimeDirection] { ltd =>
+          println("Better update path...")
+          val plan = $plan.now()
+
+          plan.copy(l = plan.l.map {
+            // TODO BUG - does not update end location
+            routeSegment =>
+              routeSegment.updateTimeAtLocation(
+                l,
+                ltd.routeSegment.start.t,
+                ltd.routeSegment.end.t,
+              )
+          })
+
+        }),
       ),
     )
 

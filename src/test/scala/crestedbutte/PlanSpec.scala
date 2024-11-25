@@ -1,7 +1,8 @@
 package crestedbutte
 
 import com.raquo.airstream.state.Var
-import zio.test._
+import crestedbutte.routes.RtaNorthbound
+import zio.test.*
 
 object PlanSpec extends ZIOSpecDefault {
   def spec =
@@ -10,6 +11,7 @@ object PlanSpec extends ZIOSpecDefault {
         test("happy path") {
 
           val scheduleAtStop: BusScheduleAtStop = ???
+          RtaNorthbound.fullSchedule.routeWithTimes
           val $plan: Var[Plan] = Var(Plan(Seq.empty))
 
           assertCompletes

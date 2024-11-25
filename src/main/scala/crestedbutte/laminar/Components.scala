@@ -15,16 +15,25 @@ import java.time.format.DateTimeFormatter
 import java.time.{Clock, Instant, OffsetDateTime}
 import scala.concurrent.duration.FiniteDuration
 
+enum SelectedSegmentPiece:
+  case Start, End
+  
+case class LocationTimeDirection(
+  locationWithTime: LocationWithTime,
+  selectedSegmentPiece: SelectedSegmentPiece,
+  routeSegment: RouteSegment
+                                )
+
 object Components {
   def GeoBits(
-    $mapLinksEnabled: Signal[Boolean],
-    location: Location,
-    $gpsPosition: Signal[Option[GpsCoordinates]],
-  ) = {
+               $mapLinksEnabled: Signal[Boolean],
+               location: Location,
+               $gpsPosition: Signal[Option[GpsCoordinates]],
+             ) = {
     def distanceFromCurrentLocationToStop(
-      gpsPosition: Signal[Option[GpsCoordinates]],
-      location: Location,
-    ) =
+                                           gpsPosition: Signal[Option[GpsCoordinates]],
+                                           location: Location,
+                                         ) =
       gpsPosition.map(
         _.flatMap(userCords =>
           location.gpsCoordinates.map(stopCoords =>
@@ -46,7 +55,7 @@ object Components {
             cls := "map-link",
             child <--
               distanceFromCurrentLocationToStop($gpsPosition,
-                                                location,
+                location,
               ),
             location.gpsCoordinates.map(Components.GeoLink),
           )
@@ -57,8 +66,8 @@ object Components {
   }
 
   def GPS(
-    gpsPosition: Var[Option[GpsCoordinates]],
-  ) =
+           gpsPosition: Var[Option[GpsCoordinates]],
+         ) =
     button(
       idAttr := "Get position",
       onClick --> Observer[dom.MouseEvent]: ev =>
@@ -67,13 +76,13 @@ object Components {
     )
 
   def FeatureControlCenter(
-    featureUpdates: WriteBus[FeatureStatus],
-  ) = {
+                            featureUpdates: WriteBus[FeatureStatus],
+                          ) = {
 
     // TODO Make this a separate component?
     def FeatureToggle(
-      feature: Feature,
-    ) =
+                       feature: Feature,
+                     ) =
       label(
         cls := "checkbox",
         feature.toString,
@@ -92,8 +101,8 @@ object Components {
   }
 
   def GeoLink(
-    gpsCoordinates: GpsCoordinates,
-  ) =
+               gpsCoordinates: GpsCoordinates,
+             ) =
     a(
       cls := "link",
       href := s"https://www.google.com/maps/search/?api=1&query=${gpsCoordinates.latitude},${gpsCoordinates.longitude}",
@@ -101,9 +110,9 @@ object Components {
     )
 
   def SvgIcon(
-    name: String,
-    clsName: String = "",
-  ) =
+               name: String,
+               clsName: String = "",
+             ) =
     img(
       cls := s"glyphicon $clsName",
       src := s"/glyphicons/svg/individual-svg/$name",
@@ -115,17 +124,17 @@ object Components {
   import org.scalajs.dom.window
 
   def PlanElement(
-    db: Persistence,
-    $plan: Var[Plan],
-    initialTime: WallTime,
-    timestamp: WallTime,
-    addingNewRoute: Var[Boolean],
-  ) =
+                   db: Persistence,
+                   $plan: Var[Plan],
+                   initialTime: WallTime,
+                   timestamp: WallTime,
+                   addingNewRoute: Var[Boolean],
+                 ) = {
     def RouteLegElement(
-      routeSegment: RouteSegment,
-      planIndex: Int,
-      db: Persistence,
-    ) =
+                         routeSegment: RouteSegment,
+                         planIndex: Int,
+                         db: Persistence,
+                       ) =
 
       val routeWithTimes =
         routeSegment.route match
@@ -165,14 +174,20 @@ object Components {
             glyphicons-basic-842-square-minus.svg
            */
           SvgIcon("glyphicons-basic-842-square-minus.svg",
-                  clsName = "delete",
+            clsName = "delete",
           ),
         )
 
       def stopInfo(
-        stop: LocationWithTime,
-        $plan: Var[Plan],
-      ) =
+                    routeSegment: RouteSegment,
+                    $plan: Var[Plan],
+                    selectedSegmentPiece: SelectedSegmentPiece
+                  ) = {
+        // TODO Update stopBeingImplicitlyChanged after explicit bit is calculated
+        val (stopBeingExplicitlyChanged, stopBeingImplicitlyChanged) = selectedSegmentPiece match
+          case SelectedSegmentPiece.Start => (routeSegment.start, routeSegment.end)
+          case SelectedSegmentPiece.End => (routeSegment.end, routeSegment.start)
+        val stop = stopBeingExplicitlyChanged
         UpcomingStopInfo(
           stop.l,
           if (
@@ -194,14 +209,16 @@ object Components {
                         stopTimeInfo,
                         scheduleAtStop,
                         $plan,
+                        selectedSegmentPiece
                       )
                     case Right(value) => div("-")
 
-                    //                      scheduleAtStop.times.map(t => div(t.toDumbAmericanString))
-                }*,
+                  //                      scheduleAtStop.times.map(t => div(t.toDumbAmericanString))
+                } *,
             ),
           ),
         )
+      }
 
       div(
         TouchControls.swipeProp {
@@ -219,7 +236,7 @@ object Components {
           case Swipe.Right =>
             nextBefore match {
               case Some(nextBeforeValue) =>
-                $plan.update(plan => 
+                $plan.update(plan =>
                   plan.copy(l =
                     plan.l.updated(planIndex, nextBeforeValue),
                   )
@@ -231,7 +248,7 @@ object Components {
         div(
           cls := "plan-segments",
           // TODO pass state piece is being updated
-          stopInfo(routeSegment.start, $plan),
+          stopInfo(routeSegment, $plan, SelectedSegmentPiece.Start),
 
           /*
              Connecting icons for start and end of legs
@@ -241,13 +258,13 @@ object Components {
             glyphicons-basic-827-arrow-thin-down.svg
            */
           SvgIcon("glyphicons-basic-211-arrow-down.svg",
-                  "plain-white plan-segment-divider",
+            "plain-white plan-segment-divider",
           ),
-          stopInfo(routeSegment.end, $plan),
+          stopInfo(routeSegment, $plan, SelectedSegmentPiece.End),
           div( // TODO Move this separator outside of this, so it's not attached to the last leg of the trip
             textAlign := "center",
             SvgIcon("glyphicons-basic-947-circle-more.svg",
-                    "plain-white plan-segment-divider",
+              "plain-white plan-segment-divider",
             ),
             // TODO Possibly use this icon as a separator: glyphicons-basic-947-circle-more.svg
           ),
@@ -298,6 +315,7 @@ object Components {
         },
       ),
     )
+}
 
   import com.raquo.laminar.api.L.*
 
@@ -655,7 +673,8 @@ object Components {
   def StopTimeInfoForLocation(
     stopTimeInfo: StopTimeInfo,
     busScheduleAtStop: BusScheduleAtStop,
-    $plan: Var[Plan],
+    $plan: Var[Plan], // TODO Get rid of this
+    selectedSegmentPiece: SelectedSegmentPiece
     // TODO pass state piece is being updated
   ) = {
 
@@ -683,6 +702,7 @@ object Components {
           busScheduleAtStop,
           modalActive,
           $plan,
+          selectedSegmentPiece
         ),
       ),
     )
