@@ -37,12 +37,4 @@ object BusSchedule {
         ),
     )
 
-  // Useful for irregular stoptimes
-  def apply(
-    stopTimeStrings: String*,
-  ) =
-    new BusSchedule(
-      List(stopTimeStrings: _*)
-        .map(WallTime(_)),
-    )
 }

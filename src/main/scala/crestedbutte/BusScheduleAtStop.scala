@@ -10,11 +10,3 @@ case class BusScheduleAtStop(
     times.map(t => LocationWithTime(location, t))
 
 }
-
-object BusScheduleAtStop:
-  def apply(
-    location: Location,
-    scheduleAtStop: BusSchedule,
-    routeName: RouteName,
-  ): BusScheduleAtStop =
-    BusScheduleAtStop(location, scheduleAtStop.stopTimes, routeName)
