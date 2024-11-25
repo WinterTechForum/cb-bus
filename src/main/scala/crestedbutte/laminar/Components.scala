@@ -701,8 +701,21 @@ object Components {
         BulmaLocal.bulmaModal(
           busScheduleAtStop,
           modalActive,
-          $plan,
-          selectedSegmentPiece
+          $plan.now(),
+          selectedSegmentPiece,
+          $plan.writer.contramap[LocationTimeDirection] { ltd =>
+            println("Better update path...")
+            val plan = $plan.now()
+            plan.copy(l = plan.l.map {
+              // TODO BUG - does not update end location
+              routeSegment =>
+                routeSegment.updateTimeAtLocation(
+                  ltd.locationWithTime,
+                  ltd.routeSegment.start.t,
+                  ltd.routeSegment.end.t,
+                )
+            })
+          }
         ),
       ),
     )

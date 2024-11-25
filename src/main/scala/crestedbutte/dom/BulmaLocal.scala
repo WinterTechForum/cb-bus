@@ -10,12 +10,14 @@ import org.scalajs.dom.experimental.Notification
 
 object BulmaLocal {
   def bulmaModal(
-    scheduleAtStop: BusScheduleAtStop,
-    $active: Var[Boolean],
-    $plan: Var[Plan],
-    selectedSegmentPiece: SelectedSegmentPiece
-    // TODO pass state piece is being updated
-  ) =
+                  scheduleAtStop: BusScheduleAtStop,
+                  $active: Var[Boolean],
+                  plan: Plan,
+                  selectedSegmentPiece: SelectedSegmentPiece,
+                  selectedTimeUpdater: Sink[LocationTimeDirection]
+                  // TODO pass state piece is being updated
+                ) = {
+    println("Updating modal behavior")
     val notificationBus = EventBus[ReactiveHtmlElement[_]]()
     div(
       cls := "modal",
@@ -30,22 +32,9 @@ object BulmaLocal {
         child <-- notificationBus.events.map(element => element),
         UpcomingStops(
           scheduleAtStop,
-          $plan,
-          selectedSegmentPiece,$plan.writer.contramap[LocationTimeDirection] { ltd =>
-            println("Better update path...")
-            val plan = $plan.now()
-
-            plan.copy(l = plan.l.map {
-              // TODO BUG - does not update end location
-              routeSegment =>
-                routeSegment.updateTimeAtLocation(
-                  ltd.locationWithTime,
-                  ltd.routeSegment.start.t,
-                  ltd.routeSegment.end.t,
-                )
-            })
-
-          }
+          plan,
+          selectedSegmentPiece, 
+          selectedTimeUpdater
         ),
       ),
       button(
@@ -60,6 +49,7 @@ object BulmaLocal {
         } --> $active,
       ),
     )
+}
 
   def locationwithTime(
     // pair with other end somehow
@@ -91,7 +81,7 @@ object BulmaLocal {
 
   def UpcomingStops(
     scheduleAtStop: BusScheduleAtStop, // TODO This needs to be pairs.
-    $plan: Var[Plan],
+    plan: Plan,
     selectedSegmentPiece: SelectedSegmentPiece,
     selectedTimeUpdater: Sink[LocationTimeDirection]
     // TODO pass state piece is being updated
@@ -101,7 +91,7 @@ object BulmaLocal {
       h4(textAlign := "center", scheduleAtStop.location.name),
       h5(textAlign := "center", "Upcoming Arrivals"),
       scheduleAtStop.locationsWithTimes.map(l =>
-        locationwithTime(l, $plan.now(), selectedSegmentPiece, selectedTimeUpdater),
+        locationwithTime(l, plan, selectedSegmentPiece, selectedTimeUpdater),
       ),
     )
   }
