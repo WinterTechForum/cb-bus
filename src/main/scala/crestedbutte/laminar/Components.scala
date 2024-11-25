@@ -17,7 +17,7 @@ import scala.concurrent.duration.FiniteDuration
 
 enum SelectedSegmentPiece:
   case Start, End
-  
+
 case class LocationTimeDirection(
   locationWithTime: LocationWithTime,
   selectedSegmentPiece: SelectedSegmentPiece,
@@ -689,11 +689,7 @@ object Components {
             .add("is-clipped")
           true
         } --> modalActive,
-//        span(cls := "stop-time-info")(
-//          div(
         stopTimeInfo.time.toDumbAmericanString,
-//          ),
-//        )
       ),
       div(
         cls := "wait-time",
@@ -702,9 +698,17 @@ object Components {
           busScheduleAtStop,
           modalActive,
           $plan.now(),
-          selectedSegmentPiece,
+          selectedSegmentPiece, // TODO Can we just reference this in the Sink below, and not pass it down?
           $plan.writer.contramap[LocationTimeDirection] { ltd =>
-            println("Better update path...")
+            println("We are updating: " + ltd.locationWithTime.l)
+            val other =
+              if (ltd.routeSegment.start.l ==  ltd.locationWithTime.l)
+                ltd.routeSegment.end.l
+              else if (ltd.routeSegment.end.l ==  ltd.locationWithTime.l)
+                ltd.routeSegment.start.l
+              else
+                throw new RuntimeException("WTF")
+            println("We should *also* update: " + other)
             val plan = $plan.now()
             plan.copy(l = plan.l.map {
               // TODO BUG - does not update end location
