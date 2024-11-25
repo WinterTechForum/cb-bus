@@ -115,7 +115,6 @@ object Components {
   import org.scalajs.dom.window
 
   def PlanElement(
-    plan: Plan,
     db: Persistence,
     $plan: Var[Plan],
     initialTime: WallTime,
@@ -144,6 +143,7 @@ object Components {
         a(
           cls := "link",
           onClick --> Observer { _ =>
+            val plan = $plan.now()
             val newPlan =
               plan.copy(l = plan.l.filterNot(_ == routeSegment))
             db.saveDailyPlanOnly(newPlan)
@@ -209,22 +209,22 @@ object Components {
             println("Swiping left and updating plan")
             nextAfter match
               case Some(nextAfterValue) =>
-                val newPlan =
+                $plan.update(plan =>
                   plan.copy(l =
                     plan.l.updated(planIndex, nextAfterValue),
                   )
-                $plan.set(newPlan)
-                db.saveDailyPlanOnly(newPlan)
+                )
+                db.saveDailyPlanOnly($plan.now())
               case None => ()
           case Swipe.Right =>
             nextBefore match {
               case Some(nextBeforeValue) =>
-                val newPlan =
+                $plan.update(plan => 
                   plan.copy(l =
                     plan.l.updated(planIndex, nextBeforeValue),
                   )
-                $plan.set(newPlan)
-                db.saveDailyPlanOnly(newPlan)
+                )
+                db.saveDailyPlanOnly($plan.now())
               case None => ()
             }
         },
@@ -255,7 +255,7 @@ object Components {
       )
 
     div(
-      plan.l.zipWithIndex
+      $plan.now().l.zipWithIndex
         .map { case (routeSegment, idx) =>
           div(
             RouteLegElement(
@@ -489,7 +489,7 @@ object Components {
                   },
                 ),
               ),
-            Components.PlanElement(plan,
+            Components.PlanElement(
                                    db,
                                    $plan,
                                    initialTime,
