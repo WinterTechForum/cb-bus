@@ -3,10 +3,10 @@ package crestedbutte.routes
 import crestedbutte.{
   BusSchedule,
   BusScheduleAtStop,
-  RouteName,
   Location,
   LocationWithTime,
   RouteLeg,
+  RouteName,
   RouteSegment,
 }
 import com.billding.time.WallTime
@@ -106,10 +106,10 @@ case class RouteWithTimes(
 object RouteWithTimes {
 
   def schedTyped(
-                  routeName: RouteName,
-                  location: Location,
-                  routeConstructor: RouteLeg => RouteLeg,
-                  stopTimes: WallTime*,
+    routeName: RouteName,
+    location: Location,
+    routeConstructor: RouteLeg => RouteLeg,
+    stopTimes: WallTime*,
   ): RouteWithTimes =
     RouteWithTimes(
       stopTimes
@@ -122,10 +122,10 @@ object RouteWithTimes {
     )
 
   def schedTyped(
-                  routeName: RouteName,
-                  location: Location,
-                  routeConstructor: RouteLeg => RouteLeg,
-                  busSchedule: BusSchedule,
+    routeName: RouteName,
+    location: Location,
+    routeConstructor: RouteLeg => RouteLeg,
+    busSchedule: BusSchedule,
   ): RouteWithTimes =
     schedTyped(routeName,
                location,
@@ -134,10 +134,10 @@ object RouteWithTimes {
     )
 
   def sched(
-             routeName: RouteName,
-             location: Location,
-             routeConstructor: RouteLeg => RouteLeg,
-             stopTimes: String*,
+    routeName: RouteName,
+    location: Location,
+    routeConstructor: RouteLeg => RouteLeg,
+    stopTimes: String*,
   ): RouteWithTimes =
     schedTyped(
       routeName,

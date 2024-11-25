@@ -29,7 +29,7 @@ object BulmaLocal {
         child <-- notificationBus.events.map(element => element),
         UpcomingStops(
           scheduleAtStop,
-          $plan
+          $plan,
         ),
       ),
       button(
@@ -49,42 +49,41 @@ object BulmaLocal {
     // pair with other end somehow
     l: LocationWithTime,
     $plan: Var[Plan],
-                      ) =
+  ) =
     div(
       textAlign := "center",
       verticalAlign := "middle",
       paddingBottom := "3px",
       cls := "time",
-
       div(
-        child <-- $plan.signal.map(
-          plan =>
-            div(
-            plan.l.map(
-            segment =>
+        child <-- $plan.signal.map(plan =>
+          div(
+            plan.l.map(segment =>
               span(
-                cls:="clickable-time",
-                onClick --> Observer {
-                  _ =>
-                    // TODO We need to track the previous state, so we know which one to update here.
-                    $plan.update(plan => plan.copy(l = plan.l.map {
+                cls := "clickable-time",
+                onClick --> Observer { _ =>
+                  // TODO We need to track the previous state, so we know which one to update here.
+                  $plan.update(plan =>
+                    plan.copy(l = plan.l.map {
                       // TODO BUG - does not update end location
-                      routeSegment => routeSegment.updateTimeAtLocation(l, segment.start.t, segment.end.t)
-                    }))
-                    
-                    println("$plan maybe.1: " + $plan.now())
+                      routeSegment =>
+                        routeSegment.updateTimeAtLocation(
+                          l,
+                          segment.start.t,
+                          segment.end.t,
+                        )
+                    }),
+                  )
+
+                  println("$plan maybe.1: " + $plan.now())
                 },
                 l.t.toDumbAmericanString,
-
-            )
-
-          )
-        )
-        )
-
+              ),
+            ),
+          ),
+        ),
       ),
     )
-
 
   def UpcomingStops(
     scheduleAtStop: BusScheduleAtStop, // TODO This needs to be pairs.
@@ -94,15 +93,15 @@ object BulmaLocal {
     div(
       h4(textAlign := "center", scheduleAtStop.location.name),
       h5(textAlign := "center", "Upcoming Arrivals"),
-      scheduleAtStop.locationsWithTimes.map(
-        l => locationwithTime(l, $plan)
+      scheduleAtStop.locationsWithTimes.map(l =>
+        locationwithTime(l, $plan),
       ),
     )
 
   def manualClunkyAlerts(
-                          $alertsEnabled: Signal[Boolean],
-                          time: WallTime,
-                        ) =
+    $alertsEnabled: Signal[Boolean],
+    time: WallTime,
+  ) =
     div(
       child <-- $alertsEnabled.map(alertsEnabled =>
         if (dom.Notification.permission == "granted" && alertsEnabled)

@@ -207,7 +207,7 @@ object Components {
                       StopTimeInfoForLocation(
                         stopTimeInfo,
                         scheduleAtStop,
-                        $plan
+                        $plan,
                       )
                     case Right(value) => div("-")
 
@@ -522,10 +522,10 @@ object Components {
     )
 
   def rightLegOnRightRoute(
-                            start: Location,
-                            end: Location,
-                            plan: Plan,
-                            pageLoadTime: WallTime,
+    start: Location,
+    end: Location,
+    plan: Plan,
+    pageLoadTime: WallTime,
   ): RouteSegment = {
 
     val routeSegments =
@@ -543,7 +543,8 @@ object Components {
             val cutoff =
               lastArrivalTime.getOrElse(pageLoadTime)
             println(s"Looking for start time after $cutoff")
-            l.start.t.isLikelyEarlyMorningRatherThanLateNight || l.start.t.isAfter(cutoff)
+            l.start.t.isLikelyEarlyMorningRatherThanLateNight || l.start.t
+              .isAfter(cutoff)
           }
           .getOrElse {
             println("A")
@@ -575,7 +576,6 @@ object Components {
       div(
         div("Starting at: "),
         div("____________________"),
-
         div(
           color := "grey",
           span("|__________________|"),
@@ -584,59 +584,58 @@ object Components {
           div(
             button(
               cls := "button m-2",
-              onClick --> Observer {
-                _ =>
-                  println("In observer: " + location)
-                  startingPoint.update {
-                    case Some(startingPointNow) if startingPointNow == location=>
-                      println("Clearing out startingPoint")
-                      None
-                    case Some(other) =>
-                      try {
-                        println("Trying to connect dots")
-                        val matchingLeg =
-                          rightLegOnRightRoute(
-                            other,
-                            location,
-                            $plan.now(),
-                            initialTime,
-                          )
-                        println("Connected dots")
+              onClick --> Observer { _ =>
+                println("In observer: " + location)
+                startingPoint.update {
+                  case Some(startingPointNow)
+                      if startingPointNow == location =>
+                    println("Clearing out startingPoint")
+                    None
+                  case Some(other) =>
+                    try {
+                      println("Trying to connect dots")
+                      val matchingLeg =
+                        rightLegOnRightRoute(
+                          other,
+                          location,
+                          $plan.now(),
+                          initialTime,
+                        )
+                      println("Connected dots")
 
-                        $plan.update { case oldPlan =>
-                          val newPlan =
-                            oldPlan.copy(l =
-                              oldPlan.l :+ matchingLeg,
-                            )
-                          db.saveDailyPlanOnly(newPlan)
-                          println(
-                            "setting addingNewRoute to false",
-                          )
-                          addingNewRoute.set(false)
-                          println(
-                            "Adding new route: " + addingNewRoute
-                              .now(),
-                          )
-                          newPlan
-                        }
-                        Some(other)
-                      } catch {
-                        case ex: Throwable =>
-                          println("Illegal state: " + ex)
-                          throw new IllegalStateException(ex.getMessage)
+                      $plan.update { case oldPlan =>
+                        val newPlan =
+                          oldPlan.copy(l = oldPlan.l :+ matchingLeg)
+                        db.saveDailyPlanOnly(newPlan)
+                        println(
+                          "setting addingNewRoute to false",
+                        )
+                        addingNewRoute.set(false)
+                        println(
+                          "Adding new route: " + addingNewRoute
+                            .now(),
+                        )
+                        newPlan
                       }
-                    case None =>
-                      Some(location)
-                  }
+                      Some(other)
+                    }
+                    catch {
+                      case ex: Throwable =>
+                        println("Illegal state: " + ex)
+                        throw new IllegalStateException(ex.getMessage)
+                    }
+                  case None =>
+                    Some(location)
+                }
               },
-              cls <-- startingPoint.signal.map {
-                  sp =>
-                    sp match
-                      case Some(startingPointNow) if startingPointNow == location =>
-                        println("startingPointNow: " + startingPointNow)
-                        "is-primary"
-                      case Some(_) => ""
-                      case None => ""
+              cls <-- startingPoint.signal.map { sp =>
+                sp match
+                  case Some(startingPointNow)
+                      if startingPointNow == location =>
+                    println("startingPointNow: " + startingPointNow)
+                    "is-primary"
+                  case Some(_) => ""
+                  case None    => ""
               },
               location.name,
             ),
@@ -644,7 +643,7 @@ object Components {
         ),
       )
     div(
-              startingPoints
+      startingPoints,
     )
 
   def renderWaitTime(
@@ -693,7 +692,7 @@ object Components {
         } --> modalActive,
 //        span(cls := "stop-time-info")(
 //          div(
-            stopTimeInfo.time.toDumbAmericanString
+        stopTimeInfo.time.toDumbAmericanString,
 //          ),
 //        )
       ),
@@ -703,7 +702,7 @@ object Components {
         BulmaLocal.bulmaModal(
           busScheduleAtStop,
           modalActive,
-          $plan
+          $plan,
         ),
       ),
     )

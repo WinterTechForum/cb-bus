@@ -6,15 +6,15 @@ case class BusScheduleAtStop(
   location: Location,
   times: Seq[WallTime],
   routeName: RouteName) {
-  val locationsWithTimes = times.map(t => LocationWithTime(location, t))
-
+  val locationsWithTimes =
+    times.map(t => LocationWithTime(location, t))
 
 }
 
 object BusScheduleAtStop:
   def apply(
-             location: Location,
-             scheduleAtStop: BusSchedule,
-             routeName: RouteName,
+    location: Location,
+    scheduleAtStop: BusSchedule,
+    routeName: RouteName,
   ): BusScheduleAtStop =
     BusScheduleAtStop(location, scheduleAtStop.stopTimes, routeName)

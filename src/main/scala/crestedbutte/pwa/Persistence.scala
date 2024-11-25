@@ -28,7 +28,6 @@ class Persistence():
     }
     ()
 
-
   def retrieveDailyPlanOnly = {
     val previouslyStoredPlan =
       localStorage

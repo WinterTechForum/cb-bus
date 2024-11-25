@@ -16,7 +16,7 @@ object RouteName {
     ).zipWithIndex
 
   def encode(
-              name: RouteName,
+    name: RouteName,
   ): Int = indexedComponentNames.find(_._1 == name).get._2
 
   def decode(
@@ -87,7 +87,7 @@ case class Plan(
   // TODO It kind of sucks that I'm working with the compressed name here.
   l: Seq[RouteSegment])
     derives JsonCodec:
-  
+
   val plainTextRepresentation: String =
     l.zipWithIndex
       .map(

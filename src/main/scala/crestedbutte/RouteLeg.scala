@@ -3,15 +3,15 @@ package crestedbutte
 import com.billding.time.{MinuteDuration, WallTime}
 import zio.json.*
 
-case class RouteSegment private(
-                                 r: RouteName,
-                                 s: LocationWithTime,
-                                 e: LocationWithTime)
+case class RouteSegment private (
+  r: RouteName,
+  s: LocationWithTime,
+  e: LocationWithTime)
     derives JsonCodec {
 
   assert(
     s.l != e.l,
-    "RouteSegment must start and stop at different locations"
+    "RouteSegment must start and stop at different locations",
   )
 
   // These let us use good names for logical operations, while keeping shortest names for serialization
@@ -24,21 +24,19 @@ case class RouteSegment private(
        |${end.t.toDumbAmericanString}  ${end.l.name}
        |""".stripMargin
 
-  /**
-   * TODO This all feels awkward.
-   * 
-   * @param lwt
-   * @param previousStartTime this ensures we only update one entry
-   * @param previousEndTime
-   * @return
-   */
+  /** TODO This all feels awkward.
+    *
+    * @param lwt
+    * @param previousStartTime
+    *   this ensures we only update one entry
+    * @param previousEndTime
+    * @return
+    */
   def updateTimeAtLocation(
-                            lwt: LocationWithTime,
-                            previousStartTime: WallTime, 
-                            previousEndTime: WallTime,
-
-                          ): RouteSegment =
-
+    lwt: LocationWithTime,
+    previousStartTime: WallTime,
+    previousEndTime: WallTime,
+  ): RouteSegment =
     lwt.l match
       case s.l if s.t == previousStartTime =>
         copy(s = s.copy(t = lwt.t))
@@ -49,21 +47,21 @@ case class RouteSegment private(
 
 object RouteSegment {
   def attempt(
-               r: RouteName,
-               s: LocationWithTime,
-               e: LocationWithTime
-             ) =
+    r: RouteName,
+    s: LocationWithTime,
+    e: LocationWithTime,
+  ) =
     for {
       firstPass <- Either.cond(
         s.l != e.l,
-      RouteSegment(r,s,e),
-      "Either: RouteSegment must start and stop at different locations"
+        RouteSegment(r, s, e),
+        "Either: RouteSegment must start and stop at different locations",
       )
 
       secondPass <- Either.cond(
         WallTime.ordering.compare(s.t, e.t) <= 0,
-        RouteSegment(r,s,e),
-        "Either: RouteSegment must be in correct order. Start: " + s + "  End: " + e
+        RouteSegment(r, s, e),
+        "Either: RouteSegment must be in correct order. Start: " + s + "  End: " + e,
       )
     } yield secondPass
 
@@ -79,8 +77,8 @@ object RouteSegment {
 
 object RouteLeg:
   def apply(
-             stops: Seq[LocationWithTime],
-             routeName: RouteName,
+    stops: Seq[LocationWithTime],
+    routeName: RouteName,
   ): Either[String, RouteLeg] =
     for
       head <- stops.headOption.toRight("Empty Route")
@@ -89,10 +87,10 @@ object RouteLeg:
 
 // TODO Ensure no repeat Locations
 case class RouteLeg private (
-                              stops: Seq[LocationWithTime],
-                              routeName: RouteName,
-                              head: LocationWithTime,
-                              last: LocationWithTime)
+  stops: Seq[LocationWithTime],
+  routeName: RouteName,
+  head: LocationWithTime,
+  last: LocationWithTime)
     derives JsonCodec {
 
   def segmentFrom(
@@ -102,7 +100,9 @@ case class RouteLeg private (
     for
       startWithTime       <- stops.find(_.l.matches(start))
       destinationWithTime <- stops.find(_.l.matches(destination))
-      res <- RouteSegment.attempt(routeName, startWithTime, destinationWithTime).toOption
+      res <- RouteSegment
+        .attempt(routeName, startWithTime, destinationWithTime)
+        .toOption
     yield res
 
   assert(stops.nonEmpty,
