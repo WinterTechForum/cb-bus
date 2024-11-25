@@ -9,12 +9,8 @@ import crestedbutte.{
 }
 import com.billding.time.MinuteDuration.toMinuteDuration
 
-/*
-
-  // TODO How should I indicate when it arrives back at Mountaineer Square?
-  //    Currently, it's hard to determine what buses you could catch from the Square.
- */
 object ThreeSeasonsTimes
+/*
     extends NamedRoute(
       RouteName("Three Seasons Loop"),
       RouteWithTimes.schedTyped(
@@ -27,3 +23,4 @@ object ThreeSeasonsTimes
         BusSchedule("08:00", "22:45", 15.minutes),
       ),
     )
+ */

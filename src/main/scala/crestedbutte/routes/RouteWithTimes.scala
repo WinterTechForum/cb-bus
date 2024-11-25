@@ -93,45 +93,24 @@ case class RouteWithTimes(
 
 object RouteWithTimes {
 
-  def schedTyped(
-    routeName: RouteName,
-    location: Location,
-    routeConstructor: RouteLeg => RouteLeg,
-    stopTimes: WallTime*,
-  ): RouteWithTimes =
-    RouteWithTimes(
-      stopTimes
-        .flatMap(time =>
-          RouteLeg(Seq(LocationWithTime(location, time)),
-                   routeName,
-          ).toOption,
-        )
-        .map(routeConstructor),
-    )
-
-  def schedTyped(
-    routeName: RouteName,
-    location: Location,
-    routeConstructor: RouteLeg => RouteLeg,
-    busSchedule: BusSchedule,
-  ): RouteWithTimes =
-    schedTyped(routeName,
-               location,
-               routeConstructor,
-               busSchedule.stopTimes: _*,
-    )
-
   def sched(
     routeName: RouteName,
     location: Location,
     routeConstructor: RouteLeg => RouteLeg,
     stopTimes: String*,
-  ): RouteWithTimes =
-    schedTyped(
-      routeName,
-      location,
-      routeConstructor,
-      stopTimes.toList.map(WallTime(_)): _*,
-    ) // ugh
+  ): RouteWithTimes = {
+    val stopTimesTyped =
+      stopTimes
+        .flatMap(time =>
+          RouteLeg(Seq(LocationWithTime(location, WallTime(time))),
+            routeName,
+          ).toOption,
+        )
+    RouteWithTimes(
+      stopTimesTyped
+        .map(routeConstructor),
+    )
+
+  }
 
 }

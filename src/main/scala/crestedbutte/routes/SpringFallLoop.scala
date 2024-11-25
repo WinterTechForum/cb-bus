@@ -10,6 +10,7 @@ import crestedbutte.{
 import com.billding.time.MinuteDuration.toMinuteDuration
 
 object SpringFallLoop
+/*
     extends NamedRoute(
       RouteName("Off-season Loop"),
       RouteWithTimes.schedTyped(
@@ -29,3 +30,6 @@ object SpringFallLoop
         BusSchedule("07:35", "22:55", 40.minutes),
       ),
     )
+
+
+ */
