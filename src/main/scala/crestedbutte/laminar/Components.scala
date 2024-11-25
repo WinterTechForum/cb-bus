@@ -20,7 +20,6 @@ enum SelectedSegmentPiece:
 
 case class LocationTimeDirection(
   locationWithTime: LocationWithTime,
-  selectedSegmentPiece: SelectedSegmentPiece,
   routeSegment: RouteSegment
                                 )
 
@@ -698,7 +697,6 @@ object Components {
           busScheduleAtStop,
           modalActive,
           $plan.now(),
-          selectedSegmentPiece, // TODO Can we just reference this in the Sink below, and not pass it down?
           $plan.writer.contramap[LocationTimeDirection] { ltd =>
             println("We are updating: " + ltd.locationWithTime.l)
             val other =

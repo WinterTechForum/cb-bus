@@ -13,7 +13,6 @@ object BulmaLocal {
                   scheduleAtStop: BusScheduleAtStop,
                   $active: Var[Boolean],
                   plan: Plan,
-                  selectedSegmentPiece: SelectedSegmentPiece,
                   selectedTimeUpdater: Sink[LocationTimeDirection]
                   // TODO pass state piece is being updated
                 ) = {
@@ -33,7 +32,6 @@ object BulmaLocal {
         UpcomingStops(
           scheduleAtStop,
           plan,
-          selectedSegmentPiece, 
           selectedTimeUpdater
         ),
       ),
@@ -55,7 +53,6 @@ object BulmaLocal {
     // pair with other end somehow
     l: LocationWithTime,
     plan: Plan, // TODO Instead of passing Plan, we should just emit an event with the new selected time.
-    selectedSegmentPiece: SelectedSegmentPiece,
     updates: Sink[LocationTimeDirection]
   ) = {
     div(
@@ -69,7 +66,7 @@ object BulmaLocal {
               span(
                 cls := "clickable-time",
                 onClick.mapTo {
-                  LocationTimeDirection(l, selectedSegmentPiece, segment)
+                  LocationTimeDirection(l, segment)
                 } --> updates,
                 l.t.toDumbAmericanString,
               ),
@@ -82,7 +79,6 @@ object BulmaLocal {
   def UpcomingStops(
     scheduleAtStop: BusScheduleAtStop, // TODO This needs to be pairs.
     plan: Plan,
-    selectedSegmentPiece: SelectedSegmentPiece,
     selectedTimeUpdater: Sink[LocationTimeDirection]
     // TODO pass state piece is being updated
   ) = {
@@ -91,7 +87,7 @@ object BulmaLocal {
       h4(textAlign := "center", scheduleAtStop.location.name),
       h5(textAlign := "center", "Upcoming Arrivals"),
       scheduleAtStop.locationsWithTimes.map(l =>
-        locationwithTime(l, plan, selectedSegmentPiece, selectedTimeUpdater),
+        locationwithTime(l, plan, selectedTimeUpdater),
       ),
     )
   }
