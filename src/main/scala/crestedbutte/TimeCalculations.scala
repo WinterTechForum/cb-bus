@@ -23,18 +23,26 @@ object TimeCalculations {
           ltd.routeSegment.start.l
         else
           throw new RuntimeException("WTF")
-      val newRouteLegThatShouldBeUsedForUpdatingOtherStop = RtaSouthbound.normalRouteWithTimes.legs.find(routeLeg => routeLeg.stops.contains(ltd.locationWithTime))
+      val newRouteLegThatShouldBeUsedForUpdatingOtherStop =
+        // TODO Check Southbound AND Northbound
+        RtaSouthbound.normalRouteWithTimes.legs.find(routeLeg => routeLeg.stops.contains(ltd.locationWithTime)).getOrElse(throw new IllegalStateException("boof"))
       println(newRouteLegThatShouldBeUsedForUpdatingOtherStop)
       println("We should *also* update: " + other + " on route: " + ltd.routeSegment.route)
-      plan.copy(l = plan.l.map {
-        // TODO BUG - does not update end location
-        routeSegment =>
-          routeSegment.updateTimeAtLocation(
-            ltd.locationWithTime,
-            ltd.routeSegment.start.t,
-            ltd.routeSegment.end.t,
-          )
-      })
+    val newOtherValue =
+      newRouteLegThatShouldBeUsedForUpdatingOtherStop.stops.find(lwt => lwt.l == other).getOrElse(throw new IllegalStateException("doof"))
+    plan.copy(l = plan.l.map {
+      // TODO BUG - does not update end location
+      routeSegment =>
+        routeSegment.updateTimeAtLocation(
+          ltd.locationWithTime,
+          ltd.routeSegment.start.t,
+          ltd.routeSegment.end.t,
+        ).updateTimeAtLocation(
+          newOtherValue,
+          ltd.routeSegment.start.t,
+          ltd.routeSegment.end.t,
+        )
+    })
   }
 
   def getUpcomingArrivalInfo(
