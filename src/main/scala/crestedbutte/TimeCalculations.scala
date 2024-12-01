@@ -20,10 +20,11 @@ object TimeCalculations {
         .equals(now.localTime)
 
   def getUpcomingArrivalInfo(
+    departureTimeAtStop: WallTime,
     stops: BusScheduleAtStop,
     now: WallTime,
   ): UpcomingArrivalInfo =
-    nextBusArrivalTime(stops.times, now)
+    nextBusArrivalTime(stops.times, departureTimeAtStop)
       .map(nextArrivalTime =>
         UpcomingArrivalInfo(
           stops.location,

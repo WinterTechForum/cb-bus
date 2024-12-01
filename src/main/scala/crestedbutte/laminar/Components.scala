@@ -201,7 +201,7 @@ object Components {
                 .filter(_.location == stop.l)
                 .map { scheduleAtStop =>
                   TimeCalculations
-                    .getUpcomingArrivalInfo(scheduleAtStop, timestamp)
+                    .getUpcomingArrivalInfo(stop.t, scheduleAtStop, timestamp)
                     .content match
                     case Left(stopTimeInfo: StopTimeInfo) =>
                       StopTimeInfoForLocation(
