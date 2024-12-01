@@ -201,18 +201,15 @@ object Components {
                 .filter(_.location == stop.l)
                 .map { scheduleAtStop =>
                   TimeCalculations
-                    .getUpcomingArrivalInfo(scheduleAtStop, stop.t)
+                    .getUpcomingArrivalInfo(scheduleAtStop, timestamp)
                     .content match
                     case Left(stopTimeInfo: StopTimeInfo) =>
                       StopTimeInfoForLocation(
                         stopTimeInfo,
                         scheduleAtStop,
                         $plan,
-                        selectedSegmentPiece
                       )
                     case Right(value) => div("-")
-
-                  //                      scheduleAtStop.times.map(t => div(t.toDumbAmericanString))
                 } *,
             ),
           ),
@@ -673,7 +670,6 @@ object Components {
     stopTimeInfo: StopTimeInfo,
     busScheduleAtStop: BusScheduleAtStop,
     $plan: Var[Plan], // TODO Get rid of this
-    selectedSegmentPiece: SelectedSegmentPiece
     // TODO pass state piece is being updated
   ) = {
 
