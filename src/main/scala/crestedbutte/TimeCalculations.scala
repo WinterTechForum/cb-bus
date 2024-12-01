@@ -9,16 +9,6 @@ import java.time.{DateTimeException, OffsetDateTime}
 
 object TimeCalculations {
 
-  // TODO Shouldn't be part of this class
-  def catchableBus(
-    now: WallTime,
-    goal: WallTime,
-  ) =
-    goal.localTime
-      .isAfter(now.localTime) ||
-      goal.localTime
-        .equals(now.localTime)
-
   def getUpcomingArrivalInfo(
     departureTimeAtStop: WallTime,
     stops: BusScheduleAtStop,
@@ -30,7 +20,7 @@ object TimeCalculations {
           stops.location,
           StopTimeInfo(
             nextArrivalTime,
-            nextArrivalTime
+            nextArrivalTime // TODO Return an optional duration based on whether the bus is still in the future
               .between(now),
           ),
         ),
@@ -49,5 +39,15 @@ object TimeCalculations {
     timesAtStop
       .find(stopTime => TimeCalculations.catchableBus(now, stopTime))
       .filter(_ => now.isLikelyEarlyMorningRatherThanLateNight)
+
+  // TODO Shouldn't be part of this class
+  def catchableBus(
+                    now: WallTime,
+                    goal: WallTime,
+                  ) =
+    goal.localTime
+      .isAfter(now.localTime) ||
+      goal.localTime
+        .equals(now.localTime)
 
 }
