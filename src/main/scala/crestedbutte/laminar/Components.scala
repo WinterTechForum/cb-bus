@@ -209,25 +209,7 @@ object Components {
                         scheduleAtStop,
                         $plan.now(),
                         $plan.writer.contramap[LocationTimeDirection] { ltd =>
-                          println("We are updating: " + ltd.locationWithTime.l)
-                          val other =
-                            if (ltd.routeSegment.start.l ==  ltd.locationWithTime.l)
-                              ltd.routeSegment.end.l
-                            else if (ltd.routeSegment.end.l ==  ltd.locationWithTime.l)
-                              ltd.routeSegment.start.l
-                            else
-                              throw new RuntimeException("WTF")
-                          println("We should *also* update: " + other)
-                          val plan = $plan.now()
-                          plan.copy(l = plan.l.map {
-                            // TODO BUG - does not update end location
-                            routeSegment =>
-                              routeSegment.updateTimeAtLocation(
-                                ltd.locationWithTime,
-                                ltd.routeSegment.start.t,
-                                ltd.routeSegment.end.t,
-                              )
-                          })
+                          TimeCalculations.updateSegmentFromArbitrarySelection(ltd, $plan.now())
                         }
                       )
                     case Right(value) => div("-")
