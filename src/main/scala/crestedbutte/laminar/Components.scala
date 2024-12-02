@@ -144,9 +144,6 @@ object Components {
           case other =>
             throw new Exception("Unrecognized route: " + other)
 
-      val nextAfter = routeWithTimes.nextAfter(routeSegment)
-      val nextBefore = routeWithTimes.nextBefore(routeSegment)
-
       val deleteButton: ReactiveHtmlElement[HTMLAnchorElement] =
         a(
           cls := "link",
@@ -222,26 +219,22 @@ object Components {
       div(
         TouchControls.swipeProp {
           case Swipe.Left =>
-            println("Swiping left and updating plan")
-            nextAfter match
-              case Some(nextAfterValue) =>
-                $plan.update(plan =>
-                  plan.copy(l =
-                    plan.l.updated(planIndex, nextAfterValue),
-                  )
+            routeWithTimes.nextAfter(routeSegment).foreach { nextAfterValue =>
+              $plan.update(plan =>
+                plan.copy(l =
+                  plan.l.updated(planIndex, nextAfterValue),
                 )
-                db.saveDailyPlanOnly($plan.now())
-              case None => ()
+              )
+              db.saveDailyPlanOnly($plan.now())
+            }
           case Swipe.Right =>
-            nextBefore match {
-              case Some(nextBeforeValue) =>
+            routeWithTimes.nextBefore(routeSegment).foreach {nextBeforeValue =>
                 $plan.update(plan =>
                   plan.copy(l =
                     plan.l.updated(planIndex, nextBeforeValue),
                   )
                 )
                 db.saveDailyPlanOnly($plan.now())
-              case None => ()
             }
         },
         div(
@@ -385,7 +378,6 @@ object Components {
     initialTime: WallTime,
     db: Persistence,
   ) = {
-    println(Instant.now())
     // TODO Turn this into a Signal. The EventBus should be contained within the Experimental/FeatureControlCenter
     val featureUpdates = new EventBus[FeatureStatus]
 

@@ -2,7 +2,7 @@ package crestedbutte
 
 import com.billding.time.WallTime
 import crestedbutte.laminar.{LocationTimeDirection, SelectedSegmentPiece}
-import crestedbutte.routes.RtaSouthbound
+import crestedbutte.routes.{RtaNorthbound, RtaSouthbound}
 import zio.ZIO
 import zio.Clock
 
@@ -15,7 +15,6 @@ object TimeCalculations {
                                            ltd: LocationTimeDirection,
                                            plan: Plan
                                          ) = {
-      println("We are updating: " + ltd.locationWithTime.l)
       val other =
         if (ltd.routeSegment.start.l == ltd.locationWithTime.l)
           ltd.routeSegment.end.l
@@ -23,15 +22,16 @@ object TimeCalculations {
           ltd.routeSegment.start.l
         else
           throw new RuntimeException("WTF")
-      val newRouteLegThatShouldBeUsedForUpdatingOtherStop =
-        // TODO Check Southbound AND Northbound
-        RtaSouthbound.normalRouteWithTimes.legs.find(routeLeg => routeLeg.stops.contains(ltd.locationWithTime)).getOrElse(throw new IllegalStateException("boof"))
-      println(newRouteLegThatShouldBeUsedForUpdatingOtherStop)
-      println("We should *also* update: " + other + " on route: " + ltd.routeSegment.route)
+      val routeWithTimes =
+        ltd.routeSegment.route match
+          case RtaSouthbound.componentName => RtaSouthbound.normalRouteWithTimes
+          case RtaNorthbound.componentName => RtaSouthbound.normalRouteWithTimes
+          case other => throw new IllegalArgumentException("Route not supported: " + other)
+    val newRouteLegThatShouldBeUsedForUpdatingOtherStop =
+        routeWithTimes.legs.find(routeLeg => routeLeg.stops.contains(ltd.locationWithTime)).getOrElse(throw new IllegalStateException("boof"))
     val newOtherValue =
       newRouteLegThatShouldBeUsedForUpdatingOtherStop.stops.find(lwt => lwt.l == other).getOrElse(throw new IllegalStateException("doof"))
     plan.copy(l = plan.l.map {
-      // TODO BUG - does not update end location
       routeSegment =>
         routeSegment.updateTimeAtLocation(
           ltd.locationWithTime,
