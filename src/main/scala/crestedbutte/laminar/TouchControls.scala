@@ -35,8 +35,6 @@ object TouchControls {
   val touchstartX: Var[Double] = Var(0)
   val touchendX: Var[Double] = Var(10)
 
-//  val swipeEvent: EventProp[Swipe] =
-
   def swipeProp(
     swipeEvent: Swipe => Unit,
   ) =
@@ -47,7 +45,6 @@ object TouchControls {
           val start = touchstartX.now()
           val end = t.changedTouches(0).screenX
           val significantSwipe = Math.abs(start - end) > 50
-          println("Start: " + start + "  End: " + end)
           val opt =
             if (significantSwipe)
               if (start > end)
@@ -66,27 +63,4 @@ object TouchControls {
       )
     }
 
-
-//  def initialize() = {
-//
-//    def checkDirection() = {
-//      if (touchendX.now() < touchstartX.now())
-//        println("swiped left ! ")
-//      if (touchendX.now() > touchstartX.now())
-//        println("swiped right ! ")
-//    }
-//
-//    document.addEventListener("touchstart", (e: TouchEvent) => {
-//      touchstartX.set(e.changedTouches(0).screenX)
-//    }
-//    )
-//
-//    document.addEventListener("touchend", (e: TouchEvent) => {
-//      touchendX.set(e.changedTouches(0).screenX)
-//      checkDirection()
-//    }
-//    )
-//
-//
-//  }
 }
