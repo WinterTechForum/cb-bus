@@ -533,19 +533,16 @@ object Components {
                 .map(_.end.t)
             val cutoff =
               lastArrivalTime.getOrElse(pageLoadTime)
-            println(s"Looking for start time after $cutoff")
             l.start.t.isLikelyEarlyMorningRatherThanLateNight || l.start.t
               .isAfter(cutoff)
           }
           .getOrElse {
-            println("A")
             // TODO Confirm I can delete this possibility?
             throw new IllegalStateException(
               "No route leg available in either route. Start: " + start + "  End: " + end,
             )
           }
       case None =>
-        println("B")
         throw new IllegalStateException(
           "No route leg available in either route B",
         )
@@ -576,15 +573,12 @@ object Components {
             button(
               cls := "button m-2",
               onClick --> Observer { _ =>
-                println("In observer: " + location)
                 startingPoint.update {
                   case Some(startingPointNow)
                       if startingPointNow == location =>
-                    println("Clearing out startingPoint")
                     None
                   case Some(other) =>
                     try {
-                      println("Trying to connect dots")
                       val matchingLeg =
                         rightLegOnRightRoute(
                           other,
@@ -592,27 +586,18 @@ object Components {
                           $plan.now(),
                           initialTime,
                         )
-                      println("Connected dots")
 
                       $plan.update { case oldPlan =>
                         val newPlan =
                           oldPlan.copy(l = oldPlan.l :+ matchingLeg)
                         db.saveDailyPlanOnly(newPlan)
-                        println(
-                          "setting addingNewRoute to false",
-                        )
                         addingNewRoute.set(false)
-                        println(
-                          "Adding new route: " + addingNewRoute
-                            .now(),
-                        )
                         newPlan
                       }
                       Some(other)
                     }
                     catch {
                       case ex: Throwable =>
-                        println("Illegal state: " + ex)
                         throw new IllegalStateException(ex.getMessage)
                     }
                   case None =>
@@ -623,7 +608,6 @@ object Components {
                 sp match
                   case Some(startingPointNow)
                       if startingPointNow == location =>
-                    println("startingPointNow: " + startingPointNow)
                     "is-primary"
                   case Some(_) => ""
                   case None    => ""
