@@ -41,7 +41,6 @@ object TouchControls {
     swipeEvent: Swipe => Unit,
   ) =
     Modifier { el =>
-      println("Amending modifiers!")
       el.amend(
         onTouchStart.map(_.changedTouches(0).screenX) --> touchstartX,
         onTouchEnd.flatMap { t =>
@@ -66,6 +65,7 @@ object TouchControls {
         },
       )
     }
+
 
 //  def initialize() = {
 //

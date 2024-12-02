@@ -129,6 +129,22 @@ object Components {
                    timestamp: WallTime,
                    addingNewRoute: Var[Boolean],
                  ) = {
+    // TODO Eventually pass this in as a param.
+    val planSwipeUpdater: Observer[(Int, Option[RouteSegment])] =
+      $plan.writer.contramap[(Int, Option[RouteSegment])]{ (idx, segmentO) =>
+        segmentO match
+          case Some(segment) => {
+            val plan = $plan.now()
+            val updatedPlan =
+              plan.copy(l =
+                plan.l.updated(idx, segment),
+              )
+            db.saveDailyPlanOnly(updatedPlan)
+            updatedPlan
+          }
+          case None => $plan.now()
+      }
+
     def RouteLegElement(
                          routeSegment: RouteSegment,
                          planIndex: Int,
@@ -219,23 +235,9 @@ object Components {
       div(
         TouchControls.swipeProp {
           case Swipe.Left =>
-            routeWithTimes.nextAfter(routeSegment).foreach { nextAfterValue =>
-              $plan.update(plan =>
-                plan.copy(l =
-                  plan.l.updated(planIndex, nextAfterValue),
-                )
-              )
-              db.saveDailyPlanOnly($plan.now())
-            }
+            planSwipeUpdater.onNext(planIndex, routeWithTimes.nextAfter(routeSegment))
           case Swipe.Right =>
-            routeWithTimes.nextBefore(routeSegment).foreach {nextBeforeValue =>
-                $plan.update(plan =>
-                  plan.copy(l =
-                    plan.l.updated(planIndex, nextBeforeValue),
-                  )
-                )
-                db.saveDailyPlanOnly($plan.now())
-            }
+            planSwipeUpdater.onNext(planIndex, routeWithTimes.nextBefore(routeSegment))
         },
         div(
           cls := "plan-segments",
