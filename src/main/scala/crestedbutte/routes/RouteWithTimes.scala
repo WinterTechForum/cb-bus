@@ -103,7 +103,7 @@ object RouteWithTimes {
       stopTimes
         .flatMap(time =>
           RouteLeg(Seq(LocationWithTime(location, WallTime(time))),
-            routeName,
+                   routeName,
           ).toOption,
         )
     RouteWithTimes(

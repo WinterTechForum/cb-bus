@@ -7,7 +7,11 @@ import crestedbutte.NotificationStuff.desiredAlarms
 import crestedbutte.dom.BulmaLocal
 import crestedbutte.laminar.Experimental.getLocation
 import crestedbutte.laminar.TouchControls.Swipe
-import crestedbutte.routes.{CompleteStopList, RtaNorthbound, RtaSouthbound}
+import crestedbutte.routes.{
+  CompleteStopList,
+  RtaNorthbound,
+  RtaSouthbound,
+}
 import org.scalajs.dom
 import org.scalajs.dom.HTMLAnchorElement
 
@@ -20,19 +24,18 @@ enum SelectedSegmentPiece:
 
 case class LocationTimeDirection(
   locationWithTime: LocationWithTime,
-  routeSegment: RouteSegment
-                                )
+  routeSegment: RouteSegment)
 
 object Components {
   def GeoBits(
-               $mapLinksEnabled: Signal[Boolean],
-               location: Location,
-               $gpsPosition: Signal[Option[GpsCoordinates]],
-             ) = {
+    $mapLinksEnabled: Signal[Boolean],
+    location: Location,
+    $gpsPosition: Signal[Option[GpsCoordinates]],
+  ) = {
     def distanceFromCurrentLocationToStop(
-                                           gpsPosition: Signal[Option[GpsCoordinates]],
-                                           location: Location,
-                                         ) =
+      gpsPosition: Signal[Option[GpsCoordinates]],
+      location: Location,
+    ) =
       gpsPosition.map(
         _.flatMap(userCords =>
           location.gpsCoordinates.map(stopCoords =>
@@ -54,7 +57,7 @@ object Components {
             cls := "map-link",
             child <--
               distanceFromCurrentLocationToStop($gpsPosition,
-                location,
+                                                location,
               ),
             location.gpsCoordinates.map(Components.GeoLink),
           )
@@ -65,8 +68,8 @@ object Components {
   }
 
   def GPS(
-           gpsPosition: Var[Option[GpsCoordinates]],
-         ) =
+    gpsPosition: Var[Option[GpsCoordinates]],
+  ) =
     button(
       idAttr := "Get position",
       onClick --> Observer[dom.MouseEvent]: ev =>
@@ -75,13 +78,13 @@ object Components {
     )
 
   def FeatureControlCenter(
-                            featureUpdates: WriteBus[FeatureStatus],
-                          ) = {
+    featureUpdates: WriteBus[FeatureStatus],
+  ) = {
 
     // TODO Make this a separate component?
     def FeatureToggle(
-                       feature: Feature,
-                     ) =
+      feature: Feature,
+    ) =
       label(
         cls := "checkbox",
         feature.toString,
@@ -100,8 +103,8 @@ object Components {
   }
 
   def GeoLink(
-               gpsCoordinates: GpsCoordinates,
-             ) =
+    gpsCoordinates: GpsCoordinates,
+  ) =
     a(
       cls := "link",
       href := s"https://www.google.com/maps/search/?api=1&query=${gpsCoordinates.latitude},${gpsCoordinates.longitude}",
@@ -109,9 +112,9 @@ object Components {
     )
 
   def SvgIcon(
-               name: String,
-               clsName: String = "",
-             ) =
+    name: String,
+    clsName: String = "",
+  ) =
     img(
       cls := s"glyphicon $clsName",
       src := s"/glyphicons/svg/individual-svg/$name",
@@ -123,33 +126,34 @@ object Components {
   import org.scalajs.dom.window
 
   def PlanElement(
-                   db: Persistence,
-                   $plan: Var[Plan],
-                   initialTime: WallTime,
-                   timestamp: WallTime,
-                   addingNewRoute: Var[Boolean],
-                 ) = {
+    db: Persistence,
+    $plan: Var[Plan],
+    initialTime: WallTime,
+    timestamp: WallTime,
+    addingNewRoute: Var[Boolean],
+  ) = {
     // TODO Eventually pass this in as a param.
     val planSwipeUpdater: Observer[(Int, Option[RouteSegment])] =
-      $plan.writer.contramap[(Int, Option[RouteSegment])]{ (idx, segmentO) =>
-        segmentO match
-          case Some(segment) => {
-            val plan = $plan.now()
-            val updatedPlan =
-              plan.copy(l =
-                plan.l.updated(idx, segment),
-              )
-            db.saveDailyPlanOnly(updatedPlan)
-            updatedPlan
-          }
-          case None => $plan.now()
+      $plan.writer.contramap[(Int, Option[RouteSegment])] {
+        (
+          idx,
+          segmentO,
+        ) =>
+          segmentO match
+            case Some(segment) =>
+              val plan = $plan.now()
+              val updatedPlan =
+                plan.copy(l = plan.l.updated(idx, segment) )
+              db.saveDailyPlanOnly(updatedPlan)
+              updatedPlan
+            case None => $plan.now()
       }
 
     def RouteLegElement(
-                         routeSegment: RouteSegment,
-                         planIndex: Int,
-                         db: Persistence,
-                       ) =
+      routeSegment: RouteSegment,
+      planIndex: Int,
+      db: Persistence,
+    ) =
 
       val routeWithTimes =
         routeSegment.route match
@@ -186,19 +190,22 @@ object Components {
             glyphicons-basic-842-square-minus.svg
            */
           SvgIcon("glyphicons-basic-842-square-minus.svg",
-            clsName = "delete",
+                  clsName = "delete",
           ),
         )
 
       def stopInfo(
-                    routeSegment: RouteSegment,
-                    $plan: Var[Plan],
-                    selectedSegmentPiece: SelectedSegmentPiece
-                  ) = {
+        routeSegment: RouteSegment,
+        $plan: Var[Plan],
+        selectedSegmentPiece: SelectedSegmentPiece,
+      ) = {
         // TODO Update stopBeingImplicitlyChanged after explicit bit is calculated
-        val (stopBeingExplicitlyChanged, stopBeingImplicitlyChanged) = selectedSegmentPiece match
-          case SelectedSegmentPiece.Start => (routeSegment.start, routeSegment.end)
-          case SelectedSegmentPiece.End => (routeSegment.end, routeSegment.start)
+        val (stopBeingExplicitlyChanged, stopBeingImplicitlyChanged) =
+          selectedSegmentPiece match
+            case SelectedSegmentPiece.Start =>
+              (routeSegment.start, routeSegment.end)
+            case SelectedSegmentPiece.End =>
+              (routeSegment.end, routeSegment.start)
         val stop = stopBeingExplicitlyChanged
         UpcomingStopInfo(
           stop.l,
@@ -214,19 +221,27 @@ object Components {
                 .filter(_.location == stop.l)
                 .map { scheduleAtStop =>
                   TimeCalculations
-                    .getUpcomingArrivalInfo(stop.t, scheduleAtStop, timestamp)
+                    .getUpcomingArrivalInfo(stop.t,
+                                            scheduleAtStop,
+                                            timestamp,
+                    )
                     .content match
                     case Left(stopTimeInfo: StopTimeInfo) =>
                       StopTimeInfoForLocation(
                         stopTimeInfo,
                         scheduleAtStop,
                         $plan.now(),
-                        $plan.writer.contramap[LocationTimeDirection] { ltd =>
-                          TimeCalculations.updateSegmentFromArbitrarySelection(ltd, $plan.now())
-                        }
+                        $plan.writer
+                          .contramap[LocationTimeDirection] { ltd =>
+                            TimeCalculations
+                              .updateSegmentFromArbitrarySelection(
+                                ltd,
+                                $plan.now(),
+                              )
+                          },
                       )
                     case Right(value) => div("-")
-                } *,
+                }*,
             ),
           ),
         )
@@ -235,9 +250,15 @@ object Components {
       div(
         TouchControls.swipeProp {
           case Swipe.Left =>
-            planSwipeUpdater.onNext(planIndex, routeWithTimes.nextAfter(routeSegment))
+            planSwipeUpdater.onNext(
+              planIndex,
+              routeWithTimes.nextAfter(routeSegment),
+            )
           case Swipe.Right =>
-            planSwipeUpdater.onNext(planIndex, routeWithTimes.nextBefore(routeSegment))
+            planSwipeUpdater.onNext(
+              planIndex,
+              routeWithTimes.nextBefore(routeSegment),
+            )
         },
         div(
           cls := "plan-segments",
@@ -252,13 +273,13 @@ object Components {
             glyphicons-basic-827-arrow-thin-down.svg
            */
           SvgIcon("glyphicons-basic-211-arrow-down.svg",
-            "plain-white plan-segment-divider",
+                  "plain-white plan-segment-divider",
           ),
           stopInfo(routeSegment, $plan, SelectedSegmentPiece.End),
           div( // TODO Move this separator outside of this, so it's not attached to the last leg of the trip
             textAlign := "center",
             SvgIcon("glyphicons-basic-947-circle-more.svg",
-              "plain-white plan-segment-divider",
+                    "plain-white plan-segment-divider",
             ),
             // TODO Possibly use this icon as a separator: glyphicons-basic-947-circle-more.svg
           ),
@@ -309,7 +330,7 @@ object Components {
         },
       ),
     )
-}
+  }
 
   import com.raquo.laminar.api.L.*
 
@@ -501,11 +522,11 @@ object Components {
                 ),
               ),
             Components.PlanElement(
-                                   db,
-                                   $plan,
-                                   initialTime,
-                                   timestamp,
-                                   addingNewRoute,
+              db,
+              $plan,
+              initialTime,
+              timestamp,
+              addingNewRoute,
             ),
           ),
         ),
@@ -651,7 +672,7 @@ object Components {
     stopTimeInfo: StopTimeInfo,
     busScheduleAtStop: BusScheduleAtStop,
     plan: Plan, // TODO Get rid of this
-    selectedTimeUpdater: Sink[LocationTimeDirection]
+    selectedTimeUpdater: Sink[LocationTimeDirection],
     // TODO pass state piece is being updated
   ) = {
 
@@ -675,7 +696,7 @@ object Components {
           busScheduleAtStop,
           modalActive,
           plan,
-          selectedTimeUpdater
+          selectedTimeUpdater,
         ),
       ),
     )

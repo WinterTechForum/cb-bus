@@ -4,18 +4,22 @@ import com.billding.time.WallTime
 import com.raquo.laminar.api.L.*
 import com.raquo.laminar.nodes.ReactiveHtmlElement
 import crestedbutte.*
-import crestedbutte.laminar.{Experimental, LocationTimeDirection, SelectedSegmentPiece}
+import crestedbutte.laminar.{
+  Experimental,
+  LocationTimeDirection,
+  SelectedSegmentPiece,
+}
 import org.scalajs.dom
 import org.scalajs.dom.experimental.Notification
 
 object BulmaLocal {
   def bulmaModal(
-                  scheduleAtStop: BusScheduleAtStop,
-                  $active: Var[Boolean],
-                  plan: Plan,
-                  selectedTimeUpdater: Sink[LocationTimeDirection]
-                  // TODO pass state piece is being updated
-                ) = {
+    scheduleAtStop: BusScheduleAtStop,
+    $active: Var[Boolean],
+    plan: Plan,
+    selectedTimeUpdater: Sink[LocationTimeDirection],
+    // TODO pass state piece is being updated
+  ) = {
     println("Updating modal behavior")
     val notificationBus = EventBus[ReactiveHtmlElement[_]]()
     div(
@@ -32,7 +36,7 @@ object BulmaLocal {
         UpcomingStops(
           scheduleAtStop,
           plan,
-          selectedTimeUpdater
+          selectedTimeUpdater,
         ),
       ),
       button(
@@ -47,39 +51,38 @@ object BulmaLocal {
         } --> $active,
       ),
     )
-}
+  }
 
   def locationwithTime(
     // pair with other end somehow
     l: LocationWithTime,
     plan: Plan, // TODO Instead of passing Plan, we should just emit an event with the new selected time.
-    updates: Sink[LocationTimeDirection]
-  ) = {
+    updates: Sink[LocationTimeDirection],
+  ) =
     div(
       textAlign := "center",
       verticalAlign := "middle",
       paddingBottom := "3px",
       cls := "time",
       div(
-          div(
-            plan.l.map(segment =>
-              span(
-                cls := "clickable-time",
-                onClick.mapTo {
-                  LocationTimeDirection(l, segment)
-                } --> updates,
-                l.t.toDumbAmericanString,
-              ),
+        div(
+          plan.l.map(segment =>
+            span(
+              cls := "clickable-time",
+              onClick.mapTo {
+                LocationTimeDirection(l, segment)
+              } --> updates,
+              l.t.toDumbAmericanString,
             ),
+          ),
         ),
       ),
     )
-  }
 
   def UpcomingStops(
     scheduleAtStop: BusScheduleAtStop, // TODO This needs to be pairs.
     plan: Plan,
-    selectedTimeUpdater: Sink[LocationTimeDirection]
+    selectedTimeUpdater: Sink[LocationTimeDirection],
     // TODO pass state piece is being updated
   ) = {
     println("Repainting UpcomingStops")
