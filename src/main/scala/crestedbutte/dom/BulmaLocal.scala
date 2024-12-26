@@ -20,7 +20,6 @@ object BulmaLocal {
     selectedTimeUpdater: Sink[LocationTimeDirection],
     // TODO pass state piece is being updated
   ) = {
-    println("Updating modal behavior")
     val notificationBus = EventBus[ReactiveHtmlElement[_]]()
     div(
       cls := "modal",
@@ -85,7 +84,6 @@ object BulmaLocal {
     selectedTimeUpdater: Sink[LocationTimeDirection],
     // TODO pass state piece is being updated
   ) = {
-    println("Repainting UpcomingStops")
     div(
       h4(textAlign := "center", scheduleAtStop.location.name),
       h5(textAlign := "center", "Upcoming Arrivals"),

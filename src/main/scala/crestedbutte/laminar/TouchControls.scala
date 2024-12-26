@@ -53,7 +53,6 @@ object TouchControls {
                 Some(Swipe.Right)
             else
               None
-          println("opt: " + opt)
           EventStream.fromSeq(
             opt.toSeq,
           )
