@@ -83,7 +83,7 @@ object BulmaLocal {
     plan: Plan,
     selectedTimeUpdater: Sink[LocationTimeDirection],
     // TODO pass state piece is being updated
-  ) = {
+  ) =
     div(
       h4(textAlign := "center", scheduleAtStop.location.name),
       h5(textAlign := "center", "Upcoming Arrivals"),
@@ -91,7 +91,6 @@ object BulmaLocal {
         locationwithTime(l, plan, selectedTimeUpdater),
       ),
     )
-  }
 
   def manualClunkyAlerts(
     $alertsEnabled: Signal[Boolean],

@@ -143,7 +143,7 @@ object Components {
             case Some(segment) =>
               val plan = $plan.now()
               val updatedPlan =
-                plan.copy(l = plan.l.updated(idx, segment) )
+                plan.copy(l = plan.l.updated(idx, segment))
               db.saveDailyPlanOnly(updatedPlan)
               updatedPlan
             case None => $plan.now()
