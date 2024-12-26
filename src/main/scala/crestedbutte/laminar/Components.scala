@@ -5,15 +5,12 @@ import com.raquo.laminar.api.L.*
 import crestedbutte.*
 import crestedbutte.NotificationStuff.desiredAlarms
 import crestedbutte.dom.BulmaLocal
+import crestedbutte.dom.BulmaLocal.UpcomingStops
 import crestedbutte.laminar.Experimental.getLocation
 import crestedbutte.laminar.TouchControls.Swipe
-import crestedbutte.routes.{
-  CompleteStopList,
-  RtaNorthbound,
-  RtaSouthbound,
-}
+import crestedbutte.routes.{CompleteStopList, RtaNorthbound, RtaSouthbound}
 import org.scalajs.dom
-import org.scalajs.dom.HTMLAnchorElement
+import org.scalajs.dom.{HTMLAnchorElement, HTMLDivElement}
 
 import java.time.format.DateTimeFormatter
 import java.time.{Clock, Instant, OffsetDateTime}
@@ -131,6 +128,7 @@ object Components {
     initialTime: WallTime,
     timestamp: WallTime,
     addingNewRoute: Var[Boolean],
+    scheduleSelector: Observer[Option[BusScheduleAtStop]]
   ) = {
     // TODO Eventually pass this in as a param.
     val planSwipeUpdater: Observer[(Int, Option[RouteSegment])] =
@@ -239,7 +237,9 @@ object Components {
                                 $plan.now(),
                               )
                           },
+                        scheduleSelector
                       )
+                    // TODO Do we ever hit this Right anymore?
                     case Right(value) => div("-")
                 }*,
             ),
@@ -417,6 +417,13 @@ object Components {
 
     val gpsPosition: Var[Option[GpsCoordinates]] = Var(None)
 
+    val selectedStop: Var[Option[BusScheduleAtStop]] = Var(None)
+
+    val $plan: Var[Plan] = Var(
+      db.retrieveDailyPlanOnly.getOrElse(Plan(Seq.empty)),
+    )
+
+
     val upcomingArrivalData = timeStamps
       .map { timestamp =>
         // This is a super janky way to avoid being unable to scroll
@@ -427,16 +434,40 @@ object Components {
           .remove("is-clipped")
         TripViewerLaminar(
           db,
+          $plan,
           initialTime,
           timestamp,
+          selectedStop.writer
         )
       }
+
+    val whatToShowBetter: Signal[ReactiveHtmlElement[HTMLDivElement]] =
+    selectedStop.signal.combineWith(upcomingArrivalData)
+      .map {
+      case (Some(busScheduleAtStop), hiddenMainContent) =>
+        UpcomingStops(
+          busScheduleAtStop,
+          $plan.now(),
+          $plan.writer
+            .contramap[LocationTimeDirection] { ltd =>
+              selectedStop.set(None)
+              TimeCalculations
+                .updateSegmentFromArbitrarySelection(
+                  ltd,
+                  $plan.now(),
+                )
+            },
+        )
+      case (None, mainContent) => mainContent
+    }
+
 
     div(
       div(
         cls := "bill-box",
+
         idAttr := "container",
-        child <-- upcomingArrivalData, // **THIS IS THE IMPORTANT STUFF** The fact that it's hard to see means I need to remove other bullshit
+        child <-- whatToShowBetter, // **THIS IS THE IMPORTANT STUFF** The fact that it's hard to see means I need to remove other bullshit
         timeStamps --> Observer[WallTime](
           onNext = localTime =>
             desiredAlarms
@@ -480,13 +511,12 @@ object Components {
 
   def TripViewerLaminar(
     db: Persistence,
+    $plan: Var[Plan],
     initialTime: WallTime,
     timestamp: WallTime,
+    scheduleSelector: Observer[Option[BusScheduleAtStop]]
   ) =
 
-    val $plan: Var[Plan] = Var(
-      db.retrieveDailyPlanOnly.getOrElse(Plan(Seq.empty)),
-    )
     val addingNewRoute: Var[Boolean] = Var(
       true,
     )
@@ -527,6 +557,7 @@ object Components {
               initialTime,
               timestamp,
               addingNewRoute,
+              scheduleSelector
             ),
           ),
         ),
@@ -673,6 +704,7 @@ object Components {
     busScheduleAtStop: BusScheduleAtStop,
     plan: Plan, // TODO Get rid of this
     selectedTimeUpdater: Sink[LocationTimeDirection],
+    scheduleSelector: Observer[Option[BusScheduleAtStop]] // TODO Use this instead of activating modal
     // TODO pass state piece is being updated
   ) = {
 
@@ -681,17 +713,15 @@ object Components {
       button(
         cls := "arrival-time button open-arrival-time-modal",
         onClick.preventDefault.map { _ =>
-          org.scalajs.dom.document
-            .querySelector("html")
-            .classList
-            .add("is-clipped")
-          true
-        } --> modalActive,
+          Some(busScheduleAtStop)
+        } --> scheduleSelector,
         stopTimeInfo.time.toDumbAmericanString,
       ),
       div(
         cls := "wait-time",
         renderWaitTime(stopTimeInfo.waitingDuration),
+        // TODO Instead of creating the modal here, we should *just* set BusScheduleAtStop in the observer.
+        //    The content to be shown should be handled elsewhere
         BulmaLocal.bulmaModal(
           busScheduleAtStop,
           modalActive,

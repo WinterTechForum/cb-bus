@@ -44,6 +44,7 @@ object TimeCalculations {
       newRouteLegThatShouldBeUsedForUpdatingOtherStop.stops
         .find(lwt => lwt.l == other)
         .getOrElse(throw new IllegalStateException("doof"))
+    val res =
     plan.copy(l = plan.l.map { routeSegment =>
       routeSegment
         .updateTimeAtLocation(
@@ -57,6 +58,8 @@ object TimeCalculations {
           ltd.routeSegment.end.t,
         )
     })
+    println("Updated plan: " + res)
+    res
   }
 
   def getUpcomingArrivalInfo(

@@ -69,7 +69,10 @@ object BulmaLocal {
             span(
               cls := "clickable-time",
               onClick.mapTo {
-                LocationTimeDirection(l, segment)
+                {
+                  println("Clicked: " + l)
+                  LocationTimeDirection(l, segment)
+                }
               } --> updates,
               l.t.toDumbAmericanString,
             ),
