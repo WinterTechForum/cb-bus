@@ -391,17 +391,6 @@ object Components {
     // TODO Turn this into a Signal. The EventBus should be contained within the Experimental/FeatureControlCenter
     val featureUpdates = new EventBus[FeatureStatus]
 
-    val initialFeatureSets = FeatureSets(
-      Feature.values.map((_, false)).toMap,
-    )
-
-    val $enabledFeatures: Signal[FeatureSets] =
-      featureUpdates.events
-        .foldLeft[FeatureSets](initialFeatureSets) {
-          case (currentFeatures, featureUpdate) =>
-            currentFeatures.update(featureUpdate)
-        }
-
     val gpsPosition: Var[Option[GpsCoordinates]] = Var(None)
 
     val $plan: Var[Plan] = Var(
@@ -410,12 +399,6 @@ object Components {
 
     val upcomingArrivalData = timeStamps
       .map { timestamp =>
-        // This is a super janky way to avoid being unable to scroll
-        // after we refresh the page and close the model
-        org.scalajs.dom.document
-          .querySelector("html")
-          .classList
-          .remove("is-clipped")
         TripViewerLaminar(
           db,
           $plan,

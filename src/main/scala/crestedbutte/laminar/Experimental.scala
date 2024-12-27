@@ -144,9 +144,6 @@ object Experimental {
     featureUpdates: EventBus[FeatureStatus],
   ) = {
     val newTimePicker = TimePicker("12:34")
-    val $currentRoute: Var[NamedRoute] = Var(
-      RtaSouthbound.fullSchedule,
-    )
     div(
       idAttr := "sandbox",
       timeStamps.map(_ => getLocation($gpsPosition),
@@ -169,98 +166,4 @@ object Experimental {
     )
   }
 
-  sealed trait AM_OR_PM
-  case object AM extends AM_OR_PM
-  case object PM extends AM_OR_PM
-
-  def Toggler(
-    $value: Var[AM_OR_PM],
-  ) = {
-    val updates = new EventBus[Unit]
-    val newNumberValues: EventStream[AM_OR_PM] =
-      updates.events.withCurrentValueOf($value).map {
-        case curNumberValue =>
-          if (curNumberValue == AM)
-            PM
-          else
-            AM
-
-      }
-
-    div(
-      cls := "amOrPm wheel",
-      button(
-        cls := "arrival-time adjuster-button open-arrival-time-modal tp-inc",
-        onClick.preventDefault.map(_ => ()) --> updates,
-        img(
-          cls := "glyphicon",
-          src := "/glyphicons/svg/individual-svg/glyphicons-basic-222-chevron-up.svg",
-        ),
-      ),
-      div(
-        cls := "tp-display",
-        child <-- $value.signal.map(_.toString),
-      ),
-      button(
-        cls := "arrival-time adjuster-button open-arrival-time-modal tp-dec",
-        onClick.preventDefault.map(_ => ()) --> updates,
-        img(
-          cls := "glyphicon",
-          src := "/glyphicons/svg/individual-svg/glyphicons-basic-221-chevron-down.svg",
-        ),
-      ),
-      newNumberValues --> $value,
-    )
-
-  }
-
-  def NumberPicker(
-    $number: Var[Int],
-    deltaValue: Int,
-    minValue: Int,
-    maxValue: Int,
-    sectionName: String,
-  ) = {
-    val updates = new EventBus[Int]
-    val newNumberValues: EventStream[Int] =
-      updates.events.withCurrentValueOf($number).map {
-        case (delta, curNumberValue) =>
-          if (delta > 0)
-            if (curNumberValue + delta <= maxValue)
-              curNumberValue + delta
-            else
-              curNumberValue
-          else if (curNumberValue + delta >= minValue)
-            curNumberValue + delta
-          else
-            curNumberValue
-
-      }
-
-    div(
-      cls := s"$sectionName wheel",
-      button(
-        cls := s"arrival-time adjuster-button open-arrival-time-modal tp-inc",
-        onClick.preventDefault.map(_ => deltaValue) --> updates,
-        img(
-          cls := "glyphicon",
-          src := "/glyphicons/svg/individual-svg/glyphicons-basic-222-chevron-up.svg",
-        ),
-      ),
-      div(
-        cls := s"tp-display",
-        child <-- $number.signal.map(_.toString),
-      ),
-      button(
-        cls := s"arrival-time adjuster-button open-arrival-time-modal tp-dec",
-        onClick.preventDefault.map(_ => -deltaValue) --> updates,
-        img(
-          cls := "glyphicon",
-          src := "/glyphicons/svg/individual-svg/glyphicons-basic-221-chevron-down.svg",
-        ),
-      ),
-      newNumberValues --> $number,
-    )
-
-  }
 }
