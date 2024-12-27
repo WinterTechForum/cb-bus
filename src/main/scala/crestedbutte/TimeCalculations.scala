@@ -45,19 +45,19 @@ object TimeCalculations {
         .find(lwt => lwt.l == other)
         .getOrElse(throw new IllegalStateException("doof"))
     val res =
-    plan.copy(l = plan.l.map { routeSegment =>
-      routeSegment
-        .updateTimeAtLocation(
-          ltd.locationWithTime,
-          ltd.routeSegment.start.t,
-          ltd.routeSegment.end.t,
-        )
-        .updateTimeAtLocation(
-          newOtherValue,
-          ltd.routeSegment.start.t,
-          ltd.routeSegment.end.t,
-        )
-    })
+      plan.copy(l = plan.l.map { routeSegment =>
+        routeSegment
+          .updateTimeAtLocation(
+            ltd.locationWithTime,
+            ltd.routeSegment.start.t,
+            ltd.routeSegment.end.t,
+          )
+          .updateTimeAtLocation(
+            newOtherValue,
+            ltd.routeSegment.start.t,
+            ltd.routeSegment.end.t,
+          )
+      })
     res
   }
 

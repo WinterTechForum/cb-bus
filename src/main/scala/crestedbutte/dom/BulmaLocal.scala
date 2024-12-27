@@ -14,12 +14,12 @@ import org.scalajs.dom.experimental.Notification
 
 object BulmaLocal {
   def locationwithTime(
-                        // pair with other end somehow
-                        l: LocationWithTime,
+    // pair with other end somehow
+    l: LocationWithTime,
     // TODO pass in segment, instead of plan?
-                        segment: RouteSegment, // TODO Instead of passing Plan, we should just emit an event with the new selected time.
-                        updates: Sink[LocationTimeDirection],
-                      ) = {
+    segment: RouteSegment, // TODO Instead of passing Plan, we should just emit an event with the new selected time.
+    updates: Sink[LocationTimeDirection],
+  ) = {
     println("segment: " + segment)
     div(
       textAlign := "center",
@@ -31,13 +31,11 @@ object BulmaLocal {
           span(
             cls := "clickable-time",
             onClick.mapTo {
-              {
-                println("Clicked: " + l)
-                LocationTimeDirection(l, segment)
-              }
+              println("Clicked: " + l)
+              LocationTimeDirection(l, segment)
             } --> updates,
             l.t.toDumbAmericanString,
-          )
+          ),
         ),
       ),
     )
@@ -52,10 +50,9 @@ object BulmaLocal {
     div(
       h4(textAlign := "center", scheduleAtStop.location.name),
       h5(textAlign := "center", "Upcoming Arrivals"),
-      scheduleAtStop.locationsWithTimes.map(l => {
+      scheduleAtStop.locationsWithTimes.map { l =>
         locationwithTime(l, routeSegment, selectedTimeUpdater)
-      }
-      ),
+      },
     )
   }
 

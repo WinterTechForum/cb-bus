@@ -8,7 +8,11 @@ import crestedbutte.dom.BulmaLocal
 import crestedbutte.dom.BulmaLocal.UpcomingStops
 import crestedbutte.laminar.Experimental.getLocation
 import crestedbutte.laminar.TouchControls.Swipe
-import crestedbutte.routes.{CompleteStopList, RtaNorthbound, RtaSouthbound}
+import crestedbutte.routes.{
+  CompleteStopList,
+  RtaNorthbound,
+  RtaSouthbound,
+}
 import org.scalajs.dom
 import org.scalajs.dom.{HTMLAnchorElement, HTMLDivElement}
 
@@ -128,7 +132,9 @@ object Components {
     initialTime: WallTime,
     timestamp: WallTime,
     addingNewRoute: Var[Boolean],
-    scheduleSelector: Observer[Option[(BusScheduleAtStop, RouteSegment)]]
+    scheduleSelector: Observer[
+      Option[(BusScheduleAtStop, RouteSegment)],
+    ],
   ) = {
     // TODO Eventually pass this in as a param.
     val planSwipeUpdater: Observer[(Int, Option[RouteSegment])] =
@@ -182,7 +188,10 @@ object Components {
           ),
         )
 
-      def stopInfo(routeSegment: RouteSegment, selectedSegmentPiece: SelectedSegmentPiece) = {
+      def stopInfo(
+        routeSegment: RouteSegment,
+        selectedSegmentPiece: SelectedSegmentPiece,
+      ) = {
         // TODO Update stopBeingImplicitlyChanged after explicit bit is calculated
         val (stopBeingExplicitlyChanged, stopBeingImplicitlyChanged) =
           selectedSegmentPiece match
@@ -211,7 +220,11 @@ object Components {
                     )
                     .content match
                     case Left(stopTimeInfo: StopTimeInfo) =>
-                      StopTimeInfoForLocation(stopTimeInfo, scheduleAtStop, scheduleSelector, routeSegment)
+                      StopTimeInfoForLocation(stopTimeInfo,
+                                              scheduleAtStop,
+                                              scheduleSelector,
+                                              routeSegment,
+                      )
                     // TODO Do we ever hit this Right anymore?
                     case Right(value) => div("-")
                 }*,
@@ -333,12 +346,13 @@ object Components {
       currentWallTime:
         javaClock
 
-    val selectedStop: Var[Option[(BusScheduleAtStop, RouteSegment)]] = Var(None)
+    val selectedStop: Var[Option[(BusScheduleAtStop, RouteSegment)]] =
+      Var(None)
 
     val timeStamps: Signal[WallTime] = clockTicks.events
       .filter(_ =>
         // Don't reset content if we're in the middle of a selecting a new time. TODO This is all funky now.
-        selectedStop.now().isEmpty
+        selectedStop.now().isEmpty,
       )
       .foldLeft(
         initialTime,
@@ -362,7 +376,7 @@ object Components {
         pageMode,
         initialTime,
         db,
-        selectedStop
+        selectedStop,
       ),
     )
   }
@@ -372,7 +386,7 @@ object Components {
     pageMode: AppMode,
     initialTime: WallTime,
     db: Persistence,
-    selectedStop: Var[Option[(BusScheduleAtStop, RouteSegment)]]
+    selectedStop: Var[Option[(BusScheduleAtStop, RouteSegment)]],
   ) = {
     // TODO Turn this into a Signal. The EventBus should be contained within the Experimental/FeatureControlCenter
     val featureUpdates = new EventBus[FeatureStatus]
@@ -394,7 +408,6 @@ object Components {
       db.retrieveDailyPlanOnly.getOrElse(Plan(Seq.empty)),
     )
 
-
     val upcomingArrivalData = timeStamps
       .map { timestamp =>
         // This is a super janky way to avoid being unable to scroll
@@ -408,37 +421,39 @@ object Components {
           $plan,
           initialTime,
           timestamp,
-          selectedStop.writer
+          selectedStop.writer,
         )
       }
 
-    val whatToShowBetter: Signal[ReactiveHtmlElement[HTMLDivElement]] =
-    selectedStop.signal.combineWith(upcomingArrivalData)
-      .map {
-      case (Some((busScheduleAtStop, routeSegment)), hiddenMainContent) =>
-        UpcomingStops(
-          busScheduleAtStop,
-          routeSegment,
-          // TODO This needs heavy scrutiny. It was pulled from a very different context
-          $plan.writer
-            .contramap[LocationTimeDirection] { ltd =>
-              println("ltd in contramap: " + ltd)
-              selectedStop.set(None)
-              TimeCalculations
-                .updateSegmentFromArbitrarySelection(
-                  ltd,
-                  $plan.now(),
-                )
-            },
-        )
-      case (None, mainContent) => mainContent
-    }
-
+    val whatToShowBetter
+      : Signal[ReactiveHtmlElement[HTMLDivElement]] =
+      selectedStop.signal
+        .combineWith(upcomingArrivalData)
+        .map {
+          case (Some((busScheduleAtStop, routeSegment)),
+                hiddenMainContent,
+              ) =>
+            UpcomingStops(
+              busScheduleAtStop,
+              routeSegment,
+              // TODO This needs heavy scrutiny. It was pulled from a very different context
+              $plan.writer
+                .contramap[LocationTimeDirection] { ltd =>
+                  println("ltd in contramap: " + ltd)
+                  selectedStop.set(None)
+                  TimeCalculations
+                    .updateSegmentFromArbitrarySelection(
+                      ltd,
+                      $plan.now(),
+                    )
+                },
+            )
+          case (None, mainContent) => mainContent
+        }
 
     div(
       div(
         cls := "bill-box",
-
         idAttr := "container",
         child <-- whatToShowBetter, // **THIS IS THE IMPORTANT STUFF** The fact that it's hard to see means I need to remove other bullshit
         timeStamps --> Observer[WallTime](
@@ -487,7 +502,9 @@ object Components {
     $plan: Var[Plan],
     initialTime: WallTime,
     timestamp: WallTime,
-    scheduleSelector: Observer[Option[(BusScheduleAtStop, RouteSegment)]]
+    scheduleSelector: Observer[
+      Option[(BusScheduleAtStop, RouteSegment)],
+    ],
   ) =
 
     val addingNewRoute: Var[Boolean] = Var(
@@ -530,7 +547,7 @@ object Components {
               initialTime,
               timestamp,
               addingNewRoute,
-              scheduleSelector
+              scheduleSelector,
             ),
           ),
         ),
@@ -672,8 +689,14 @@ object Components {
       ),
     )
 
-  def StopTimeInfoForLocation(stopTimeInfo: StopTimeInfo, busScheduleAtStop: BusScheduleAtStop, scheduleSelector: Observer[Option[(BusScheduleAtStop, RouteSegment)]], routeSegment: RouteSegment): ReactiveHtmlElement[HTMLDivElement] = {
-
+  def StopTimeInfoForLocation(
+    stopTimeInfo: StopTimeInfo,
+    busScheduleAtStop: BusScheduleAtStop,
+    scheduleSelector: Observer[
+      Option[(BusScheduleAtStop, RouteSegment)],
+    ],
+    routeSegment: RouteSegment,
+  ): ReactiveHtmlElement[HTMLDivElement] =
     div(
       button(
         cls := "arrival-time button open-arrival-time-modal",
@@ -689,5 +712,4 @@ object Components {
         //    The content to be shown should be handled elsewhere
       ),
     )
-  }
 }
