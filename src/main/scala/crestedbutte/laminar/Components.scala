@@ -135,30 +135,14 @@ object Components {
     scheduleSelector: Observer[
       Option[(BusScheduleAtStop, RouteSegment)],
     ],
+    planSwipeUpdater: Observer[(Int, Option[RouteSegment])]
   ) = {
     // TODO Eventually pass this in as a param.
-    val planSwipeUpdater: Observer[(Int, Option[RouteSegment])] =
-      $plan.writer.contramap[(Int, Option[RouteSegment])] {
-        (
-          idx,
-          segmentO,
-        ) =>
-          segmentO match
-            case Some(segment) =>
-              val plan = $plan.now()
-              val updatedPlan =
-                plan.copy(l = plan.l.updated(idx, segment))
-              db.saveDailyPlanOnly(updatedPlan)
-              updatedPlan
-            case None => $plan.now()
-      }
-
     def RouteLegElement(
       routeSegment: RouteSegment,
       planIndex: Int,
       db: Persistence,
     ) =
-
       val routeWithTimes =
         routeSegment.route match
           case RtaSouthbound.componentName =>
@@ -488,6 +472,23 @@ object Components {
     val addingNewRoute: Var[Boolean] = Var(
       true, // TODO This doesn't seem to be working.
     )
+
+    val planSwipeUpdater: Observer[(Int, Option[RouteSegment])] =
+      $plan.writer.contramap[(Int, Option[RouteSegment])] {
+        (
+          idx,
+          segmentO,
+        ) =>
+          segmentO match
+            case Some(segment) =>
+              val plan = $plan.now()
+              val updatedPlan =
+                plan.copy(l = plan.l.updated(idx, segment))
+              db.saveDailyPlanOnly(updatedPlan)
+              updatedPlan
+            case None => $plan.now()
+      }
+
     div(
       child <-- $plan.signal.map(plan =>
         div(
@@ -526,6 +527,7 @@ object Components {
               timestamp,
               addingNewRoute,
               scheduleSelector,
+              planSwipeUpdater,
             ),
           ),
         ),
