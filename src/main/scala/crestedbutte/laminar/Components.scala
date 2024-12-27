@@ -8,11 +8,7 @@ import crestedbutte.dom.BulmaLocal
 import crestedbutte.dom.BulmaLocal.UpcomingStops
 import crestedbutte.laminar.Experimental.getLocation
 import crestedbutte.laminar.TouchControls.Swipe
-import crestedbutte.routes.{
-  CompleteStopList,
-  RtaNorthbound,
-  RtaSouthbound,
-}
+import crestedbutte.routes.{CompleteStopList, RouteWithTimes, RtaNorthbound, RtaSouthbound}
 import org.scalajs.dom
 import org.scalajs.dom.{HTMLAnchorElement, HTMLDivElement}
 
@@ -188,7 +184,7 @@ object Components {
     )
   }
 
-
+  
   def RouteLegElement(
                        routeSegment: RouteSegment,
                        planIndex: Int,
@@ -201,7 +197,7 @@ object Components {
                        ],
                        planSwipeUpdater: Observer[(Int, Option[RouteSegment])]
                      ) =
-    val routeWithTimes =
+    val routeWithTimes: RouteWithTimes =
       routeSegment.route match
         case RtaSouthbound.componentName =>
           RtaSouthbound.fullSchedule.routeWithTimes
@@ -230,51 +226,6 @@ object Components {
         ),
       )
 
-    def stopInfo(
-                  routeSegment: RouteSegment,
-                  selectedSegmentPiece: SelectedSegmentPiece,
-                ) = {
-      // TODO Update stopBeingImplicitlyChanged after explicit bit is calculated
-      val (stopBeingExplicitlyChanged, stopBeingImplicitlyChanged) =
-        selectedSegmentPiece match
-          case SelectedSegmentPiece.Start =>
-            (routeSegment.start, routeSegment.end)
-          case SelectedSegmentPiece.End =>
-            (routeSegment.end, routeSegment.start)
-      val stop = stopBeingExplicitlyChanged
-      UpcomingStopInfo(
-        stop.l,
-        if (
-          stop == routeSegment.start
-        ) // Only show delete beside start location
-          deleteButton
-        else
-          div(),
-        div(
-          div(
-            routeWithTimes.allStops
-              .filter(_.location == stop.l)
-              .map { scheduleAtStop =>
-                TimeCalculations
-                  .getUpcomingArrivalInfo(stop.t,
-                    scheduleAtStop,
-                    timestamp,
-                  )
-                  .content match
-                  case Left(stopTimeInfo: StopTimeInfo) =>
-                    StopTimeInfoForLocation(stopTimeInfo,
-                      scheduleAtStop,
-                      scheduleSelector,
-                      routeSegment,
-                    )
-                  // TODO Do we ever hit this Right anymore?
-                  case Right(value) => div("-")
-              } *,
-          ),
-        ),
-      )
-    }
-
     div(
       TouchControls.swipeProp {
         case Swipe.Left =>
@@ -291,7 +242,7 @@ object Components {
       div(
         cls := "plan-segments",
         // TODO pass state piece is being updated
-        stopInfo(routeSegment, SelectedSegmentPiece.Start),
+        stopInfo(routeSegment, SelectedSegmentPiece.Start, deleteButton, routeWithTimes, timestamp, scheduleSelector),
 
         /*
            Connecting icons for start and end of legs
@@ -303,7 +254,7 @@ object Components {
         SvgIcon("glyphicons-basic-211-arrow-down.svg",
           "plain-white plan-segment-divider",
         ),
-        stopInfo(routeSegment, SelectedSegmentPiece.End),
+        stopInfo(routeSegment, SelectedSegmentPiece.End, deleteButton, routeWithTimes, timestamp, scheduleSelector),
         div( // TODO Move this separator outside of this, so it's not attached to the last leg of the trip
           textAlign := "center",
           SvgIcon("glyphicons-basic-947-circle-more.svg",
@@ -314,6 +265,58 @@ object Components {
       ),
     )
 
+
+  def stopInfo(
+                routeSegment: RouteSegment,
+                selectedSegmentPiece: SelectedSegmentPiece,
+                deleteButton: ReactiveHtmlElement[_],
+                routeWithTimes: RouteWithTimes,
+                timestamp: WallTime,
+                scheduleSelector: Observer[
+                  Option[(BusScheduleAtStop, RouteSegment)],
+                ],
+              ) = {
+    // TODO Update stopBeingImplicitlyChanged after explicit bit is calculated
+    val (stopBeingExplicitlyChanged, stopBeingImplicitlyChanged) =
+      selectedSegmentPiece match
+        case SelectedSegmentPiece.Start =>
+          (routeSegment.start, routeSegment.end)
+        case SelectedSegmentPiece.End =>
+          (routeSegment.end, routeSegment.start)
+    val stop = stopBeingExplicitlyChanged
+    UpcomingStopInfo(
+      stop.l,
+      if (
+        stop == routeSegment.start
+      ) // Only show delete beside start location
+        deleteButton
+      else
+        div(),
+      div(
+        div(
+          routeWithTimes.allStops
+            .filter(_.location == stop.l)
+            .map { scheduleAtStop =>
+              TimeCalculations
+                .getUpcomingArrivalInfo(stop.t,
+                  scheduleAtStop,
+                  timestamp,
+                )
+                .content match
+                case Left(stopTimeInfo: StopTimeInfo) =>
+                  StopTimeInfoForLocation(stopTimeInfo,
+                    scheduleAtStop,
+                    scheduleSelector,
+                    routeSegment,
+                  )
+                // TODO Do we ever hit this Right anymore?
+                case Right(value) => div("-")
+            } *,
+        ),
+      ),
+    )
+  }
+  
   import com.raquo.laminar.api.L.*
 
   def FullApp(
