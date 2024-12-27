@@ -137,125 +137,6 @@ object Components {
     ],
     planSwipeUpdater: Observer[(Int, Option[RouteSegment])]
   ) = {
-    // TODO Eventually pass this in as a param.
-    def RouteLegElement(
-      routeSegment: RouteSegment,
-      planIndex: Int,
-      db: Persistence,
-    ) =
-      val routeWithTimes =
-        routeSegment.route match
-          case RtaSouthbound.componentName =>
-            RtaSouthbound.fullSchedule.routeWithTimes
-          case RtaNorthbound.componentName =>
-            RtaNorthbound.fullSchedule.routeWithTimes
-          case other =>
-            throw new Exception("Unrecognized route: " + other)
-
-      val deleteButton: ReactiveHtmlElement[HTMLAnchorElement] =
-        a(
-          cls := "link",
-          onClick --> Observer { _ =>
-            val plan = $plan.now()
-            val newPlan =
-              plan.copy(l = plan.l.filterNot(_ == routeSegment))
-            db.saveDailyPlanOnly(newPlan)
-            $plan.set(newPlan)
-            if (newPlan.l.isEmpty) {
-              addingNewRoute.set {
-                true
-              }
-            }
-          },
-          SvgIcon("glyphicons-basic-842-square-minus.svg",
-                  clsName = "delete",
-          ),
-        )
-
-      def stopInfo(
-        routeSegment: RouteSegment,
-        selectedSegmentPiece: SelectedSegmentPiece,
-      ) = {
-        // TODO Update stopBeingImplicitlyChanged after explicit bit is calculated
-        val (stopBeingExplicitlyChanged, stopBeingImplicitlyChanged) =
-          selectedSegmentPiece match
-            case SelectedSegmentPiece.Start =>
-              (routeSegment.start, routeSegment.end)
-            case SelectedSegmentPiece.End =>
-              (routeSegment.end, routeSegment.start)
-        val stop = stopBeingExplicitlyChanged
-        UpcomingStopInfo(
-          stop.l,
-          if (
-            stop == routeSegment.start
-          ) // Only show delete beside start location
-            deleteButton
-          else
-            div(),
-          div(
-            div(
-              routeWithTimes.allStops
-                .filter(_.location == stop.l)
-                .map { scheduleAtStop =>
-                  TimeCalculations
-                    .getUpcomingArrivalInfo(stop.t,
-                                            scheduleAtStop,
-                                            timestamp,
-                    )
-                    .content match
-                    case Left(stopTimeInfo: StopTimeInfo) =>
-                      StopTimeInfoForLocation(stopTimeInfo,
-                                              scheduleAtStop,
-                                              scheduleSelector,
-                                              routeSegment,
-                      )
-                    // TODO Do we ever hit this Right anymore?
-                    case Right(value) => div("-")
-                }*,
-            ),
-          ),
-        )
-      }
-
-      div(
-        TouchControls.swipeProp {
-          case Swipe.Left =>
-            planSwipeUpdater.onNext(
-              planIndex,
-              routeWithTimes.nextAfter(routeSegment),
-            )
-          case Swipe.Right =>
-            planSwipeUpdater.onNext(
-              planIndex,
-              routeWithTimes.nextBefore(routeSegment),
-            )
-        },
-        div(
-          cls := "plan-segments",
-          // TODO pass state piece is being updated
-          stopInfo(routeSegment, SelectedSegmentPiece.Start),
-
-          /*
-             Connecting icons for start and end of legs
-            glyphicons-basic-211-arrow-down.svg
-            glyphicons-basic-221-chevron-down.svg
-            glyphicons-basic-796-set-down.svg
-            glyphicons-basic-827-arrow-thin-down.svg
-           */
-          SvgIcon("glyphicons-basic-211-arrow-down.svg",
-                  "plain-white plan-segment-divider",
-          ),
-          stopInfo(routeSegment, SelectedSegmentPiece.End),
-          div( // TODO Move this separator outside of this, so it's not attached to the last leg of the trip
-            textAlign := "center",
-            SvgIcon("glyphicons-basic-947-circle-more.svg",
-                    "plain-white plan-segment-divider",
-            ),
-            // TODO Possibly use this icon as a separator: glyphicons-basic-947-circle-more.svg
-          ),
-        ),
-      )
-
     div(
       $plan.now().l.zipWithIndex
         .map { case (routeSegment, idx) =>
@@ -264,6 +145,11 @@ object Components {
               routeSegment,
               idx,
               db,
+              $plan,
+              addingNewRoute,
+              timestamp,
+              scheduleSelector,
+              planSwipeUpdater
             ),
           )
         }
@@ -301,6 +187,132 @@ object Components {
       ),
     )
   }
+
+
+  def RouteLegElement(
+                       routeSegment: RouteSegment,
+                       planIndex: Int,
+                       db: Persistence,
+    $plan: Var[Plan],
+                       addingNewRoute: Var[Boolean],
+                       timestamp: WallTime,
+                       scheduleSelector: Observer[
+                         Option[(BusScheduleAtStop, RouteSegment)],
+                       ],
+                       planSwipeUpdater: Observer[(Int, Option[RouteSegment])]
+                     ) =
+    val routeWithTimes =
+      routeSegment.route match
+        case RtaSouthbound.componentName =>
+          RtaSouthbound.fullSchedule.routeWithTimes
+        case RtaNorthbound.componentName =>
+          RtaNorthbound.fullSchedule.routeWithTimes
+        case other =>
+          throw new Exception("Unrecognized route: " + other)
+
+    val deleteButton: ReactiveHtmlElement[HTMLAnchorElement] =
+      a(
+        cls := "link",
+        onClick --> Observer { _ =>
+          val plan = $plan.now()
+          val newPlan =
+            plan.copy(l = plan.l.filterNot(_ == routeSegment))
+          db.saveDailyPlanOnly(newPlan)
+          $plan.set(newPlan)
+          if (newPlan.l.isEmpty) {
+            addingNewRoute.set {
+              true
+            }
+          }
+        },
+        SvgIcon("glyphicons-basic-842-square-minus.svg",
+          clsName = "delete",
+        ),
+      )
+
+    def stopInfo(
+                  routeSegment: RouteSegment,
+                  selectedSegmentPiece: SelectedSegmentPiece,
+                ) = {
+      // TODO Update stopBeingImplicitlyChanged after explicit bit is calculated
+      val (stopBeingExplicitlyChanged, stopBeingImplicitlyChanged) =
+        selectedSegmentPiece match
+          case SelectedSegmentPiece.Start =>
+            (routeSegment.start, routeSegment.end)
+          case SelectedSegmentPiece.End =>
+            (routeSegment.end, routeSegment.start)
+      val stop = stopBeingExplicitlyChanged
+      UpcomingStopInfo(
+        stop.l,
+        if (
+          stop == routeSegment.start
+        ) // Only show delete beside start location
+          deleteButton
+        else
+          div(),
+        div(
+          div(
+            routeWithTimes.allStops
+              .filter(_.location == stop.l)
+              .map { scheduleAtStop =>
+                TimeCalculations
+                  .getUpcomingArrivalInfo(stop.t,
+                    scheduleAtStop,
+                    timestamp,
+                  )
+                  .content match
+                  case Left(stopTimeInfo: StopTimeInfo) =>
+                    StopTimeInfoForLocation(stopTimeInfo,
+                      scheduleAtStop,
+                      scheduleSelector,
+                      routeSegment,
+                    )
+                  // TODO Do we ever hit this Right anymore?
+                  case Right(value) => div("-")
+              } *,
+          ),
+        ),
+      )
+    }
+
+    div(
+      TouchControls.swipeProp {
+        case Swipe.Left =>
+          planSwipeUpdater.onNext(
+            planIndex,
+            routeWithTimes.nextAfter(routeSegment),
+          )
+        case Swipe.Right =>
+          planSwipeUpdater.onNext(
+            planIndex,
+            routeWithTimes.nextBefore(routeSegment),
+          )
+      },
+      div(
+        cls := "plan-segments",
+        // TODO pass state piece is being updated
+        stopInfo(routeSegment, SelectedSegmentPiece.Start),
+
+        /*
+           Connecting icons for start and end of legs
+          glyphicons-basic-211-arrow-down.svg
+          glyphicons-basic-221-chevron-down.svg
+          glyphicons-basic-796-set-down.svg
+          glyphicons-basic-827-arrow-thin-down.svg
+         */
+        SvgIcon("glyphicons-basic-211-arrow-down.svg",
+          "plain-white plan-segment-divider",
+        ),
+        stopInfo(routeSegment, SelectedSegmentPiece.End),
+        div( // TODO Move this separator outside of this, so it's not attached to the last leg of the trip
+          textAlign := "center",
+          SvgIcon("glyphicons-basic-947-circle-more.svg",
+            "plain-white plan-segment-divider",
+          ),
+          // TODO Possibly use this icon as a separator: glyphicons-basic-947-circle-more.svg
+        ),
+      ),
+    )
 
   import com.raquo.laminar.api.L.*
 
