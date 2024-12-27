@@ -20,7 +20,6 @@ object BulmaLocal {
     segment: RouteSegment, // TODO Instead of passing Plan, we should just emit an event with the new selected time.
     updates: Sink[LocationTimeDirection],
   ) = {
-    println("segment: " + segment)
     div(
       textAlign := "center",
       verticalAlign := "middle",
@@ -31,7 +30,6 @@ object BulmaLocal {
           span(
             cls := "clickable-time",
             onClick.mapTo {
-              println("Clicked: " + l)
               LocationTimeDirection(l, segment)
             } --> updates,
             l.t.toDumbAmericanString,
@@ -55,21 +53,5 @@ object BulmaLocal {
       },
     )
   }
-
-  def manualClunkyAlerts(
-    $alertsEnabled: Signal[Boolean],
-    time: WallTime,
-  ) =
-    div(
-      child <-- $alertsEnabled.map(alertsEnabled =>
-        if (dom.Notification.permission == "granted" && alertsEnabled)
-          Experimental.Notifications.AlarmIcon(
-            "glyphicons-basic-443-bell-ringing.svg",
-            "arrival-time-alarm",
-            time,
-          )
-        else div(),
-      ),
-    )
 
 }

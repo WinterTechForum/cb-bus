@@ -350,10 +350,6 @@ object Components {
       Var(None)
 
     val timeStamps: Signal[WallTime] = clockTicks.events
-      .filter(_ =>
-        // Don't reset content if we're in the middle of a selecting a new time. TODO This is all funky now.
-        selectedStop.now().isEmpty,
-      )
       .foldLeft(
         initialTime,
       )(
@@ -422,7 +418,6 @@ object Components {
               // TODO This needs heavy scrutiny. It was pulled from a very different context
               $plan.writer
                 .contramap[LocationTimeDirection] { ltd =>
-                  println("ltd in contramap: " + ltd)
                   selectedStop.set(None)
                   TimeCalculations
                     .updateSegmentFromArbitrarySelection(
