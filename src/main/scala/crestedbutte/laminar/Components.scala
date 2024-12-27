@@ -418,7 +418,6 @@ object Components {
       case (Some((busScheduleAtStop, routeSegment)), hiddenMainContent) =>
         UpcomingStops(
           busScheduleAtStop,
-          $plan.now(),
           routeSegment,
           // TODO This needs heavy scrutiny. It was pulled from a very different context
           $plan.writer

@@ -45,7 +45,6 @@ object BulmaLocal {
 
   def UpcomingStops(
     scheduleAtStop: BusScheduleAtStop, // TODO This needs to be pairs.
-    plan: Plan,
     routeSegment: RouteSegment,
     selectedTimeUpdater: Sink[LocationTimeDirection],
   ) = {
