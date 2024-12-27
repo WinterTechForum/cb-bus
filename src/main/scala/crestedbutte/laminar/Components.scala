@@ -486,7 +486,7 @@ object Components {
   ) =
 
     val addingNewRoute: Var[Boolean] = Var(
-      true,
+      true, // TODO This doesn't seem to be working.
     )
     div(
       child <-- $plan.signal.map(plan =>
