@@ -58,7 +58,6 @@ object TimeCalculations {
           ltd.routeSegment.end.t,
         )
     })
-    println("Updated plan: " + res)
     res
   }
 

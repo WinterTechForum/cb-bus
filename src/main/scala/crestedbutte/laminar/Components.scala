@@ -128,7 +128,7 @@ object Components {
     initialTime: WallTime,
     timestamp: WallTime,
     addingNewRoute: Var[Boolean],
-    scheduleSelector: Observer[Option[BusScheduleAtStop]]
+    scheduleSelector: Observer[Option[(BusScheduleAtStop, RouteSegment)]]
   ) = {
     // TODO Eventually pass this in as a param.
     val planSwipeUpdater: Observer[(Int, Option[RouteSegment])] =
@@ -177,26 +177,12 @@ object Components {
               }
             }
           },
-          /*
-          Options:
-            glyphicons-basic-193-circle-empty-remove.svg
-            glyphicons-basic-373-times.svg
-            glyphicons-basic-599-menu-close.svg
-            glyphicons-basic-632-circle-minus.svg
-            glyphicons-basic-639-octagon-remove-empty.svg
-            glyphicons-basic-640-octagon-remove.svg
-            glyphicons-basic-842-square-minus.svg
-           */
           SvgIcon("glyphicons-basic-842-square-minus.svg",
                   clsName = "delete",
           ),
         )
 
-      def stopInfo(
-        routeSegment: RouteSegment,
-        $plan: Var[Plan],
-        selectedSegmentPiece: SelectedSegmentPiece,
-      ) = {
+      def stopInfo(routeSegment: RouteSegment, selectedSegmentPiece: SelectedSegmentPiece) = {
         // TODO Update stopBeingImplicitlyChanged after explicit bit is calculated
         val (stopBeingExplicitlyChanged, stopBeingImplicitlyChanged) =
           selectedSegmentPiece match
@@ -225,20 +211,7 @@ object Components {
                     )
                     .content match
                     case Left(stopTimeInfo: StopTimeInfo) =>
-                      StopTimeInfoForLocation(
-                        stopTimeInfo,
-                        scheduleAtStop,
-                        $plan.now(),
-                        $plan.writer
-                          .contramap[LocationTimeDirection] { ltd =>
-                            TimeCalculations
-                              .updateSegmentFromArbitrarySelection(
-                                ltd,
-                                $plan.now(),
-                              )
-                          },
-                        scheduleSelector
-                      )
+                      StopTimeInfoForLocation(stopTimeInfo, scheduleAtStop, scheduleSelector, routeSegment)
                     // TODO Do we ever hit this Right anymore?
                     case Right(value) => div("-")
                 }*,
@@ -263,7 +236,7 @@ object Components {
         div(
           cls := "plan-segments",
           // TODO pass state piece is being updated
-          stopInfo(routeSegment, $plan, SelectedSegmentPiece.Start),
+          stopInfo(routeSegment, SelectedSegmentPiece.Start),
 
           /*
              Connecting icons for start and end of legs
@@ -275,7 +248,7 @@ object Components {
           SvgIcon("glyphicons-basic-211-arrow-down.svg",
                   "plain-white plan-segment-divider",
           ),
-          stopInfo(routeSegment, $plan, SelectedSegmentPiece.End),
+          stopInfo(routeSegment, SelectedSegmentPiece.End),
           div( // TODO Move this separator outside of this, so it's not attached to the last leg of the trip
             textAlign := "center",
             SvgIcon("glyphicons-basic-947-circle-more.svg",
@@ -360,14 +333,12 @@ object Components {
       currentWallTime:
         javaClock
 
+    val selectedStop: Var[Option[(BusScheduleAtStop, RouteSegment)]] = Var(None)
+
     val timeStamps: Signal[WallTime] = clockTicks.events
       .filter(_ =>
-        selectedComponent != PlanViewer &&
-          // Don't reset content if we're in the middle of a modal
-          !org.scalajs.dom.document
-            .querySelector("html")
-            .classList
-            .contains("is-clipped"),
+        // Don't reset content if we're in the middle of a selecting a new time. TODO This is all funky now.
+        selectedStop.now().isEmpty
       )
       .foldLeft(
         initialTime,
@@ -391,6 +362,7 @@ object Components {
         pageMode,
         initialTime,
         db,
+        selectedStop
       ),
     )
   }
@@ -400,6 +372,7 @@ object Components {
     pageMode: AppMode,
     initialTime: WallTime,
     db: Persistence,
+    selectedStop: Var[Option[(BusScheduleAtStop, RouteSegment)]]
   ) = {
     // TODO Turn this into a Signal. The EventBus should be contained within the Experimental/FeatureControlCenter
     val featureUpdates = new EventBus[FeatureStatus]
@@ -416,8 +389,6 @@ object Components {
         }
 
     val gpsPosition: Var[Option[GpsCoordinates]] = Var(None)
-
-    val selectedStop: Var[Option[BusScheduleAtStop]] = Var(None)
 
     val $plan: Var[Plan] = Var(
       db.retrieveDailyPlanOnly.getOrElse(Plan(Seq.empty)),
@@ -444,12 +415,15 @@ object Components {
     val whatToShowBetter: Signal[ReactiveHtmlElement[HTMLDivElement]] =
     selectedStop.signal.combineWith(upcomingArrivalData)
       .map {
-      case (Some(busScheduleAtStop), hiddenMainContent) =>
+      case (Some((busScheduleAtStop, routeSegment)), hiddenMainContent) =>
         UpcomingStops(
           busScheduleAtStop,
           $plan.now(),
+          routeSegment,
+          // TODO This needs heavy scrutiny. It was pulled from a very different context
           $plan.writer
             .contramap[LocationTimeDirection] { ltd =>
+              println("ltd in contramap: " + ltd)
               selectedStop.set(None)
               TimeCalculations
                 .updateSegmentFromArbitrarySelection(
@@ -514,7 +488,7 @@ object Components {
     $plan: Var[Plan],
     initialTime: WallTime,
     timestamp: WallTime,
-    scheduleSelector: Observer[Option[BusScheduleAtStop]]
+    scheduleSelector: Observer[Option[(BusScheduleAtStop, RouteSegment)]]
   ) =
 
     val addingNewRoute: Var[Boolean] = Var(
@@ -699,21 +673,13 @@ object Components {
       ),
     )
 
-  def StopTimeInfoForLocation(
-    stopTimeInfo: StopTimeInfo,
-    busScheduleAtStop: BusScheduleAtStop,
-    plan: Plan, // TODO Get rid of this
-    selectedTimeUpdater: Sink[LocationTimeDirection],
-    scheduleSelector: Observer[Option[BusScheduleAtStop]] // TODO Use this instead of activating modal
-    // TODO pass state piece is being updated
-  ) = {
+  def StopTimeInfoForLocation(stopTimeInfo: StopTimeInfo, busScheduleAtStop: BusScheduleAtStop, scheduleSelector: Observer[Option[(BusScheduleAtStop, RouteSegment)]], routeSegment: RouteSegment): ReactiveHtmlElement[HTMLDivElement] = {
 
-    val modalActive = Var(false)
     div(
       button(
         cls := "arrival-time button open-arrival-time-modal",
         onClick.preventDefault.map { _ =>
-          Some(busScheduleAtStop)
+          Some((busScheduleAtStop, routeSegment))
         } --> scheduleSelector,
         stopTimeInfo.time.toDumbAmericanString,
       ),
@@ -722,12 +688,6 @@ object Components {
         renderWaitTime(stopTimeInfo.waitingDuration),
         // TODO Instead of creating the modal here, we should *just* set BusScheduleAtStop in the observer.
         //    The content to be shown should be handled elsewhere
-        BulmaLocal.bulmaModal(
-          busScheduleAtStop,
-          modalActive,
-          plan,
-          selectedTimeUpdater,
-        ),
       ),
     )
   }
