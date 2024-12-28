@@ -229,56 +229,78 @@ object Components {
         ),
       )
 
-    div(
-      TouchControls.swipeProp {
-        case Swipe.Left =>
-          planSwipeUpdater.onNext(
-            planIndex,
-            routeWithTimes.nextAfter(routeSegment),
-          )
-        case Swipe.Right =>
-          planSwipeUpdater.onNext(
-            planIndex,
-            routeWithTimes.nextBefore(routeSegment),
-          )
-      },
+    val res =
       div(
-        cls := "plan-segments",
-        // TODO pass state piece is being updated
-        stopInfo(routeSegment,
-                 SelectedSegmentPiece.Start,
-                 deleteButton,
-                 routeWithTimes,
-                 timestamp,
-                 scheduleSelector,
-        ),
+        TouchControls.swipeProp {
+          case Swipe.Left =>
+            planSwipeUpdater.onNext(
+              planIndex,
+              routeWithTimes.nextAfter(routeSegment),
+            )
+          case Swipe.Right =>
+            planSwipeUpdater.onNext(
+              planIndex,
+              routeWithTimes.nextBefore(routeSegment),
+            )
+        },
+        div(
+          /*
+          // grab the element
+            var el = document.getElementById('idOfElement');
 
-        /*
-           Connecting icons for start and end of legs
-          glyphicons-basic-211-arrow-down.svg
-          glyphicons-basic-221-chevron-down.svg
-          glyphicons-basic-796-set-down.svg
-          glyphicons-basic-827-arrow-thin-down.svg
-         */
-        SvgIcon("glyphicons-basic-211-arrow-down.svg",
-                "plain-white plan-segment-divider",
-        ),
-        stopInfo(routeSegment,
-                 SelectedSegmentPiece.End,
-                 deleteButton,
-                 routeWithTimes,
-                 timestamp,
-                 scheduleSelector,
-        ),
-        div( // TODO Move this separator outside of this, so it's not attached to the last leg of the trip
-          textAlign := "center",
-          SvgIcon("glyphicons-basic-947-circle-more.svg",
-                  "plain-white plan-segment-divider",
+            // listen for the long-press event
+            el.addEventListener('long-press', function(e) {
+
+              // stop the event from bubbling up
+              e.preventDefault()
+
+              console.log(e.target);
+            });
+           */
+          cls := "plan-segments",
+          // TODO pass state piece is being updated
+          stopInfo(routeSegment,
+            SelectedSegmentPiece.Start,
+            deleteButton,
+            routeWithTimes,
+            timestamp,
+            scheduleSelector,
           ),
-          // TODO Possibly use this icon as a separator: glyphicons-basic-947-circle-more.svg
-        ),
-      ),
+
+          /*
+             Connecting icons for start and end of legs
+            glyphicons-basic-211-arrow-down.svg
+            glyphicons-basic-221-chevron-down.svg
+            glyphicons-basic-796-set-down.svg
+            glyphicons-basic-827-arrow-thin-down.svg
+           */
+          SvgIcon("glyphicons-basic-211-arrow-down.svg",
+            "plain-white plan-segment-divider",
+          ),
+          stopInfo(routeSegment,
+            SelectedSegmentPiece.End,
+            deleteButton,
+            routeWithTimes,
+            timestamp,
+            scheduleSelector,
+          ),
+          div( // TODO Move this separator outside of this, so it's not attached to the last leg of the trip
+            textAlign := "center",
+            SvgIcon("glyphicons-basic-947-circle-more.svg",
+              "plain-white plan-segment-divider",
+            ),
+            // TODO Possibly use this icon as a separator: glyphicons-basic-947-circle-more.svg
+          ),
+        )
+      )
+
+    res.ref.addEventListener(
+      "long-press",
+      _ => println("Long pressed!")
     )
+
+    println("Added long pressed behavior. Maybe.")
+    res
 
   def stopInfo(
     routeSegment: RouteSegment,
