@@ -40,7 +40,7 @@ object TimeCalculations {
       routeWithTimes.legs
         .find(routeLeg =>
           println()
-          routeLeg.stops.foreach(s => println("s: "  + s))
+          routeLeg.stops.foreach(s => println("s: " + s))
           routeLeg.stops.contains(ltd.locationWithTime),
         )
         .getOrElse(throw new IllegalStateException("boof"))
