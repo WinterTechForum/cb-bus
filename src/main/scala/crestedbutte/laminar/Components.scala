@@ -8,7 +8,12 @@ import crestedbutte.dom.BulmaLocal
 import crestedbutte.dom.BulmaLocal.UpcomingStops
 import crestedbutte.laminar.Experimental.getLocation
 import crestedbutte.laminar.TouchControls.Swipe
-import crestedbutte.routes.{CompleteStopList, RouteWithTimes, RtaNorthbound, RtaSouthbound}
+import crestedbutte.routes.{
+  CompleteStopList,
+  RouteWithTimes,
+  RtaNorthbound,
+  RtaSouthbound,
+}
 import org.scalajs.dom
 import org.scalajs.dom.{HTMLAnchorElement, HTMLDivElement}
 
@@ -131,8 +136,8 @@ object Components {
     scheduleSelector: Observer[
       Option[(BusScheduleAtStop, RouteSegment)],
     ],
-    planSwipeUpdater: Observer[(Int, Option[RouteSegment])]
-  ) = {
+    planSwipeUpdater: Observer[(Int, Option[RouteSegment])],
+  ) =
     div(
       $plan.now().l.zipWithIndex
         .map { case (routeSegment, idx) =>
@@ -145,7 +150,7 @@ object Components {
               addingNewRoute,
               timestamp,
               scheduleSelector,
-              planSwipeUpdater
+              planSwipeUpdater,
             ),
           )
         }
@@ -182,21 +187,19 @@ object Components {
         },
       ),
     )
-  }
 
-  
   def RouteLegElement(
-                       routeSegment: RouteSegment,
-                       planIndex: Int,
-                       db: Persistence,
+    routeSegment: RouteSegment,
+    planIndex: Int,
+    db: Persistence,
     $plan: Var[Plan],
-                       addingNewRoute: Var[Boolean],
-                       timestamp: WallTime,
-                       scheduleSelector: Observer[
-                         Option[(BusScheduleAtStop, RouteSegment)],
-                       ],
-                       planSwipeUpdater: Observer[(Int, Option[RouteSegment])]
-                     ) =
+    addingNewRoute: Var[Boolean],
+    timestamp: WallTime,
+    scheduleSelector: Observer[
+      Option[(BusScheduleAtStop, RouteSegment)],
+    ],
+    planSwipeUpdater: Observer[(Int, Option[RouteSegment])],
+  ) =
     val routeWithTimes: RouteWithTimes =
       routeSegment.route match
         case RtaSouthbound.componentName =>
@@ -222,7 +225,7 @@ object Components {
           }
         },
         SvgIcon("glyphicons-basic-842-square-minus.svg",
-          clsName = "delete",
+                clsName = "delete",
         ),
       )
 
@@ -242,7 +245,13 @@ object Components {
       div(
         cls := "plan-segments",
         // TODO pass state piece is being updated
-        stopInfo(routeSegment, SelectedSegmentPiece.Start, deleteButton, routeWithTimes, timestamp, scheduleSelector),
+        stopInfo(routeSegment,
+                 SelectedSegmentPiece.Start,
+                 deleteButton,
+                 routeWithTimes,
+                 timestamp,
+                 scheduleSelector,
+        ),
 
         /*
            Connecting icons for start and end of legs
@@ -252,30 +261,35 @@ object Components {
           glyphicons-basic-827-arrow-thin-down.svg
          */
         SvgIcon("glyphicons-basic-211-arrow-down.svg",
-          "plain-white plan-segment-divider",
+                "plain-white plan-segment-divider",
         ),
-        stopInfo(routeSegment, SelectedSegmentPiece.End, deleteButton, routeWithTimes, timestamp, scheduleSelector),
+        stopInfo(routeSegment,
+                 SelectedSegmentPiece.End,
+                 deleteButton,
+                 routeWithTimes,
+                 timestamp,
+                 scheduleSelector,
+        ),
         div( // TODO Move this separator outside of this, so it's not attached to the last leg of the trip
           textAlign := "center",
           SvgIcon("glyphicons-basic-947-circle-more.svg",
-            "plain-white plan-segment-divider",
+                  "plain-white plan-segment-divider",
           ),
           // TODO Possibly use this icon as a separator: glyphicons-basic-947-circle-more.svg
         ),
       ),
     )
 
-
   def stopInfo(
-                routeSegment: RouteSegment,
-                selectedSegmentPiece: SelectedSegmentPiece,
-                deleteButton: ReactiveHtmlElement[_],
-                routeWithTimes: RouteWithTimes,
-                timestamp: WallTime,
-                scheduleSelector: Observer[
-                  Option[(BusScheduleAtStop, RouteSegment)],
-                ],
-              ) = {
+    routeSegment: RouteSegment,
+    selectedSegmentPiece: SelectedSegmentPiece,
+    deleteButton: ReactiveHtmlElement[_],
+    routeWithTimes: RouteWithTimes,
+    timestamp: WallTime,
+    scheduleSelector: Observer[
+      Option[(BusScheduleAtStop, RouteSegment)],
+    ],
+  ) = {
     // TODO Update stopBeingImplicitlyChanged after explicit bit is calculated
     val (stopBeingExplicitlyChanged, stopBeingImplicitlyChanged) =
       selectedSegmentPiece match
@@ -299,24 +313,24 @@ object Components {
             .map { scheduleAtStop =>
               TimeCalculations
                 .getUpcomingArrivalInfo(stop.t,
-                  scheduleAtStop,
-                  timestamp,
+                                        scheduleAtStop,
+                                        timestamp,
                 )
                 .content match
                 case Left(stopTimeInfo: StopTimeInfo) =>
                   StopTimeInfoForLocation(stopTimeInfo,
-                    scheduleAtStop,
-                    scheduleSelector,
-                    routeSegment,
+                                          scheduleAtStop,
+                                          scheduleSelector,
+                                          routeSegment,
                   )
                 // TODO Do we ever hit this Right anymore?
                 case Right(value) => div("-")
-            } *,
+            }*,
         ),
       ),
     )
   }
-  
+
   import com.raquo.laminar.api.L.*
 
   def FullApp(
@@ -703,8 +717,6 @@ object Components {
       div(
         cls := "wait-time",
         renderWaitTime(stopTimeInfo.waitingDuration),
-        // TODO Instead of creating the modal here, we should *just* set BusScheduleAtStop in the observer.
-        //    The content to be shown should be handled elsewhere
       ),
     )
 }

@@ -19,7 +19,7 @@ object BulmaLocal {
     // TODO pass in segment, instead of plan?
     segment: RouteSegment, // TODO Instead of passing Plan, we should just emit an event with the new selected time.
     updates: Sink[LocationTimeDirection],
-  ) = {
+  ) =
     div(
       textAlign := "center",
       verticalAlign := "middle",
@@ -37,7 +37,6 @@ object BulmaLocal {
         ),
       ),
     )
-  }
 
   def UpcomingStops(
     scheduleAtStop: BusScheduleAtStop, // TODO This needs to be pairs.

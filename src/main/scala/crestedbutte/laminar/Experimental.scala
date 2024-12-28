@@ -146,7 +146,8 @@ object Experimental {
     val newTimePicker = TimePicker("12:34")
     div(
       idAttr := "sandbox",
-      timeStamps.map(_ => getLocation($gpsPosition),
+      timeStamps.map(_ =>
+        getLocation($gpsPosition),
       ) --> $gpsPosition.writer,
       Components.FeatureControlCenter(featureUpdates.writer),
       button(
@@ -167,9 +168,9 @@ object Experimental {
   }
 
   def manualClunkyAlerts(
-                          $alertsEnabled: Signal[Boolean],
-                          time: WallTime,
-                        ) =
+    $alertsEnabled: Signal[Boolean],
+    time: WallTime,
+  ) =
     div(
       child <-- $alertsEnabled.map(alertsEnabled =>
         if (dom.Notification.permission == "granted" && alertsEnabled)
