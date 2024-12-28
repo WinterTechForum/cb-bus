@@ -361,7 +361,7 @@ object Components {
       Var(None)
 
     val timeStamps: Signal[WallTime] = clockTicks.events
-      .foldLeft(
+      .scanLeft(
         initialTime,
       )(
         (
@@ -395,11 +395,6 @@ object Components {
     db: Persistence,
     selectedStop: Var[Option[(BusScheduleAtStop, RouteSegment)]],
   ) = {
-    // TODO Turn this into a Signal. The EventBus should be contained within the Experimental/FeatureControlCenter
-    val featureUpdates = new EventBus[FeatureStatus]
-
-    val gpsPosition: Var[Option[GpsCoordinates]] = Var(None)
-
     val $plan: Var[Plan] = Var(
       db.retrieveDailyPlanOnly.getOrElse(Plan(Seq.empty)),
     )
@@ -462,8 +457,6 @@ object Components {
         Option.when(pageMode == AppMode.dev)(
           Experimental.Sandbox(
             timeStamps,
-            gpsPosition,
-            featureUpdates: EventBus[FeatureStatus],
           ),
         ),
       ),

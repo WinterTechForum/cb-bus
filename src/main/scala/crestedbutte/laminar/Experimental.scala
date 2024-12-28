@@ -140,16 +140,17 @@ object Experimental {
 
   def Sandbox(
     timeStamps: Signal[WallTime],
-    $gpsPosition: Var[Option[GpsCoordinates]],
-    featureUpdates: EventBus[FeatureStatus],
   ) = {
+
+    val $gpsPosition: Var[Option[GpsCoordinates]] = Var(None)
+//    val featureUpdates = new EventBus[FeatureStatus]
     val newTimePicker = TimePicker("12:34")
     div(
       idAttr := "sandbox",
       timeStamps.map(_ =>
         getLocation($gpsPosition),
       ) --> $gpsPosition.writer,
-      Components.FeatureControlCenter(featureUpdates.writer),
+//      Components.FeatureControlCenter(featureUpdates.writer),
       button(
         idAttr := "Get position",
         onClick --> Observer[dom.MouseEvent](
