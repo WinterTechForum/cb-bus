@@ -360,6 +360,8 @@ object Components {
     val selectedStop: Var[Option[(BusScheduleAtStop, RouteSegment)]] =
       Var(None)
 
+    println("initialTime toplevel: " + initialTime)
+
     val timeStamps: Signal[WallTime] = clockTicks.events
       .scanLeft(
         initialTime,
@@ -376,7 +378,7 @@ object Components {
       RepeatingElement()
         .repeatWithInterval( // This acts like a Dune thumper
           (),
-          new FiniteDuration(5, scala.concurrent.duration.SECONDS),
+          new FiniteDuration(500, scala.concurrent.duration.SECONDS), // TODO Make low again
         ) --> clockTicks,
       overallPageLayout(
         timeStamps,
@@ -573,11 +575,9 @@ object Components {
                 .map(_.end.t)
             val cutoff =
               lastArrivalTime.getOrElse(pageLoadTime)
-            l.start.t.isLikelyEarlyMorningRatherThanLateNight || l.start.t
-              .isAfter(cutoff)
+            l.start.t .isAfter(cutoff)
           }
           .getOrElse {
-            // TODO Confirm I can delete this possibility?
             throw new IllegalStateException(
               "No route leg available in either route. Start: " + start + "  End: " + end,
             )
@@ -619,6 +619,7 @@ object Components {
                     None
                   case Some(other) =>
                     try {
+                      println("initialTime: " + initialTime)
                       val matchingLeg =
                         rightLegOnRightRoute(
                           other,
