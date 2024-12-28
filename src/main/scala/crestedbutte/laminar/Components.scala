@@ -260,11 +260,11 @@ object Components {
           cls := "plan-segments",
           // TODO pass state piece is being updated
           stopInfo(routeSegment,
-            SelectedSegmentPiece.Start,
-            deleteButton,
-            routeWithTimes,
-            timestamp,
-            scheduleSelector,
+                   SelectedSegmentPiece.Start,
+                   deleteButton,
+                   routeWithTimes,
+                   timestamp,
+                   scheduleSelector,
           ),
 
           /*
@@ -275,28 +275,28 @@ object Components {
             glyphicons-basic-827-arrow-thin-down.svg
            */
           SvgIcon("glyphicons-basic-211-arrow-down.svg",
-            "plain-white plan-segment-divider",
+                  "plain-white plan-segment-divider",
           ),
           stopInfo(routeSegment,
-            SelectedSegmentPiece.End,
-            deleteButton,
-            routeWithTimes,
-            timestamp,
-            scheduleSelector,
+                   SelectedSegmentPiece.End,
+                   deleteButton,
+                   routeWithTimes,
+                   timestamp,
+                   scheduleSelector,
           ),
           div( // TODO Move this separator outside of this, so it's not attached to the last leg of the trip
             textAlign := "center",
             SvgIcon("glyphicons-basic-947-circle-more.svg",
-              "plain-white plan-segment-divider",
+                    "plain-white plan-segment-divider",
             ),
             // TODO Possibly use this icon as a separator: glyphicons-basic-947-circle-more.svg
           ),
-        )
+        ),
       )
 
     res.ref.addEventListener(
       "long-press",
-      _ => println("Long pressed!")
+      _ => println("Long pressed!"),
     )
 
     println("Added long pressed behavior. Maybe.")
