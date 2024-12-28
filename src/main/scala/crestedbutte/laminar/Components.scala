@@ -378,7 +378,9 @@ object Components {
       RepeatingElement()
         .repeatWithInterval( // This acts like a Dune thumper
           (),
-          new FiniteDuration(500, scala.concurrent.duration.SECONDS), // TODO Make low again
+          new FiniteDuration(500,
+                             scala.concurrent.duration.SECONDS,
+          ), // TODO Make low again
         ) --> clockTicks,
       overallPageLayout(
         timeStamps,
@@ -575,7 +577,7 @@ object Components {
                 .map(_.end.t)
             val cutoff =
               lastArrivalTime.getOrElse(pageLoadTime)
-            l.start.t .isAfter(cutoff)
+            l.start.t.isAfter(cutoff)
           }
           .getOrElse {
             throw new IllegalStateException(
