@@ -24,19 +24,23 @@ object TimeCalculations {
         ltd.routeSegment.start.l
       else
         throw new RuntimeException("WTF")
+    println("ltd.routeSegment.route: " + ltd.routeSegment.route)
     val routeWithTimes =
       ltd.routeSegment.route match
         case RtaSouthbound.componentName =>
           RtaSouthbound.normalRouteWithTimes
         case RtaNorthbound.componentName =>
-          RtaSouthbound.normalRouteWithTimes
+          RtaNorthbound.normalRouteWithTimes
         case other =>
           throw new IllegalArgumentException(
             "Route not supported: " + other,
           )
+    println("ltd: " + ltd)
     val newRouteLegThatShouldBeUsedForUpdatingOtherStop =
       routeWithTimes.legs
         .find(routeLeg =>
+          println()
+          routeLeg.stops.foreach(s => println("s: "  + s))
           routeLeg.stops.contains(ltd.locationWithTime),
         )
         .getOrElse(throw new IllegalStateException("boof"))
