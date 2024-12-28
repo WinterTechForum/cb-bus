@@ -33,13 +33,21 @@ class Persistence():
       localStorage
         .getItem("today")
 
-    previouslyStoredPlan
-      .fromJson[Option[Plan]]
-      .getOrElse:
-        println(
-          "Bad plan in localStorage. This can happen after serialization changes. \n" + previouslyStoredPlan,
-        )
-        Some(Plan(Seq.empty)) // Ugh, wart
+    if (previouslyStoredPlan == null)
+      val blankState = Option(Plan(Seq.empty)) // Ugh, wart
+      localStorage.setItem("today", blankState.toJson)
+      blankState
+
+    else
+      previouslyStoredPlan
+        .fromJson[Option[Plan]]
+        .getOrElse:
+          println(
+            "Bad plan in localStorage. This can happen after serialization changes. \n" + previouslyStoredPlan,
+          )
+          val blankState = Option(Plan(Seq.empty)) // Ugh, wart
+          localStorage.setItem("today", blankState.toJson)
+          blankState
   }
 
   def updateDailyPlan(

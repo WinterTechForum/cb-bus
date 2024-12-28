@@ -337,11 +337,9 @@ object Components {
     pageMode: AppMode,
     javaClock: Clock,
   ) = {
-    val db = Persistence()
+    val db: Persistence = Persistence()
 
     val clockTicks = new EventBus[Unit]
-
-    val selectedComponent = PlanViewer
 
     def currentWallTime(
       javaClock: Clock,
@@ -521,43 +519,41 @@ object Components {
     div(
       child <-- $plan.signal.map(plan =>
         div(
-          div(
-            if (plan.l.isEmpty)
-              div()
-            else
-              div(
-                button(
-                  cls := "button m-2",
-                  "Copy Text",
-                  onClick --> Observer { _ =>
-                    dom.window.navigator.clipboard
-                      .writeText(plan.plainTextRepresentation)
-                  },
-                ),
-                button(
-                  cls := "button m-2",
-                  "Copy App Link",
-                  onClick --> Observer { _ =>
-                    val url =
-                      if (dom.document.URL.contains("localhost"))
-                        s"http://localhost:8000/index_dev.html?plan=${UrlEncoding.encode(plan)}"
-                      else
-                        s"https://cbbus.netlify.app/?plan=${UrlEncoding.encode(plan)}"
-
-                    dom.window.navigator.clipboard
-                      .writeText(url)
-                  },
-                ),
+          if (plan.l.isEmpty)
+            div()
+          else
+            div(
+              button(
+                cls := "button m-2",
+                "Copy Text",
+                onClick --> Observer { _ =>
+                  dom.window.navigator.clipboard
+                    .writeText(plan.plainTextRepresentation)
+                },
               ),
-            Components.PlanElement(
-              db,
-              $plan,
-              initialTime,
-              timestamp,
-              addingNewRoute,
-              scheduleSelector,
-              planSwipeUpdater,
+              button(
+                cls := "button m-2",
+                "Copy App Link",
+                onClick --> Observer { _ =>
+                  val url =
+                    if (dom.document.URL.contains("localhost"))
+                      s"http://localhost:8000/index_dev.html?plan=${UrlEncoding.encode(plan)}"
+                    else
+                      s"https://cbbus.netlify.app/?plan=${UrlEncoding.encode(plan)}"
+
+                  dom.window.navigator.clipboard
+                    .writeText(url)
+                },
+              ),
             ),
+          Components.PlanElement(
+            db,
+            $plan,
+            initialTime,
+            timestamp,
+            addingNewRoute,
+            scheduleSelector,
+            planSwipeUpdater,
           ),
         ),
       ),
