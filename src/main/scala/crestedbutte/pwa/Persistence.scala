@@ -37,7 +37,6 @@ class Persistence():
       val blankState = Option(Plan(Seq.empty)) // Ugh, wart
       localStorage.setItem("today", blankState.toJson)
       blankState
-
     else
       previouslyStoredPlan
         .fromJson[Option[Plan]]
