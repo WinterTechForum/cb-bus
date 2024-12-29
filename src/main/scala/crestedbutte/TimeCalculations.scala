@@ -1,16 +1,8 @@
 package crestedbutte
 
 import com.billding.time.WallTime
-import crestedbutte.laminar.{
-  LocationTimeDirection,
-  SelectedSegmentPiece,
-}
+import crestedbutte.laminar.LocationTimeDirection
 import crestedbutte.routes.{RtaNorthbound, RtaSouthbound}
-import zio.ZIO
-import zio.Clock
-
-import java.time.format.DateTimeFormatter
-import java.time.{DateTimeException, OffsetDateTime}
 
 object TimeCalculations {
   def updateSegmentFromArbitrarySelection(
