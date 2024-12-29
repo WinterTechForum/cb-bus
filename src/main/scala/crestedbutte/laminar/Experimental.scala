@@ -2,13 +2,11 @@ package crestedbutte.laminar
 
 import com.billding.time.WallTime
 import crestedbutte.NotificationStuff.{desiredAlarms, headsUpAmount}
-import crestedbutte.routes.RtaSouthbound
 import crestedbutte.*
 import org.scalajs.dom
 import org.scalajs.dom.NotificationOptions
 import org.scalajs.dom.experimental.{Notification, NotificationOptions}
 import org.scalajs.dom.raw.Position
-import typings.std.global.navigator
 
 import scala.scalajs.js
 
@@ -25,12 +23,11 @@ object Experimental {
   def getLocation(
     $gpsPosition: Var[Option[GpsCoordinates]],
   ): Option[GpsCoordinates] = {
-    //    val permissionsLocal: permissions.PermissionsNavigator = org.scalajs.dom.experimental.permissions.toPermissions(navigator)
-    //    permissionsLocal.permissions.query(PermissionDescriptor(org.scalajs.dom.experimental.permissions.PermissionName.geolocation))
     var positionResult: Option[GpsCoordinates] = None
-    if (navigator.geolocation != null) {
+
+    if (dom.window.navigator.geolocation != null) {
       // TODO This callback is screwing me up. I think.
-      navigator.geolocation.getCurrentPosition(
+      dom.window.navigator.geolocation.getCurrentPosition(
         successCallback = position => {
           showPosition(position)
           $gpsPosition.set(

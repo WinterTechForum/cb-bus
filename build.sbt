@@ -34,11 +34,6 @@ val zioVersion = "2.0.21"
 
 scalacOptions ++= Seq("-Xmax-inlines", "150")
 
-Compile / npmDependencies ++= Seq(
-  "smart-webcomponents" -> "16.0.1",
-//  "react" -> "17.0.1"
-)
-
 libraryDependencies ++= Seq(
   "dev.zio" %%% "zio" % zioVersion,
   "dev.zio" %%% "zio-streams" % zioVersion,
@@ -55,8 +50,6 @@ libraryDependencies ++= Seq(
   "io.github.kitlangton" %%% "animus" % "0.6.5",
   "org.scala-js" %%% "scalajs-dom" % "2.8.0"
 )
-
-testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
 
 // This is an application with a main method
 scalaJSUseMainModuleInitializer := true
