@@ -3,10 +3,10 @@ package com.billding.time
 case class MinuteDuration(
   minutes: Minutes) {
   val toMinutes: Long = minutes.value
-  
+
   def humanFriendly = {
     val hoursData =
-      if (toMinutes / 60  == 1)
+      if (toMinutes / 60 == 1)
         Some((1, "hour"))
       else if (toMinutes / 60 > 1)
         Some((toMinutes / 60, "hours"))
@@ -14,7 +14,7 @@ case class MinuteDuration(
         None
 
     hoursData match
-      case Some(value) => 
+      case Some(value) =>
         s"${value._1} ${value._2} ${toMinutes % 60} minutes"
       case None =>
         s"${toMinutes % 60} minutes"

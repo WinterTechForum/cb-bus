@@ -147,39 +147,42 @@ object Components {
         segments.zipWithIndex
           .map { case (routeSegment, idx) =>
             (routeSegment,
-              RouteLegElement(
-                routeSegment,
-                idx,
-                db,
-                $plan,
-                addingNewRoute,
-                timestamp,
-                scheduleSelector,
-                planSwipeUpdater,
-              )
+             RouteLegElement(
+               routeSegment,
+               idx,
+               db,
+               $plan,
+               addingNewRoute,
+               timestamp,
+               scheduleSelector,
+               planSwipeUpdater,
+             ),
             )
           }
           .reduce { case ((firstSegment, acc), (nextSegment, next)) =>
             (firstSegment,
-            acc.amend(
-              div(
-                div(
-                  textAlign := "center",
-                  paddingTop := "1.5em",
-                  paddingBottom := "1.5em",
-                  SvgIcon("glyphicons-basic-947-circle-more.svg",
-                    "plain-white plan-segment-divider",
-                  ),
-                  span(
-                    cls:="transit-time",
-                    firstSegment.end.t.between(nextSegment.start.t).humanFriendly
-                  )
-                ),
-                next,
-              )
+             acc.amend(
+               div(
+                 div(
+                   textAlign := "center",
+                   paddingTop := "1.5em",
+                   paddingBottom := "1.5em",
+                   SvgIcon("glyphicons-basic-947-circle-more.svg",
+                           "plain-white plan-segment-divider",
+                   ),
+                   span(
+                     cls := "transit-time",
+                     firstSegment.end.t
+                       .between(nextSegment.start.t)
+                       .humanFriendly,
+                   ),
+                 ),
+                 next,
+               ),
+             ),
             )
-            )
-          }._2 // Yuck.
+          }
+          ._2 // Yuck.
       }
     div(
       segmentContent,
@@ -272,11 +275,11 @@ object Components {
         },
         div(
           cls := "plan-segments",
-          (if (timestamp.isAfter(routeSegment.start.t))
-            opacity:= 0.5
+          if (timestamp.isAfter(routeSegment.start.t))
+            opacity := 0.5
 //            backgroundColor := "red"
           else
-            cls := ""),
+            cls := "",
           // TODO pass state piece is being updated
           stopInfo(routeSegment,
                    SelectedSegmentPiece.Start,
@@ -295,12 +298,14 @@ object Components {
            */
           div(
             SvgIcon("glyphicons-basic-211-arrow-down.svg",
-              "plain-white plan-segment-divider",
+                    "plain-white plan-segment-divider",
             ),
             span(
-              cls:="transit-time",
-              routeSegment.start.t.between(routeSegment.end.t).humanFriendly
-            )
+              cls := "transit-time",
+              routeSegment.start.t
+                .between(routeSegment.end.t)
+                .humanFriendly,
+            ),
           ),
           stopInfo(routeSegment,
                    SelectedSegmentPiece.End,
@@ -471,11 +476,11 @@ object Components {
                 .contramap[LocationTimeDirection] { ltd =>
                   selectedStop.set(None)
                   val res =
-                  TimeCalculations
-                    .updateSegmentFromArbitrarySelection(
-                      ltd,
-                      $plan.now(),
-                    )
+                    TimeCalculations
+                      .updateSegmentFromArbitrarySelection(
+                        ltd,
+                        $plan.now(),
+                      )
                   // TODO Not a great place for this persistence effect
                   db.saveDailyPlanOnly(res)
                   res
