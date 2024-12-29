@@ -6,10 +6,7 @@ import crestedbutte.routes.RtaSouthbound
 import crestedbutte.*
 import org.scalajs.dom
 import org.scalajs.dom.NotificationOptions
-import org.scalajs.dom.experimental.{
-  Notification,
-  NotificationOptions,
-}
+import org.scalajs.dom.experimental.{Notification, NotificationOptions}
 import org.scalajs.dom.raw.Position
 import typings.std.global.navigator
 
@@ -129,8 +126,7 @@ object Experimental {
           desiredAlarms.append(ev)
         },
       )
-      Components
-        .SvgIcon(name)
+      SvgIcon(name)
         .amend(
           verticalAlign := "middle",
           onClick.map(_ => busTime) --> clickObserverNarrow,
@@ -179,6 +175,90 @@ object Experimental {
           )
         else div(),
       ),
+    )
+
+  def GeoBits(
+               $mapLinksEnabled: Signal[Boolean],
+               location: Location,
+               $gpsPosition: Signal[Option[GpsCoordinates]],
+             ) = {
+    def distanceFromCurrentLocationToStop(
+                                           gpsPosition: Signal[Option[GpsCoordinates]],
+                                           location: Location,
+                                         ) =
+      gpsPosition.map(
+        _.flatMap(userCords =>
+          location.gpsCoordinates.map(stopCoords =>
+            div(
+              GpsCalculations
+                .distanceInKmBetweenEarthCoordinatesT(
+                  userCords,
+                  stopCoords,
+                ),
+            ),
+          ),
+        ).getOrElse(div()),
+      )
+
+    div(
+      child <-- $mapLinksEnabled.map(mapLinksEnabled =>
+        if (mapLinksEnabled)
+          div(
+            cls := "map-link",
+            child <--
+              distanceFromCurrentLocationToStop($gpsPosition,
+                location,
+              ),
+            location.gpsCoordinates.map(GeoLink),
+          )
+        else
+          div(),
+      ),
+    )
+  }
+
+  def GPS(
+           gpsPosition: Var[Option[GpsCoordinates]],
+         ) =
+    button(
+      idAttr := "Get position",
+      onClick --> Observer[dom.MouseEvent]: ev =>
+        getLocation(gpsPosition),
+      "Get GPS coords",
+    )
+
+  def FeatureControlCenter(
+                            featureUpdates: WriteBus[FeatureStatus],
+                          ) = {
+
+    // TODO Make this a separate component?
+    def FeatureToggle(
+                       feature: Feature,
+                     ) =
+      label(
+        cls := "checkbox",
+        feature.toString,
+        input(
+          typ := "checkbox",
+          onInput.mapToChecked.map(
+            FeatureStatus(feature, _),
+          ) --> featureUpdates,
+        ),
+      )
+
+    div(
+      "Control Center",
+      Feature.values.map(FeatureToggle),
+    )
+  }
+
+  def GeoLink(
+               gpsCoordinates: GpsCoordinates,
+             ) =
+    a(
+      cls := "link",
+      href := s"https://www.google.com/maps/search/?api=1&query=${gpsCoordinates.latitude},${gpsCoordinates.longitude}",
+      SvgIcon("glyphicons-basic-592-map.svg"),
     )
 
 }

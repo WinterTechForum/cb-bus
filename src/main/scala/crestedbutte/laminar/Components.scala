@@ -30,99 +30,6 @@ case class LocationTimeDirection(
   routeSegment: RouteSegment)
 
 object Components {
-  def GeoBits(
-    $mapLinksEnabled: Signal[Boolean],
-    location: Location,
-    $gpsPosition: Signal[Option[GpsCoordinates]],
-  ) = {
-    def distanceFromCurrentLocationToStop(
-      gpsPosition: Signal[Option[GpsCoordinates]],
-      location: Location,
-    ) =
-      gpsPosition.map(
-        _.flatMap(userCords =>
-          location.gpsCoordinates.map(stopCoords =>
-            div(
-              GpsCalculations
-                .distanceInKmBetweenEarthCoordinatesT(
-                  userCords,
-                  stopCoords,
-                ),
-            ),
-          ),
-        ).getOrElse(div()),
-      )
-
-    div(
-      child <-- $mapLinksEnabled.map(mapLinksEnabled =>
-        if (mapLinksEnabled)
-          div(
-            cls := "map-link",
-            child <--
-              distanceFromCurrentLocationToStop($gpsPosition,
-                                                location,
-              ),
-            location.gpsCoordinates.map(Components.GeoLink),
-          )
-        else
-          div(),
-      ),
-    )
-  }
-
-  def GPS(
-    gpsPosition: Var[Option[GpsCoordinates]],
-  ) =
-    button(
-      idAttr := "Get position",
-      onClick --> Observer[dom.MouseEvent]: ev =>
-        getLocation(gpsPosition),
-      "Get GPS coords",
-    )
-
-  def FeatureControlCenter(
-    featureUpdates: WriteBus[FeatureStatus],
-  ) = {
-
-    // TODO Make this a separate component?
-    def FeatureToggle(
-      feature: Feature,
-    ) =
-      label(
-        cls := "checkbox",
-        feature.toString,
-        input(
-          typ := "checkbox",
-          onInput.mapToChecked.map(
-            FeatureStatus(feature, _),
-          ) --> featureUpdates,
-        ),
-      )
-
-    div(
-      "Control Center",
-      Feature.values.map(FeatureToggle),
-    )
-  }
-
-  def GeoLink(
-    gpsCoordinates: GpsCoordinates,
-  ) =
-    a(
-      cls := "link",
-      href := s"https://www.google.com/maps/search/?api=1&query=${gpsCoordinates.latitude},${gpsCoordinates.longitude}",
-      SvgIcon("glyphicons-basic-592-map.svg"),
-    )
-
-  def SvgIcon(
-    name: String,
-    clsName: String = "",
-  ) =
-    img(
-      cls := s"glyphicon $clsName",
-      src := s"/glyphicons/svg/individual-svg/$name",
-      alt := "Thanks for riding the bus!",
-    )
 
   import com.raquo.laminar.nodes.ReactiveHtmlElement
   import crestedbutte.pwa.Persistence
@@ -637,9 +544,6 @@ object Components {
           }
           .getOrElse {
             segments.head
-//            throw new IllegalStateException(
-//              "No route leg available in either route. Start: " + start + "  End: " + end,
-//            )
           }
       case None =>
         throw new IllegalStateException(
@@ -656,12 +560,9 @@ object Components {
     addingNewRoute: Var[Boolean], // TODO Smaller type
   ) =
     val startingPoint: Var[Option[Location]] = Var(None)
-    // TODO
     val $locationsVar: Var[Seq[(Location, Int)]] = Var(Seq.empty)
     val $locations: Signal[Seq[(Location, Int)]] =
       $locationsVar.signal
-    val animation: Signal[Double] =
-      Animation.from(20L).wait(10).to(1).run
 
     // Do a more unified view in the start/stop selection.
     // Shouldn't be 2 completely separate groups of elements
