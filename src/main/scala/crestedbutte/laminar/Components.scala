@@ -275,8 +275,13 @@ object Components {
             glyphicons-basic-796-set-down.svg
             glyphicons-basic-827-arrow-thin-down.svg
            */
-          SvgIcon("glyphicons-basic-211-arrow-down.svg",
-                  "plain-white plan-segment-divider",
+          div(
+            SvgIcon("glyphicons-basic-211-arrow-down.svg",
+              "plain-white plan-segment-divider",
+            ),
+            span(
+              (routeSegment.start.t.between(routeSegment.end.t).toMinutes + " min")
+            )
           ),
           stopInfo(routeSegment,
                    SelectedSegmentPiece.End,
