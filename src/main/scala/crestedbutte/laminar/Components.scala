@@ -165,6 +165,8 @@ object Components {
               div(
                 div(
                   textAlign := "center",
+                  paddingTop := "1.5em",
+                  paddingBottom := "1.5em",
                   SvgIcon("glyphicons-basic-947-circle-more.svg",
                     "plain-white plan-segment-divider",
                   ),
