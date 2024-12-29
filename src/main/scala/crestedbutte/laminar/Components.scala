@@ -604,9 +604,10 @@ object Components {
             l.start.t.isAfter(cutoff)
           }
           .getOrElse {
-            throw new IllegalStateException(
-              "No route leg available in either route. Start: " + start + "  End: " + end,
-            )
+            segments.head
+//            throw new IllegalStateException(
+//              "No route leg available in either route. Start: " + start + "  End: " + end,
+//            )
           }
       case None =>
         throw new IllegalStateException(
