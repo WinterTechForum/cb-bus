@@ -88,6 +88,8 @@ case class Plan(
   l: Seq[RouteSegment])
     derives JsonCodec:
 
+  val routeSegments: Seq[RouteSegment] = l
+
   val plainTextRepresentation: String =
     l.zipWithIndex
       .map(

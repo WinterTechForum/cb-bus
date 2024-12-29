@@ -138,26 +138,43 @@ object Components {
       Option[(BusScheduleAtStop, RouteSegment)],
     ],
     planSwipeUpdater: Observer[(Int, Option[RouteSegment])],
-  ) =
+  ) = {
+    val segments = $plan.now().routeSegments
+    val segmentContent =
+      if (segments.isEmpty)
+        div()
+      else {
+        segments.zipWithIndex
+          .map { case (routeSegment, idx) =>
+            div(
+              RouteLegElement(
+                routeSegment,
+                idx,
+                db,
+                $plan,
+                addingNewRoute,
+                timestamp,
+                scheduleSelector,
+                planSwipeUpdater,
+              ),
+            )
+          }
+          .reduce { case (acc, next) =>
+            acc.amend(
+              div(
+                div(
+                  textAlign := "center",
+                  SvgIcon("glyphicons-basic-947-circle-more.svg",
+                    "plain-white plan-segment-divider",
+                  ),
+                ),
+                next,
+              )
+            )
+          }
+      }
     div(
-      $plan.now().l.zipWithIndex
-        .map { case (routeSegment, idx) =>
-          div(
-            RouteLegElement(
-              routeSegment,
-              idx,
-              db,
-              $plan,
-              addingNewRoute,
-              timestamp,
-              scheduleSelector,
-              planSwipeUpdater,
-            ),
-          )
-        }
-        .foldLeft(div()) { case (acc, next) =>
-          acc.amend(next)
-        },
+      segmentContent,
       div(
         cls := "add-new-route-section",
         child <-- addingNewRoute.signal.map {
@@ -188,6 +205,7 @@ object Components {
         },
       ),
     )
+  }
 
   def RouteLegElement(
     routeSegment: RouteSegment,
@@ -290,13 +308,6 @@ object Components {
                    routeWithTimes,
                    timestamp,
                    scheduleSelector,
-          ),
-          div( // TODO Move this separator outside of this, so it's not attached to the last leg of the trip
-            textAlign := "center",
-            SvgIcon("glyphicons-basic-947-circle-more.svg",
-                    "plain-white plan-segment-divider",
-            ),
-            // TODO Possibly use this icon as a separator: glyphicons-basic-947-circle-more.svg
           ),
         ),
       )
