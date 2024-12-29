@@ -468,11 +468,15 @@ object Components {
               $plan.writer
                 .contramap[LocationTimeDirection] { ltd =>
                   selectedStop.set(None)
+                  val res =
                   TimeCalculations
                     .updateSegmentFromArbitrarySelection(
                       ltd,
                       $plan.now(),
                     )
+                  // TODO Not a great place for this persistence effect
+                  db.saveDailyPlanOnly(res)
+                  res
                 },
             )
           case (None, mainContent) => mainContent
