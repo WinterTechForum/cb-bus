@@ -2,7 +2,6 @@ package crestedbutte
 
 import com.billding.time.WallTime
 import crestedbutte.laminar.{AppMode, Components}
-import crestedbutte.pwa.Persistence
 import urldsl.errors.DummyError
 import urldsl.language.QueryParameters
 
@@ -38,9 +37,6 @@ object RoutingStuff {
   implicit val wallTimeRw: ReadWriter[WallTime] =
     readwriter[String].bimap[WallTime](_.toEUString, WallTime(_))
 
-  implicit private val componentNameRw: ReadWriter[RouteName] =
-    macroRW
-
   implicit val planRw: ReadWriter[Plan] =
     readwriter[String].bimap[Plan](
       UrlEncoding.encode,
@@ -64,15 +60,14 @@ object RoutingStuff {
        page.plan.map(UrlEncoding.encode),
       )
 
-  private val decodePage: (
-    (Option[String], Option[String], Option[String]),
-  ) => BusPage = { case (mode, time, plan) =>
+  private val decodePage = {
+    (mode: Option[String], time: Option[String], plan: Option[String]) =>
     BusPage(
       mode = mode.map(AppMode.withName).getOrElse(AppMode.Production),
       time = time.map(WallTime.apply),
       plan = plan.flatMap(UrlEncoding.decode(_).toOption),
     )
-  }
+  }.tupled
 
   val params: QueryParameters[
     (Option[String], Option[String], Option[String]),
