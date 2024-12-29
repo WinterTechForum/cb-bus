@@ -448,6 +448,11 @@ object Components {
       db.retrieveDailyPlanOnly.getOrElse(Plan(Seq.empty)),
     )
 
+    val addingNewRoute: Var[Boolean] = Var(
+      $plan.now().routeSegments.isEmpty // If no segments , assume we want to add more
+    )
+
+
     val upcomingArrivalData =
       timeStamps
         .map { timestamp =>
@@ -457,6 +462,7 @@ object Components {
             initialTime,
             timestamp,
             selectedStop.writer,
+            addingNewRoute,
           )
         }
 
@@ -483,6 +489,9 @@ object Components {
                       )
                   // TODO Not a great place for this persistence effect
                   db.saveDailyPlanOnly(res)
+                  addingNewRoute.set {
+                    false
+                  }
                   res
                 },
             )
@@ -541,11 +550,8 @@ object Components {
     scheduleSelector: Observer[
       Option[(BusScheduleAtStop, RouteSegment)],
     ],
+    addingNewRoute: Var[Boolean]
   ) =
-
-    val addingNewRoute: Var[Boolean] = Var(
-      true, // TODO This doesn't seem to be working.
-    )
 
     val planSwipeUpdater: Observer[(Int, Option[RouteSegment])] =
       $plan.writer.contramap[(Int, Option[RouteSegment])] {
