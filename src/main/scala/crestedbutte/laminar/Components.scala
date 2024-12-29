@@ -640,69 +640,67 @@ object Components {
           span("|__________________|"),
         ), // Really just to keep vertical spacing from changing after you select a start point
         onMountCallback(ctx => {
-          locations.zipWithIndex.foreach(l => $locationsVar.update(_ :+ l))
+          locations.zipWithIndex.foreach(l =>
+            import scala.scalajs.js.timers._
+            setTimeout(l._2 * 30)(
+              $locationsVar.update(_ :+ l)
+            )
+          )
         }),
         div(
           children <-- $locations.splitTransition(identity) {
-            case (_, (character, _), _, transition) =>
+            case (_, (location, _), _, transition) =>
               div(
-                character.name,
-                display.inlineFlex,
-                color("orange"),
+                //            display.inlineFlex,
                 transition.width,
-                transition.height
+                transition.height,
+                button(
+                  cls := "button m-2",
+                  onClick --> Observer { _ =>
+                    startingPoint.update {
+                      case Some(startingPointNow)
+                        if startingPointNow == location =>
+                        None
+                      case Some(other) =>
+                        try {
+                          println("initialTime: " + initialTime)
+                          val matchingLeg =
+                            rightLegOnRightRoute(
+                              other,
+                              location,
+                              $plan.now(),
+                              initialTime,
+                            )
+
+                          $plan.update { case oldPlan =>
+                            val newPlan =
+                              oldPlan.copy(l = oldPlan.l :+ matchingLeg)
+                            db.saveDailyPlanOnly(newPlan)
+                            addingNewRoute.set(false)
+                            newPlan
+                          }
+                          Some(other)
+                        }
+                        catch {
+                          case ex: Throwable =>
+                            throw new IllegalStateException(ex.getMessage)
+                        }
+                      case None =>
+                        Some(location)
+                    }
+                  },
+                  cls <-- startingPoint.signal.map { sp =>
+                    sp match
+                      case Some(startingPointNow)
+                        if startingPointNow == location =>
+                        "is-primary"
+                      case Some(_) => ""
+                      case None => ""
+                  },
+                  location.name,
+                ),
               )
           }
-        ),
-        locations.map(location =>
-          div(
-            Transitions.width(Signal.fromValue(true)),
-            button(
-              cls := "button m-2",
-              onClick --> Observer { _ =>
-                startingPoint.update {
-                  case Some(startingPointNow)
-                      if startingPointNow == location =>
-                    None
-                  case Some(other) =>
-                    try {
-                      println("initialTime: " + initialTime)
-                      val matchingLeg =
-                        rightLegOnRightRoute(
-                          other,
-                          location,
-                          $plan.now(),
-                          initialTime,
-                        )
-
-                      $plan.update { case oldPlan =>
-                        val newPlan =
-                          oldPlan.copy(l = oldPlan.l :+ matchingLeg)
-                        db.saveDailyPlanOnly(newPlan)
-                        addingNewRoute.set(false)
-                        newPlan
-                      }
-                      Some(other)
-                    }
-                    catch {
-                      case ex: Throwable =>
-                        throw new IllegalStateException(ex.getMessage)
-                    }
-                  case None =>
-                    Some(location)
-                }
-              },
-              cls <-- startingPoint.signal.map { sp =>
-                sp match
-                  case Some(startingPointNow)
-                      if startingPointNow == location =>
-                    "is-primary"
-                  case Some(_) => ""
-                  case None    => ""
-              },
-              location.name,
-            ),
-          ),
         ),
       )
     div(
