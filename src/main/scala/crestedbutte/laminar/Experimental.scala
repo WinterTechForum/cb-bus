@@ -1,6 +1,6 @@
 package crestedbutte.laminar
 
-import com.billding.time.{WallTime}
+import com.billding.time.WallTime
 import crestedbutte.NotificationStuff.{desiredAlarms, headsUpAmount}
 import crestedbutte.routes.RtaSouthbound
 import crestedbutte.*
@@ -146,7 +146,8 @@ object Experimental {
 //    val featureUpdates = new EventBus[FeatureStatus]
     div(
       idAttr := "sandbox",
-      timeStamps.map(_ => getLocation($gpsPosition),
+      timeStamps.map(_ =>
+        getLocation($gpsPosition),
       ) --> $gpsPosition.writer,
 //      Components.FeatureControlCenter(featureUpdates.writer),
       button(

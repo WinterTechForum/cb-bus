@@ -61,12 +61,17 @@ object RoutingStuff {
       )
 
   private val decodePage = {
-    (mode: Option[String], time: Option[String], plan: Option[String]) =>
-    BusPage(
-      mode = mode.map(AppMode.withName).getOrElse(AppMode.Production),
-      time = time.map(WallTime.apply),
-      plan = plan.flatMap(UrlEncoding.decode(_).toOption),
-    )
+    (
+      mode: Option[String],
+      time: Option[String],
+      plan: Option[String],
+    ) =>
+      BusPage(
+        mode =
+          mode.map(AppMode.withName).getOrElse(AppMode.Production),
+        time = time.map(WallTime.apply),
+        plan = plan.flatMap(UrlEncoding.decode(_).toOption),
+      )
   }.tupled
 
   val params: QueryParameters[

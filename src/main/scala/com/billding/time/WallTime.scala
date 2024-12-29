@@ -23,14 +23,12 @@ object Minutes {
 
   def safe(
     value: Int,
-  ): Minutes =
-    Minutes(mod(value, max))
+  ): Minutes = Minutes(mod(value, max))
 
   private def mod(
     dividend: Int,
     divisor: Int,
-  ): Int =
-    ((dividend % divisor) + divisor) % divisor
+  ): Int = ((dividend % divisor) + divisor) % divisor
 
 }
 
@@ -53,7 +51,7 @@ case class WallTime private (
     else hours24 % 12
 
   val hours: Int = hourNotation match {
-    case HourNotation.Twelve => hours12
+    case HourNotation.Twelve     => hours12
     case HourNotation.TwentyFour => hours24
   }
 
@@ -71,28 +69,25 @@ case class WallTime private (
     else
       plusMinutes(1).roundToNextFive()
 
-
   def isBefore(
     wallTime: WallTime,
-  ) =
-    localTime.isBefore(wallTime.localTime)
+  ) = localTime.isBefore(wallTime.localTime)
 
   def isAfter(
     wallTime: WallTime,
-  ) =
-    localTime.isAfter(wallTime.localTime)
+  ) = localTime.isAfter(wallTime.localTime)
 
   def isBeforeOrEqualTo(
     wallTime: WallTime,
   ) =
     localTime.isBefore(wallTime.localTime) ||
-    localTime.equals(wallTime.localTime)
+      localTime.equals(wallTime.localTime)
 
   def isAfterOrEqualTo(
     wallTime: WallTime,
   ) =
     localTime.isAfter(wallTime.localTime) ||
-    localTime.equals(wallTime.localTime)
+      localTime.equals(wallTime.localTime)
 
   def between(
     wallTime: WallTime,
@@ -105,13 +100,11 @@ case class WallTime private (
 
   def plusMinutes(
     minutes: Int,
-  ) =
-    WallTime(Minutes.safe(localTime.value + minutes), hourNotation)
+  ) = WallTime(Minutes.safe(localTime.value + minutes), hourNotation)
 
   def plus(
     duration: MinuteDuration,
-  ) =
-    plusMinutes(duration.minutes.value)
+  ) = plusMinutes(duration.minutes.value)
 
   val paddedMinutes: String =
     if (minutes < 10)
@@ -122,7 +115,7 @@ case class WallTime private (
   override val toString: String = {
     val hoursVal =
       hourNotation match {
-        case HourNotation.Twelve => hours12
+        case HourNotation.Twelve     => hours12
         case HourNotation.TwentyFour => hours24
       }
     val paddedHours =
@@ -157,7 +150,7 @@ case class WallTime private (
     this.isAfter(
       WallTime(
         Minutes.safe(beginningOfMorningRoutesInHours),
-        hourNotation
+        hourNotation,
       ),
     )
 
@@ -167,57 +160,73 @@ case class WallTime private (
 
   override def equals(
     other: Any,
-  ): Boolean = other match {
-    case that: WallTime =>
-      (that.canEqual(this)) &&
-      localTime == that.localTime
-    case _ => false
-  }
+  ): Boolean =
+    other match {
+      case that: WallTime =>
+        (that.canEqual(this)) &&
+        localTime == that.localTime
+      case _ => false
+    }
 
   override def hashCode(): Int = {
     val state = Seq(localTime)
-    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+    state
+      .map(_.hashCode())
+      .foldLeft(0)(
+        (
+          a,
+          b,
+        ) => 31 * a + b,
+      )
   }
 }
 
 object WallTime {
-  def fromMinutes(m: Int) =
-    WallTime(Minutes.safe(m), HourNotation.Twelve)
+  def fromMinutes(
+    m: Int,
+  ) = WallTime(Minutes.safe(m), HourNotation.Twelve)
 
   def apply(
     raw: String,
   ): WallTime =
     WallTime(Minutes.safe(parseMinutes(raw)),
-      if(raw.contains("AM") || raw.contains("PM"))
-        HourNotation.Twelve else
-      HourNotation.TwentyFour
+             if (raw.contains("AM") || raw.contains("PM"))
+               HourNotation.Twelve
+             else
+               HourNotation.TwentyFour,
     )
 
   def parseMinutes(
     raw: String,
-  ) = {
+  ) =
     if (raw.length == 4 || raw.length == 5) {
       val Array(hours, minutes) = raw.split(":")
       hours.toInt * 60 + minutes.toInt
-    } else if (raw.length == 7 || raw.length == 8) {
+    }
+    else if (raw.length == 7 || raw.length == 8) {
       val hourOffset =
-        if(raw.endsWith("AM")) 0
-        else if( raw.endsWith("PM")) 12
+        if (raw.endsWith("AM")) 0
+        else if (raw.endsWith("PM")) 12
         else throw new IllegalArgumentException(raw)
       val Array(hours, minutes) = raw.dropRight(2).trim.split(":")
       (hours.toInt + hourOffset) * 60 + minutes.toInt
-    } else throw new IllegalArgumentException(raw)
-  }
+    }
+    else throw new IllegalArgumentException(raw)
 
   // TODO Should I move this to the bus project?
   implicit val ordering: Ordering[WallTime] =
-    (x: WallTime, y: WallTime) =>
-      if ((x.isLikelyEarlyMorningRatherThanLateNight
+    (
+      x: WallTime,
+      y: WallTime,
+    ) =>
+      if (
+        (x.isLikelyEarlyMorningRatherThanLateNight
           && y.isLikelyEarlyMorningRatherThanLateNight)
-          || (
-            !x.isLikelyEarlyMorningRatherThanLateNight
+        || (
+          !x.isLikelyEarlyMorningRatherThanLateNight
             && !y.isLikelyEarlyMorningRatherThanLateNight
-          ))
+        )
+      )
         x.localTime.value.compareTo(y.localTime.value)
       else if (x.isLikelyEarlyMorningRatherThanLateNight)
         -1

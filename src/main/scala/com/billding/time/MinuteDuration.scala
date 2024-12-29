@@ -6,13 +6,11 @@ case class MinuteDuration(
 
   def times(
     int: Int,
-  ) =
-    MinuteDuration.ofMinutes(toMinutes.toInt * int)
+  ) = MinuteDuration.ofMinutes(toMinutes.toInt * int)
 
   def dividedBy(
     duration: MinuteDuration,
-  ) =
-    toMinutes / duration.toMinutes
+  ) = toMinutes / duration.toMinutes
 
   def canEqual(
     other: Any,
@@ -20,16 +18,24 @@ case class MinuteDuration(
 
   override def equals(
     other: Any,
-  ): Boolean = other match {
-    case that: MinuteDuration =>
-      (that.canEqual(this)) &&
-      toMinutes == that.toMinutes
-    case _ => false
-  }
+  ): Boolean =
+    other match {
+      case that: MinuteDuration =>
+        (that.canEqual(this)) &&
+        toMinutes == that.toMinutes
+      case _ => false
+    }
 
   override def hashCode(): Int = {
     val state = Seq(toMinutes)
-    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
+    state
+      .map(_.hashCode())
+      .foldLeft(0)(
+        (
+          a,
+          b,
+        ) => 31 * a + b,
+      )
   }
 }
 
@@ -47,8 +53,7 @@ object MinuteDuration {
 
   def ofMinutes(
     minutes: Int,
-  ) =
-    new MinuteDuration(Minutes.safe(minutes))
+  ) = new MinuteDuration(Minutes.safe(minutes))
 
   class DurationFriendlyInt(
     int: Int) {
@@ -57,6 +62,5 @@ object MinuteDuration {
 
   implicit def toMinuteDuration(
     int: Int,
-  ): DurationFriendlyInt =
-    new DurationFriendlyInt(int)
+  ): DurationFriendlyInt = new DurationFriendlyInt(int)
 }
