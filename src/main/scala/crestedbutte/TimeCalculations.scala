@@ -35,12 +35,9 @@ object TimeCalculations {
           throw new IllegalArgumentException(
             "Route not supported: " + other,
           )
-    println("ltd: " + ltd)
     val newRouteLegThatShouldBeUsedForUpdatingOtherStop =
       routeWithTimes.legs
         .find(routeLeg =>
-          println()
-          routeLeg.stops.foreach(s => println("s: " + s))
           routeLeg.stops.contains(ltd.locationWithTime),
         )
         .getOrElse(throw new IllegalStateException("boof"))
