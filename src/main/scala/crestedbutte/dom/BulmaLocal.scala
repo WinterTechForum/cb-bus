@@ -24,10 +24,10 @@ object BulmaLocal {
       textAlign := "center",
       verticalAlign := "middle",
       paddingBottom := "3px",
-      (if (segment.start == l || segment.end == l)
+      if (segment.start == l || segment.end == l)
         backgroundColor := "LightGreen"
       else
-        cls := ""),
+        cls := "",
       cls := "time",
       div(
         div(
