@@ -62,10 +62,6 @@ libraryDependencies ++= Seq(
   "org.scala-js" %%% "scalajs-dom" % "2.8.0"
 )
 
-libraryDependencies += "com.lihaoyi" %%% "utest" % "0.8.1" % "test"
-
-testFrameworks += new TestFramework("utest.runner.Framework")
-
 testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
 
 // This is an application with a main method
