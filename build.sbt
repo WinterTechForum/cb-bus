@@ -42,7 +42,6 @@ Compile / npmDependencies ++= Seq(
 
 libraryDependencies ++= Seq(
   "com.billding" %%% "bulmascala" % "0.2.22",
-  "com.billding" %%% "scalajsziolibrary" % "0.0.16", // TODO Remove after SW updates
   "dev.zio" %%% "zio" % zioVersion,
   "dev.zio" %%% "zio-streams" % zioVersion,
   "dev.zio" %%% "zio-streams" % zioVersion,

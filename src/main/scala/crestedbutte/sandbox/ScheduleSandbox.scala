@@ -1,6 +1,6 @@
 package crestedbutte.sandbox
 
-import crestedbutte.dom.DomManipulation
+import crestedbutte.DomManipulation
 import zio.*
 
 object ScheduleSandbox {

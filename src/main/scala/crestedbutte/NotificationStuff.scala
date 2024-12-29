@@ -1,9 +1,6 @@
 package crestedbutte
 
 import com.billding.time.{MinuteDuration, WallTime}
-import crestedbutte.Browser.Browser
-import org.scalajs.dom.MouseEvent
-import zio.ZIO
 
 import scala.collection.mutable
 
