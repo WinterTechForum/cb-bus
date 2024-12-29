@@ -160,7 +160,7 @@ object Components {
             )
           }
           .reduce { case ((firstSegment, acc), (nextSegment, next)) =>
-            (firstSegment,
+            (nextSegment,
              acc.amend(
                div(
                  div(
