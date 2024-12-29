@@ -170,14 +170,14 @@ object Components {
                   ),
                   span(
                     cls:="transit-time",
-                    (firstSegment.end.t.between(nextSegment.start.t).toMinutes + " min")
+                    firstSegment.end.t.between(nextSegment.start.t).humanFriendly
                   )
                 ),
                 next,
               )
             )
             )
-          }._2
+          }._2 // Yuck.
       }
     div(
       segmentContent,
@@ -270,6 +270,11 @@ object Components {
         },
         div(
           cls := "plan-segments",
+          (if (timestamp.isAfter(routeSegment.start.t))
+            opacity:= 0.5
+//            backgroundColor := "red"
+          else
+            cls := ""),
           // TODO pass state piece is being updated
           stopInfo(routeSegment,
                    SelectedSegmentPiece.Start,
@@ -292,7 +297,7 @@ object Components {
             ),
             span(
               cls:="transit-time",
-              (routeSegment.start.t.between(routeSegment.end.t).toMinutes + " min")
+              routeSegment.start.t.between(routeSegment.end.t).humanFriendly
             )
           ),
           stopInfo(routeSegment,
@@ -730,7 +735,7 @@ object Components {
     if (duration.toMinutes == 0)
       "Leaving!"
     else
-      duration.toMinutes + " min."
+      duration.humanFriendly
 
   def SafeRideLink(
     safeRideRecommendation: LateNightRecommendation,
@@ -766,9 +771,10 @@ object Components {
         } --> scheduleSelector,
         stopTimeInfo.time.toDumbAmericanString,
       ),
-      div(
-        cls := "wait-time",
-        renderWaitTime(stopTimeInfo.waitingDuration),
-      ),
+      // TODO Instead of showing this everywhere, only show for the next upcoming segment
+//      div(
+//        cls := "wait-time",
+//        renderWaitTime(stopTimeInfo.waitingDuration),
+//      ),
     )
 }
