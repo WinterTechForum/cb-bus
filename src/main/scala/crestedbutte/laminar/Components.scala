@@ -20,6 +20,7 @@ import org.scalajs.dom.{HTMLAnchorElement, HTMLDivElement}
 import java.time.format.DateTimeFormatter
 import java.time.{Clock, Instant, OffsetDateTime}
 import scala.concurrent.duration.FiniteDuration
+import animus._
 
 enum SelectedSegmentPiece:
   case Start, End
