@@ -196,3 +196,7 @@ body {
     display: flex;
     justify-content: center;
 }
+
+.transit-time {
+    color: lightgray;
+}

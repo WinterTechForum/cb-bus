@@ -280,6 +280,7 @@ object Components {
               "plain-white plan-segment-divider",
             ),
             span(
+              cls:="transit-time",
               (routeSegment.start.t.between(routeSegment.end.t).toMinutes + " min")
             )
           ),
