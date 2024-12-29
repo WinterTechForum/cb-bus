@@ -68,7 +68,7 @@ object RoutingStuff {
     ) =>
       BusPage(
         mode =
-          mode.map(AppMode.withName).getOrElse(AppMode.Production),
+          mode.map(AppMode.valueOf).getOrElse(AppMode.Production),
         time = time.map(WallTime.apply),
         plan = plan.flatMap(UrlEncoding.decode(_).toOption),
       )

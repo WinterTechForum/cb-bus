@@ -9,7 +9,6 @@ enablePlugins(ScalaJSPlugin)
 enablePlugins(TzdbPlugin)
 
 enablePlugins(ScalablyTypedConverterPlugin)
-//enablePlugins(ScalaJSBundlerPlugin)
 enablePlugins(WebScalaJSBundlerPlugin)
 
 pipelineStages in Assets := Seq(scalaJSPipeline)
@@ -53,7 +52,6 @@ libraryDependencies ++= Seq(
   "com.raquo" %%% "domtypes" % "17.1.0",
   "com.lihaoyi" %%% "upickle" % "3.1.3",
   "com.raquo" %%% "waypoint" % "7.0.0",   // Requires Airstream 0.12.0 & URL DSL 0.3.2
-  "com.beachape" %%% "enumeratum" % "1.7.3",
   "io.github.kitlangton" %%% "animus" % "0.6.5",
   "org.scala-js" %%% "scalajs-dom" % "2.8.0"
 )

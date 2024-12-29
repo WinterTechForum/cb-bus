@@ -1,16 +1,10 @@
 package crestedbutte.laminar
 
-import enumeratum._
-
-sealed trait AppMode extends EnumEntry
+enum AppMode:
+  case Production, dev, Premium
 
 // TODO Use Scala 3 enum
-object AppMode extends Enum[AppMode] {
-  val values = findValues // macro
-
-  case object Production extends AppMode
-  case object dev extends AppMode
-  case object Premium extends AppMode
+object AppMode {
 
   import upickle.default._
   implicit val PremiumRW: ReadWriter[Premium.type] = macroRW

@@ -1,16 +1,7 @@
 package crestedbutte
 
-import enumeratum._
-
-sealed trait Feature extends EnumEntry
-
-// TODO Turn into Scala 3 enum
-object Feature extends Enum[Feature] {
-  val values = findValues // macro
-
-  case object MapLinks extends Feature
-  case object BusAlarms extends Feature
-}
+enum Feature:
+  case MapLinks, BusAlarms
 
 case class FeatureStatus(
   feature: Feature,
