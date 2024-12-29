@@ -41,12 +41,9 @@ Compile / npmDependencies ++= Seq(
 )
 
 libraryDependencies ++= Seq(
-  "com.billding" %%% "bulmascala" % "0.2.22",
   "dev.zio" %%% "zio" % zioVersion,
   "dev.zio" %%% "zio-streams" % zioVersion,
-  "dev.zio" %%% "zio-streams" % zioVersion,
   "dev.zio" %%% "zio-json" % "0.6.2",
-  "com.lihaoyi" %%% "scalatags" % "0.12.0",
   "io.github.cquiroz" %%% "scala-java-time" % "2.5.0",
   "dev.zio" %%% "zio-test"     % zioVersion % "test",
   "dev.zio" %%% "zio-test-sbt" % zioVersion % "test",
