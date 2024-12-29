@@ -1,6 +1,5 @@
 package crestedbutte
 
-import com.billding.time.{TimePicker, WallTime}
 import crestedbutte.Browser.Browser
 import crestedbutte.laminar.{AppMode, Components, TouchControls}
 import org.scalajs.dom

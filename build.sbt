@@ -43,7 +43,6 @@ Compile / npmDependencies ++= Seq(
 libraryDependencies ++= Seq(
   "com.billding" %%% "bulmascala" % "0.2.22",
   "com.billding" %%% "scalajsziolibrary" % "0.0.16",
-  "com.billdingsoftware" %%% "timepicker" % "0.3.15",
   "dev.zio" %%% "zio" % zioVersion,
   "dev.zio" %%% "zio-streams" % zioVersion,
   "dev.zio" %%% "zio-streams" % zioVersion,
@@ -59,7 +58,7 @@ libraryDependencies ++= Seq(
   "com.lihaoyi" %%% "upickle" % "3.1.3",
   "com.raquo" %%% "waypoint" % "7.0.0",   // Requires Airstream 0.12.0 & URL DSL 0.3.2
   "com.beachape" %%% "enumeratum" % "1.7.3",
-  "io.github.kitlangton" %%% "animus" % "0.5.1"
+  "io.github.kitlangton" %%% "animus" % "0.6.5"
 )
 
 libraryDependencies += "com.lihaoyi" %%% "utest" % "0.8.1" % "test"

@@ -22,7 +22,7 @@ object TouchControls {
   val touchBus = EventBus[dom.TouchEvent]()
 
   val swipeEvents =
-    touchBus.events.flatMap(e =>
+    touchBus.events.flatMapSwitch(e =>
       EventStream.fromSeq(
         Option
           .when(Random.nextBoolean())(

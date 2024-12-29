@@ -426,21 +426,22 @@ object Components {
       db.retrieveDailyPlanOnly.getOrElse(Plan(Seq.empty)),
     )
 
-    val upcomingArrivalData = timeStamps
-      .map { timestamp =>
-        TripViewerLaminar(
-          db,
-          $plan,
-          initialTime,
-          timestamp,
-          selectedStop.writer,
-        )
-      }
+    val upcomingArrivalData =
+      timeStamps
+        .map { timestamp =>
+          TripViewerLaminar(
+            db,
+            $plan,
+            initialTime,
+            timestamp,
+            selectedStop.writer,
+          )
+        }
 
     val whatToShowBetter
       : Signal[ReactiveHtmlElement[HTMLDivElement]] =
       selectedStop.signal
-        .combineWith(upcomingArrivalData)
+        .withCurrentValueOf(upcomingArrivalData)
         .map {
           case (Some((busScheduleAtStop, routeSegment)),
                 hiddenMainContent,
@@ -476,7 +477,7 @@ object Components {
                   // TODO Direct comparison
                   .toMinutes <= NotificationStuff.headsUpAmount.toMinutes,
               )
-              .map(
+              .foreach(
                 Experimental.Notifications
                   .createJankyBusAlertInSideEffectyWay(_, localTime),
               ),
@@ -622,6 +623,11 @@ object Components {
     addingNewRoute: Var[Boolean], // TODO Smaller type
   ) =
     val startingPoint: Var[Option[Location]] = Var(None)
+    // TODO
+    val $locationsVar: Var[Seq[(Location, Int)]] = Var(Seq.empty)
+    val $locations: Signal[Seq[(Location, Int)]] = $locationsVar.signal
+    val animation: Signal[Double] = Animation.from(20L).wait(10).to(1).run
+
 
     // Do a more unified view in the start/stop selection.
     // Shouldn't be 2 completely separate groups of elements
@@ -633,8 +639,24 @@ object Components {
           color := "grey",
           span("|__________________|"),
         ), // Really just to keep vertical spacing from changing after you select a start point
+        onMountCallback(ctx => {
+          locations.zipWithIndex.foreach(l => $locationsVar.update(_ :+ l))
+        }),
+        div(
+          children <-- $locations.splitTransition(identity) {
+            case (_, (character, _), _, transition) =>
+              div(
+                character.name,
+                display.inlineFlex,
+                color("orange"),
+                transition.width,
+                transition.height
+              )
+          }
+        ),
         locations.map(location =>
           div(
+            Transitions.width(Signal.fromValue(true)),
             button(
               cls := "button m-2",
               onClick --> Observer { _ =>

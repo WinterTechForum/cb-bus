@@ -1,6 +1,6 @@
 package crestedbutte.laminar
 
-import com.billding.time.{TimePicker, WallTime}
+import com.billding.time.{WallTime}
 import crestedbutte.NotificationStuff.{desiredAlarms, headsUpAmount}
 import crestedbutte.routes.RtaSouthbound
 import crestedbutte.*
@@ -144,7 +144,6 @@ object Experimental {
 
     val $gpsPosition: Var[Option[GpsCoordinates]] = Var(None)
 //    val featureUpdates = new EventBus[FeatureStatus]
-    val newTimePicker = TimePicker("12:34")
     div(
       idAttr := "sandbox",
       timeStamps.map(_ => getLocation($gpsPosition),
@@ -163,7 +162,6 @@ object Experimental {
         "Request Notifications Permission",
         onClick --> Notifications.clickObserver,
       ),
-      newTimePicker.component,
     )
   }
 
