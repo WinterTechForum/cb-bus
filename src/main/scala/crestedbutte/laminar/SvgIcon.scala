@@ -1,6 +1,5 @@
 package crestedbutte.laminar
 
-
 import com.billding.time.{MinuteDuration, WallTime}
 import com.raquo.laminar.api.L.*
 import crestedbutte.*
@@ -26,9 +25,9 @@ import animus._
 object SvgIcon {
 
   def apply(
-               name: String,
-               clsName: String = "",
-             ) =
+    name: String,
+    clsName: String = "",
+  ) =
     img(
       cls := s"glyphicon $clsName",
       src := s"/glyphicons/svg/individual-svg/$name",

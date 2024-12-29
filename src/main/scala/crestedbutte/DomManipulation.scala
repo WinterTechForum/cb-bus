@@ -11,16 +11,15 @@ object DomManipulation {
   ): ZIO[Browser, Nothing, Node] =
     ZIO
       .service[Browser]
-      .map {
-        browser =>
-          browser
-            .querySelector("#landing-message")
-            .map(browser.body().removeChild(_))
-          browser
-            .body()
-            .appendChild(
-              pageContent,
-            )
+      .map { browser =>
+        browser
+          .querySelector("#landing-message")
+          .map(browser.body().removeChild(_))
+        browser
+          .body()
+          .appendChild(
+            pageContent,
+          )
       }
 
   def appendMessageToPage(
@@ -28,14 +27,12 @@ object DomManipulation {
   ): ZIO[Browser, Throwable, Unit] =
     ZIO
       .service[Browser]
-      .map[Unit](
-        browser => {
-          println("Should show timezones: " + message)
-          browser
-            .querySelector(".timezone")
-            .foreach(_.appendChild(message))
-        },
-      )
+      .map[Unit] { browser =>
+        println("Should show timezones: " + message)
+        browser
+          .querySelector(".timezone")
+          .foreach(_.appendChild(message))
+      }
 
   def updateContentInsideElementAndReveal(
     containerId: String,
@@ -44,25 +41,25 @@ object DomManipulation {
   ): ZIO[Browser, Nothing, Unit] =
     ZIO
       .service[Browser]
-      .map {
-        browser =>
-          browser
-            .querySelector(s"#$containerId") // TODO Handle case where this is missing
-            .foreach {
-              routeElementResult =>
-                routeElementResult
-                  .querySelector("#" + innerContentId)
-                  .innerHTML = ""
+      .map { browser =>
+        browser
+          .querySelector(
+            s"#$containerId",
+          ) // TODO Handle case where this is missing
+          .foreach { routeElementResult =>
+            routeElementResult
+              .querySelector("#" + innerContentId)
+              .innerHTML = ""
 
-                routeElementResult.setAttribute(
-                  "style",
-                  "display:box",
-                ) // TODO or grid?
+            routeElementResult.setAttribute(
+              "style",
+              "display:box",
+            ) // TODO or grid?
 
-                routeElementResult
-                  .querySelector("#" + innerContentId)
-                  .appendChild(newContent)
-            }
+            routeElementResult
+              .querySelector("#" + innerContentId)
+              .appendChild(newContent)
+          }
       }
 
   def hideElement(
@@ -70,17 +67,15 @@ object DomManipulation {
   ): ZIO[Browser, Nothing, Unit] =
     ZIO
       .service[Browser]
-      .map {
-        browser =>
-          browser
-            .querySelector(s"#$elementId")
-            .foreach {
-              routeElementResult =>
-                routeElementResult.setAttribute(
-                  "style",
-                  "display:none",
-                ) // Come up with way of hiding and collapsing
-            }
+      .map { browser =>
+        browser
+          .querySelector(s"#$elementId")
+          .foreach { routeElementResult =>
+            routeElementResult.setAttribute(
+              "style",
+              "display:none",
+            ) // Come up with way of hiding and collapsing
+          }
       }
 
 }

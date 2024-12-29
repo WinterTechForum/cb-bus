@@ -356,9 +356,8 @@ object Components {
     )
 
     val addingNewRoute: Var[Boolean] = Var(
-      $plan.now().routeSegments.isEmpty // If no segments , assume we want to add more
+      $plan.now().routeSegments.isEmpty, // If no segments , assume we want to add more
     )
-
 
     val upcomingArrivalData =
       timeStamps
@@ -457,7 +456,7 @@ object Components {
     scheduleSelector: Observer[
       Option[(BusScheduleAtStop, RouteSegment)],
     ],
-    addingNewRoute: Var[Boolean]
+    addingNewRoute: Var[Boolean],
   ) =
 
     val planSwipeUpdater: Observer[(Int, Option[RouteSegment])] =

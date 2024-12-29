@@ -5,7 +5,10 @@ import crestedbutte.NotificationStuff.{desiredAlarms, headsUpAmount}
 import crestedbutte.*
 import org.scalajs.dom
 import org.scalajs.dom.NotificationOptions
-import org.scalajs.dom.experimental.{Notification, NotificationOptions}
+import org.scalajs.dom.experimental.{
+  Notification,
+  NotificationOptions,
+}
 import org.scalajs.dom.raw.Position
 
 import scala.scalajs.js
@@ -139,7 +142,8 @@ object Experimental {
 //    val featureUpdates = new EventBus[FeatureStatus]
     div(
       idAttr := "sandbox",
-      timeStamps.map(_ => getLocation($gpsPosition),
+      timeStamps.map(_ =>
+        getLocation($gpsPosition),
       ) --> $gpsPosition.writer,
 //      Components.FeatureControlCenter(featureUpdates.writer),
       button(
@@ -175,14 +179,14 @@ object Experimental {
     )
 
   def GeoBits(
-               $mapLinksEnabled: Signal[Boolean],
-               location: Location,
-               $gpsPosition: Signal[Option[GpsCoordinates]],
-             ) = {
+    $mapLinksEnabled: Signal[Boolean],
+    location: Location,
+    $gpsPosition: Signal[Option[GpsCoordinates]],
+  ) = {
     def distanceFromCurrentLocationToStop(
-                                           gpsPosition: Signal[Option[GpsCoordinates]],
-                                           location: Location,
-                                         ) =
+      gpsPosition: Signal[Option[GpsCoordinates]],
+      location: Location,
+    ) =
       gpsPosition.map(
         _.flatMap(userCords =>
           location.gpsCoordinates.map(stopCoords =>
@@ -204,7 +208,7 @@ object Experimental {
             cls := "map-link",
             child <--
               distanceFromCurrentLocationToStop($gpsPosition,
-                location,
+                                                location,
               ),
             location.gpsCoordinates.map(GeoLink),
           )
@@ -215,8 +219,8 @@ object Experimental {
   }
 
   def GPS(
-           gpsPosition: Var[Option[GpsCoordinates]],
-         ) =
+    gpsPosition: Var[Option[GpsCoordinates]],
+  ) =
     button(
       idAttr := "Get position",
       onClick --> Observer[dom.MouseEvent]: ev =>
@@ -225,13 +229,13 @@ object Experimental {
     )
 
   def FeatureControlCenter(
-                            featureUpdates: WriteBus[FeatureStatus],
-                          ) = {
+    featureUpdates: WriteBus[FeatureStatus],
+  ) = {
 
     // TODO Make this a separate component?
     def FeatureToggle(
-                       feature: Feature,
-                     ) =
+      feature: Feature,
+    ) =
       label(
         cls := "checkbox",
         feature.toString,
@@ -250,8 +254,8 @@ object Experimental {
   }
 
   def GeoLink(
-               gpsCoordinates: GpsCoordinates,
-             ) =
+    gpsCoordinates: GpsCoordinates,
+  ) =
     a(
       cls := "link",
       href := s"https://www.google.com/maps/search/?api=1&query=${gpsCoordinates.latitude},${gpsCoordinates.longitude}",
