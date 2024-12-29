@@ -146,7 +146,7 @@ object Components {
       else {
         segments.zipWithIndex
           .map { case (routeSegment, idx) =>
-            div(
+            (routeSegment,
               RouteLegElement(
                 routeSegment,
                 idx,
@@ -156,10 +156,11 @@ object Components {
                 timestamp,
                 scheduleSelector,
                 planSwipeUpdater,
-              ),
+              )
             )
           }
-          .reduce { case (acc, next) =>
+          .reduce { case ((firstSegment, acc), (nextSegment, next)) =>
+            (firstSegment,
             acc.amend(
               div(
                 div(
@@ -167,11 +168,16 @@ object Components {
                   SvgIcon("glyphicons-basic-947-circle-more.svg",
                     "plain-white plan-segment-divider",
                   ),
+                  span(
+                    cls:="transit-time",
+                    (firstSegment.end.t.between(nextSegment.start.t).toMinutes + " min")
+                  )
                 ),
                 next,
               )
             )
-          }
+            )
+          }._2
       }
     div(
       segmentContent,
@@ -263,19 +269,6 @@ object Components {
             )
         },
         div(
-          /*
-          // grab the element
-            var el = document.getElementById('idOfElement');
-
-            // listen for the long-press event
-            el.addEventListener('long-press', function(e) {
-
-              // stop the event from bubbling up
-              e.preventDefault()
-
-              console.log(e.target);
-            });
-           */
           cls := "plan-segments",
           // TODO pass state piece is being updated
           stopInfo(routeSegment,
