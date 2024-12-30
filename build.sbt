@@ -8,7 +8,6 @@ enablePlugins(ScalaJSPlugin)
 
 enablePlugins(TzdbPlugin)
 
-enablePlugins(ScalablyTypedConverterPlugin)
 enablePlugins(WebScalaJSBundlerPlugin)
 
 pipelineStages in Assets := Seq(scalaJSPipeline)
