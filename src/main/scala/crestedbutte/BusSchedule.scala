@@ -4,16 +4,6 @@ import com.billding.time.{MinuteDuration, WallTime}
 
 case class BusSchedule(
   stopTimes: List[WallTime]) {
-
-  def nextBusArrivalTime(
-    now: WallTime,
-  ): Option[WallTime] =
-    if (now.isLikelyEarlyMorningRatherThanLateNight)
-      stopTimes
-        .find(stopTime =>
-          TimeCalculations.catchableBus(now, stopTime),
-        )
-    else None
 }
 
 object BusSchedule {

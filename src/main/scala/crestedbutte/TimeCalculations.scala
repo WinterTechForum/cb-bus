@@ -72,14 +72,5 @@ object TimeCalculations {
     )
   }
 
-  // TODO Shouldn't be part of this class
-  def catchableBus(
-    now: WallTime,
-    goal: WallTime,
-  ) =
-    goal.localTime
-      .isAfter(now.localTime) ||
-      goal.localTime
-        .equals(now.localTime)
 
 }
