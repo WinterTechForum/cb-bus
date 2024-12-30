@@ -22,9 +22,6 @@ import java.time.{Clock, Instant, OffsetDateTime}
 import scala.concurrent.duration.FiniteDuration
 import animus._
 
-enum SelectedSegmentPiece:
-  case Start, End
-
 case class LocationTimeDirection(
   locationWithTime: LocationWithTime,
   routeSegment: RouteSegment)
@@ -198,7 +195,7 @@ object Components {
           else
             cls := "",
           stopInfo(routeSegment,
-                   SelectedSegmentPiece.Start,
+                   routeSegment.start,
                    routeSegment.routeWithTimes,
                    timestamp,
                    scheduleSelector,
@@ -220,7 +217,7 @@ object Components {
             ), // TODO Better styling
           ),
           stopInfo(routeSegment,
-                   SelectedSegmentPiece.End,
+                   routeSegment.end,
                    routeSegment.routeWithTimes,
                    timestamp,
                    scheduleSelector,
@@ -237,7 +234,7 @@ object Components {
 
   def stopInfo(
     routeSegment: RouteSegment,
-    selectedSegmentPiece: SelectedSegmentPiece,
+    locationWithTime: LocationWithTime,
     routeWithTimes: RouteWithTimes,
     timestamp: WallTime,
     scheduleSelector: Observer[
@@ -245,13 +242,7 @@ object Components {
     ],
   ) = {
     // TODO Update stopBeingImplicitlyChanged after explicit bit is calculated
-    val (stopBeingExplicitlyChanged, stopBeingImplicitlyChanged) =
-      selectedSegmentPiece match
-        case SelectedSegmentPiece.Start =>
-          (routeSegment.start, routeSegment.end)
-        case SelectedSegmentPiece.End =>
-          (routeSegment.end, routeSegment.start)
-    val stop = stopBeingExplicitlyChanged
+    val stop = locationWithTime
     UpcomingStopInfo(
       stop.l,
       div(
