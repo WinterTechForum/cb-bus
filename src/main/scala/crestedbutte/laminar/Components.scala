@@ -195,7 +195,6 @@ object Components {
             cls := "",
           stopInfo(routeSegment,
                    SelectedSegmentPiece.Start,
-                   deleteButton(routeSegment, $plan, db, addingNewRoute),
                    routeSegment.routeWithTimes,
                    timestamp,
                    scheduleSelector,
@@ -210,10 +209,10 @@ object Components {
                 .between(routeSegment.end.t)
                 .humanFriendly,
             ),
+            deleteButton(routeSegment, $plan, db, addingNewRoute) // TODO Better styling
           ),
           stopInfo(routeSegment,
                    SelectedSegmentPiece.End,
-                   deleteButton(routeSegment, $plan, db, addingNewRoute),
                    routeSegment.routeWithTimes,
                    timestamp,
                    scheduleSelector,
@@ -231,7 +230,6 @@ object Components {
   def stopInfo(
     routeSegment: RouteSegment,
     selectedSegmentPiece: SelectedSegmentPiece,
-    deleteButton: ReactiveHtmlElement[_],
     routeWithTimes: RouteWithTimes,
     timestamp: WallTime,
     scheduleSelector: Observer[
@@ -248,12 +246,6 @@ object Components {
     val stop = stopBeingExplicitlyChanged
     UpcomingStopInfo(
       stop.l,
-      if (
-        stop == routeSegment.start
-      ) // Only show delete beside start location
-        deleteButton
-      else
-        div(),
       div(
         div(
           routeWithTimes.allStops
@@ -429,7 +421,6 @@ object Components {
   object UpcomingStopInfo {
     def apply(
       location: Location,
-      deleteButton: ReactiveHtmlElement[_],
       content: ReactiveHtmlElement[_],
     ) =
       div(
@@ -438,7 +429,6 @@ object Components {
         div(cls := "stop-name", div(location.name)),
         div(cls := "stop-alt-name", div(location.altName)),
         div(cls := "upcoming-information", content),
-        div(cls := "map-link", deleteButton),
       )
   }
 
