@@ -50,59 +50,62 @@ object Components {
     val $planSegments: Var[Seq[(RouteSegment, Int)]] = Var(Seq.empty)
 
     import scala.scalajs.js.timers._
-    segments.zipWithIndex.foreach( l =>
+    segments.zipWithIndex.foreach(l =>
       setTimeout(l._2 * 150)(
-        $planSegments.update(_ :+ l)
-      )
+        $planSegments.update(_ :+ l),
+      ),
     )
 
     val segmentContentNifty =
-      $planSegments.signal.splitTransition(identity) {
-        case (_, (routeSegment, i), _, transition) =>
-          (routeSegment,
-            RouteLegElement(
-              routeSegment,
-              i,
-              db,
-              $plan,
-              addingNewRoute,
-              timestamp,
-              scheduleSelector,
-              planSwipeUpdater,
-            ).amend(
-              transition.height
+      $planSegments.signal
+        .splitTransition(identity) {
+          case (_, (routeSegment, i), _, transition) =>
+            (routeSegment,
+             RouteLegElement(
+               routeSegment,
+               i,
+               db,
+               $plan,
+               addingNewRoute,
+               timestamp,
+               scheduleSelector,
+               planSwipeUpdater,
+             ).amend(
+               transition.height,
+             ),
             )
-          )
-      }.map( segments =>
-        if (segments.isEmpty)
-          div()
-        else {
-          div(
-          segments
-            .tail
-            .foldLeft((segments.head._1, Seq(segments.head._2))) { case ((firstSegment, acc), (nextSegment, next)) =>
-              (nextSegment,
-                acc :+
-                  div(
-                    textAlign := "center",
-                    paddingTop := "1.5em",
-                    paddingBottom := "1.5em",
-                    SvgIcon("glyphicons-basic-947-circle-more.svg",
-                      "plain-white plan-segment-divider",
-                    ),
-                    span(
-                      cls := "transit-time",
-                      firstSegment.end.t
-                        .between(nextSegment.start.t)
-                        .humanFriendly,
-                    ),
-                  ) :+ next
-              )
-            }
-            ._2 // Yuck.
-          )
         }
-      )
+        .map(segments =>
+          if (segments.isEmpty)
+            div()
+          else {
+            div(
+              segments.tail
+                .foldLeft((segments.head._1, Seq(segments.head._2))) {
+                  case ((firstSegment, acc), (nextSegment, next)) =>
+                    (nextSegment,
+                     acc :+
+                       div(
+                         textAlign := "center",
+                         paddingTop := "1.5em",
+                         paddingBottom := "1.5em",
+                         SvgIcon(
+                           "glyphicons-basic-947-circle-more.svg",
+                           "plain-white plan-segment-divider",
+                         ),
+                         span(
+                           cls := "transit-time",
+                           firstSegment.end.t
+                             .between(nextSegment.start.t)
+                             .humanFriendly,
+                         ),
+                       ) :+ next,
+                    )
+                }
+                ._2, // Yuck.
+            )
+          },
+        )
     div(
       child <-- segmentContentNifty,
       div(
