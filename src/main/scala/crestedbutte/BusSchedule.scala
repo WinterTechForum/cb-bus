@@ -3,8 +3,7 @@ package crestedbutte
 import com.billding.time.{MinuteDuration, WallTime}
 
 case class BusSchedule(
-  stopTimes: List[WallTime]) {
-}
+  stopTimes: List[WallTime]) {}
 
 object BusSchedule {
 
