@@ -196,7 +196,7 @@ object WallTime {
                HourNotation.TwentyFour,
     )
 
-  def parseMinutes(
+  private def parseMinutes(
     raw: String,
   ) =
     if (raw.length == 4 || raw.length == 5) {

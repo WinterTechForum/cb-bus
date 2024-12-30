@@ -1,23 +1,14 @@
 package crestedbutte.dom
 
-import com.billding.time.WallTime
 import com.raquo.laminar.api.L.*
 import com.raquo.laminar.nodes.ReactiveHtmlElement
 import crestedbutte.*
-import crestedbutte.laminar.{
-  Experimental,
-  LocationTimeDirection,
-  SelectedSegmentPiece,
-}
-import org.scalajs.dom
-import org.scalajs.dom.experimental.Notification
+import crestedbutte.laminar.LocationTimeDirection
 
 object BulmaLocal {
   def locationwithTime(
-    // pair with other end somehow
     l: LocationWithTime,
-    // TODO pass in segment, instead of plan?
-    segment: RouteSegment, // TODO Instead of passing Plan, we should just emit an event with the new selected time.
+    segment: RouteSegment,
     updates: Sink[LocationTimeDirection],
   ) =
     div(
@@ -43,7 +34,7 @@ object BulmaLocal {
     )
 
   def UpcomingStops(
-    scheduleAtStop: BusScheduleAtStop, // TODO This needs to be pairs.
+    scheduleAtStop: BusScheduleAtStop,
     routeSegment: RouteSegment,
     selectedTimeUpdater: Sink[LocationTimeDirection],
   ) = {
