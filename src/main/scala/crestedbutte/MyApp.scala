@@ -5,9 +5,7 @@ import zio.{ZIO, ZIOAppDefault, ZLayer}
 
 object MyApp extends ZIOAppDefault {
   override def run = {
-    val myEnvironment =
-      ZLayer.succeed(BrowserLive.browser)
-    fullApplicationLogic.provide(myEnvironment)
+    fullApplicationLogic
   }
 
   val fullApplicationLogic =

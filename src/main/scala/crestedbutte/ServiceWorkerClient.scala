@@ -1,6 +1,5 @@
 package crestedbutte
 
-import crestedbutte.Browser.Browser
 import org.scalajs.dom.ServiceWorkerRegistrationOptions
 import org.scalajs.dom.experimental.serviceworkers.toServiceWorkerNavigator
 import zio.ZIO
@@ -8,18 +7,17 @@ import zio.ZIO
 import scala.util.{Failure, Success}
 
 object ServiceWorkerClient {
-  def registerServiceWorker(): ZIO[Browser, Nothing, Unit] =
-    ZIO
-      .service[Browser]
-      .map { browser =>
+  def registerServiceWorker(): ZIO[Any, Nothing, Unit] =
+    ZIO.succeed {
+        val window = org.scalajs.dom.window
         // TODO Ew. Try to get this removed after first version of PWA is working
         import scala.concurrent.ExecutionContext.Implicits.global
 
         val serviceWorker = toServiceWorkerNavigator(
-          browser.window().navigator,
+          window.navigator,
         ).serviceWorker
 
-        if (browser.window().hasOwnProperty("OneSignalDeferred")) {
+        if (window.hasOwnProperty("OneSignalDeferred")) {
           serviceWorker.register(
             "./push/onesignal/OneSignalSDKWorker.js",
             new ServiceWorkerRegistrationOptions {
