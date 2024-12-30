@@ -140,6 +140,27 @@ object Components {
     )
   }
 
+
+  def deleteButton(routeSegment: RouteSegment, $plan: Var[Plan], db: Persistence, addingNewRoute: Var[Boolean]): ReactiveHtmlElement[HTMLAnchorElement] =
+    a(
+      cls := "link",
+      onClick --> Observer { _ =>
+        val plan = $plan.now()
+        val newPlan =
+          plan.copy(l = plan.l.filterNot(_ == routeSegment))
+        db.saveDailyPlanOnly(newPlan)
+        $plan.set(newPlan)
+        if (newPlan.l.isEmpty) {
+          addingNewRoute.set {
+            true
+          }
+        }
+      },
+      SvgIcon("glyphicons-basic-842-square-minus.svg",
+        clsName = "delete",
+      ),
+    )
+
   def RouteLegElement(
     routeSegment: RouteSegment,
     planIndex: Int,
@@ -152,72 +173,33 @@ object Components {
     ],
     planSwipeUpdater: Observer[(Int, Option[RouteSegment])],
   ) =
-    val routeWithTimes: RouteWithTimes =
-      routeSegment.route match
-        case RtaSouthbound.componentName =>
-          RtaSouthbound.fullSchedule.routeWithTimes
-        case RtaNorthbound.componentName =>
-          RtaNorthbound.fullSchedule.routeWithTimes
-        case other =>
-          throw new Exception("Unrecognized route: " + other)
-
-    val deleteButton: ReactiveHtmlElement[HTMLAnchorElement] =
-      a(
-        cls := "link",
-        onClick --> Observer { _ =>
-          val plan = $plan.now()
-          val newPlan =
-            plan.copy(l = plan.l.filterNot(_ == routeSegment))
-          db.saveDailyPlanOnly(newPlan)
-          $plan.set(newPlan)
-          if (newPlan.l.isEmpty) {
-            addingNewRoute.set {
-              true
-            }
-          }
-        },
-        SvgIcon("glyphicons-basic-842-square-minus.svg",
-                clsName = "delete",
-        ),
-      )
-
     val res =
       div(
         TouchControls.swipeProp {
           case Swipe.Left =>
             planSwipeUpdater.onNext(
               planIndex,
-              routeWithTimes.nextAfter(routeSegment),
+              routeSegment.routeWithTimes.nextAfter(routeSegment),
             )
           case Swipe.Right =>
             planSwipeUpdater.onNext(
               planIndex,
-              routeWithTimes.nextBefore(routeSegment),
+              routeSegment.routeWithTimes.nextBefore(routeSegment),
             )
         },
         div(
           cls := "plan-segments",
           if (timestamp.isAfter(routeSegment.start.t))
             opacity := 0.5
-//            backgroundColor := "red"
           else
             cls := "",
-          // TODO pass state piece is being updated
           stopInfo(routeSegment,
                    SelectedSegmentPiece.Start,
-                   deleteButton,
-                   routeWithTimes,
+                   deleteButton(routeSegment, $plan, db, addingNewRoute),
+                   routeSegment.routeWithTimes,
                    timestamp,
                    scheduleSelector,
           ),
-
-          /*
-             Connecting icons for start and end of legs
-            glyphicons-basic-211-arrow-down.svg
-            glyphicons-basic-221-chevron-down.svg
-            glyphicons-basic-796-set-down.svg
-            glyphicons-basic-827-arrow-thin-down.svg
-           */
           div(
             SvgIcon("glyphicons-basic-211-arrow-down.svg",
                     "plain-white plan-segment-divider",
@@ -231,8 +213,8 @@ object Components {
           ),
           stopInfo(routeSegment,
                    SelectedSegmentPiece.End,
-                   deleteButton,
-                   routeWithTimes,
+                   deleteButton(routeSegment, $plan, db, addingNewRoute),
+                   routeSegment.routeWithTimes,
                    timestamp,
                    scheduleSelector,
           ),
@@ -244,7 +226,6 @@ object Components {
       _ => println("Long pressed!"),
     )
 
-    println("Added long pressed behavior. Maybe.")
     res
 
   def stopInfo(
@@ -387,11 +368,6 @@ object Components {
           )
         }
 
-//    val s1 : Signal[ReactiveHtmlElement[HTMLDivElement]] = ???
-//    s1.splitOneTransition()
-//    val s2 : Signal[RouteSegment] = ???
-//    s2.splitOneTransition()
-
     val whatToShowBetter
       : Signal[ReactiveHtmlElement[HTMLDivElement]] =
       selectedStop.signal
@@ -428,15 +404,6 @@ object Components {
       div(
         cls := ElementNames.BoxClass,
         idAttr := "container",
-        /*
-
-          children <-- $locations.splitTransition(identity) {
-            case (_, (location, _), _, transition) =>
-              div(
-                //            display.inlineFlex,
-                transition.width,
-                transition.height,
-         */
         child <-- whatToShowBetter, // **THIS IS THE IMPORTANT STUFF** The fact that it's hard to see means I need to remove other bullshit
         timeStamps --> Observer[WallTime](
           onNext = localTime =>
@@ -444,7 +411,6 @@ object Components {
               .dequeueAll(busTime =>
                 localTime
                   .between(busTime)
-                  // TODO Direct comparison
                   .toMinutes <= NotificationStuff.headsUpAmount.toMinutes,
               )
               .foreach(

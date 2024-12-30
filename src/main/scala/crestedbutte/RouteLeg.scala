@@ -1,7 +1,8 @@
 package crestedbutte
 
 import com.billding.time.{MinuteDuration, WallTime}
-import zio.json.*
+import crestedbutte.routes.{RouteLookup, RouteWithTimes}
+import zio.json.JsonCodec
 
 case class RouteSegment private (
   r: RouteName,
@@ -18,6 +19,9 @@ case class RouteSegment private (
   val route = r
   val start = s
   val end = e
+
+  val routeWithTimes: RouteWithTimes =
+    RouteLookup(this)
 
   lazy val plainTextRepresentation =
     s"""${start.t.toDumbAmericanString}  ${start.l.name}
