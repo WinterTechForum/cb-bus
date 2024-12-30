@@ -420,7 +420,7 @@ object Components {
               )
               .foreach(
                 Experimental.Notifications
-                  .createJankyBusAlertInSideEffectyWay(_, localTime),
+                  .createJankyBusAlertInSideEffectyWay
               ),
         ),
         Option.when(pageMode == AppMode.dev)(

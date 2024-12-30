@@ -15,7 +15,7 @@ object RoutingStuff {
 
   private case class BusPage(
     mode: AppMode,
-    time: Option[WallTime], // TODO Make this a WallTime instead
+    time: Option[WallTime],
     plan: Option[Plan]) {
 
     val fixedTime = time

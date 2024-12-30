@@ -78,33 +78,13 @@ object Experimental {
 
     def createJankyBusAlertInSideEffectyWay(
       busTime: WallTime,
-      localTime: WallTime,
     ) = {
-      println("Dequeued time for alarm: " + busTime)
-//      if (
-//        localTime
-//          .between(busTime)
-//          // TODO Direct comparison
-//          .toMinutes <= headsUpAmount.toMinutes
-//      ) {
-//        println("Setting timeout")
-//        dom.window.setTimeout(
-      // TODO Replace this with submission to an EventBus[WallTime] that can be read via the RepeatingElement
-//          () =>
-      // Read submitted time, find difference between it and the current time, then submit a setInterval function
-      // with the appropriate delay
       new Notification(
         s"The ${busTime.toString} bus is arriving in ${headsUpAmount.toMinutes} minutes!",
         NotificationOptions(
           vibrate = js.Array(100d),
         ),
       )
-//          0,
-//          (localTime
-//            .between(busTime)
-//            .toMinutes - headsUpAmount.toMinutes) * 60 * 1000,
-//        )
-//      }
     }
 
     def AlarmIcon(
