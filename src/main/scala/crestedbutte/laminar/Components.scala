@@ -406,7 +406,7 @@ object Components {
 
     div(
       div(
-        cls := "bill-box",
+        cls := ElementNames.BoxClass,
         idAttr := "container",
         child <-- whatToShowBetter, // **THIS IS THE IMPORTANT STUFF** The fact that it's hard to see means I need to remove other bullshit
         timeStamps --> Observer[WallTime](

@@ -1,7 +1,7 @@
 package todo
 
 import org.scalajs.dom.experimental.Fetch.*
-import org.scalajs.dom.{NotificationOptions, ServiceWorkerGlobalScope}
+import org.scalajs.dom.{ServiceWorkerGlobalScope}
 import org.scalajs.dom.ServiceWorkerGlobalScope.self
 import org.scalajs.dom.experimental.serviceworkers.{
   ExtendableEvent,
@@ -9,13 +9,11 @@ import org.scalajs.dom.experimental.serviceworkers.{
 }
 import org.scalajs.dom.experimental.*
 import org.scalajs.dom.raw.MessageEvent
-//import org.scalajs.dom.window.navigator
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters.*
-import scala.util.{Failure, Success}
 
 object ServiceWorker {
   val busCache = "cb-bus"

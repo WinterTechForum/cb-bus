@@ -15,15 +15,7 @@ pipelineStages in Assets := Seq(scalaJSPipeline)
 
 scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.CommonJSModule) }
 
-githubTokenSource := TokenSource.Or(
-  TokenSource.Environment("GITHUB_TOKEN"), // Injected during a github workflow for publishing
-  TokenSource.GitConfig("github.token") // local token set in ~/.gitconfig
-)
-
-resolvers += "jitpack" at "https://jitpack.io"
 resolvers += Resolver.url("typesafe", url("https://repo.typesafe.com/typesafe/ivy-releases/"))(Resolver.ivyStylePatterns)
-resolvers += Resolver.githubPackages("swoogles", "BulmaScala")
-resolvers += Resolver.githubPackages("swoogles", "ScalaJsZioLibrary")
 
 // This is only for quick dev turn-around
 resolvers += "Sonatype" at "https://s01.oss.sonatype.org/content/repositories/public"
@@ -46,7 +38,6 @@ libraryDependencies ++= Seq(
   "com.lihaoyi" %%% "upickle" % "3.1.3",
   "com.raquo" %%% "waypoint" % "7.0.0",   // Requires Airstream 0.12.0 & URL DSL 0.3.2
   "io.github.kitlangton" %%% "animus" % "0.6.5",
-  "org.scala-js" %%% "scalajs-dom" % "2.8.0"
 )
 
 // This is an application with a main method
