@@ -140,8 +140,12 @@ object Components {
     )
   }
 
-
-  def deleteButton(routeSegment: RouteSegment, $plan: Var[Plan], db: Persistence, addingNewRoute: Var[Boolean]): ReactiveHtmlElement[HTMLAnchorElement] =
+  def deleteButton(
+    routeSegment: RouteSegment,
+    $plan: Var[Plan],
+    db: Persistence,
+    addingNewRoute: Var[Boolean],
+  ): ReactiveHtmlElement[HTMLAnchorElement] =
     a(
       cls := "link",
       onClick --> Observer { _ =>
@@ -157,7 +161,7 @@ object Components {
         }
       },
       SvgIcon("glyphicons-basic-842-square-minus.svg",
-        clsName = "delete",
+              clsName = "delete",
       ),
     )
 
@@ -209,7 +213,11 @@ object Components {
                 .between(routeSegment.end.t)
                 .humanFriendly,
             ),
-            deleteButton(routeSegment, $plan, db, addingNewRoute) // TODO Better styling
+            deleteButton(routeSegment,
+                         $plan,
+                         db,
+                         addingNewRoute,
+            ), // TODO Better styling
           ),
           stopInfo(routeSegment,
                    SelectedSegmentPiece.End,
