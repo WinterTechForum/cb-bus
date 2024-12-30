@@ -41,7 +41,9 @@ object BulmaLocal {
   ) = {
     println("UPcoming stops: " + scheduleAtStop.location)
     val $opacity = Animation.from(0).wait(250).to(1).run
+    val $width = Animation.from(0).wait(250).to(100).run
     div(
+      width <-- $width.map(_.toString + "%"),
       opacity <-- $opacity,
       h4(textAlign := "center", scheduleAtStop.location.name),
       h5(textAlign := "center", "Upcoming Arrivals"),
