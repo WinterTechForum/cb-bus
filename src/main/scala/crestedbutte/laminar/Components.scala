@@ -372,6 +372,11 @@ object Components {
           )
         }
 
+//    val s1 : Signal[ReactiveHtmlElement[HTMLDivElement]] = ???
+//    s1.splitOneTransition()
+//    val s2 : Signal[RouteSegment] = ???
+//    s2.splitOneTransition()
+
     val whatToShowBetter
       : Signal[ReactiveHtmlElement[HTMLDivElement]] =
       selectedStop.signal
@@ -408,6 +413,15 @@ object Components {
       div(
         cls := ElementNames.BoxClass,
         idAttr := "container",
+        /*
+
+          children <-- $locations.splitTransition(identity) {
+            case (_, (location, _), _, transition) =>
+              div(
+                //            display.inlineFlex,
+                transition.width,
+                transition.height,
+         */
         child <-- whatToShowBetter, // **THIS IS THE IMPORTANT STUFF** The fact that it's hard to see means I need to remove other bullshit
         timeStamps --> Observer[WallTime](
           onNext = localTime =>

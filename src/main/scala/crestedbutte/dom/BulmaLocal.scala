@@ -1,5 +1,6 @@
 package crestedbutte.dom
 
+import animus.Animation
 import com.raquo.laminar.api.L.*
 import com.raquo.laminar.nodes.ReactiveHtmlElement
 import crestedbutte.*
@@ -39,7 +40,9 @@ object BulmaLocal {
     selectedTimeUpdater: Sink[LocationTimeDirection],
   ) = {
     println("UPcoming stops: " + scheduleAtStop.location)
+    val $opacity = Animation.from(0).wait(250).to(1).run
     div(
+      opacity <-- $opacity,
       h4(textAlign := "center", scheduleAtStop.location.name),
       h5(textAlign := "center", "Upcoming Arrivals"),
       scheduleAtStop.locationsWithTimes.map { l =>
