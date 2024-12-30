@@ -433,8 +433,7 @@ object Components {
                   .toMinutes <= NotificationStuff.headsUpAmount.toMinutes,
               )
               .foreach(
-                Experimental.Notifications
-                  .createJankyBusAlertInSideEffectyWay
+                Experimental.Notifications.createJankyBusAlertInSideEffectyWay,
               ),
         ),
         Option.when(pageMode == AppMode.dev)(

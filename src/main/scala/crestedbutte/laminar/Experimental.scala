@@ -78,14 +78,13 @@ object Experimental {
 
     def createJankyBusAlertInSideEffectyWay(
       busTime: WallTime,
-    ) = {
+    ) =
       new Notification(
         s"The ${busTime.toString} bus is arriving in ${headsUpAmount.toMinutes} minutes!",
         NotificationOptions(
           vibrate = js.Array(100d),
         ),
       )
-    }
 
     def AlarmIcon(
       name: String,
@@ -122,8 +121,7 @@ object Experimental {
 //    val featureUpdates = new EventBus[FeatureStatus]
     div(
       idAttr := "sandbox",
-      timeStamps.map(_ =>
-        getLocation($gpsPosition),
+      timeStamps.map(_ => getLocation($gpsPosition),
       ) --> $gpsPosition.writer,
 //      Components.FeatureControlCenter(featureUpdates.writer),
       button(
