@@ -47,52 +47,64 @@ object Components {
     planSwipeUpdater: Observer[(Int, Option[RouteSegment])],
   ) = {
     val segments = $plan.now().routeSegments
-    val segmentContent =
-      if (segments.isEmpty)
-        div()
-      else {
-        segments.zipWithIndex
-          .map { case (routeSegment, idx) =>
-            (routeSegment,
-             RouteLegElement(
-               routeSegment,
-               idx,
-               db,
-               $plan,
-               addingNewRoute,
-               timestamp,
-               scheduleSelector,
-               planSwipeUpdater,
-             ),
+    val $planSegments: Var[Seq[(RouteSegment, Int)]] = Var(Seq.empty)
+
+    import scala.scalajs.js.timers._
+    segments.zipWithIndex.foreach( l =>
+      setTimeout(l._2 * 150)(
+        $planSegments.update(_ :+ l)
+      )
+    )
+
+    val segmentContentNifty =
+      $planSegments.signal.splitTransition(identity) {
+        case (_, (routeSegment, i), _, transition) =>
+          (routeSegment,
+            RouteLegElement(
+              routeSegment,
+              i,
+              db,
+              $plan,
+              addingNewRoute,
+              timestamp,
+              scheduleSelector,
+              planSwipeUpdater,
+            ).amend(
+              transition.height
             )
-          }
-          .reduce { case ((firstSegment, acc), (nextSegment, next)) =>
-            (nextSegment,
-             acc.amend(
-               div(
-                 div(
-                   textAlign := "center",
-                   paddingTop := "1.5em",
-                   paddingBottom := "1.5em",
-                   SvgIcon("glyphicons-basic-947-circle-more.svg",
-                           "plain-white plan-segment-divider",
-                   ),
-                   span(
-                     cls := "transit-time",
-                     firstSegment.end.t
-                       .between(nextSegment.start.t)
-                       .humanFriendly,
-                   ),
-                 ),
-                 next,
-               ),
-             ),
-            )
-          }
-          ._2 // Yuck.
-      }
+          )
+      }.map( segments =>
+        if (segments.isEmpty)
+          div()
+        else {
+          div(
+          segments
+            .tail
+            .foldLeft((segments.head._1, Seq(segments.head._2))) { case ((firstSegment, acc), (nextSegment, next)) =>
+              (nextSegment,
+                acc :+
+                  div(
+                    textAlign := "center",
+                    paddingTop := "1.5em",
+                    paddingBottom := "1.5em",
+                    SvgIcon("glyphicons-basic-947-circle-more.svg",
+                      "plain-white plan-segment-divider",
+                    ),
+                    span(
+                      cls := "transit-time",
+                      firstSegment.end.t
+                        .between(nextSegment.start.t)
+                        .humanFriendly,
+                    ),
+                  ) :+ next
+              )
+            }
+            ._2 // Yuck.
+          )
+        }
+      )
     div(
-      segmentContent,
+      child <-- segmentContentNifty,
       div(
         cls := "add-new-route-section",
         child <-- addingNewRoute.signal.map {
