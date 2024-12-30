@@ -65,15 +65,6 @@ object UpcomingArrivalInfo {
       ),
     )
 
-  def apply(
-    location: Location,
-    content: LateNightRecommendation,
-  ): UpcomingArrivalInfo =
-    UpcomingArrivalInfo(
-      location,
-      Right(content),
-    )
-
 }
 
 import zio.json._
@@ -84,7 +75,6 @@ implicit val hourNotationCodec: JsonCodec[HourNotation] =
   DeriveJsonCodec.gen[HourNotation]
 
 case class Plan(
-  // TODO It kind of sucks that I'm working with the compressed name here.
   l: Seq[RouteSegment])
     derives JsonCodec:
 
