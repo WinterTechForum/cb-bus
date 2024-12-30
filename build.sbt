@@ -35,8 +35,6 @@ val zioVersion = "2.0.21"
 scalacOptions ++= Seq("-Xmax-inlines", "150")
 
 libraryDependencies ++= Seq(
-  "dev.zio" %%% "zio" % zioVersion,
-  "dev.zio" %%% "zio-streams" % zioVersion,
   "dev.zio" %%% "zio-json" % "0.6.2",
   "io.github.cquiroz" %%% "scala-java-time" % "2.5.0",
   "dev.zio" %%% "zio-test"     % zioVersion % "test",

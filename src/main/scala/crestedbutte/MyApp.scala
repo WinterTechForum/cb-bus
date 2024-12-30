@@ -1,24 +1,16 @@
 package crestedbutte
 
 import org.scalajs.dom
-import zio.{ZIO, ZIOAppDefault, ZLayer}
 
-object MyApp extends ZIOAppDefault {
-  override def run = {
-    fullApplicationLogic
-  }
+object MyApp extends App {
 
-  val fullApplicationLogic =
-    for {
-      _ <- ServiceWorkerClient.registerServiceWorker()
-      _ <- ZIO.attempt {
-        val appHolder = dom.document.getElementById("landing-message")
-        appHolder.innerHTML = ""
-        com.raquo.laminar.api.L.render(
-          appHolder,
-          RoutingStuff.app,
-        )
-      }
-    } yield 0
+  println("Doing this without zio")
+  ServiceWorkerClient.registerServiceWorker()
+  val appHolder = dom.document.getElementById("landing-message")
+  appHolder.innerHTML = ""
+  com.raquo.laminar.api.L.render(
+    appHolder,
+    RoutingStuff.app,
+  )
 
 }

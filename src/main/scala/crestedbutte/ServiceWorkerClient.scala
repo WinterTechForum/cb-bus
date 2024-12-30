@@ -2,13 +2,11 @@ package crestedbutte
 
 import org.scalajs.dom.ServiceWorkerRegistrationOptions
 import org.scalajs.dom.experimental.serviceworkers.toServiceWorkerNavigator
-import zio.ZIO
 
 import scala.util.{Failure, Success}
 
 object ServiceWorkerClient {
-  def registerServiceWorker(): ZIO[Any, Nothing, Unit] =
-    ZIO.succeed {
+  def registerServiceWorker(): Unit = {
         val window = org.scalajs.dom.window
         // TODO Ew. Try to get this removed after first version of PWA is working
         import scala.concurrent.ExecutionContext.Implicits.global
