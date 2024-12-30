@@ -142,22 +142,6 @@ object Experimental {
     )
   }
 
-  def manualClunkyAlerts(
-    $alertsEnabled: Signal[Boolean],
-    time: WallTime,
-  ) =
-    div(
-      child <-- $alertsEnabled.map(alertsEnabled =>
-        if (dom.Notification.permission == "granted" && alertsEnabled)
-          Experimental.Notifications.AlarmIcon(
-            "glyphicons-basic-443-bell-ringing.svg",
-            "arrival-time-alarm",
-            time,
-          )
-        else div(),
-      ),
-    )
-
   def GeoBits(
     $mapLinksEnabled: Signal[Boolean],
     location: Location,
