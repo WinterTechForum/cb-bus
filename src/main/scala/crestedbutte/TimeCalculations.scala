@@ -58,32 +58,19 @@ object TimeCalculations {
     departureTimeAtStop: WallTime,
     stops: BusScheduleAtStop,
     now: WallTime,
-  ): UpcomingArrivalInfo =
-    nextBusArrivalTime(stops.times, departureTimeAtStop)
-      .map(nextArrivalTime =>
-        UpcomingArrivalInfo(
-          stops.location,
-          StopTimeInfo(
-            nextArrivalTime,
-            nextArrivalTime // TODO Return an optional duration based on whether the bus is still in the future
-              .between(now),
-          ),
-        ),
-      )
-      .getOrElse(
-        UpcomingArrivalInfo(
-          stops.location,
-          LateNightRecommendation("Late Shuttle"),
-        ),
-      )
-
-  private def nextBusArrivalTime(
-    timesAtStop: Seq[WallTime],
-    now: WallTime,
-  ): Option[WallTime] =
-    timesAtStop
-      .find(stopTime => TimeCalculations.catchableBus(now, stopTime))
-      .filter(_ => now.isLikelyEarlyMorningRatherThanLateNight)
+  ): UpcomingArrivalInfo = {
+    // TODO delete
+    println("getUpcomingArrivalInfo")
+    println("departureTimeAtStop: " + departureTimeAtStop)
+    UpcomingArrivalInfo(
+      stops.location,
+      StopTimeInfo(
+        departureTimeAtStop,
+        departureTimeAtStop // TODO Return an optional duration based on whether the bus is still in the future
+          .between(now),
+      ),
+    )
+  }
 
   // TODO Shouldn't be part of this class
   def catchableBus(

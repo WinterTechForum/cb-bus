@@ -250,6 +250,7 @@ object Components {
           routeWithTimes.allStops
             .filter(_.location == stop.l)
             .map { scheduleAtStop =>
+              // TODO What is this
               TimeCalculations
                 .getUpcomingArrivalInfo(stop.t,
                                         scheduleAtStop,
