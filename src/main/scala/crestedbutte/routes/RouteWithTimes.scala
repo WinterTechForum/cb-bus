@@ -76,19 +76,6 @@ case class RouteWithTimes(
       }
     }
 
-  def firstRouteLeg(
-  ): RouteLeg =
-    RouteLeg(
-      allStops
-        .map(stop =>
-          LocationWithTime(
-            stop.location,
-            stop.times.toList(0),
-          ),
-        ),
-      allStops.head.routeName, // TODO Unsafe
-    ).getOrElse(throw new IllegalStateException("No stops in route"))
-
 }
 
 object RouteWithTimes {
