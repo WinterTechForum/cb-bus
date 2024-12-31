@@ -315,31 +315,6 @@ object Components {
         ) => currentWallTime(javaClock),
       )
 
-    div(
-      onMountCallback: context =>
-        db.initializeOrResetStorage(),
-      RepeatingElement()
-        .repeatWithInterval( // This acts like a Dune thumper
-          (),
-          new FiniteDuration(500,
-                             scala.concurrent.duration.SECONDS,
-          ), // TODO Make low again
-        ) --> clockTicks,
-      overallPageLayout(
-        timeStamps,
-        pageMode,
-        initialTime,
-        db,
-      )
-    )
-  }
-
-  def overallPageLayout(
-    timeStamps: Signal[WallTime],
-    pageMode: AppMode,
-    initialTime: WallTime,
-    db: Persistence,
-  ) = {
     val $plan: Var[Plan] = Var(
       db.retrieveDailyPlanOnly.getOrElse(Plan(Seq.empty)),
     )
@@ -383,7 +358,7 @@ object Components {
         }
 
     val whatToShowBetter
-      : Signal[ReactiveHtmlElement[HTMLDivElement]] =
+    : Signal[ReactiveHtmlElement[HTMLDivElement]] =
       selectedStop
         .signal
         .map {
@@ -414,28 +389,40 @@ object Components {
         }
 
     div(
+      onMountCallback: context =>
+        db.initializeOrResetStorage(),
+      RepeatingElement()
+        .repeatWithInterval( // This acts like a Dune thumper
+          (),
+          new FiniteDuration(500,
+                             scala.concurrent.duration.SECONDS,
+          ), // TODO Make low again
+        ) --> clockTicks,
+
       div(
-        cls := ElementNames.BoxClass,
-        idAttr := "container",
-        child <-- whatToShowBetter, // **THIS IS THE IMPORTANT STUFF** The fact that it's hard to see means I need to remove other bullshit
-        timeStamps --> Observer[WallTime](
-          onNext = localTime =>
-            desiredAlarms
-              .dequeueAll(busTime =>
-                localTime
-                  .between(busTime)
-                  .toMinutes <= NotificationStuff.headsUpAmount.toMinutes,
-              )
-              .foreach(
-                Experimental.Notifications.createJankyBusAlertInSideEffectyWay,
-              ),
-        ),
-        Option.when(pageMode == AppMode.dev)(
-          Experimental.Sandbox(
-            timeStamps,
+        div(
+          cls := ElementNames.BoxClass,
+          idAttr := "container",
+          child <-- whatToShowBetter, // **THIS IS THE IMPORTANT STUFF** The fact that it's hard to see means I need to remove other bullshit
+          timeStamps --> Observer[WallTime](
+            onNext = localTime =>
+              desiredAlarms
+                .dequeueAll(busTime =>
+                  localTime
+                    .between(busTime)
+                    .toMinutes <= NotificationStuff.headsUpAmount.toMinutes,
+                )
+                .foreach(
+                  Experimental.Notifications.createJankyBusAlertInSideEffectyWay,
+                ),
+          ),
+          Option.when(pageMode == AppMode.dev)(
+            Experimental.Sandbox(
+              timeStamps,
+            ),
           ),
         ),
-      ),
+      )
     )
   }
 
