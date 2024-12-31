@@ -362,6 +362,7 @@ object Components {
       selectedStop.signal
         .map {
           case Some((busScheduleAtStop, routeSegment)) =>
+            val res =
             UpcomingStops(
               busScheduleAtStop,
               routeSegment,
@@ -381,6 +382,15 @@ object Components {
                   res
                 },
             )
+
+            import scala.scalajs.js.timers._
+            setTimeout(200)(
+              dom.document.getElementById("selected-time").scrollIntoView(
+                top = false
+                //              { behavior: "instant", block: "end" }
+              )
+            )
+            res
           case None =>
             div(
               child <-- upcomingArrivalData,

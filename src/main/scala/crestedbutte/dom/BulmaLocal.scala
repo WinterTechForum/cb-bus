@@ -18,6 +18,10 @@ object BulmaLocal {
       else
         ""
     div(
+      if (segment.start == l || segment.end == l)
+        idAttr := "selected-time"
+      else
+        cls := "",
       textAlign := "center",
       paddingBottom := "3px",
       cls := "time",
