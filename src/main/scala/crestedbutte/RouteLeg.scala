@@ -8,13 +8,14 @@ trait RoutePiece
 
 case class RouteGap(
   start: WallTime,
-  endTime: WallTime
-                   ) extends RoutePiece
+  endTime: WallTime)
+    extends RoutePiece
 
 case class RouteSegment private (
   r: RouteName,
   s: LocationWithTime,
-  e: LocationWithTime) extends RoutePiece
+  e: LocationWithTime)
+    extends RoutePiece
     derives JsonCodec {
 
   assert(

@@ -10,7 +10,12 @@ import crestedbutte.dom.BulmaLocal
 import crestedbutte.dom.BulmaLocal.UpcomingStops
 import crestedbutte.laminar.TouchControls.Swipe
 import crestedbutte.pwa.Persistence
-import crestedbutte.routes.{CompleteStopList, RouteWithTimes, RtaNorthbound, RtaSouthbound}
+import crestedbutte.routes.{
+  CompleteStopList,
+  RouteWithTimes,
+  RtaNorthbound,
+  RtaSouthbound,
+}
 import java.time.format.DateTimeFormatter
 import java.time.{Clock, OffsetDateTime}
 import org.scalajs.dom
@@ -41,14 +46,15 @@ object Components {
           if (segments.isEmpty)
             segments
           else
-          segments.tail
-            .foldLeft[Seq[RoutePiece]](Seq(segments.head)) {
-              case (acc, next) =>
-                acc.last match
-                  case RouteSegment(r, s, e) =>
-                    (acc :+ RouteGap(e.t, next.start.t)) :+ next
-                  case _ => ??? // Eh, annoying, but not nearly as bad as the previous muck
-            }
+            segments.tail
+              .foldLeft[Seq[RoutePiece]](Seq(segments.head)) {
+                case (acc, next) =>
+                  acc.last match
+                    case RouteSegment(r, s, e) =>
+                      (acc :+ RouteGap(e.t, next.start.t)) :+ next
+                    case _ =>
+                      ??? // Eh, annoying, but not nearly as bad as the previous muck
+              }
 
         val $planSegments: Var[Seq[(RoutePiece, Int)]] =
           Var(Seq.empty)
@@ -60,8 +66,8 @@ object Components {
           ),
         )
 
-
-        val segmentContentNifty: Signal[Seq[ReactiveHtmlElement[HTMLDivElement]]] =
+        val segmentContentNifty
+          : Signal[Seq[ReactiveHtmlElement[HTMLDivElement]]] =
           $planSegments.signal
             .splitTransition(identity) {
               case (_, (routePiece, i), _, transition) =>
@@ -175,8 +181,8 @@ object Components {
       div(
         cls := "transit-period-icon ",
         SvgIcon("glyphicons-basic-211-arrow-down.svg",
-          "plain-white plan-segment-divider",
-        )
+                "plain-white plan-segment-divider",
+        ),
       ),
       span(
         cls := "transit-period-duration transit-time",
