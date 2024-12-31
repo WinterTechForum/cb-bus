@@ -161,6 +161,29 @@ object Components {
       ),
     )
 
+  def transitSegment(
+                      routeSegment: RouteSegment,
+                      $plan: Var[Plan],
+                      db: Persistence,
+                      addingNewRoute: Var[Boolean]
+                    ) =
+    div(
+      SvgIcon("glyphicons-basic-211-arrow-down.svg",
+        "plain-white plan-segment-divider",
+      ),
+      span(
+        cls := "transit-time",
+        routeSegment.start.t
+          .between(routeSegment.end.t)
+          .humanFriendly,
+      ),
+      deleteButton(routeSegment,
+        $plan,
+        db,
+        addingNewRoute,
+      ),
+    )
+
   def RouteLegElement(
     routeSegment: RouteSegment,
     planIndex: Int,
@@ -199,21 +222,11 @@ object Components {
                    timestamp,
                    scheduleSelector,
           ),
-          div(
-            SvgIcon("glyphicons-basic-211-arrow-down.svg",
-                    "plain-white plan-segment-divider",
-            ),
-            span(
-              cls := "transit-time",
-              routeSegment.start.t
-                .between(routeSegment.end.t)
-                .humanFriendly,
-            ),
-            deleteButton(routeSegment,
-                         $plan,
-                         db,
-                         addingNewRoute,
-            ),
+          transitSegment(
+            routeSegment,
+            $plan,
+            db,
+            addingNewRoute
           ),
           stopInfo(routeSegment,
                    routeSegment.end,
@@ -345,6 +358,7 @@ object Components {
 
     val whatToShowBetter
       : Signal[ReactiveHtmlElement[HTMLDivElement]] =
+      // TODO This is one of the most awkward bits of the whole app.
       selectedStop.signal
         .withCurrentValueOf(upcomingArrivalData)
         .map {
@@ -354,7 +368,6 @@ object Components {
             UpcomingStops(
               busScheduleAtStop,
               routeSegment,
-              // TODO This needs heavy scrutiny. It was pulled from a very different context
               $plan.writer
                 .contramap[LocationTimeDirection] { ltd =>
                   selectedStop.set(None)
@@ -364,7 +377,6 @@ object Components {
                         ltd,
                         $plan.now(),
                       )
-                  // TODO Not a great place for this persistence effect
                   db.saveDailyPlanOnly(res)
                   addingNewRoute.set {
                     false
