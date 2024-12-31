@@ -73,11 +73,11 @@ body {
 
 .stop-information {
     display: grid;
-    grid-template-columns:1fr 6fr 3fr;
+    grid-template-columns:2fr 6fr;
     grid-template-rows: auto 1fr ;
     grid-template-areas:
-            "upcoming-information stop-name map-link"
-            "upcoming-information stop-alt-name map-link";
+            "upcoming-information stop-name"
+            "upcoming-information stop-alt-name";
     padding-top: 5px;
     padding-bottom: 5px;
     /*border-bottom: 1px solid white;*/

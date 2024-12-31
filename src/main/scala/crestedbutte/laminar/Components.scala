@@ -1,30 +1,27 @@
 package crestedbutte.laminar
 
+import animus.*
 import com.billding.time.WallTime
 import com.raquo.laminar.api.L.*
+import com.raquo.laminar.nodes.ReactiveHtmlElement
 import crestedbutte.*
 import crestedbutte.NotificationStuff.desiredAlarms
 import crestedbutte.dom.BulmaLocal
 import crestedbutte.dom.BulmaLocal.UpcomingStops
 import crestedbutte.laminar.TouchControls.Swipe
+import crestedbutte.pwa.Persistence
 import crestedbutte.routes.{CompleteStopList, RouteWithTimes, RtaNorthbound, RtaSouthbound}
-import org.scalajs.dom
-import org.scalajs.dom.{HTMLAnchorElement, HTMLDivElement}
-
 import java.time.format.DateTimeFormatter
 import java.time.{Clock, OffsetDateTime}
+import org.scalajs.dom
+import org.scalajs.dom.{HTMLAnchorElement, HTMLDivElement}
 import scala.concurrent.duration.FiniteDuration
-import animus.*
 
 case class LocationTimeDirection(
   locationWithTime: LocationWithTime,
   routeSegment: RouteSegment)
 
 object Components {
-
-  import com.raquo.laminar.nodes.ReactiveHtmlElement
-  import crestedbutte.pwa.Persistence
-  import org.scalajs.dom.window
 
   def PlanElement(
     db: Persistence,
@@ -50,7 +47,7 @@ object Components {
                 acc.last match
                   case RouteSegment(r, s, e) =>
                     (acc :+ RouteGap(e.t, next.start.t)) :+ next
-                  case _ => ???
+                  case _ => ??? // Eh, annoying, but not nearly as bad as the previous muck
             }
 
         val $planSegments: Var[Seq[(RoutePiece, Int)]] =
@@ -63,9 +60,6 @@ object Components {
           ),
         )
 
-
-        pprint.pprintln("Num pieces: " + routePieces.length)
-        pprint.pprintln(routePieces)
 
         val segmentContentNifty: Signal[Seq[ReactiveHtmlElement[HTMLDivElement]]] =
           $planSegments.signal
@@ -124,14 +118,13 @@ object Components {
                     onClick --> Observer { _ =>
                       addingNewRoute.set {
                         true
-
                       }
                     },
                   ),
                 )
               case true =>
                 div(
-                  smallStopSelectorNew(
+                  StopSelector(
                     CompleteStopList.values,
                     $plan,
                     db,
@@ -153,6 +146,7 @@ object Components {
   ): ReactiveHtmlElement[HTMLAnchorElement] =
     a(
       cls := "link",
+      // TODO Should this Observer/behavior be defined above?
       onClick --> Observer { _ =>
         val plan = $plan.now()
         val newPlan =
@@ -480,7 +474,7 @@ object Components {
 
   }
 
-  def smallStopSelectorNew(
+  def StopSelector(
     locations: Seq[Location],
     $plan: Var[Plan],
     db: Persistence,
