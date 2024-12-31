@@ -225,6 +225,9 @@ body {
 }
 
 .add-new-route-section {
+    padding-top: 10px;
+    padding-bottom: 10px;
+
     align-items: center;
     display: flex;
     justify-content: center;
