@@ -358,13 +358,10 @@ object Components {
 
     val whatToShowBetter
       : Signal[ReactiveHtmlElement[HTMLDivElement]] =
-      // TODO This is one of the most awkward bits of the whole app.
-      selectedStop.signal
-        .withCurrentValueOf(upcomingArrivalData)
+      selectedStop
+        .signal
         .map {
-          case (Some((busScheduleAtStop, routeSegment)),
-                hiddenMainContent,
-              ) =>
+          case Some((busScheduleAtStop, routeSegment)) =>
             UpcomingStops(
               busScheduleAtStop,
               routeSegment,
@@ -384,7 +381,10 @@ object Components {
                   res
                 },
             )
-          case (None, mainContent) => mainContent
+          case None =>
+            div(
+              child <-- upcomingArrivalData
+            )
         }
 
     div(
