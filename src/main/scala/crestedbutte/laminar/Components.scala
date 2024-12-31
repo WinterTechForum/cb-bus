@@ -1,25 +1,20 @@
 package crestedbutte.laminar
 
-import com.billding.time.{MinuteDuration, WallTime}
+import com.billding.time.WallTime
 import com.raquo.laminar.api.L.*
 import crestedbutte.*
 import crestedbutte.NotificationStuff.desiredAlarms
 import crestedbutte.dom.BulmaLocal
 import crestedbutte.dom.BulmaLocal.UpcomingStops
 import crestedbutte.laminar.TouchControls.Swipe
-import crestedbutte.routes.{
-  CompleteStopList,
-  RouteWithTimes,
-  RtaNorthbound,
-  RtaSouthbound,
-}
+import crestedbutte.routes.{CompleteStopList, RouteWithTimes, RtaNorthbound, RtaSouthbound}
 import org.scalajs.dom
 import org.scalajs.dom.{HTMLAnchorElement, HTMLDivElement}
 
 import java.time.format.DateTimeFormatter
 import java.time.{Clock, OffsetDateTime}
 import scala.concurrent.duration.FiniteDuration
-import animus._
+import animus.*
 
 case class LocationTimeDirection(
   locationWithTime: LocationWithTime,
@@ -45,76 +40,78 @@ object Components {
     div(
       child <-- $plan.signal.map { plan =>
         val segments = plan.routeSegments
-        val $planSegments: Var[Seq[(RouteSegment, Int)]] =
+        val routePieces: Seq[RoutePiece] =
+          if (segments.isEmpty)
+            segments
+          else
+          segments.tail
+            .foldLeft[Seq[RoutePiece]](Seq(segments.head)) {
+              case (acc, next) =>
+                acc.last match
+                  case RouteSegment(r, s, e) =>
+                    (acc :+ RouteGap(e.t, next.start.t)) :+ next
+                  case _ => ???
+            }
+
+        val $planSegments: Var[Seq[(RoutePiece, Int)]] =
           Var(Seq.empty)
 
         import scala.scalajs.js.timers._
-        segments.zipWithIndex.foreach(l =>
+        routePieces.zipWithIndex.foreach(l =>
           setTimeout(l._2 * 150)(
             $planSegments.update(_ :+ l),
           ),
         )
 
-        val segmentContentNifty =
+
+        pprint.pprintln("Num pieces: " + routePieces.length)
+        pprint.pprintln(routePieces)
+
+        val segmentContentNifty: Signal[Seq[ReactiveHtmlElement[HTMLDivElement]]] =
           $planSegments.signal
             .splitTransition(identity) {
-              case (_, (routeSegment, i), _, transition) =>
-                (routeSegment,
-                 RouteLegElement(
-                   routeSegment,
-                   i,
-                   db,
-                   $plan,
-                   addingNewRoute,
-                   timestamp,
-                   scheduleSelector,
-                   planSwipeUpdater,
-                 ).amend(
-                   transition.height,
-                 ),
-                )
+              case (_, (routePiece, i), _, transition) =>
+                routePiece match {
+                  case r: RouteGap =>
+                    div(
+                      textAlign := "center",
+                      paddingTop := "1.5em",
+                      paddingBottom := "1.5em",
+                      SvgIcon(
+                        "glyphicons-basic-947-circle-more.svg",
+                        "plain-white plan-segment-divider",
+                      ),
+                      span(
+                        cls := "transit-time",
+                        r.endTime
+                          .between(r.start)
+                          .humanFriendly,
+                      ),
+                    )
+                  case rs: RouteSegment =>
+                    RouteLegElement(
+                      rs,
+                      i,
+                      db,
+                      $plan,
+                      addingNewRoute,
+                      timestamp,
+                      scheduleSelector,
+                      planSwipeUpdater,
+                    ).amend(
+                      transition.height,
+                    )
+
+                }
+
             }
-            .map(segments =>
-              if (segments.isEmpty)
-                div()
-              else {
-                div(
-                  segments.tail
-                    .foldLeft(
-                      (segments.head._1, Seq(segments.head._2)),
-                    ) {
-                      case ((firstSegment, acc),
-                            (nextSegment, next),
-                          ) =>
-                        (nextSegment,
-                         acc :+
-                           div(
-                             textAlign := "center",
-                             paddingTop := "1.5em",
-                             paddingBottom := "1.5em",
-                             SvgIcon(
-                               "glyphicons-basic-947-circle-more.svg",
-                               "plain-white plan-segment-divider",
-                             ),
-                             span(
-                               cls := "transit-time",
-                               firstSegment.end.t
-                                 .between(nextSegment.start.t)
-                                 .humanFriendly,
-                             ),
-                           ) :+ next,
-                        )
-                    }
-                    ._2, // Yuck.
-                )
-              },
-            )
+
         div(
           if (segments.isEmpty)
             div()
           else
             copyButtons(plan),
-          child <-- segmentContentNifty,
+          children <-- segmentContentNifty,
           div(
             cls := "add-new-route-section",
             child <-- addingNewRoute.signal.map {

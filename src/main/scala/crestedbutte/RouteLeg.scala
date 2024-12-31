@@ -4,10 +4,17 @@ import com.billding.time.{MinuteDuration, WallTime}
 import crestedbutte.routes.{RouteLookup, RouteWithTimes}
 import zio.json.JsonCodec
 
+trait RoutePiece
+
+case class RouteGap(
+  start: WallTime,
+  endTime: WallTime
+                   ) extends RoutePiece
+
 case class RouteSegment private (
   r: RouteName,
   s: LocationWithTime,
-  e: LocationWithTime)
+  e: LocationWithTime) extends RoutePiece
     derives JsonCodec {
 
   assert(

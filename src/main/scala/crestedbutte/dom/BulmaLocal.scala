@@ -36,7 +36,6 @@ object BulmaLocal {
     routeSegment: RouteSegment,
     selectedTimeUpdater: Sink[LocationTimeDirection],
   ) = {
-    println("UPcoming stops: " + scheduleAtStop.location)
     val $opacity = Animation.from(0).wait(250).to(1).run
     val $width = Animation.from(0).wait(250).to(100).run
     div(
