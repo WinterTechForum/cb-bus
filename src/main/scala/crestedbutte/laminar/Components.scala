@@ -42,7 +42,8 @@ object Components {
     ],
     planSwipeUpdater: Observer[(Int, Option[RouteSegment])],
   ) = {
-    val segments = $plan.now().routeSegments
+    val plan = $plan.now()
+    val segments = plan.routeSegments
     val $planSegments: Var[Seq[(RouteSegment, Int)]] = Var(Seq.empty)
 
     import scala.scalajs.js.timers._
@@ -103,6 +104,10 @@ object Components {
           },
         )
     div(
+      if (segments.isEmpty)
+        div()
+      else
+        copyButtons(plan),
       child <-- segmentContentNifty,
       div(
         cls := "add-new-route-section",
@@ -343,6 +348,23 @@ object Components {
     val selectedStop: Var[Option[(BusScheduleAtStop, RouteSegment)]] =
       Var(None)
 
+    val planSwipeUpdater: Observer[(Int, Option[RouteSegment])] =
+      $plan.writer.contramap[(Int, Option[RouteSegment])] {
+        (
+          idx,
+          segmentO,
+        ) =>
+          segmentO match
+            case Some(segment) =>
+              val plan = $plan.now()
+              val updatedPlan =
+                plan.copy(l = plan.l.updated(idx, segment))
+              db.saveDailyPlanOnly(updatedPlan)
+              updatedPlan
+            case None => $plan.now()
+      }
+
+
     val upcomingArrivalData =
       timeStamps
         .map { timestamp =>
@@ -353,6 +375,7 @@ object Components {
             timestamp,
             selectedStop.writer,
             addingNewRoute,
+            planSwipeUpdater
           )
         }
 
@@ -422,31 +445,12 @@ object Components {
       Option[(BusScheduleAtStop, RouteSegment)],
     ],
     addingNewRoute: Var[Boolean],
+    planSwipeUpdater: Observer[(Int, Option[RouteSegment])]
   ) =
-
-    val planSwipeUpdater: Observer[(Int, Option[RouteSegment])] =
-      $plan.writer.contramap[(Int, Option[RouteSegment])] {
-        (
-          idx,
-          segmentO,
-        ) =>
-          segmentO match
-            case Some(segment) =>
-              val plan = $plan.now()
-              val updatedPlan =
-                plan.copy(l = plan.l.updated(idx, segment))
-              db.saveDailyPlanOnly(updatedPlan)
-              updatedPlan
-            case None => $plan.now()
-      }
 
     div(
       child <-- $plan.signal.map(plan =>
         div(
-          if (plan.l.isEmpty)
-            div()
-          else
-            copyButtons(plan),
           Components.PlanElement(
             db,
             $plan,
