@@ -240,15 +240,14 @@ object Components {
       Option[(BusScheduleAtStop, RouteSegment)],
     ],
   ) = {
-    // TODO Update stopBeingImplicitlyChanged after explicit bit is calculated
     val stop = locationWithTime
     UpcomingStopInfo(
       stop.l,
       div(
-        div(
-          routeWithTimes.allStops
-            .filter(_.location == stop.l)
-            .map { scheduleAtStop =>
+        routeWithTimes.allStops
+          .filter(_.location == stop.l)
+          .map { scheduleAtStop =>
+            val stopTimeInfo: StopTimeInfo =
               UpcomingArrivalInfo(
                 scheduleAtStop.location,
                 StopTimeInfo(
@@ -257,17 +256,13 @@ object Components {
                     .between(timestamp), // is timestamp now?
                 ),
               )
-                .content match
-                case Left(stopTimeInfo: StopTimeInfo) =>
-                  StopTimeInfoForLocation(stopTimeInfo,
-                                          scheduleAtStop,
-                                          scheduleSelector,
-                                          routeSegment,
-                  )
-                // TODO Do we ever hit this Right anymore?
-                case Right(value) => div("-")
-            }*,
-        ),
+                .content
+            StopTimeInfoForLocation(stopTimeInfo,
+              scheduleAtStop,
+              scheduleSelector,
+              routeSegment,
+            )
+          }*,
       ),
     )
   }

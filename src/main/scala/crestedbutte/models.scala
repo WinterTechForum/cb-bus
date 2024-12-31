@@ -49,23 +49,8 @@ case class GpsCoordinates(
 
 case class UpcomingArrivalInfo(
   location: Location,
-  content: Either[StopTimeInfo, LateNightRecommendation],
+  content: StopTimeInfo,
   /* TODO: waitDuration: Duration*/)
-
-object UpcomingArrivalInfo {
-
-  def apply(
-    location: Location,
-    content: StopTimeInfo,
-  ): UpcomingArrivalInfo =
-    UpcomingArrivalInfo(
-      location,
-      Left(
-        content,
-      ),
-    )
-
-}
 
 import zio.json._
 implicit val wallTimeCodec: JsonCodec[WallTime] =
