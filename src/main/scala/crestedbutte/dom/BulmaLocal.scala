@@ -11,28 +11,25 @@ object BulmaLocal {
     l: LocationWithTime,
     segment: RouteSegment,
     updates: Sink[LocationTimeDirection],
-  ) =
+  ) = {
+    val buttonModifier =
+      if (segment.start == l || segment.end == l)
+        " is-primary"
+      else
+        ""
     div(
       textAlign := "center",
-      verticalAlign := "middle",
       paddingBottom := "3px",
-      if (segment.start == l || segment.end == l)
-        backgroundColor := "LightGreen"
-      else
-        cls := "",
       cls := "time",
-      div(
-        div(
-          span(
-            cls := "clickable-time",
-            onClick.mapTo {
-              LocationTimeDirection(l, segment)
-            } --> updates,
-            l.t.toDumbAmericanString,
-          ),
-        ),
+      button(
+        cls := s"clickable-time button m-2 $buttonModifier",
+        onClick.mapTo {
+          LocationTimeDirection(l, segment)
+        } --> updates,
+        l.t.toDumbAmericanString,
       ),
     )
+  }
 
   def UpcomingStops(
     scheduleAtStop: BusScheduleAtStop,

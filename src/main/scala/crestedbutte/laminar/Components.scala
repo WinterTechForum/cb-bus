@@ -314,7 +314,7 @@ object Components {
           _,
         ) => currentWallTime(javaClock),
       )
-
+    
     val $plan: Var[Plan] = Var(
       db.retrieveDailyPlanOnly.getOrElse(Plan(Seq.empty)),
     )
