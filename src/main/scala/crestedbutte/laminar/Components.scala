@@ -213,7 +213,7 @@ object Components {
                          $plan,
                          db,
                          addingNewRoute,
-            ), // TODO Better styling
+            ),
           ),
           stopInfo(routeSegment,
                    routeSegment.end,
@@ -232,23 +232,20 @@ object Components {
     res
 
   def stopInfo(
-    routeSegment: RouteSegment,
-    locationWithTime: LocationWithTime,
-    routeWithTimes: RouteWithTimes,
-    timestamp: WallTime, // TODO *should* we be using this?
-    scheduleSelector: Observer[
-      Option[(BusScheduleAtStop, RouteSegment)],
-    ],
-  ) = {
-    val stop = locationWithTime
-
+                routeSegment: RouteSegment,
+                stop: LocationWithTime,
+                routeWithTimes: RouteWithTimes,
+                timestamp: WallTime, // TODO *should* we be using this?
+                scheduleSelector: Observer[
+                  Option[(BusScheduleAtStop, RouteSegment)],
+                ],
+              ) =
     div(
       width := "100%",
       cls := "stop-information",
       div(cls := "stop-name", div(stop.l.name)),
       div(cls := "stop-alt-name", div(stop.l.altName)),
       div(
-        cls := "upcoming-information",
         div(
           routeWithTimes.allStops
             .filter(_.location == stop.l)
@@ -262,8 +259,6 @@ object Components {
         )
       )
     )
-
-  }
 
   def FullApp(
     pageMode: AppMode,
