@@ -235,7 +235,7 @@ object Components {
     routeSegment: RouteSegment,
     locationWithTime: LocationWithTime,
     routeWithTimes: RouteWithTimes,
-    timestamp: WallTime,
+    timestamp: WallTime, // TODO *should* we be using this?
     scheduleSelector: Observer[
       Option[(BusScheduleAtStop, RouteSegment)],
     ],
@@ -258,9 +258,9 @@ object Components {
                 scheduleSelector,
                 routeSegment,
               )
-            },
-        ),
-      ),
+            }
+        )
+      )
     )
 
   }
@@ -289,8 +289,6 @@ object Components {
       currentWallTime:
         javaClock
 
-    println("initialTime toplevel: " + initialTime)
-
     val timeStamps: Signal[WallTime] = clockTicks.events
       .scanLeft(
         initialTime,
@@ -316,7 +314,7 @@ object Components {
         pageMode,
         initialTime,
         db,
-      ),
+      )
     )
   }
 
@@ -527,87 +525,64 @@ object Components {
     val $locations: Signal[Seq[(Location, Int)]] =
       $locationsVar.signal
 
-    // Do a more unified view in the start/stop selection.
-    // Shouldn't be 2 completely separate groups of elements
-    val startingPoints =
+    div(
+      onMountCallback { ctx =>
+        locations.zipWithIndex.foreach(l =>
+          import scala.scalajs.js.timers._
+          setTimeout(l._2 * 30)(
+            $locationsVar.update(_ :+ l),
+          ),
+        )
+      },
       div(
-        div("Starting at: "),
-        div("____________________"),
-        div(
-          color := "grey",
-          span("|__________________|"),
-        ), // Really just to keep vertical spacing from changing after you select a start point
-        onMountCallback { ctx =>
-          locations.zipWithIndex.foreach(l =>
-            import scala.scalajs.js.timers._
-            setTimeout(l._2 * 30)(
-              $locationsVar.update(_ :+ l),
-            ),
-          )
-        },
-        div(
-          children <-- $locations.splitTransition(identity) {
-            case (_, (location, _), _, transition) =>
-              div(
-                //            display.inlineFlex,
-                transition.width,
-                transition.height,
-                button(
-                  cls := "button m-2",
-                  onClick --> Observer {
-                    _ =>
-                      startingPoint.update {
-                        case Some(startingPointNow)
-                            if startingPointNow == location =>
-                          None
-                        case Some(other) =>
-                          try {
-                            println("initialTime: " + initialTime)
-                            val matchingLeg =
-                              rightLegOnRightRoute(
-                                other,
-                                location,
-                                $plan.now(),
-                                initialTime,
-                              )
-
-                            $plan.update { case oldPlan =>
-                              val newPlan =
-                                oldPlan.copy(l =
-                                  oldPlan.l :+ matchingLeg,
-                                )
-                              db.saveDailyPlanOnly(newPlan)
-                              addingNewRoute.set(false)
-                              newPlan
-                            }
-                            Some(other)
-                          }
-                          catch {
-                            case ex: Throwable =>
-                              throw new IllegalStateException(
-                                ex.getMessage,
-                              )
-                          }
-                        case None =>
-                          Some(location)
-                      }
-                  },
-                  cls <-- startingPoint.signal.map { sp =>
-                    sp match
+        children <-- $locations.splitTransition(identity) {
+          case (_, (location, _), _, transition) =>
+            div(
+              transition.width,
+              transition.height,
+              button(
+                cls := "button m-2",
+                onClick --> Observer {
+                  _ =>
+                    startingPoint.update {
                       case Some(startingPointNow)
                           if startingPointNow == location =>
-                        "is-primary"
-                      case Some(_) => ""
-                      case None    => ""
-                  },
-                  location.name,
-                ),
+                        None
+                      case Some(other) =>
+                        val matchingLeg =
+                          rightLegOnRightRoute(
+                            other,
+                            location,
+                            $plan.now(),
+                            initialTime,
+                          )
+
+                        $plan.update { case oldPlan =>
+                          val newPlan =
+                            oldPlan.copy(l =
+                              oldPlan.l :+ matchingLeg,
+                            )
+                          db.saveDailyPlanOnly(newPlan)
+                          addingNewRoute.set(false)
+                          newPlan
+                        }
+                        Some(other)
+                      case None =>
+                        Some(location)
+                    }
+                },
+                cls <-- startingPoint.signal.map {
+                  case Some(startingPointNow)
+                    if startingPointNow == location =>
+                    "is-primary"
+                  case Some(_) => ""
+                  case None => ""
+                },
+                location.name,
               )
-          },
-        ),
+            )
+        }
       )
-    div(
-      startingPoints,
     )
 
   def SafeRideLink(
