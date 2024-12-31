@@ -41,11 +41,12 @@ object Components {
       Option[(BusScheduleAtStop, RouteSegment)],
     ],
     planSwipeUpdater: Observer[(Int, Option[RouteSegment])],
-  ) = {
+  ) =
     div(
-      child <-- $plan.signal.map{plan =>
+      child <-- $plan.signal.map { plan =>
         val segments = plan.routeSegments
-        val $planSegments: Var[Seq[(RouteSegment, Int)]] = Var(Seq.empty)
+        val $planSegments: Var[Seq[(RouteSegment, Int)]] =
+          Var(Seq.empty)
 
         import scala.scalajs.js.timers._
         segments.zipWithIndex.foreach(l =>
@@ -59,18 +60,18 @@ object Components {
             .splitTransition(identity) {
               case (_, (routeSegment, i), _, transition) =>
                 (routeSegment,
-                  RouteLegElement(
-                    routeSegment,
-                    i,
-                    db,
-                    $plan,
-                    addingNewRoute,
-                    timestamp,
-                    scheduleSelector,
-                    planSwipeUpdater,
-                  ).amend(
-                    transition.height,
-                  ),
+                 RouteLegElement(
+                   routeSegment,
+                   i,
+                   db,
+                   $plan,
+                   addingNewRoute,
+                   timestamp,
+                   scheduleSelector,
+                   planSwipeUpdater,
+                 ).amend(
+                   transition.height,
+                 ),
                 )
             }
             .map(segments =>
@@ -79,25 +80,29 @@ object Components {
               else {
                 div(
                   segments.tail
-                    .foldLeft((segments.head._1, Seq(segments.head._2))) {
-                      case ((firstSegment, acc), (nextSegment, next)) =>
+                    .foldLeft(
+                      (segments.head._1, Seq(segments.head._2)),
+                    ) {
+                      case ((firstSegment, acc),
+                            (nextSegment, next),
+                          ) =>
                         (nextSegment,
-                          acc :+
-                            div(
-                              textAlign := "center",
-                              paddingTop := "1.5em",
-                              paddingBottom := "1.5em",
-                              SvgIcon(
-                                "glyphicons-basic-947-circle-more.svg",
-                                "plain-white plan-segment-divider",
-                              ),
-                              span(
-                                cls := "transit-time",
-                                firstSegment.end.t
-                                  .between(nextSegment.start.t)
-                                  .humanFriendly,
-                              ),
-                            ) :+ next,
+                         acc :+
+                           div(
+                             textAlign := "center",
+                             paddingTop := "1.5em",
+                             paddingBottom := "1.5em",
+                             SvgIcon(
+                               "glyphicons-basic-947-circle-more.svg",
+                               "plain-white plan-segment-divider",
+                             ),
+                             span(
+                               cls := "transit-time",
+                               firstSegment.end.t
+                                 .between(nextSegment.start.t)
+                                 .humanFriendly,
+                             ),
+                           ) :+ next,
                         )
                     }
                     ._2, // Yuck.
@@ -140,9 +145,8 @@ object Components {
             },
           ),
         )
-      }
+      },
     )
-  }
 
   def deleteButton(
     routeSegment: RouteSegment,
@@ -170,14 +174,14 @@ object Components {
     )
 
   def transitSegment(
-                      routeSegment: RouteSegment,
-                      $plan: Var[Plan],
-                      db: Persistence,
-                      addingNewRoute: Var[Boolean]
-                    ) =
+    routeSegment: RouteSegment,
+    $plan: Var[Plan],
+    db: Persistence,
+    addingNewRoute: Var[Boolean],
+  ) =
     div(
       SvgIcon("glyphicons-basic-211-arrow-down.svg",
-        "plain-white plan-segment-divider",
+              "plain-white plan-segment-divider",
       ),
       span(
         cls := "transit-time",
@@ -185,11 +189,7 @@ object Components {
           .between(routeSegment.end.t)
           .humanFriendly,
       ),
-      deleteButton(routeSegment,
-        $plan,
-        db,
-        addingNewRoute,
-      ),
+      deleteButton(routeSegment, $plan, db, addingNewRoute),
     )
 
   def RouteLegElement(
@@ -234,7 +234,7 @@ object Components {
             routeSegment,
             $plan,
             db,
-            addingNewRoute
+            addingNewRoute,
           ),
           stopInfo(routeSegment,
                    routeSegment.end,
@@ -253,14 +253,14 @@ object Components {
     res
 
   def stopInfo(
-                routeSegment: RouteSegment,
-                stop: LocationWithTime,
-                routeWithTimes: RouteWithTimes,
-                timestamp: WallTime, // TODO *should* we be using this?
-                scheduleSelector: Observer[
-                  Option[(BusScheduleAtStop, RouteSegment)],
-                ],
-              ) =
+    routeSegment: RouteSegment,
+    stop: LocationWithTime,
+    routeWithTimes: RouteWithTimes,
+    timestamp: WallTime, // TODO *should* we be using this?
+    scheduleSelector: Observer[
+      Option[(BusScheduleAtStop, RouteSegment)],
+    ],
+  ) =
     div(
       width := "100%",
       cls := "stop-information",
@@ -272,13 +272,13 @@ object Components {
             .filter(_.location == stop.l)
             .map { scheduleAtStop =>
               StopTimeInfoForLocation(stop.t,
-                scheduleAtStop,
-                scheduleSelector,
-                routeSegment,
+                                      scheduleAtStop,
+                                      scheduleSelector,
+                                      routeSegment,
               )
-            }
-        )
-      )
+            },
+        ),
+      ),
     )
 
   def FullApp(
@@ -314,7 +314,7 @@ object Components {
           _,
         ) => currentWallTime(javaClock),
       )
-    
+
     val $plan: Var[Plan] = Var(
       db.retrieveDailyPlanOnly.getOrElse(Plan(Seq.empty)),
     )
@@ -342,7 +342,6 @@ object Components {
             case None => $plan.now()
       }
 
-
     val upcomingArrivalData =
       timeStamps
         .map { timestamp =>
@@ -353,14 +352,13 @@ object Components {
             timestamp,
             addingNewRoute,
             selectedStop.writer,
-            planSwipeUpdater
+            planSwipeUpdater,
           )
         }
 
     val whatToShowBetter
-    : Signal[ReactiveHtmlElement[HTMLDivElement]] =
-      selectedStop
-        .signal
+      : Signal[ReactiveHtmlElement[HTMLDivElement]] =
+      selectedStop.signal
         .map {
           case Some((busScheduleAtStop, routeSegment)) =>
             UpcomingStops(
@@ -384,7 +382,7 @@ object Components {
             )
           case None =>
             div(
-              child <-- upcomingArrivalData
+              child <-- upcomingArrivalData,
             )
         }
 
@@ -398,7 +396,6 @@ object Components {
                              scala.concurrent.duration.SECONDS,
           ), // TODO Make low again
         ) --> clockTicks,
-
       div(
         div(
           cls := ElementNames.BoxClass,
@@ -422,11 +419,13 @@ object Components {
             ),
           ),
         ),
-      )
+      ),
     )
   }
 
-  def copyButtons(plan: Plan) = {
+  def copyButtons(
+    plan: Plan,
+  ) =
     div(
       button(
         cls := "button m-2",
@@ -451,7 +450,6 @@ object Components {
         },
       ),
     )
-  }
 
   def rightLegOnRightRoute(
     start: Location,
@@ -467,7 +465,7 @@ object Components {
         .getOrElse(
           throw new IllegalStateException(
             "No route leg available in either route B",
-          )
+          ),
         )
 
     routeSegments
@@ -482,7 +480,6 @@ object Components {
       .getOrElse {
         routeSegments.head
       }
-
 
   }
 
@@ -546,16 +543,16 @@ object Components {
                 },
                 cls <-- startingPoint.signal.map {
                   case Some(startingPointNow)
-                    if startingPointNow == location =>
+                      if startingPointNow == location =>
                     "is-primary"
                   case Some(_) => ""
-                  case None => ""
+                  case None    => ""
                 },
                 location.name,
-              )
+              ),
             )
-        }
-      )
+        },
+      ),
     )
 
   def SafeRideLink(
@@ -591,6 +588,6 @@ object Components {
           Some((busScheduleAtStop, routeSegment))
         } --> scheduleSelector,
         stopTime.toDumbAmericanString,
-      )
+      ),
     )
 }
