@@ -363,32 +363,34 @@ object Components {
         .map {
           case Some((busScheduleAtStop, routeSegment)) =>
             val res =
-            UpcomingStops(
-              busScheduleAtStop,
-              routeSegment,
-              $plan.writer
-                .contramap[LocationTimeDirection] { ltd =>
-                  selectedStop.set(None)
-                  val res =
-                    TimeCalculations
-                      .updateSegmentFromArbitrarySelection(
-                        ltd,
-                        $plan.now(),
-                      )
-                  db.saveDailyPlanOnly(res)
-                  addingNewRoute.set {
-                    false
-                  }
-                  res
-                },
-            )
+              UpcomingStops(
+                busScheduleAtStop,
+                routeSegment,
+                $plan.writer
+                  .contramap[LocationTimeDirection] { ltd =>
+                    selectedStop.set(None)
+                    val res =
+                      TimeCalculations
+                        .updateSegmentFromArbitrarySelection(
+                          ltd,
+                          $plan.now(),
+                        )
+                    db.saveDailyPlanOnly(res)
+                    addingNewRoute.set {
+                      false
+                    }
+                    res
+                  },
+              )
 
             import scala.scalajs.js.timers._
             setTimeout(200)(
-              dom.document.getElementById("selected-time").scrollIntoView(
-                top = false
-                //              { behavior: "instant", block: "end" }
-              )
+              dom.document
+                .getElementById("selected-time")
+                .scrollIntoView(
+                  top = false,
+                  //              { behavior: "instant", block: "end" }
+                ),
             )
             res
           case None =>
