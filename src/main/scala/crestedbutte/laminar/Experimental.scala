@@ -118,7 +118,6 @@ object Experimental {
   ) = {
 
     val $gpsPosition: Var[Option[GpsCoordinates]] = Var(None)
-//    val featureUpdates = new EventBus[FeatureStatus]
     div(
       idAttr := "sandbox",
       timeStamps.map(_ => getLocation($gpsPosition),
