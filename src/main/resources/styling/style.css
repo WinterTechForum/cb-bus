@@ -71,6 +71,39 @@ body {
     color: white;
 }
 
+.transit-period {
+    width: 100%;
+    display: grid;
+    grid-template-columns:2fr 4fr 1fr;
+    grid-template-rows: auto 1fr ;
+    grid-template-areas:
+      "transit-period-duration transit-period-icon transit-period-delete";
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+
+.transit-period-duration {
+    grid-area: transit-period-duration;
+    text-align: left;
+    vertical-align: middle;
+    position:relative;
+}
+
+.transit-period-icon {
+    grid-area: transit-period-icon;
+    text-align: center;
+    vertical-align: middle;
+    position:relative;
+}
+
+.transit-period-delete {
+    grid-area: transit-period-delete;
+    text-align: center;
+    vertical-align: middle;
+    position:relative;
+    top: calc(15%);
+}
+
 .stop-information {
     display: grid;
     grid-template-columns:2fr 6fr;
@@ -80,7 +113,6 @@ body {
             "upcoming-information stop-alt-name";
     padding-top: 5px;
     padding-bottom: 5px;
-    /*border-bottom: 1px solid white;*/
 }
 
 .map-link {
@@ -187,6 +219,7 @@ body {
 }
 
 .plan-segments {
+    background-color: #3c9f4c;
     display: grid;
     place-items: center;
 }

@@ -145,7 +145,7 @@ object Components {
     addingNewRoute: Var[Boolean],
   ): ReactiveHtmlElement[HTMLAnchorElement] =
     a(
-      cls := "link",
+      cls := "link transit-period-delete",
       // TODO Should this Observer/behavior be defined above?
       onClick --> Observer { _ =>
         val plan = $plan.now()
@@ -171,11 +171,15 @@ object Components {
     addingNewRoute: Var[Boolean],
   ) =
     div(
-      SvgIcon("glyphicons-basic-211-arrow-down.svg",
-              "plain-white plan-segment-divider",
+      cls := "transit-period",
+      div(
+        cls := "transit-period-icon ",
+        SvgIcon("glyphicons-basic-211-arrow-down.svg",
+          "plain-white plan-segment-divider",
+        )
       ),
       span(
-        cls := "transit-time",
+        cls := "transit-period-duration transit-time",
         routeSegment.start.t
           .between(routeSegment.end.t)
           .humanFriendly,
@@ -210,7 +214,7 @@ object Components {
             )
         },
         div(
-          cls := "plan-segments",
+          cls := "plan-segments box",
           if (timestamp.isAfter(routeSegment.start.t))
             opacity := 0.5
           else
