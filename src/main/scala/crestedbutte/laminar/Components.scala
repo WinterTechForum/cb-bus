@@ -42,102 +42,105 @@ object Components {
     ],
     planSwipeUpdater: Observer[(Int, Option[RouteSegment])],
   ) = {
-    val plan = $plan.now()
-    val segments = plan.routeSegments
-    val $planSegments: Var[Seq[(RouteSegment, Int)]] = Var(Seq.empty)
+    div(
+      child <-- $plan.signal.map{plan =>
+        val segments = plan.routeSegments
+        val $planSegments: Var[Seq[(RouteSegment, Int)]] = Var(Seq.empty)
 
-    import scala.scalajs.js.timers._
-    segments.zipWithIndex.foreach(l =>
-      setTimeout(l._2 * 150)(
-        $planSegments.update(_ :+ l),
-      ),
-    )
+        import scala.scalajs.js.timers._
+        segments.zipWithIndex.foreach(l =>
+          setTimeout(l._2 * 150)(
+            $planSegments.update(_ :+ l),
+          ),
+        )
 
-    val segmentContentNifty =
-      $planSegments.signal
-        .splitTransition(identity) {
-          case (_, (routeSegment, i), _, transition) =>
-            (routeSegment,
-             RouteLegElement(
-               routeSegment,
-               i,
-               db,
-               $plan,
-               addingNewRoute,
-               timestamp,
-               scheduleSelector,
-               planSwipeUpdater,
-             ).amend(
-               transition.height,
-             ),
+        val segmentContentNifty =
+          $planSegments.signal
+            .splitTransition(identity) {
+              case (_, (routeSegment, i), _, transition) =>
+                (routeSegment,
+                  RouteLegElement(
+                    routeSegment,
+                    i,
+                    db,
+                    $plan,
+                    addingNewRoute,
+                    timestamp,
+                    scheduleSelector,
+                    planSwipeUpdater,
+                  ).amend(
+                    transition.height,
+                  ),
+                )
+            }
+            .map(segments =>
+              if (segments.isEmpty)
+                div()
+              else {
+                div(
+                  segments.tail
+                    .foldLeft((segments.head._1, Seq(segments.head._2))) {
+                      case ((firstSegment, acc), (nextSegment, next)) =>
+                        (nextSegment,
+                          acc :+
+                            div(
+                              textAlign := "center",
+                              paddingTop := "1.5em",
+                              paddingBottom := "1.5em",
+                              SvgIcon(
+                                "glyphicons-basic-947-circle-more.svg",
+                                "plain-white plan-segment-divider",
+                              ),
+                              span(
+                                cls := "transit-time",
+                                firstSegment.end.t
+                                  .between(nextSegment.start.t)
+                                  .humanFriendly,
+                              ),
+                            ) :+ next,
+                        )
+                    }
+                    ._2, // Yuck.
+                )
+              },
             )
-        }
-        .map(segments =>
+        div(
           if (segments.isEmpty)
             div()
-          else {
-            div(
-              segments.tail
-                .foldLeft((segments.head._1, Seq(segments.head._2))) {
-                  case ((firstSegment, acc), (nextSegment, next)) =>
-                    (nextSegment,
-                     acc :+
-                       div(
-                         textAlign := "center",
-                         paddingTop := "1.5em",
-                         paddingBottom := "1.5em",
-                         SvgIcon(
-                           "glyphicons-basic-947-circle-more.svg",
-                           "plain-white plan-segment-divider",
-                         ),
-                         span(
-                           cls := "transit-time",
-                           firstSegment.end.t
-                             .between(nextSegment.start.t)
-                             .humanFriendly,
-                         ),
-                       ) :+ next,
-                    )
-                }
-                ._2, // Yuck.
-            )
-          },
-        )
-    div(
-      if (segments.isEmpty)
-        div()
-      else
-        copyButtons(plan),
-      child <-- segmentContentNifty,
-      div(
-        cls := "add-new-route-section",
-        child <-- addingNewRoute.signal.map {
-          case false =>
-            div(
-              cls := "centered",
-              button(
-                cls := "button",
-                "Add new route",
-                onClick --> Observer { _ =>
-                  addingNewRoute.set {
-                    true
+          else
+            copyButtons(plan),
+          child <-- segmentContentNifty,
+          div(
+            cls := "add-new-route-section",
+            child <-- addingNewRoute.signal.map {
+              case false =>
+                div(
+                  cls := "centered",
+                  button(
+                    cls := "button",
+                    "Add new route",
+                    onClick --> Observer { _ =>
+                      addingNewRoute.set {
+                        true
 
-                  }
-                },
-              ),
-            )
-          case true =>
-            div(
-              smallStopSelectorNew(
-                CompleteStopList.values,
-                $plan,
-                db,
-                initialTime,
-                addingNewRoute,
-              ),
-            )
-        },
-      ),
+                      }
+                    },
+                  ),
+                )
+              case true =>
+                div(
+                  smallStopSelectorNew(
+                    CompleteStopList.values,
+                    $plan,
+                    db,
+                    initialTime,
+                    addingNewRoute,
+                  ),
+                )
+            },
+          ),
+        )
+      }
     )
   }
 
@@ -368,13 +371,13 @@ object Components {
     val upcomingArrivalData =
       timeStamps
         .map { timestamp =>
-          TripViewerLaminar(
+          Components.PlanElement(
             db,
             $plan,
             initialTime,
             timestamp,
-            selectedStop.writer,
             addingNewRoute,
+            selectedStop.writer,
             planSwipeUpdater
           )
         }
@@ -435,34 +438,6 @@ object Components {
       ),
     )
   }
-
-  def TripViewerLaminar(
-    db: Persistence,
-    $plan: Var[Plan],
-    initialTime: WallTime,
-    timestamp: WallTime,
-    scheduleSelector: Observer[
-      Option[(BusScheduleAtStop, RouteSegment)],
-    ],
-    addingNewRoute: Var[Boolean],
-    planSwipeUpdater: Observer[(Int, Option[RouteSegment])]
-  ) =
-
-    div(
-      child <-- $plan.signal.map(plan =>
-        div(
-          Components.PlanElement(
-            db,
-            $plan,
-            initialTime,
-            timestamp,
-            addingNewRoute,
-            scheduleSelector,
-            planSwipeUpdater,
-          ),
-        ),
-      ),
-    )
 
   def copyButtons(plan: Plan) = {
     div(
