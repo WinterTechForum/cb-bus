@@ -1,6 +1,5 @@
 package crestedbutte
 
-import com.billding.time.WallTime
 import crestedbutte.laminar.LocationTimeDirection
 import crestedbutte.routes.{RtaNorthbound, RtaSouthbound}
 
@@ -52,24 +51,6 @@ object TimeCalculations {
           )
       })
     res
-  }
-
-  def getUpcomingArrivalInfo(
-    departureTimeAtStop: WallTime,
-    stops: BusScheduleAtStop,
-    now: WallTime,
-  ): UpcomingArrivalInfo = {
-    // TODO delete
-    println("getUpcomingArrivalInfo")
-    println("departureTimeAtStop: " + departureTimeAtStop)
-    UpcomingArrivalInfo(
-      stops.location,
-      StopTimeInfo(
-        departureTimeAtStop,
-        departureTimeAtStop // TODO Return an optional duration based on whether the bus is still in the future
-          .between(now),
-      ),
-    )
   }
 
 }

@@ -6,7 +6,6 @@ import crestedbutte.*
 import crestedbutte.NotificationStuff.desiredAlarms
 import crestedbutte.dom.BulmaLocal
 import crestedbutte.dom.BulmaLocal.UpcomingStops
-import crestedbutte.laminar.Experimental.getLocation
 import crestedbutte.laminar.TouchControls.Swipe
 import crestedbutte.routes.{
   CompleteStopList,
@@ -18,7 +17,7 @@ import org.scalajs.dom
 import org.scalajs.dom.{HTMLAnchorElement, HTMLDivElement}
 
 import java.time.format.DateTimeFormatter
-import java.time.{Clock, Instant, OffsetDateTime}
+import java.time.{Clock, OffsetDateTime}
 import scala.concurrent.duration.FiniteDuration
 import animus._
 
@@ -250,12 +249,14 @@ object Components {
           routeWithTimes.allStops
             .filter(_.location == stop.l)
             .map { scheduleAtStop =>
-              // TODO What is this
-              TimeCalculations
-                .getUpcomingArrivalInfo(stop.t,
-                                        scheduleAtStop,
-                                        timestamp,
-                )
+              UpcomingArrivalInfo(
+                scheduleAtStop.location,
+                StopTimeInfo(
+                  stop.t,
+                  stop.t // TODO Return an optional duration based on whether the bus is still in the future
+                    .between(timestamp), // is timestamp now?
+                ),
+              )
                 .content match
                 case Left(stopTimeInfo: StopTimeInfo) =>
                   StopTimeInfoForLocation(stopTimeInfo,
@@ -297,9 +298,6 @@ object Components {
       currentWallTime:
         javaClock
 
-    val selectedStop: Var[Option[(BusScheduleAtStop, RouteSegment)]] =
-      Var(None)
-
     println("initialTime toplevel: " + initialTime)
 
     val timeStamps: Signal[WallTime] = clockTicks.events
@@ -327,7 +325,6 @@ object Components {
         pageMode,
         initialTime,
         db,
-        selectedStop,
       ),
     )
   }
@@ -337,7 +334,6 @@ object Components {
     pageMode: AppMode,
     initialTime: WallTime,
     db: Persistence,
-    selectedStop: Var[Option[(BusScheduleAtStop, RouteSegment)]],
   ) = {
     val $plan: Var[Plan] = Var(
       db.retrieveDailyPlanOnly.getOrElse(Plan(Seq.empty)),
@@ -346,6 +342,9 @@ object Components {
     val addingNewRoute: Var[Boolean] = Var(
       $plan.now().routeSegments.isEmpty, // If no segments , assume we want to add more
     )
+
+    val selectedStop: Var[Option[(BusScheduleAtStop, RouteSegment)]] =
+      Var(None)
 
     val upcomingArrivalData =
       timeStamps
@@ -513,25 +512,25 @@ object Components {
       RtaSouthbound.fullSchedule
         .segment(start, end)
         .orElse(RtaNorthbound.fullSchedule.segment(start, end))
-
-    routeSegments match
-      case Some(segments) =>
-        segments
-          .find { l =>
-            val lastArrivalTime =
-              plan.l.lastOption
-                .map(_.end.t)
-            val cutoff =
-              lastArrivalTime.getOrElse(pageLoadTime)
-            l.start.t.isAfter(cutoff)
-          }
-          .getOrElse {
-            segments.head
-          }
-      case None =>
-        throw new IllegalStateException(
-          "No route leg available in either route B",
+        .getOrElse(
+          throw new IllegalStateException(
+            "No route leg available in either route B",
+          )
         )
+
+    routeSegments 
+      .find { l =>
+        val lastArrivalTime =
+          plan.l.lastOption
+            .map(_.end.t)
+        val cutoff =
+          lastArrivalTime.getOrElse(pageLoadTime)
+        l.start.t.isAfter(cutoff)
+      }
+      .getOrElse {
+        routeSegments.head
+      }
+        
 
   }
 
