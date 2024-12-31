@@ -464,30 +464,7 @@ object Components {
           if (plan.l.isEmpty)
             div()
           else
-            div(
-              button(
-                cls := "button m-2",
-                "Copy Text",
-                onClick --> Observer { _ =>
-                  dom.window.navigator.clipboard
-                    .writeText(plan.plainTextRepresentation)
-                },
-              ),
-              button(
-                cls := "button m-2",
-                "Copy App Link",
-                onClick --> Observer { _ =>
-                  val url =
-                    if (dom.document.URL.contains("localhost"))
-                      s"http://localhost:8000/index_dev.html?plan=${UrlEncoding.encode(plan)}"
-                    else
-                      s"https://cbbus.netlify.app/?plan=${UrlEncoding.encode(plan)}"
-
-                  dom.window.navigator.clipboard
-                    .writeText(url)
-                },
-              ),
-            ),
+            copyButtons(plan),
           Components.PlanElement(
             db,
             $plan,
@@ -500,6 +477,33 @@ object Components {
         ),
       ),
     )
+
+  def copyButtons(plan: Plan) = {
+    div(
+      button(
+        cls := "button m-2",
+        "Copy Text",
+        onClick --> Observer { _ =>
+          dom.window.navigator.clipboard
+            .writeText(plan.plainTextRepresentation)
+        },
+      ),
+      button(
+        cls := "button m-2",
+        "Copy App Link",
+        onClick --> Observer { _ =>
+          val url =
+            if (dom.document.URL.contains("localhost"))
+              s"http://localhost:8000/index_dev.html?plan=${UrlEncoding.encode(plan)}"
+            else
+              s"https://cbbus.netlify.app/?plan=${UrlEncoding.encode(plan)}"
+
+          dom.window.navigator.clipboard
+            .writeText(url)
+        },
+      ),
+    )
+  }
 
   def rightLegOnRightRoute(
     start: Location,
@@ -518,7 +522,7 @@ object Components {
           )
         )
 
-    routeSegments 
+    routeSegments
       .find { l =>
         val lastArrivalTime =
           plan.l.lastOption
@@ -530,7 +534,7 @@ object Components {
       .getOrElse {
         routeSegments.head
       }
-        
+
 
   }
 
