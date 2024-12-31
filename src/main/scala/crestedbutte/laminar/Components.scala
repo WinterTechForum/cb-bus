@@ -241,33 +241,29 @@ object Components {
     ],
   ) = {
     val stop = locationWithTime
-    UpcomingStopInfo(
-      stop.l,
+
+    div(
+      width := "100%",
+      cls := "stop-information",
+      div(cls := "stop-name", div(stop.l.name)),
+      div(cls := "stop-alt-name", div(stop.l.altName)),
       div(
-        routeWithTimes.allStops
-          .filter(_.location == stop.l)
-          .map { scheduleAtStop =>
-            val stopTimeInfo: StopTimeInfo =
-              UpcomingArrivalInfo(
-                scheduleAtStop.location,
-                StopTimeInfo(
-                  stop.t,
-                  stop.t // TODO Return an optional duration based on whether the bus is still in the future
-                    .between(timestamp), // is timestamp now?
-                ),
+        cls := "upcoming-information",
+        div(
+          routeWithTimes.allStops
+            .filter(_.location == stop.l)
+            .map { scheduleAtStop =>
+              StopTimeInfoForLocation(stop.t,
+                scheduleAtStop,
+                scheduleSelector,
+                routeSegment,
               )
-                .content
-            StopTimeInfoForLocation(stopTimeInfo,
-              scheduleAtStop,
-              scheduleSelector,
-              routeSegment,
-            )
-          }*,
+            },
+        ),
       ),
     )
-  }
 
-  import com.raquo.laminar.api.L.*
+  }
 
   def FullApp(
     pageMode: AppMode,
@@ -410,20 +406,6 @@ object Components {
         ),
       ),
     )
-  }
-
-  object UpcomingStopInfo {
-    def apply(
-      location: Location,
-      content: ReactiveHtmlElement[_],
-    ) =
-      div(
-        width := "100%",
-        cls := "stop-information",
-        div(cls := "stop-name", div(location.name)),
-        div(cls := "stop-alt-name", div(location.altName)),
-        div(cls := "upcoming-information", content),
-      )
   }
 
   def TripViewerLaminar(
@@ -628,14 +610,6 @@ object Components {
       startingPoints,
     )
 
-  def renderWaitTime(
-    duration: MinuteDuration,
-  ) =
-    if (duration.toMinutes == 0)
-      "Leaving!"
-    else
-      duration.humanFriendly
-
   def SafeRideLink(
     safeRideRecommendation: LateNightRecommendation,
   ) =
@@ -655,7 +629,7 @@ object Components {
     )
 
   def StopTimeInfoForLocation(
-    stopTimeInfo: StopTimeInfo,
+    stopTime: WallTime,
     busScheduleAtStop: BusScheduleAtStop,
     scheduleSelector: Observer[
       Option[(BusScheduleAtStop, RouteSegment)],
@@ -668,12 +642,7 @@ object Components {
         onClick.preventDefault.map { _ =>
           Some((busScheduleAtStop, routeSegment))
         } --> scheduleSelector,
-        stopTimeInfo.time.toDumbAmericanString,
-      ),
-      // TODO Instead of showing this everywhere, only show for the next upcoming segment
-//      div(
-//        cls := "wait-time",
-//        renderWaitTime(stopTimeInfo.waitingDuration),
-//      ),
+        stopTime.toDumbAmericanString,
+      )
     )
 }

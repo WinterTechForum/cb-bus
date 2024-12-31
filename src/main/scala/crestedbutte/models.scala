@@ -47,11 +47,6 @@ case class GpsCoordinates(
   latitude: Double,
   longitude: Double)
 
-case class UpcomingArrivalInfo(
-  location: Location,
-  content: StopTimeInfo,
-  /* TODO: waitDuration: Duration*/)
-
 import zio.json._
 implicit val wallTimeCodec: JsonCodec[WallTime] =
   JsonCodec.int.transform(WallTime.fromMinutes, _.localTime.value)
