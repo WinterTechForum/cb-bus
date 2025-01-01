@@ -37,7 +37,6 @@ object Components {
     scheduleSelector: Observer[
       Option[(BusScheduleAtStop, RouteSegment)],
     ],
-    planSwipeUpdater: Observer[(Int, Option[RouteSegment])],
   ) =
     div(
       child <-- $plan.signal.map { plan =>
@@ -97,7 +96,6 @@ object Components {
                       addingNewRoute,
                       timestamp,
                       scheduleSelector,
-                      planSwipeUpdater,
                     ).amend(
                       transition.height,
                     )
@@ -203,8 +201,25 @@ object Components {
     scheduleSelector: Observer[
       Option[(BusScheduleAtStop, RouteSegment)],
     ],
-    planSwipeUpdater: Observer[(Int, Option[RouteSegment])],
-  ) =
+  ) = {
+
+    val planSwipeUpdater
+    : Observer[(Int, Option[RouteSegment])] =
+      $plan.writer.contramap[(Int, Option[RouteSegment])] {
+        (
+          idx,
+          segmentO,
+        ) =>
+          segmentO match
+            case Some(segment) =>
+              val plan = $plan.now()
+              val updatedPlan =
+                plan.copy(l = plan.l.updated(idx, segment))
+              db.saveDailyPlanOnly(updatedPlan)
+              updatedPlan
+            case None => $plan.now()
+      }
+
     val res =
       div(
         TouchControls.swipeProp {
@@ -252,6 +267,7 @@ object Components {
     )
 
     res
+  }
 
   def stopInfo(
     routeSegment: RouteSegment,
@@ -330,23 +346,6 @@ object Components {
     val upcomingArrivalData =
       timeStamps
         .map { timestamp =>
-          val planSwipeUpdater
-            : Observer[(Int, Option[RouteSegment])] =
-            $plan.writer.contramap[(Int, Option[RouteSegment])] {
-              (
-                idx,
-                segmentO,
-              ) =>
-                segmentO match
-                  case Some(segment) =>
-                    val plan = $plan.now()
-                    val updatedPlan =
-                      plan.copy(l = plan.l.updated(idx, segment))
-                    db.saveDailyPlanOnly(updatedPlan)
-                    updatedPlan
-                  case None => $plan.now()
-            }
-
           Components.PlanElement(
             db,
             $plan,
@@ -354,7 +353,6 @@ object Components {
             timestamp,
             addingNewRoute,
             selectedStop.writer,
-            planSwipeUpdater,
           )
         }
 
