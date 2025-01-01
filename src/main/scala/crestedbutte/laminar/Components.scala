@@ -330,7 +330,8 @@ object Components {
     val upcomingArrivalData =
       timeStamps
         .map { timestamp =>
-          val planSwipeUpdater: Observer[(Int, Option[RouteSegment])] =
+          val planSwipeUpdater
+            : Observer[(Int, Option[RouteSegment])] =
             $plan.writer.contramap[(Int, Option[RouteSegment])] {
               (
                 idx,
