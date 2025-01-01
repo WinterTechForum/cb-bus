@@ -472,30 +472,33 @@ object Components {
     end: Location,
     plan: Plan,
     pageLoadTime: WallTime,
-  ): RouteSegment = {
+  ): Option[RouteSegment] = {
 
-    val routeSegments =
+    val routeSegmentsO =
       RtaSouthbound.fullSchedule
         .segment(start, end)
         .orElse(RtaNorthbound.fullSchedule.segment(start, end))
-        .getOrElse(
-          throw new IllegalStateException(
-            "No route leg available in either route B",
-          ),
-        )
+//        .getOrElse(
+//          throw new IllegalStateException(
+//            "No route leg available in either route B",
+//          ),
+//        )
 
-    routeSegments
-      .find { l =>
-        val lastArrivalTime =
-          plan.l.lastOption
-            .map(_.end.t)
-        val cutoff =
-          lastArrivalTime.getOrElse(pageLoadTime)
-        l.start.t.isAfter(cutoff)
-      }
-      .getOrElse {
-        routeSegments.head
-      }
+    routeSegmentsO
+      .flatMap(routeSegments =>
+        routeSegments
+          .find { l =>
+            val lastArrivalTime =
+              plan.l.lastOption
+                .map(_.end.t)
+            val cutoff =
+              lastArrivalTime.getOrElse(pageLoadTime)
+            l.start.t.isAfter(cutoff)
+          }
+          .orElse {
+            routeSegments.headOption
+          }
+      )
 
   }
 
@@ -535,7 +538,7 @@ object Components {
                           if startingPointNow == location =>
                         None
                       case Some(other) =>
-                        val matchingLeg =
+                        val matchingLegO =
                           rightLegOnRightRoute(
                             other,
                             location,
@@ -543,16 +546,22 @@ object Components {
                             initialTime,
                           )
 
-                        $plan.update { case oldPlan =>
-                          val newPlan =
-                            oldPlan.copy(l =
-                              oldPlan.l :+ matchingLeg,
-                            )
-                          db.saveDailyPlanOnly(newPlan)
-                          addingNewRoute.set(false)
-                          newPlan
-                        }
-                        Some(other)
+                        matchingLegO match
+                          case Some(matchingLeg) =>
+                            $plan.update { case oldPlan =>
+                              val newPlan =
+                                oldPlan.copy(l =
+                                  oldPlan.l :+ matchingLeg,
+                                )
+                              db.saveDailyPlanOnly(newPlan)
+                              addingNewRoute.set(false)
+                              newPlan
+                            }
+                            Some(other)
+                          case None =>
+                            println("giving up and deselecting starting point")
+                            None
+
                       case None =>
                         Some(location)
                     }
