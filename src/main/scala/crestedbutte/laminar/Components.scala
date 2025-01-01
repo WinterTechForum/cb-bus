@@ -530,6 +530,19 @@ object Components {
               transition.width,
               transition.height,
               button(
+                disabled <-- startingPoint.signal.map {
+                  case Some(startingPointNow)
+                      if startingPointNow == location =>
+                    false
+                  case Some(other) =>
+                    rightLegOnRightRoute(
+                      other,
+                      location,
+                      $plan.now(),
+                      initialTime,
+                    ).isEmpty
+                  case None    => false
+                },
                 cls := "button m-2",
                 onClick --> Observer {
                   _ =>
