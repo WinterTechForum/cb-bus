@@ -327,25 +327,25 @@ object Components {
     val selectedStop: Var[Option[(BusScheduleAtStop, RouteSegment)]] =
       Var(None)
 
-    val planSwipeUpdater: Observer[(Int, Option[RouteSegment])] =
-      $plan.writer.contramap[(Int, Option[RouteSegment])] {
-        (
-          idx,
-          segmentO,
-        ) =>
-          segmentO match
-            case Some(segment) =>
-              val plan = $plan.now()
-              val updatedPlan =
-                plan.copy(l = plan.l.updated(idx, segment))
-              db.saveDailyPlanOnly(updatedPlan)
-              updatedPlan
-            case None => $plan.now()
-      }
-
     val upcomingArrivalData =
       timeStamps
         .map { timestamp =>
+          val planSwipeUpdater: Observer[(Int, Option[RouteSegment])] =
+            $plan.writer.contramap[(Int, Option[RouteSegment])] {
+              (
+                idx,
+                segmentO,
+              ) =>
+                segmentO match
+                  case Some(segment) =>
+                    val plan = $plan.now()
+                    val updatedPlan =
+                      plan.copy(l = plan.l.updated(idx, segment))
+                    db.saveDailyPlanOnly(updatedPlan)
+                    updatedPlan
+                  case None => $plan.now()
+            }
+
           Components.PlanElement(
             db,
             $plan,
@@ -405,7 +405,7 @@ object Components {
       RepeatingElement()
         .repeatWithInterval( // This acts like a Dune thumper
           (),
-          new FiniteDuration(500,
+          new FiniteDuration(10,
                              scala.concurrent.duration.SECONDS,
           ), // TODO Make low again
         ) --> clockTicks,
