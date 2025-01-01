@@ -223,7 +223,7 @@ object Components {
       div(
         /*
         Re-enable once I figure out what's broken with multisegment trips
-        
+
         TouchControls.swipeProp {
           case Swipe.Left =>
             planSwipeUpdater.onNext(
@@ -236,7 +236,7 @@ object Components {
               routeSegment.routeWithTimes.nextBefore(routeSegment),
             )
         },
-          
+
          */
         div(
           cls := "plan-segments box",
