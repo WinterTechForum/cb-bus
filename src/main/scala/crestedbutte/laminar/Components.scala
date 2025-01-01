@@ -203,8 +203,7 @@ object Components {
     ],
   ) = {
 
-    val planSwipeUpdater
-    : Observer[(Int, Option[RouteSegment])] =
+    val planSwipeUpdater: Observer[(Int, Option[RouteSegment])] =
       $plan.writer.contramap[(Int, Option[RouteSegment])] {
         (
           idx,
