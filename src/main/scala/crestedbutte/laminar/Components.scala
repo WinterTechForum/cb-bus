@@ -497,7 +497,7 @@ object Components {
           }
           .orElse {
             routeSegments.headOption
-          }
+          },
       )
 
   }
@@ -541,7 +541,7 @@ object Components {
                       $plan.now(),
                       initialTime,
                     ).isEmpty
-                  case None    => false
+                  case None => false
                 },
                 cls := "button m-2",
                 onClick --> Observer {
@@ -572,7 +572,9 @@ object Components {
                             }
                             Some(other)
                           case None =>
-                            println("giving up and deselecting starting point")
+                            println(
+                              "giving up and deselecting starting point",
+                            )
                             None
 
                       case None =>
