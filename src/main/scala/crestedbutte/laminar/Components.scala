@@ -408,7 +408,7 @@ object Components {
       RepeatingElement()
         .repeatWithInterval( // This acts like a Dune thumper
           (),
-          new FiniteDuration(10,
+          new FiniteDuration(200,
                              scala.concurrent.duration.SECONDS,
           ), // TODO Make low again
         ) --> clockTicks,
