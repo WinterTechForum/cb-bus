@@ -86,7 +86,7 @@ object Components {
                   case rs: RouteSegment =>
                     RouteLegElement(
                       rs,
-                      i,
+                      i / 2, // hack to unfuck indices now that the gaps get them too
                       db,
                       $plan,
                       addingNewRoute,
@@ -216,25 +216,19 @@ object Components {
       }
 
     val res =
-      div(
-        /*
-        Re-enable once I figure out what's broken with multisegment trips
-
-        TouchControls.swipeProp {
-          case Swipe.Left =>
-            planSwipeUpdater.onNext(
-              planIndex,
-              routeSegment.routeWithTimes.nextAfter(routeSegment),
-            )
-          case Swipe.Right =>
-            planSwipeUpdater.onNext(
-              planIndex,
-              routeSegment.routeWithTimes.nextBefore(routeSegment),
-            )
-        },
-
-         */
         div(
+          TouchControls.swipeProp {
+            case Swipe.Left =>
+              planSwipeUpdater.onNext(
+                planIndex,
+                routeSegment.routeWithTimes.nextAfter(routeSegment),
+              )
+            case Swipe.Right =>
+              planSwipeUpdater.onNext(
+                planIndex,
+                routeSegment.routeWithTimes.nextBefore(routeSegment),
+              )
+          },
           cls := "plan-segments box",
           if (timestamp.isAfter(routeSegment.start.t))
             opacity := 0.5
@@ -258,7 +252,6 @@ object Components {
                    timestamp,
                    scheduleSelector,
           ),
-        ),
       )
 
     res.ref.addEventListener(
