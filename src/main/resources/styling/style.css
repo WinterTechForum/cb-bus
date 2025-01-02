@@ -5,12 +5,9 @@
 
 body {
     margin: 5px;
-    background-color: #444;
+    background-color: #FFFFFF;
 }
 
-.modal-background {
-    background-color: rgba(10,10,10,.97);
-}
 .scrollable-route-leg {
     height: 60vh; /* What's a good, flexible height value here? */
     overflow: auto;
@@ -21,8 +18,8 @@ body {
 }
 
 .bill-box {
-    background-color: #444;
-    color: #fff;
+    background-color: #FFFFFF;
+    color: #000000;
     border-radius: 5px;
     padding: 5px;
     font-size: 120%;
@@ -219,7 +216,8 @@ body {
 }
 
 .plan-segments {
-    background-color: #299595;
+    background-color: #00998E;
+    color: #FFFFFF;
     display: grid;
     place-items: center;
 }
@@ -234,6 +232,6 @@ body {
 }
 
 .transit-time {
-    color: lightgray;
+    color: black;
     font-size: 80%;
 }
