@@ -16,7 +16,7 @@ object BulmaLocal {
       if (segment.start == l || segment.end == l)
         " is-primary"
       else
-        ""
+        " is-info"
     div(
       if (segment.start == l || segment.end == l)
         idAttr := "selected-time"
@@ -26,7 +26,7 @@ object BulmaLocal {
       paddingBottom := "3px",
       cls := "time",
       button(
-        cls := s"clickable-time button m-2 $buttonModifier",
+        cls := s"button clickable-time button m-2 $buttonModifier",
         onClick.mapTo {
           LocationTimeDirection(l, segment)
         } --> updates,

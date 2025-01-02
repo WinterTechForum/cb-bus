@@ -581,8 +581,8 @@ object Components {
                   case Some(startingPointNow)
                       if startingPointNow == location =>
                     "is-primary"
-                  case Some(_) => ""
-                  case None    => ""
+                  case Some(_) => "is-info"
+                  case None    => "is-info"
                 },
                 location.name,
               ),
