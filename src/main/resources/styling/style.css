@@ -232,6 +232,11 @@ body {
 }
 
 .transit-time {
+    color: white;
+    font-size: 80%;
+}
+
+.time-at-stop {
     color: black;
     font-size: 80%;
 }

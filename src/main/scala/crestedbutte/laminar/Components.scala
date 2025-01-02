@@ -77,7 +77,7 @@ object Components {
                       paddingTop := "1.5em",
                       paddingBottom := "1.5em",
                       span(
-                        cls := "transit-time",
+                        cls := "time-at-stop",
                         r.endTime
                           .between(r.start)
                           .humanFriendly,
