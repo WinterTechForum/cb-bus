@@ -1,7 +1,7 @@
 {
-  "short_name": "CB Buses",
-  "name": "CB Buses",
-  "description": "Give live bus schedule updates",
+  "short_name": "RTA Buses",
+  "name": "RTA Buses",
+  "description": "UNOFFICIAL RTA bus app. Not affiliated with the RTA.",
   "scope": "/",
   "icons": [
     {
