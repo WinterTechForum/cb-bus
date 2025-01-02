@@ -216,42 +216,42 @@ object Components {
       }
 
     val res =
-        div(
-          TouchControls.swipeProp {
-            case Swipe.Left =>
-              planSwipeUpdater.onNext(
-                planIndex,
-                routeSegment.routeWithTimes.nextAfter(routeSegment),
-              )
-            case Swipe.Right =>
-              planSwipeUpdater.onNext(
-                planIndex,
-                routeSegment.routeWithTimes.nextBefore(routeSegment),
-              )
-          },
-          cls := "plan-segments box",
-          if (timestamp.isAfter(routeSegment.start.t))
-            opacity := 0.5
-          else
-            cls := "",
-          stopInfo(routeSegment,
-                   routeSegment.start,
-                   routeSegment.routeWithTimes,
-                   timestamp,
-                   scheduleSelector,
-          ),
-          transitSegment(
-            routeSegment,
-            $plan,
-            db,
-            addingNewRoute,
-          ),
-          stopInfo(routeSegment,
-                   routeSegment.end,
-                   routeSegment.routeWithTimes,
-                   timestamp,
-                   scheduleSelector,
-          ),
+      div(
+        TouchControls.swipeProp {
+          case Swipe.Left =>
+            planSwipeUpdater.onNext(
+              planIndex,
+              routeSegment.routeWithTimes.nextAfter(routeSegment),
+            )
+          case Swipe.Right =>
+            planSwipeUpdater.onNext(
+              planIndex,
+              routeSegment.routeWithTimes.nextBefore(routeSegment),
+            )
+        },
+        cls := "plan-segments box",
+        if (timestamp.isAfter(routeSegment.start.t))
+          opacity := 0.5
+        else
+          cls := "",
+        stopInfo(routeSegment,
+                 routeSegment.start,
+                 routeSegment.routeWithTimes,
+                 timestamp,
+                 scheduleSelector,
+        ),
+        transitSegment(
+          routeSegment,
+          $plan,
+          db,
+          addingNewRoute,
+        ),
+        stopInfo(routeSegment,
+                 routeSegment.end,
+                 routeSegment.routeWithTimes,
+                 timestamp,
+                 scheduleSelector,
+        ),
       )
 
     res.ref.addEventListener(
