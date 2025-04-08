@@ -93,7 +93,7 @@ object Components {
                       timestamp,
                       scheduleSelector,
                     ).amend(
-                      transition.height,
+                      transition.height, // TODO Provide directly to the element
                     )
 
                 }
