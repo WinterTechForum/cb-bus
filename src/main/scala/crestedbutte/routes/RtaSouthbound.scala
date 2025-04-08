@@ -75,7 +75,6 @@ object RtaSouthbound {
       "04:30 PM",
       "05:05 PM",
       "05:35 PM",
-      "05:50 PM",
       "06:05 PM",
       "06:35 PM",
       "07:05 PM",
