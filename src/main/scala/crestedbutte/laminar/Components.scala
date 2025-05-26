@@ -114,7 +114,7 @@ object Components {
                   cls := "centered",
                   button(
                     cls := "button",
-                    "Add new route",
+                    "Add new route!",
                     onClick --> Observer { _ =>
                       addingNewRoute.set {
                         true

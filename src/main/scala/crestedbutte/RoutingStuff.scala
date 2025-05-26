@@ -4,8 +4,9 @@ import com.billding.time.WallTime
 import crestedbutte.laminar.{AppMode, Components}
 import urldsl.errors.DummyError
 import urldsl.language.QueryParameters
+import java.time.ZoneId
 
-import java.time.{OffsetDateTime, ZoneId}
+import java.time.OffsetDateTime
 
 object RoutingStuff {
   import com.raquo.laminar.api.L
@@ -28,10 +29,10 @@ object RoutingStuff {
               s"2020-02-21T${fixedTime.get.toEUString}:00.00-07:00",
             )
             .toInstant,
-          ZoneId.of("America/Denver"),
+          ZoneId.systemDefault(),
         )
       else
-        java.time.Clock.system(ZoneId.of("America/Denver"))
+        java.time.Clock.systemUTC()
   }
 
   implicit val wallTimeRw: ReadWriter[WallTime] =

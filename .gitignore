@@ -10,3 +10,8 @@
 /src/main/resources/target
 hs_err*log
 replay_pid*log
+.bloop
+.metals
+*.DS_Store
+.vscode
+project/metals.sbt

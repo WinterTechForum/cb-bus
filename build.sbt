@@ -1,12 +1,12 @@
 // Can't upgrade till this is resolve:
 // https://github.com/ScalablyTyped/Converter/issues/565
-scalaVersion := "3.3.1"
+scalaVersion := "3.3.6"
 
 version := "0.2"
 
 enablePlugins(ScalaJSPlugin)
 
-enablePlugins(TzdbPlugin)
+// enablePlugins(TzdbPlugin)
 
 enablePlugins(WebScalaJSBundlerPlugin)
 
@@ -44,12 +44,19 @@ scalaJSUseMainModuleInitializer := true
 
 lazy val cbBuild = taskKey[Unit]("Execute the shell script")
 
+Compile / fastOptJS / artifactPath := 
+  baseDirectory.value / "src" / "main" / "resources" / "compiledJavascript" / "main.js"
+Compile / fullOptJS / artifactPath := 
+  baseDirectory.value / "src" / "main" / "resources" / "compiledJavascript" / "main.js"
+
+
+
 cbBuild := {
   (Compile/fastOptJS).value
   import scala.sys.process._
   (Process("mkdir ./src/main/resources/compiledJavascript") #|| Process("mkdir ./src/main/resources/compiledJavascript/cb-bus") #||
-    Process("cp ./target/scala-3.3.1/cb-bus-fastopt/main.js ./src/main/resources/compiledJavascript/cb-bus") #&&
-    Process("cp ./target/scala-3.3.1/cb-bus-fastopt/main.js.map ./src/main/resources/compiledJavascript/cb-bus") #&&
+    // Process("cp ./target/scala-3.3.1/cb-bus-fastopt/main.js ./src/main/resources/compiledJavascript/cb-bus") #&&
+    // Process("cp ./target/scala-3.3.1/cb-bus-fastopt/main.js.map ./src/main/resources/compiledJavascript/cb-bus") #&&
     Process("cp sw/target/scala-3.3.1/sw-opt.js ./src/main/resources/") #&&
     Process("cp sw/target/scala-3.3.1/sw-opt.js.map ./src/main/resources/")
     )!
@@ -69,7 +76,7 @@ cbPublish := {
     Process("cp sw/target/scala-3.3.1/sw-opt.js.map src/main/resources/"))!
 }
 
-zonesFilter := {(z: String) => z == "America/Denver" || z == "America/Mountain"}
+// zonesFilter := {(z: String) => z == "America/Denver" || z == "America/Mountain"}
 
 //lazy val sw = (project in file("sw"))
 //  .enablePlugins(ScalaJSPlugin)
