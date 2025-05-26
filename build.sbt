@@ -16,11 +16,6 @@ scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.CommonJSModule) }
 
 resolvers += Resolver.url("typesafe", url("https://repo.typesafe.com/typesafe/ivy-releases/"))(Resolver.ivyStylePatterns)
 
-// This is only for quick dev turn-around
-resolvers += "Sonatype" at "https://s01.oss.sonatype.org/content/repositories/public"
-
-
-
 val zioVersion = "2.0.21"
 
 scalacOptions ++= Seq("-Xmax-inlines", "150")
@@ -49,18 +44,6 @@ Compile / fastOptJS / artifactPath :=
 Compile / fullOptJS / artifactPath := 
   baseDirectory.value / "src" / "main" / "resources" / "compiledJavascript" / "main.js"
 
-
-
-cbBuild := {
-  (Compile/fastOptJS).value
-  import scala.sys.process._
-  (Process("mkdir ./src/main/resources/compiledJavascript") #|| Process("mkdir ./src/main/resources/compiledJavascript/cb-bus") #||
-    // Process("cp ./target/scala-3.3.1/cb-bus-fastopt/main.js ./src/main/resources/compiledJavascript/cb-bus") #&&
-    // Process("cp ./target/scala-3.3.1/cb-bus-fastopt/main.js.map ./src/main/resources/compiledJavascript/cb-bus") #&&
-    Process("cp sw/target/scala-3.3.1/sw-opt.js ./src/main/resources/") #&&
-    Process("cp sw/target/scala-3.3.1/sw-opt.js.map ./src/main/resources/")
-    )!
-}
 
 lazy val cbPublish = taskKey[Unit]("Build the files for a real deploment")
 cbPublish := {
