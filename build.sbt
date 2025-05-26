@@ -1,6 +1,6 @@
 // Can't upgrade till this is resolve:
 // https://github.com/ScalablyTyped/Converter/issues/565
-scalaVersion := "3.3.6"
+ThisBuild / scalaVersion := "3.3.6"
 
 version := "0.2"
 
@@ -64,16 +64,9 @@ cbBuild := {
 
 lazy val cbPublish = taskKey[Unit]("Build the files for a real deploment")
 cbPublish := {
+  (sw/Compile/fullOptJS).value
   (Compile/fullOptJS).value
   (Compile/scalafmt).value
-//  (sw/Compile/fullOptJS).value
-  import scala.sys.process._
-  //  "ls ./target/scala-2.13" !
-  (Process("mkdir ./src/main/resources/compiledJavascript") #||
-    Process("cp ./target/scala-3.3.1/cb-bus-opt/main.js ./src/main/resources/compiledJavascript/") #&&
-    Process("cp ./target/scala-3.3.1/cb-bus-opt/main.js.map src/main/resources/compiledJavascript/") #&&
-    Process("cp sw/target/scala-3.3.1/sw-opt.js src/main/resources/") #&&
-    Process("cp sw/target/scala-3.3.1/sw-opt.js.map src/main/resources/"))!
 }
 
 // zonesFilter := {(z: String) => z == "America/Denver" || z == "America/Mountain"}
@@ -85,7 +78,6 @@ lazy val sw = (project in file("sw"))
       baseDirectory.value.getParentFile / "src" / "main" / "resources" / "sw-opt.js",
     Compile / fullOptJS / artifactPath := 
       baseDirectory.value.getParentFile / "src" / "main" / "resources" / "sw-opt.js",
-   scalaVersion := "3.3.1",
    scalaJSUseMainModuleInitializer := true,
    libraryDependencies ++= Seq(
      "org.scala-js" %%% "scalajs-dom" % "2.8.0"

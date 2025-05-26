@@ -2,7 +2,7 @@
 /project/project/
 /project/target/
 /.idea/
-/src/main/resources/compiledJavascript/
+# /src/main/resources/compiledJavascript/
 /sw/target/
 .env
 .bsp/sbt.json

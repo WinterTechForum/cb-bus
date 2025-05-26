@@ -120,8 +120,7 @@ object Experimental {
     val $gpsPosition: Var[Option[GpsCoordinates]] = Var(None)
     div(
       idAttr := "sandbox",
-      timeStamps.map(_ =>
-        getLocation($gpsPosition),
+      timeStamps.map(_ => getLocation($gpsPosition),
       ) --> $gpsPosition.writer,
 //      Components.FeatureControlCenter(featureUpdates.writer),
       button(
