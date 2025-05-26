@@ -1,0 +1,242 @@
+/*html, body {*/
+/*    height: 100%;*/
+/*    margin: 0;*/
+/*}*/
+
+body {
+    margin: 5px;
+    background-color: #FFFFFF;
+}
+
+.scrollable-route-leg {
+    height: 60vh; /* What's a good, flexible height value here? */
+    overflow: auto;
+}
+
+#landing-message {
+    min-height: 100%;
+}
+
+.bill-box {
+    background-color: #FFFFFF;
+    color: #000000;
+    border-radius: 5px;
+    padding: 5px;
+    font-size: 120%;
+    margin-bottom: 10px;
+}
+
+.glyphicon {
+    height: 32px;
+    width: 32px;
+    /*vertical-align: middle;*/
+    /*display: table-cell;*/
+}
+
+.selected-leg-header {
+    text-align: center;
+}
+
+.button {
+    font-size: 80%;
+    font-weight: bold;
+    height: 85%;
+}
+
+.adjuster-button {
+    font-size: 80%;
+    font-weight: bold;
+    height: 85%;
+}
+
+.light-background {
+    background-color: white;
+}
+
+.upcoming-buses-title {
+    text-align: center;
+}
+
+.arrival-time {
+    text-align: left;
+}
+
+.wait-time {
+    text-align: left;
+}
+.link {
+    color: white;
+}
+
+.transit-period {
+    width: 100%;
+    display: grid;
+    grid-template-columns:2fr 4fr 1fr;
+    grid-template-rows: auto 1fr ;
+    grid-template-areas:
+      "transit-period-duration transit-period-icon transit-period-delete";
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+
+.transit-period-duration {
+    grid-area: transit-period-duration;
+    text-align: left;
+    vertical-align: middle;
+    position:relative;
+}
+
+.transit-period-icon {
+    grid-area: transit-period-icon;
+    text-align: center;
+    vertical-align: middle;
+    position:relative;
+}
+
+.transit-period-delete {
+    grid-area: transit-period-delete;
+    text-align: center;
+    vertical-align: middle;
+    position:relative;
+    top: calc(15%);
+}
+
+.stop-information {
+    display: grid;
+    grid-template-columns:2fr 6fr;
+    grid-template-rows: auto 1fr ;
+    grid-template-areas:
+            "upcoming-information stop-name"
+            "upcoming-information stop-alt-name";
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+
+.map-link {
+    grid-area: map-link;
+    text-align: center;
+    vertical-align: middle;
+    position:relative;
+    top: calc(40% - 10px);
+}
+
+.stop-name {
+    grid-area: stop-name;
+    text-align: center;
+}
+
+.stop-alt-name {
+    grid-area: stop-alt-name;
+    text-align: center;
+    font-size: 70%;
+}
+.upcoming-information {
+    grid-area: upcoming-information;
+    text-align: right;
+}
+
+.route-header {
+    text-align: center;
+    font-weight: bold;
+    /*font-size: 150%;*/
+}
+
+.route-header_name {
+}
+.route-header_icon {
+    margin-top: auto;
+    margin-bottom: auto;
+    padding-left: 5px;
+}
+
+/*
+    From Codepen:
+ */
+
+.overlay light {}
+
+.arrival-time-alarm {
+    padding-left: 5px;
+    padding-bottom: 5px;
+}
+#laminar-app {
+}
+
+.title {
+    color: white;
+}
+
+.time-picker-simple {
+    display: grid;
+    /*width: 10%; !* Better width calculation *!*/
+    grid-template-columns: minmax(80px, 5%) minmax(80px, 5%) minmax(80px, 5%);
+    /*grid-template-columns: 2fr 2fr 1fr;*/
+    grid-template-rows: auto 1fr ;
+    grid-template-areas:
+            "hour       minute      amOrPm";
+    padding-top: 5px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid white;
+}
+
+.hour { grid-area: hour; }
+.minute { grid-area: minute; }
+.amOrPm { grid-area: amOrPm; }
+
+.wheel {
+    display: grid;
+    place-items: center;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr ;
+    /*grid-template-columns: minmax(80px, 150px);*/
+    grid-template-areas:
+            "tp-inc"
+            "tp-display"
+            "tp-dec";
+    padding-top: 5px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid white;
+}
+
+.tp-inc { grid-area: tp-inc; }
+.tp-display { grid-area: tp-display; }
+.tp-dec { grid-area: tp-dec; }
+
+#sandbox {
+    display: grid;
+    place-items: center;
+}
+
+.delete {
+    filter: brightness(0) saturate(100%) invert(23%) sepia(100%) saturate(7457%) hue-rotate(4deg) brightness(104%) contrast(119%);
+}
+
+.plain-white {
+    filter: brightness(0) saturate(100%) invert(100%) sepia(100%) saturate(0%) hue-rotate(285deg) brightness(102%) contrast(101%);
+}
+
+.plan-segments {
+    background-color: #00998E;
+    color: #FFFFFF;
+    display: grid;
+    place-items: center;
+}
+
+.add-new-route-section {
+    padding-top: 10px;
+    padding-bottom: 10px;
+
+    align-items: center;
+    display: flex;
+    justify-content: center;
+}
+
+.transit-time {
+    color: white;
+    font-size: 80%;
+}
+
+.time-at-stop {
+    color: black;
+    font-size: 80%;
+}
