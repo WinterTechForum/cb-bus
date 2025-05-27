@@ -37,7 +37,6 @@ case class RouteWithTimes(
         )
       newRoute <- legs(newIndex)
         .withSameStopsAs(original)
-        .toOption
     yield RouteSegment.fromRouteLeg(newRoute)
 
   def nextBefore(
@@ -51,7 +50,6 @@ case class RouteWithTimes(
         )
       newRoute <- legs(newIndex)
         .withSameStopsAs(original)
-        .toOption
     yield RouteSegment.fromRouteLeg(newRoute)
 
   val allStops: Seq[BusScheduleAtStop] =
@@ -91,7 +89,7 @@ object RouteWithTimes {
         .flatMap(time =>
           RouteLeg(Seq(LocationWithTime(location, WallTime(time))),
                    routeName,
-          ).toOption,
+          ),
         )
     RouteWithTimes(
       stopTimesTyped

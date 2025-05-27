@@ -91,10 +91,10 @@ object RouteLeg:
   def apply(
     stops: Seq[LocationWithTime],
     routeName: RouteName,
-  ): Either[String, RouteLeg] =
+  ): Option[RouteLeg] =
     for
-      head <- stops.headOption.toRight("Empty Route")
-      last <- stops.lastOption.toRight("Empty Route")
+      head <- stops.headOption
+      last <- stops.lastOption
     yield RouteLeg(stops, routeName, head, last)
 
 // TODO Ensure no repeat Locations
@@ -123,7 +123,7 @@ case class RouteLeg private (
 
   def withSameStopsAs(
     other: RouteSegment,
-  ): Either[String, RouteLeg] =
+  ): Option[RouteLeg] =
     RouteLeg(
       stops.filter(stop =>
         // This List is a weird funky artifact from the switch to RouteSegment to RouteLeg
