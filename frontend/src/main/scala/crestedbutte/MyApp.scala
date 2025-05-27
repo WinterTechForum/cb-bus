@@ -4,7 +4,6 @@ import org.scalajs.dom
 
 object MyApp extends App {
 
-  println("Doing this without zio - 3")
   ServiceWorkerClient.registerServiceWorker()
   val appHolder = dom.document.getElementById("landing-message")
   appHolder.innerHTML = ""

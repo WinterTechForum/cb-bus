@@ -47,8 +47,6 @@ lazy val sw = (project in file("sw"))
     )
   )
 
-// resolvers += Resolver.url("typesafe", url("https://repo.typesafe.com/typesafe/ivy-releases/"))(Resolver.ivyStylePatterns)
-
 val zioVersion = "2.0.21"
 
 Global / onChangedBuildSource := ReloadOnSourceChanges
