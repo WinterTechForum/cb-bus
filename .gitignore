@@ -1,6 +1,6 @@
-/target/
-/project/project/
-/project/target/
+frontend/target
+frontend/project/project/
+frontend/project/target/
 /.idea/
 # /src/main/resources/compiledJavascript/
 /sw/target/
@@ -15,3 +15,11 @@ replay_pid*log
 *.DS_Store
 .vscode
 project/metals.sbt
+.bsp/sbt.json
+.bsp/metals.json
+.bsp/metals.json
+project/target
+project/project
+project/project/target
+project/project/project/target
+target

@@ -1,7 +1,7 @@
 package todo
 
 import org.scalajs.dom.experimental.Fetch.*
-import org.scalajs.dom.{ServiceWorkerGlobalScope}
+import org.scalajs.dom.ServiceWorkerGlobalScope
 import org.scalajs.dom.ServiceWorkerGlobalScope.self
 import org.scalajs.dom.experimental.serviceworkers.{
   ExtendableEvent,
