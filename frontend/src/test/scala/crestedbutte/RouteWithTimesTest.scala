@@ -1,36 +1,33 @@
 package crestedbutte
 
 import com.billding.time.WallTime
-import crestedbutte.routes.{RouteWithTimes, RtaSouthbound}
+import crestedbutte.routes.{RouteWithTimes, RtaNorthbound}
 import zio.test.*
 
 object RouteWithTimesTest extends ZIOSpecDefault {
   val routeLeg1 =
     RouteLeg(
       Seq(
-        LocationWithTime(Location.BrushCreek, WallTime("07:40")),
-        LocationWithTime(Location.CBSouth, WallTime("07:50")),
-        LocationWithTime(Location.Almont, WallTime("08:00")),
+        LocationWithTime(Location.GunnisonLibrary, WallTime("07:29")),
+        LocationWithTime(Location.Safeway, WallTime("07:34")),
       ),
-      RtaSouthbound.componentName,
+      RtaNorthbound.componentName,
     ).getOrElse(???)
 
   val routeLeg2 = RouteLeg(
     Seq(
-      LocationWithTime(Location.BrushCreek, WallTime("08:00")),
-      LocationWithTime(Location.CBSouth, WallTime("08:10")),
-      LocationWithTime(Location.Almont, WallTime("08:20")),
+      LocationWithTime(Location.GunnisonLibrary, WallTime("07:59")),
+      LocationWithTime(Location.Safeway, WallTime("08:04")),
     ),
-    RtaSouthbound.componentName,
+    RtaNorthbound.componentName,
   ).getOrElse(???)
 
   val routeLeg3 = RouteLeg(
     Seq(
-      LocationWithTime(Location.BrushCreek, WallTime("08:30")),
-      LocationWithTime(Location.CBSouth, WallTime("08:40")),
-      LocationWithTime(Location.Almont, WallTime("08:50")),
+      LocationWithTime(Location.GunnisonLibrary, WallTime("08:29")),
+      LocationWithTime(Location.Safeway, WallTime("08:34")),
     ),
-    RtaSouthbound.componentName,
+    RtaNorthbound.componentName,
   ).getOrElse(???)
 
   val routeWithTimes =
