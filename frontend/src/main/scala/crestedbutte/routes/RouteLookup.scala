@@ -13,4 +13,5 @@ object RouteLookup {
         RtaNorthbound.fullSchedule.routeWithTimes
       case other =>
         throw new Exception("Unrecognized route: " + other)
+
 }
