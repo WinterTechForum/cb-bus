@@ -225,10 +225,6 @@ object Components {
             )
         },
         cls := "plan-segments box",
-        if (timestamp.isAfter(routeSegment.start.t))
-          opacity := 0.5
-        else
-          cls := "",
         stopInfo(routeSegment,
                  routeSegment.start,
                  routeSegment.routeWithTimes,
