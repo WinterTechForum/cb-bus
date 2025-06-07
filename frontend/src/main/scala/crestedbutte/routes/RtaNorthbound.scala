@@ -13,37 +13,6 @@ import crestedbutte.{
 object RtaNorthbound {
   val componentName = RouteName("Rta Northbound")
 
-//  def constructExpressRoute(
-//    routeLeg: RouteLeg,
-//  ): RouteLeg =
-//    routeLeg
-//      .plus(Location.EleventhAndVirginia, 2.minutes)
-//      .plus(Location.Safeway, 4.minutes)
-//      .plus(Location.TellerAndHighwayFifty, 2.minutes)
-//      .plus(Location.Western, 2.minutes)
-//      .plus(Location.DenverAndHighwayOneThirtyFive, 3.minutes)
-//      .plus(Location.SpencerAndHighwayOneThirtyFive, 2.minutes)
-//      .plus(Location.TallTexan, 2.minutes)
-//      .plus(Location.OhioCreek, 1.minutes)
-//      .plus(Location.Almont, 7.minutes)
-//      .plus(Location.Riverland, 16.minutes)
-//      .plus(Location.BrushCreek, 1.minutes)
-//      .plus(Location.Riverbend, 1.minutes)
-//      .plus(Location.FourWayUphill, 3.minutes)
-//      .plus(Location.MountaineerSquare, 10.minutes)
-
-//  val expressRouteWithTimes =
-//    RouteWithTimes.sched(
-//      Location.GunnisonCommunitySchools,
-//      constructExpressRoute,
-//      "06:30",
-//      "06:45",
-//      "07:00",
-//      "07:30",
-//      "08:00",
-//      "08:30",
-//    )
-
   def constructNormalRoute(
     routeLeg: RouteLeg,
   ): RouteLeg =
