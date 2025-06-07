@@ -1,7 +1,9 @@
 package crestedbutte
 
+import com.billding.time.WallTime
+import crestedbutte.routes.RTA.{Northbound, Southbound}
+import crestedbutte.routes.RouteWithTimes
 import crestedbutte.laminar.LocationTimeDirection
-import crestedbutte.routes.{RtaNorthbound, RtaSouthbound}
 
 object TimeCalculations {
   def updateSegmentFromArbitrarySelection(
@@ -18,10 +20,10 @@ object TimeCalculations {
     println("ltd.routeSegment.route: " + ltd.routeSegment.route)
     val routeWithTimes =
       ltd.routeSegment.route match
-        case RtaSouthbound.componentName =>
-          RtaSouthbound.normalRouteWithTimes
-        case RtaNorthbound.componentName =>
-          RtaNorthbound.normalRouteWithTimes
+        case Southbound.componentName =>
+          Southbound.normalRouteWithTimes
+        case Northbound.componentName =>
+          Northbound.normalRouteWithTimes
         case other =>
           throw new IllegalArgumentException(
             "Route not supported: " + other,
@@ -53,4 +55,17 @@ object TimeCalculations {
     res
   }
 
+  def getRouteWithTimes(
+    routeName: RouteName,
+  ): RouteWithTimes =
+    routeName match {
+      case Southbound.componentName =>
+        Southbound.normalRouteWithTimes
+      case Northbound.componentName =>
+        Northbound.normalRouteWithTimes
+      case _ =>
+        throw new IllegalArgumentException(
+          s"Unknown route: $routeName",
+        )
+    }
 }

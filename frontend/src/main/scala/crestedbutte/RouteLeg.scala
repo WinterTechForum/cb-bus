@@ -29,7 +29,7 @@ case class RouteSegment private (
   val end = e
 
   val routeWithTimes: RouteWithTimes =
-    RouteLookup(this)
+    RouteLookup.lookupRouteWithTimes(r)
 
   lazy val plainTextRepresentation =
     s"""${start.t.toDumbAmericanString}  ${start.l.name}

@@ -10,12 +10,7 @@ import crestedbutte.dom.BulmaLocal
 import crestedbutte.dom.BulmaLocal.UpcomingStops
 import crestedbutte.laminar.TouchControls.Swipe
 import crestedbutte.pwa.Persistence
-import crestedbutte.routes.{
-  CompleteStopList,
-  RouteWithTimes,
-  RtaNorthbound,
-  RtaSouthbound,
-}
+import crestedbutte.routes.{CompleteStopList, RTA, RouteWithTimes}
 import java.time.format.DateTimeFormatter
 import java.time.{Clock, OffsetDateTime}
 import org.scalajs.dom
@@ -464,9 +459,9 @@ object Components {
   ): Option[RouteSegment] = {
 
     val routeSegmentsO =
-      RtaSouthbound.fullSchedule
+      RTA.Southbound.fullSchedule
         .segment(start, end)
-        .orElse(RtaNorthbound.fullSchedule.segment(start, end))
+        .orElse(RTA.Northbound.fullSchedule.segment(start, end))
 //        .getOrElse(
 //          throw new IllegalStateException(
 //            "No route leg available in either route B",

@@ -1,7 +1,8 @@
 package crestedbutte
 
 import com.billding.time.*
-import crestedbutte.routes.{RtaNorthbound, RtaSouthbound}
+import crestedbutte.routes.RTA
+import crestedbutte.routes.RouteWithTimes
 import zio.json.JsonCodec
 
 case class StopTimeInfo(
@@ -11,8 +12,8 @@ case class StopTimeInfo(
 object RouteName {
   private lazy val indexedComponentNames: Seq[(RouteName, Int)] =
     Seq(
-      RtaSouthbound.componentName,
-      RtaNorthbound.componentName,
+      RTA.Southbound.componentName,
+      RTA.Northbound.componentName,
     ).zipWithIndex
 
   def encode(
@@ -69,3 +70,10 @@ case class Plan(
         ) => s"${leg.plainTextRepresentation}",
       )
       .mkString("\n")
+
+object models {
+  val allRoutes = List(
+    RTA.Southbound.componentName,
+    RTA.Northbound.componentName,
+  )
+}

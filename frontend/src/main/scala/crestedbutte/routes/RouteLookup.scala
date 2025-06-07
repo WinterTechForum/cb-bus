@@ -1,17 +1,21 @@
 package crestedbutte.routes
 
-import crestedbutte.RouteSegment
+import crestedbutte.{Location, RouteName}
+import crestedbutte.routes.RouteWithTimes
+import crestedbutte.routes.RTA.{Northbound, Southbound}
 
 object RouteLookup {
-  def apply(
-    routeSegment: RouteSegment,
+  def lookupRouteWithTimes(
+    routeName: RouteName,
   ): RouteWithTimes =
-    routeSegment.route match
-      case RtaSouthbound.componentName =>
-        RtaSouthbound.fullSchedule.routeWithTimes
-      case RtaNorthbound.componentName =>
-        RtaNorthbound.fullSchedule.routeWithTimes
-      case other =>
-        throw new Exception("Unrecognized route: " + other)
-
+    routeName match {
+      case Southbound.componentName =>
+        Southbound.fullSchedule.routeWithTimes
+      case Northbound.componentName =>
+        Northbound.fullSchedule.routeWithTimes
+      case _ =>
+        throw new IllegalArgumentException(
+          s"Unknown route: $routeName",
+        )
+    }
 }
