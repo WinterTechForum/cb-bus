@@ -14,31 +14,6 @@ object RoutingStuff {
   import com.raquo.waypoint.*
   import upickle.default.*
 
-  private val encodePage: BusPage => (
-    Option[String],
-    Option[String],
-    Option[String],
-  ) =
-    page =>
-      (Some(page.mode.toString),
-       page.time.map(_.toEUString),
-       page.plan.map(UrlEncoding.encode),
-      )
-
-  private val decodePage = {
-    (
-      mode: Option[String],
-      time: Option[String],
-      plan: Option[String],
-    ) =>
-      BusPage(
-        mode =
-          mode.map(AppMode.valueOf).getOrElse(AppMode.Production),
-        time = time.map(WallTime.apply),
-        plan = plan.flatMap(UrlEncoding.decode(_).toOption),
-      )
-  }.tupled
-
   val params: QueryParameters[
     (Option[String], Option[String], Option[String]),
     DummyError,
@@ -55,8 +30,8 @@ object RoutingStuff {
                       Option[String],
                     ),
     ](
-      encode = encodePage,
-      decode = decodePage,
+      encode = BusPage.encodePage,
+      decode = BusPage.decodePage,
       pattern = (root / "index_dev.html" / endOfSegments) ? params,
     )
 
@@ -68,8 +43,8 @@ object RoutingStuff {
                       Option[String],
                     ),
     ](
-      encode = encodePage,
-      decode = decodePage,
+      encode = BusPage.encodePage,
+      decode = BusPage.decodePage,
       pattern = (root / endOfSegments) ? params,
     )
 
