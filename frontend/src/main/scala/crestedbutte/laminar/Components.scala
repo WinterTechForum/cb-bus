@@ -61,6 +61,7 @@ object Components {
         )
 
         val segmentContentNifty
+        // TODO This is where I should be able to fix the whoe list getting re-rendered when I add a new element
           : Signal[Seq[ReactiveHtmlElement[HTMLDivElement]]] =
           $planSegments.signal
             .splitTransition(identity) {

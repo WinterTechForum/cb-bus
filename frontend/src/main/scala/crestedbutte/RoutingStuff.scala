@@ -80,7 +80,6 @@ object RoutingStuff {
       .collectSignal[BusPage]($loginPage =>
         div(
           child <-- $loginPage.map(busPageInfo =>
-            // TODO Start pulling out route queryParam
             Components.FullApp(busPageInfo.mode,
                                busPageInfo.javaClock,
             ),
