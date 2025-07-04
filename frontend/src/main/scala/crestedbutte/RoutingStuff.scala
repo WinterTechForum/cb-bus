@@ -35,9 +35,6 @@ object RoutingStuff {
         java.time.Clock.systemUTC()
   }
 
-  implicit val wallTimeRw: ReadWriter[WallTime] =
-    readwriter[String].bimap[WallTime](_.toEUString, WallTime(_))
-
   implicit val planRw: ReadWriter[Plan] =
     readwriter[String].bimap[Plan](
       UrlEncoding.encode,

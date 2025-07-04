@@ -182,6 +182,10 @@ case class WallTime private (
 }
 
 object WallTime {
+  import upickle.default.*
+  implicit val wallTimeRw: ReadWriter[WallTime] =
+    readwriter[String].bimap[WallTime](_.toEUString, WallTime(_))
+
   def fromMinutes(
     m: Int,
   ) = WallTime(Minutes.safe(m), HourNotation.Twelve)
