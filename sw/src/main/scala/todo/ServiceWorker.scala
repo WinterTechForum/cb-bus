@@ -75,7 +75,7 @@ object ServiceWorker {
         ),
     )
 
-    println("main: ServiceWorker installing...")
+    println("main: ServiceWorker installing!")
   }
 
   def toCache(): Future[Unit] =
@@ -84,7 +84,7 @@ object ServiceWorker {
         println("toCache: caching assets...")
         cache.addAll(todoAssets).toFuture
       })
-      .get
+      .getOrElse(throw new Exception("ServiceWorker.toCache failure"))
 
   def fromCache(
     request: Request,
