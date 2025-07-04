@@ -71,6 +71,19 @@ case class Plan(
       )
       .mkString("\n")
 
+object Plan {
+  import upickle.default.*
+  implicit val planRw: ReadWriter[Plan] =
+    readwriter[String].bimap[Plan](
+      UrlEncoding.encode,
+      s =>
+        UrlEncoding.decode(s) match
+          case Left(error) =>
+            throw new Exception(s"Failed to decode Plan: $error")
+          case Right(value) => value,
+    )
+
+}
 object models {
   val allRoutes = List(
     RTA.Southbound.componentName,

@@ -35,16 +35,6 @@ object RoutingStuff {
         java.time.Clock.systemUTC()
   }
 
-  implicit val planRw: ReadWriter[Plan] =
-    readwriter[String].bimap[Plan](
-      UrlEncoding.encode,
-      s =>
-        UrlEncoding.decode(s) match
-          case Left(error) =>
-            throw new Exception(s"Failed to decode Plan: $error")
-          case Right(value) => value,
-    )
-
   implicit private val rw: ReadWriter[BusPage] = macroRW
 
   private val encodePage: BusPage => (
