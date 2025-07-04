@@ -91,11 +91,19 @@ object Location {
   val locationsAndIdxs = Location.values.zipWithIndex
   def encodeLocation(
     location: Location,
-  ): Int = locationsAndIdxs.find(_._1 == location).get._2
+  ): Int =
+    locationsAndIdxs
+      .find(_._1 == location)
+      .getOrElse(throw new Exception("encodeLocationFailure"))
+      ._2
 
   def decodeLocation(
     locationIdx: Int,
-  ): Location = locationsAndIdxs.find(_._2 == locationIdx).get._1
+  ): Location =
+    locationsAndIdxs
+      .find(_._2 == locationIdx)
+      .getOrElse(throw new Exception("decodeLocationFailure"))
+      ._1
 
   implicit val codec: JsonCodec[Location] =
     JsonCodec.int.transform(Location.decodeLocation,
