@@ -61,6 +61,20 @@ case class Plan(
 
   val routeSegments: Seq[RouteSegment] = l
 
+  val routePieces: Seq[RoutePiece] =
+    if (routeSegments.isEmpty)
+      routeSegments
+    else
+      routeSegments.tail
+        .foldLeft[Seq[RoutePiece]](Seq(routeSegments.head)) {
+          case (acc, next) =>
+            acc.last match
+              case RouteSegment(r, s, e) =>
+                (acc :+ RouteGap(e.t, next.start.t)) :+ next
+              case _ =>
+                ??? // Eh, annoying, but not nearly as bad as the previous muck
+        }
+
   val plainTextRepresentation: String =
     l.zipWithIndex
       .map(

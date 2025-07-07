@@ -174,114 +174,90 @@ object Components {
     ],
   ) =
     div(
-      child <-- $plan.signal.map { plan =>
-        val segments = plan.routeSegments
-        val routePieces: Seq[RoutePiece] =
-          if (segments.isEmpty)
-            segments
-          else
-            segments.tail
-              .foldLeft[Seq[RoutePiece]](Seq(segments.head)) {
-                case (acc, next) =>
-                  acc.last match
-                    case RouteSegment(r, s, e) =>
-                      (acc :+ RouteGap(e.t, next.start.t)) :+ next
-                    case _ =>
-                      ??? // Eh, annoying, but not nearly as bad as the previous muck
-              }
+      if ($plan.now().routeSegments.isEmpty)
+        div()
+      else
+        copyButtons($plan.now()),
+      children <-- $plan.signal
+        .map(_.routePieces.zipWithIndex)
+        .splitTransition(_._1.id) {
+          case (_, (routePiece, idx), _, transition) =>
+            // TODO This is a problem. I think.
+            // val $planSegments: Var[Seq[RoutePiece]] =
+            //   Var(Seq.empty)
 
-        val $planSegments: Var[Seq[RoutePiece]] =
-          Var(Seq.empty)
-
-        import scala.scalajs.js.timers._
-        routePieces.zipWithIndex.foreach(l =>
-          setTimeout(l._2 * 150)(
-            $planSegments.update(_ :+ l._1),
-          ),
-        )
-
-        def renderRoutePiece(
-          routePiece: RoutePiece,
-          idx: Int,
-          transition: Transition,
-        ) =
-          routePiece match {
-            case r: RouteGap =>
-              div(
-                textAlign := "center",
-                paddingTop := "1.5em",
-                paddingBottom := "1.5em",
-                span(
-                  cls := "time-at-stop",
-                  r.endTime
-                    .between(r.start)
-                    .humanFriendly,
-                ),
-              )
-            case rs: RouteSegment =>
-              RouteLegElement(
-                rs,
-                idx / 2, // hack to unfuck indices now that the gaps get them too
-                db,
-                $plan,
-                addingNewRoute,
-                timestamp,
-                scheduleSelector,
-                transition,
-              )
-            // .amend(
-            //   transition.height, // TODO Provide directly to the element
+            // import scala.scalajs.js.timers._
+            // routePieces.zipWithIndex.foreach(l =>
+            //   setTimeout(l._2 * 150)(
+            //     $planSegments.update(_ :+ l._1),
+            //   ),
             // )
 
-          }
-
-        val segmentContentNifty
-        // TODO This is where I should be able to fix the whoe list getting re-rendered when I add a new element
-        = // TODO For one thing, I think I should try to stay out of HtmlElements for longer
-          $planSegments.signal
-            .map(_.zipWithIndex)
-            .splitTransition(_._1.id) {
-              case (_, (routePiece, idx), _, transition) =>
-                renderRoutePiece(routePiece, idx, transition)
-
-            }
-
-        div(
-          if (segments.isEmpty)
-            div()
-          else
-            copyButtons(plan),
-          children <-- segmentContentNifty,
-          div(
-            cls := "add-new-route-section",
-            child <-- addingNewRoute.signal.map {
-              case false =>
-                div(
-                  cls := "centered",
-                  button(
-                    cls := "button",
-                    "Add new route!",
-                    onClick --> Observer { _ =>
-                      addingNewRoute.set {
-                        true
-                      }
-                    },
-                  ),
-                )
-              case true =>
-                div(
-                  StopSelector(
-                    CompleteStopList.values,
-                    $plan,
+            def renderRoutePiece(
+              routePiece: RoutePiece,
+              idx: Int,
+              transition: Transition,
+            ) =
+              routePiece match {
+                case r: RouteGap =>
+                  div(
+                    textAlign := "center",
+                    paddingTop := "1.5em",
+                    paddingBottom := "1.5em",
+                    span(
+                      cls := "time-at-stop",
+                      r.endTime
+                        .between(r.start)
+                        .humanFriendly,
+                    ),
+                  )
+                case rs: RouteSegment =>
+                  RouteLegElement(
+                    rs,
+                    idx / 2, // hack to unfuck indices now that the gaps get them too
                     db,
-                    initialTime,
+                    $plan,
                     addingNewRoute,
-                  ),
-                )
-            },
-          ),
-        )
-      },
+                    timestamp,
+                    scheduleSelector,
+                    transition,
+                  )
+                // .amend(
+                //   transition.height, // TODO Provide directly to the element
+                // )
+
+              }
+
+            renderRoutePiece(routePiece, idx, transition)
+        },
+      div(
+        cls := "add-new-route-section",
+        child <-- addingNewRoute.signal.map {
+          case false =>
+            div(
+              cls := "centered",
+              button(
+                cls := "button",
+                "Add new route!",
+                onClick --> Observer { _ =>
+                  addingNewRoute.set {
+                    true
+                  }
+                },
+              ),
+            )
+          case true =>
+            div(
+              StopSelector(
+                CompleteStopList.values,
+                $plan,
+                db,
+                initialTime,
+                addingNewRoute,
+              ),
+            )
+        },
+      ),
     )
 
   def deleteButton(
