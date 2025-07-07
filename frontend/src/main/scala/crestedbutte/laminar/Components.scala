@@ -22,6 +22,146 @@ case class LocationTimeDirection(
   routeSegment: RouteSegment)
 
 object Components {
+  def FullApp(
+    pageMode: AppMode,
+    javaClock: Clock,
+  ) = {
+    val db: Persistence = Persistence()
+
+    val clockTicks = new EventBus[Unit]
+
+    def currentWallTime(
+      javaClock: Clock,
+    ) =
+      WallTime(
+        OffsetDateTime
+          .now(javaClock)
+          .toLocalTime
+          .format(
+            DateTimeFormatter.ofPattern("HH:mm"),
+          ),
+      )
+
+    val initialTime =
+      currentWallTime:
+        javaClock
+
+    val timeStamps: Signal[WallTime] = clockTicks.events
+      .scanLeft(
+        initialTime,
+      )(
+        (
+          _,
+          _,
+        ) => currentWallTime(javaClock),
+      )
+
+    val $plan: Var[Plan] = Var(
+      db.retrieveDailyPlanOnly.getOrElse(Plan(Seq.empty)),
+    )
+
+    val addingNewRoute: Var[Boolean] = Var(
+      $plan.now().routeSegments.isEmpty, // If no segments , assume we want to add more
+    )
+
+    val selectedStop: Var[Option[(BusScheduleAtStop, RouteSegment)]] =
+      Var(None)
+
+    val upcomingArrivalData =
+      timeStamps
+        .map { timestamp =>
+          Components.PlanElement(
+            db,
+            $plan,
+            initialTime,
+            timestamp,
+            addingNewRoute,
+            selectedStop.writer,
+          )
+        }
+
+    val whatToShowBetter
+      : Signal[ReactiveHtmlElement[HTMLDivElement]] =
+      selectedStop.signal
+        .map {
+          case Some((busScheduleAtStop, routeSegment)) =>
+            val res =
+              UpcomingStops(
+                busScheduleAtStop,
+                routeSegment,
+                $plan.writer
+                  .contramap[LocationTimeDirection] { ltd =>
+                    selectedStop.set(None)
+                    val res =
+                      TimeCalculations
+                        .updateSegmentFromArbitrarySelection(
+                          ltd,
+                          $plan.now(),
+                        ) match {
+                        case Left(failure) =>
+                          throw new Exception(failure)
+                        case Right(segment) => segment
+                      }
+                    db.saveDailyPlanOnly(res)
+                    addingNewRoute.set {
+                      false
+                    }
+                    res
+                  },
+              )
+
+            import scala.scalajs.js.timers._
+            setTimeout(200)(
+              dom.document
+                .getElementById("selected-time")
+                .scrollIntoView(
+                  top = false,
+                  //              { behavior: "instant", block: "end" }
+                ),
+            )
+            res
+          case None =>
+            div(
+              child <-- upcomingArrivalData,
+            )
+        }
+
+    div(
+      onMountCallback: context =>
+        db.initializeOrResetStorage(),
+      RepeatingElement()
+        .repeatWithInterval( // This acts like a Dune thumper
+          (),
+          new FiniteDuration(200,
+                             scala.concurrent.duration.SECONDS,
+          ), // TODO Make low again
+        ) --> clockTicks,
+      div(
+        div(
+          cls := ElementNames.BoxClass,
+          idAttr := "container",
+          child <-- whatToShowBetter, // **THIS IS THE IMPORTANT STUFF** The fact that it's hard to see means I need to remove other bullshit
+          timeStamps --> Observer[WallTime](
+            onNext = localTime =>
+              desiredAlarms
+                .dequeueAll(busTime =>
+                  localTime
+                    .between(busTime)
+                    .toMinutes <= NotificationStuff.headsUpAmount.toMinutes,
+                )
+                .foreach(
+                  Experimental.Notifications.createJankyBusAlertInSideEffectyWay,
+                ),
+          ),
+          Option.when(pageMode == AppMode.dev)(
+            Experimental.Sandbox(
+              timeStamps,
+            ),
+          ),
+        ),
+      ),
+    )
+  }
 
   def PlanElement(
     db: Persistence,
@@ -62,10 +202,11 @@ object Components {
 
         val segmentContentNifty
         // TODO This is where I should be able to fix the whoe list getting re-rendered when I add a new element
-          : Signal[Seq[ReactiveHtmlElement[HTMLDivElement]]] =
+          : Signal[Seq[ReactiveHtmlElement[HTMLDivElement]]] = // TODO For one thing, I think I should try to stay out of HtmlElements for longer
           $planSegments.signal
-            .splitTransition(identity) {
-              case (_, (routePiece, i), _, transition) =>
+            .map(x => x.zipWithIndex)
+            .splitTransition(_._2) {
+              case (_, ((routePiece, idx), i), _, transition) =>
                 routePiece match {
                   case r: RouteGap =>
                     div(
@@ -282,143 +423,6 @@ object Components {
         ),
       ),
     )
-
-  def FullApp(
-    pageMode: AppMode,
-    javaClock: Clock,
-  ) = {
-    val db: Persistence = Persistence()
-
-    val clockTicks = new EventBus[Unit]
-
-    def currentWallTime(
-      javaClock: Clock,
-    ) =
-      WallTime(
-        OffsetDateTime
-          .now(javaClock)
-          .toLocalTime
-          .format(
-            DateTimeFormatter.ofPattern("HH:mm"),
-          ),
-      )
-
-    val initialTime =
-      currentWallTime:
-        javaClock
-
-    val timeStamps: Signal[WallTime] = clockTicks.events
-      .scanLeft(
-        initialTime,
-      )(
-        (
-          _,
-          _,
-        ) => currentWallTime(javaClock),
-      )
-
-    val $plan: Var[Plan] = Var(
-      db.retrieveDailyPlanOnly.getOrElse(Plan(Seq.empty)),
-    )
-
-    val addingNewRoute: Var[Boolean] = Var(
-      $plan.now().routeSegments.isEmpty, // If no segments , assume we want to add more
-    )
-
-    val selectedStop: Var[Option[(BusScheduleAtStop, RouteSegment)]] =
-      Var(None)
-
-    val upcomingArrivalData =
-      timeStamps
-        .map { timestamp =>
-          Components.PlanElement(
-            db,
-            $plan,
-            initialTime,
-            timestamp,
-            addingNewRoute,
-            selectedStop.writer,
-          )
-        }
-
-    val whatToShowBetter
-      : Signal[ReactiveHtmlElement[HTMLDivElement]] =
-      selectedStop.signal
-        .map {
-          case Some((busScheduleAtStop, routeSegment)) =>
-            val res =
-              UpcomingStops(
-                busScheduleAtStop,
-                routeSegment,
-                $plan.writer
-                  .contramap[LocationTimeDirection] { ltd =>
-                    selectedStop.set(None)
-                    val res =
-                      TimeCalculations
-                        .updateSegmentFromArbitrarySelection(
-                          ltd,
-                          $plan.now(),
-                        )
-                    db.saveDailyPlanOnly(res)
-                    addingNewRoute.set {
-                      false
-                    }
-                    res
-                  },
-              )
-
-            import scala.scalajs.js.timers._
-            setTimeout(200)(
-              dom.document
-                .getElementById("selected-time")
-                .scrollIntoView(
-                  top = false,
-                  //              { behavior: "instant", block: "end" }
-                ),
-            )
-            res
-          case None =>
-            div(
-              child <-- upcomingArrivalData,
-            )
-        }
-
-    div(
-      onMountCallback: context =>
-        db.initializeOrResetStorage(),
-      RepeatingElement()
-        .repeatWithInterval( // This acts like a Dune thumper
-          (),
-          new FiniteDuration(200,
-                             scala.concurrent.duration.SECONDS,
-          ), // TODO Make low again
-        ) --> clockTicks,
-      div(
-        div(
-          cls := ElementNames.BoxClass,
-          idAttr := "container",
-          child <-- whatToShowBetter, // **THIS IS THE IMPORTANT STUFF** The fact that it's hard to see means I need to remove other bullshit
-          timeStamps --> Observer[WallTime](
-            onNext = localTime =>
-              desiredAlarms
-                .dequeueAll(busTime =>
-                  localTime
-                    .between(busTime)
-                    .toMinutes <= NotificationStuff.headsUpAmount.toMinutes,
-                )
-                .foreach(
-                  Experimental.Notifications.createJankyBusAlertInSideEffectyWay,
-                ),
-          ),
-          Option.when(pageMode == AppMode.dev)(
-            Experimental.Sandbox(
-              timeStamps,
-            ),
-          ),
-        ),
-      ),
-    )
-  }
 
   def copyButtons(
     plan: Plan,
