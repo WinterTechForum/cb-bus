@@ -190,50 +190,59 @@ object Components {
                       ??? // Eh, annoying, but not nearly as bad as the previous muck
               }
 
-        val $planSegments: Var[Seq[(RoutePiece, Int)]] =
+        val $planSegments: Var[Seq[RoutePiece]] =
           Var(Seq.empty)
 
         import scala.scalajs.js.timers._
         routePieces.zipWithIndex.foreach(l =>
           setTimeout(l._2 * 150)(
-            $planSegments.update(_ :+ l),
+            $planSegments.update(_ :+ l._1),
           ),
         )
 
+        def renderRoutePiece(
+          routePiece: RoutePiece,
+          idx: Int,
+          transition: Transition,
+        ) =
+          routePiece match {
+            case r: RouteGap =>
+              div(
+                textAlign := "center",
+                paddingTop := "1.5em",
+                paddingBottom := "1.5em",
+                span(
+                  cls := "time-at-stop",
+                  r.endTime
+                    .between(r.start)
+                    .humanFriendly,
+                ),
+              )
+            case rs: RouteSegment =>
+              RouteLegElement(
+                rs,
+                idx / 2, // hack to unfuck indices now that the gaps get them too
+                db,
+                $plan,
+                addingNewRoute,
+                timestamp,
+                scheduleSelector,
+                transition,
+              )
+            // .amend(
+            //   transition.height, // TODO Provide directly to the element
+            // )
+
+          }
+
         val segmentContentNifty
         // TODO This is where I should be able to fix the whoe list getting re-rendered when I add a new element
-          : Signal[Seq[ReactiveHtmlElement[HTMLDivElement]]] = // TODO For one thing, I think I should try to stay out of HtmlElements for longer
+        = // TODO For one thing, I think I should try to stay out of HtmlElements for longer
           $planSegments.signal
-            .map(x => x.zipWithIndex)
-            .splitTransition(_._2) {
-              case (_, ((routePiece, idx), i), _, transition) =>
-                routePiece match {
-                  case r: RouteGap =>
-                    div(
-                      textAlign := "center",
-                      paddingTop := "1.5em",
-                      paddingBottom := "1.5em",
-                      span(
-                        cls := "time-at-stop",
-                        r.endTime
-                          .between(r.start)
-                          .humanFriendly,
-                      ),
-                    )
-                  case rs: RouteSegment =>
-                    RouteLegElement(
-                      rs,
-                      i / 2, // hack to unfuck indices now that the gaps get them too
-                      db,
-                      $plan,
-                      addingNewRoute,
-                      timestamp,
-                      scheduleSelector,
-                    ).amend(
-                      transition.height, // TODO Provide directly to the element
-                    )
-
-                }
+            .map(_.zipWithIndex)
+            .splitTransition(_._1.id) {
+              case (_, (routePiece, idx), _, transition) =>
+                renderRoutePiece(routePiece, idx, transition)
 
             }
 
@@ -334,6 +343,7 @@ object Components {
     scheduleSelector: Observer[
       Option[(BusScheduleAtStop, RouteSegment)],
     ],
+    transition: Transition,
   ) = {
 
     val planSwipeUpdater: Observer[(Int, Option[RouteSegment])] =
@@ -354,6 +364,7 @@ object Components {
 
     val res =
       div(
+        transition.height,
         TouchControls.swipeProp {
           case Swipe.Left =>
             planSwipeUpdater.onNext(

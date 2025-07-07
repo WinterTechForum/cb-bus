@@ -4,12 +4,18 @@ import com.billding.time.{MinuteDuration, WallTime}
 import crestedbutte.routes.{RouteLookup, RouteWithTimes}
 import zio.json.JsonCodec
 
-trait RoutePiece
+trait RoutePiece {
+  val id: Long
+}
+
+val random = new java.util.Random()
 
 case class RouteGap(
   start: WallTime,
   endTime: WallTime)
-    extends RoutePiece
+    extends RoutePiece {
+  val id = random.nextLong()
+}
 
 case class RouteSegment private (
   r: RouteName,
@@ -17,6 +23,7 @@ case class RouteSegment private (
   e: LocationWithTime)
     extends RoutePiece
     derives JsonCodec {
+  val id = random.nextLong()
 
   assert(
     s.l != e.l,
