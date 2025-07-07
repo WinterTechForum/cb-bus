@@ -67,19 +67,6 @@ object Components {
     val selectedStop: Var[Option[(BusScheduleAtStop, RouteSegment)]] =
       Var(None)
 
-    val upcomingArrivalData =
-      timeStamps
-        .map { timestamp =>
-          Components.PlanElement(
-            db,
-            $plan,
-            initialTime,
-            timestamp,
-            addingNewRoute,
-            selectedStop.writer,
-          )
-        }
-
     val whatToShowBetter
       : Signal[ReactiveHtmlElement[HTMLDivElement]] =
       selectedStop.signal
@@ -116,13 +103,17 @@ object Components {
                 .getElementById("selected-time")
                 .scrollIntoView(
                   top = false,
-                  //              { behavior: "instant", block: "end" }
                 ),
             )
             res
           case None =>
-            div(
-              child <-- upcomingArrivalData,
+            Components.PlanElement(
+              timeStamps,
+              db,
+              $plan,
+              initialTime,
+              addingNewRoute,
+              selectedStop.writer,
             )
         }
 
@@ -164,40 +155,23 @@ object Components {
   }
 
   def PlanElement(
+    timeStamps: Signal[WallTime],
     db: Persistence,
     $plan: Var[Plan],
     initialTime: WallTime,
-    timestamp: WallTime,
     addingNewRoute: Var[Boolean],
     scheduleSelector: Observer[
       Option[(BusScheduleAtStop, RouteSegment)],
     ],
   ) =
     div(
-      if ($plan.now().routeSegments.isEmpty)
-        div()
-      else
-        copyButtons($plan.now()),
+      copyButtons($plan.signal),
       children <-- $plan.signal
         .map(_.routePieces.zipWithIndex)
         .splitTransition(_._1.id) {
           case (_, (routePiece, idx), _, transition) =>
-            // TODO This is a problem. I think.
-            // val $planSegments: Var[Seq[RoutePiece]] =
-            //   Var(Seq.empty)
-
-            // import scala.scalajs.js.timers._
-            // routePieces.zipWithIndex.foreach(l =>
-            //   setTimeout(l._2 * 150)(
-            //     $planSegments.update(_ :+ l._1),
-            //   ),
-            // )
-
-            def renderRoutePiece(
-              routePiece: RoutePiece,
-              idx: Int,
-              transition: Transition,
-            ) =
+            div(
+              transition.height,
               routePiece match {
                 case r: RouteGap =>
                   div(
@@ -218,19 +192,11 @@ object Components {
                     db,
                     $plan,
                     addingNewRoute,
-                    timestamp,
                     scheduleSelector,
                     transition,
                   )
-                // .amend(
-                //   transition.height, // TODO Provide directly to the element
-                // )
 
-              }
-
-            div(
-              transition.height,
-              renderRoutePiece(routePiece, idx, transition),
+              },
             )
         },
       div(
@@ -318,7 +284,6 @@ object Components {
     db: Persistence,
     $plan: Var[Plan],
     addingNewRoute: Var[Boolean],
-    timestamp: WallTime,
     scheduleSelector: Observer[
       Option[(BusScheduleAtStop, RouteSegment)],
     ],
@@ -359,7 +324,6 @@ object Components {
         stopInfo(routeSegment,
                  routeSegment.start,
                  routeSegment.routeWithTimes,
-                 timestamp,
                  scheduleSelector,
         ),
         transitSegment(
@@ -371,7 +335,6 @@ object Components {
         stopInfo(routeSegment,
                  routeSegment.end,
                  routeSegment.routeWithTimes,
-                 timestamp,
                  scheduleSelector,
         ),
       )
@@ -388,7 +351,6 @@ object Components {
     routeSegment: RouteSegment,
     stop: LocationWithTime,
     routeWithTimes: RouteWithTimes,
-    timestamp: WallTime, // TODO *should* we be using this?
     scheduleSelector: Observer[
       Option[(BusScheduleAtStop, RouteSegment)],
     ],
@@ -414,31 +376,38 @@ object Components {
     )
 
   def copyButtons(
-    plan: Plan,
+    $plan: Signal[Plan],
   ) =
     div(
-      button(
-        cls := "button m-2",
-        "Copy Text",
-        onClick --> Observer { _ =>
-          dom.window.navigator.clipboard
-            .writeText(plan.plainTextRepresentation)
-        },
-      ),
-      button(
-        cls := "button m-2",
-        "Copy App Link",
-        onClick --> Observer { _ =>
-          val url =
-            if (dom.document.URL.contains("localhost"))
-              s"http://localhost:8000/index_dev.html?plan=${UrlEncoding.encode(plan)}"
-            else
-              s"https://cbbus.netlify.app/?plan=${UrlEncoding.encode(plan)}"
+      child <-- $plan.map { plan =>
+        if (plan.routeSegments.isEmpty)
+          div()
+        else
+          div(
+            button(
+              cls := "button m-2",
+              "Copy Text",
+              onClick --> Observer { _ =>
+                dom.window.navigator.clipboard
+                  .writeText(plan.plainTextRepresentation)
+              },
+            ),
+            button(
+              cls := "button m-2",
+              "Copy App Link",
+              onClick --> Observer { _ =>
+                val url =
+                  if (dom.document.URL.contains("localhost"))
+                    s"http://localhost:8000/index_dev.html?plan=${UrlEncoding.encode(plan)}"
+                  else
+                    s"https://cbbus.netlify.app/?plan=${UrlEncoding.encode(plan)}"
 
-          dom.window.navigator.clipboard
-            .writeText(url)
-        },
-      ),
+                dom.window.navigator.clipboard
+                  .writeText(url)
+              },
+            ),
+          )
+      },
     )
 
   def rightLegOnRightRoute(

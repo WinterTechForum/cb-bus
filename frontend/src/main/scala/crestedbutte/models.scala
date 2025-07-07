@@ -70,6 +70,7 @@ case class Plan(
           case (acc, next) =>
             acc.last match
               case RouteSegment(r, s, e) =>
+                // TODO Would be nice to make the gaps in a way such that they don't get re-rendered when the plan changes
                 (acc :+ RouteGap(e.t, next.start.t)) :+ next
               case _ =>
                 ??? // Eh, annoying, but not nearly as bad as the previous muck
