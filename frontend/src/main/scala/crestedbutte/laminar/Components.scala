@@ -221,7 +221,7 @@ object Components {
                 CompleteStopList.values,
                 $plan,
                 db,
-                initialTime,
+                timeStamps,
                 addingNewRoute,
               ),
             )
@@ -449,7 +449,7 @@ object Components {
     locations: Seq[Location],
     $plan: Var[Plan],
     db: Persistence,
-    initialTime: WallTime,
+    $now: Signal[WallTime],
     addingNewRoute: Var[Boolean], // TODO Smaller type
   ) =
     val startingPoint: Var[Option[Location]] = Var(None)
@@ -472,67 +472,70 @@ object Components {
             div(
               transition.width,
               transition.height,
-              button(
-                disabled <-- startingPoint.signal.map {
-                  case Some(startingPointNow)
-                      if startingPointNow == location =>
-                    false
-                  case Some(other) =>
-                    rightLegOnRightRoute(
-                      other,
-                      location,
-                      $plan.now(),
-                      initialTime,
-                    ).isEmpty
-                  case None => false
-                },
-                cls := "button m-2",
-                onClick --> Observer {
-                  _ =>
-                    startingPoint.update {
+              child <-- $now.map {
+                now =>
+                  button(
+                    disabled <-- startingPoint.signal.map {
                       case Some(startingPointNow)
                           if startingPointNow == location =>
-                        None
+                        false
                       case Some(other) =>
-                        val matchingLegO =
-                          rightLegOnRightRoute(
-                            other,
-                            location,
-                            $plan.now(),
-                            initialTime,
-                          )
-
-                        matchingLegO match
-                          case Some(matchingLeg) =>
-                            $plan.update { case oldPlan =>
-                              val newPlan =
-                                oldPlan.copy(l =
-                                  oldPlan.l :+ matchingLeg,
-                                )
-                              db.saveDailyPlanOnly(newPlan)
-                              addingNewRoute.set(false)
-                              newPlan
-                            }
-                            Some(other)
-                          case None =>
-                            println(
-                              "giving up and deselecting starting point",
-                            )
+                        rightLegOnRightRoute(
+                          other,
+                          location,
+                          $plan.now(),
+                          now,
+                        ).isEmpty
+                      case None => false
+                    },
+                    cls := "button m-2",
+                    onClick --> Observer {
+                      _ =>
+                        startingPoint.update {
+                          case Some(startingPointNow)
+                              if startingPointNow == location =>
                             None
+                          case Some(other) =>
+                            val matchingLegO =
+                              rightLegOnRightRoute(
+                                other,
+                                location,
+                                $plan.now(),
+                                now,
+                              )
 
-                      case None =>
-                        Some(location)
-                    }
-                },
-                cls <-- startingPoint.signal.map {
-                  case Some(startingPointNow)
-                      if startingPointNow == location =>
-                    "is-primary"
-                  case Some(_) => "is-info"
-                  case None    => "is-info"
-                },
-                location.name,
-              ),
+                            matchingLegO match
+                              case Some(matchingLeg) =>
+                                $plan.update { case oldPlan =>
+                                  val newPlan =
+                                    oldPlan.copy(l =
+                                      oldPlan.l :+ matchingLeg,
+                                    )
+                                  db.saveDailyPlanOnly(newPlan)
+                                  addingNewRoute.set(false)
+                                  newPlan
+                                }
+                                Some(other)
+                              case None =>
+                                println(
+                                  "giving up and deselecting starting point",
+                                )
+                                None
+
+                          case None =>
+                            Some(location)
+                        }
+                    },
+                    cls <-- startingPoint.signal.map {
+                      case Some(startingPointNow)
+                          if startingPointNow == location =>
+                        "is-primary"
+                      case Some(_) => "is-info"
+                      case None    => "is-info"
+                    },
+                    location.name,
+                  )
+              },
             )
         },
       ),
