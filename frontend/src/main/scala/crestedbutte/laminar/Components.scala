@@ -228,7 +228,10 @@ object Components {
 
               }
 
-            renderRoutePiece(routePiece, idx, transition)
+            div(
+              transition.height,
+              renderRoutePiece(routePiece, idx, transition),
+            )
         },
       div(
         cls := "add-new-route-section",
@@ -340,7 +343,6 @@ object Components {
 
     val res =
       div(
-        transition.height,
         TouchControls.swipeProp {
           case Swipe.Left =>
             planSwipeUpdater.onNext(
