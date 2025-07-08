@@ -169,49 +169,56 @@ object Components {
       children <-- $plan.signal
         .map(_.routePieces.zipWithIndex)
         .splitTransition(_._1.id) {
-          case (_, (routePiece, idx), _, transition) =>
+          case (_, (routePiece, idx), routePieceSignal, transition) =>
             div(
-              transition.height,
-              routePiece match {
-                case r: RouteGap =>
-                  div(
-                    textAlign := "center",
-                    paddingTop := "1.5em",
-                    paddingBottom := "1.5em",
-                    span(
-                      cls := "time-at-stop",
-                      r.endTime
-                        .between(r.start)
-                        .humanFriendly,
-                    ),
-                  )
-                case rs: RouteSegment =>
-                  val legDeleter =
-                    Observer { (rs: RouteSegment) =>
-                      val plan = $plan.now()
-                      println("More narrow deletion")
-                      val newPlan =
-                        plan.copy(l = plan.l.filterNot(_ == rs))
-                      db.saveDailyPlanOnly(newPlan)
-                      $plan.set(newPlan)
-                      if (newPlan.l.isEmpty) {
-                        addingNewRoute.set {
-                          true
-                        }
-                      }
-                    }
-                  RouteLegElement(
-                    rs,
-                    idx / 2, // hack to unfuck indices now that the gaps get them too
-                    db,
-                    $plan,
-                    addingNewRoute,
-                    scheduleSelector,
-                    transition,
-                    legDeleter,
-                  )
+              child <-- routePieceSignal
+                .map {
+                  case (routePieceInner, idx) =>
+                    div(
+                      transition.height,
+                      routePieceInner match {
+                        case r: RouteGap =>
+                          div(
+                            textAlign := "center",
+                            paddingTop := "1.5em",
+                            paddingBottom := "1.5em",
+                            span(
+                              cls := "time-at-stop",
+                              r.endTime
+                                .between(r.start)
+                                .humanFriendly,
+                            ),
+                          )
+                        case rs: RouteSegment =>
+                          val legDeleter =
+                            Observer { (rs: RouteSegment) =>
+                              val plan = $plan.now()
+                              println("More narrow deletion")
+                              val newPlan =
+                                plan
+                                  .copy(l = plan.l.filterNot(_ == rs))
+                              db.saveDailyPlanOnly(newPlan)
+                              $plan.set(newPlan)
+                              if (newPlan.l.isEmpty) {
+                                addingNewRoute.set {
+                                  true
+                                }
+                              }
+                            }
+                          RouteLegElement(
+                            rs,
+                            idx / 2, // hack to unfuck indices now that the gaps get them too
+                            db,
+                            $plan,
+                            addingNewRoute,
+                            scheduleSelector,
+                            transition,
+                            legDeleter,
+                          )
 
-              },
+                      },
+                    )
+                },
             )
         },
       div(

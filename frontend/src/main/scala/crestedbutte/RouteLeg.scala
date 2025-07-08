@@ -12,10 +12,9 @@ val random = new java.util.Random()
 
 case class RouteGap(
   start: WallTime,
-  endTime: WallTime)
-    extends RoutePiece {
-  val id = random.nextLong()
-}
+  endTime: WallTime,
+  id: Long)
+    extends RoutePiece
 
 case class RouteSegment private (
   r: RouteName,

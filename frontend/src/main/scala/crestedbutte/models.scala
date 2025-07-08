@@ -65,13 +65,16 @@ case class Plan(
     if (routeSegments.isEmpty)
       routeSegments
     else
-      routeSegments.tail
+      routeSegments.tail.zipWithIndex
         .foldLeft[Seq[RoutePiece]](Seq(routeSegments.head)) {
-          case (acc, next) =>
+          case (acc, (next, idx)) =>
             acc.last match
               case RouteSegment(r, s, e) =>
                 // TODO Would be nice to make the gaps in a way such that they don't get re-rendered when the plan changes
-                (acc :+ RouteGap(e.t, next.start.t)) :+ next
+                (acc :+ RouteGap(e.t,
+                                 next.start.t,
+                                 idx * 1000L,
+                )) :+ next
               case _ =>
                 ??? // Eh, annoying, but not nearly as bad as the previous muck
         }
