@@ -186,6 +186,20 @@ object Components {
                     ),
                   )
                 case rs: RouteSegment =>
+                  val legDeleter =
+                    Observer { (rs: RouteSegment) =>
+                      val plan = $plan.now()
+                      println("More narrow deletion")
+                      val newPlan =
+                        plan.copy(l = plan.l.filterNot(_ == rs))
+                      db.saveDailyPlanOnly(newPlan)
+                      $plan.set(newPlan)
+                      if (newPlan.l.isEmpty) {
+                        addingNewRoute.set {
+                          true
+                        }
+                      }
+                    }
                   RouteLegElement(
                     rs,
                     idx / 2, // hack to unfuck indices now that the gaps get them too
@@ -194,6 +208,7 @@ object Components {
                     addingNewRoute,
                     scheduleSelector,
                     transition,
+                    legDeleter,
                   )
 
               },
@@ -231,25 +246,14 @@ object Components {
 
   def deleteButton(
     routeSegment: RouteSegment,
-    $plan: Var[Plan],
     db: Persistence,
     addingNewRoute: Var[Boolean],
+    legDeleter: Observer[RouteSegment],
   ): ReactiveHtmlElement[HTMLAnchorElement] =
     a(
       cls := "link transit-period-delete",
-      // TODO Should this Observer/behavior be defined above?
-      onClick --> Observer { _ =>
-        val plan = $plan.now()
-        val newPlan =
-          plan.copy(l = plan.l.filterNot(_ == routeSegment))
-        db.saveDailyPlanOnly(newPlan)
-        $plan.set(newPlan)
-        if (newPlan.l.isEmpty) {
-          addingNewRoute.set {
-            true
-          }
-        }
-      },
+      // TODO Define Observer/behavior above, on a per segment basis, so we don't have to pass the whole $plan down here
+      onClick.mapTo(routeSegment) --> legDeleter,
       SvgIcon("glyphicons-basic-842-square-minus.svg",
               clsName = "delete",
       ),
@@ -257,9 +261,9 @@ object Components {
 
   def transitSegment(
     routeSegment: RouteSegment,
-    $plan: Var[Plan],
     db: Persistence,
     addingNewRoute: Var[Boolean],
+    legDeleter: Observer[RouteSegment],
   ) =
     div(
       cls := "transit-period",
@@ -275,7 +279,7 @@ object Components {
           .between(routeSegment.end.t)
           .humanFriendly,
       ),
-      deleteButton(routeSegment, $plan, db, addingNewRoute),
+      deleteButton(routeSegment, db, addingNewRoute, legDeleter),
     )
 
   def RouteLegElement(
@@ -288,6 +292,7 @@ object Components {
       Option[(BusScheduleAtStop, RouteSegment)],
     ],
     transition: Transition,
+    legDeleter: Observer[RouteSegment],
   ) = {
 
     val planSwipeUpdater: Observer[(Int, Option[RouteSegment])] =
@@ -328,9 +333,9 @@ object Components {
         ),
         transitSegment(
           routeSegment,
-          $plan,
           db,
           addingNewRoute,
+          legDeleter,
         ),
         stopInfo(routeSegment,
                  routeSegment.end,
