@@ -205,15 +205,26 @@ object Components {
                                 }
                               }
                             }
+                          val segmentUpdater: Observer[RouteSegment] =
+                            $plan.writer
+                              .contramap[RouteSegment] { segment =>
+                                val plan = $plan.now()
+                                val updatedPlan =
+                                  plan.copy(l =
+                                    // hack to unfuck indices now that the gaps get them too
+                                    plan.l.updated(idx / 2, segment),
+                                  )
+                                db.saveDailyPlanOnly(updatedPlan)
+                                updatedPlan
+                              }
                           RouteLegElement(
                             rs,
-                            idx / 2, // hack to unfuck indices now that the gaps get them too
                             db,
-                            $plan,
                             addingNewRoute,
                             scheduleSelector,
                             transition,
                             legDeleter,
+                            segmentUpdater,
                           )
 
                       },
@@ -291,52 +302,42 @@ object Components {
 
   def RouteLegElement(
     routeSegment: RouteSegment,
-    planIndex: Int,
     db: Persistence,
-    $plan: Var[Plan],
     addingNewRoute: Var[Boolean],
     scheduleSelector: Observer[
       Option[(BusScheduleAtStop, RouteSegment)],
     ],
     transition: Transition,
     legDeleter: Observer[RouteSegment],
+    segmentUpdater: Observer[RouteSegment],
   ) = {
-
-    val planSwipeUpdater: Observer[(Int, Option[RouteSegment])] =
-      $plan.writer.contramap[(Int, Option[RouteSegment])] {
-        (
-          idx,
-          segmentO,
-        ) =>
-          segmentO match
-            case Some(segment) =>
-              val plan = $plan.now()
-              val updatedPlan =
-                plan.copy(l = plan.l.updated(idx, segment))
-              db.saveDailyPlanOnly(updatedPlan)
-              updatedPlan
-            case None => $plan.now()
-      }
 
     val res =
       div(
         TouchControls.swipeProp {
           case Swipe.Left =>
-            planSwipeUpdater.onNext(
-              planIndex,
-              routeSegment.routeWithTimes.nextAfter(routeSegment),
-            )
+            routeSegment.routeWithTimes
+              .nextAfter(routeSegment)
+              .foreach(nextSegment =>
+                segmentUpdater.onNext(
+                  nextSegment,
+                ),
+              )
           case Swipe.Right =>
-            planSwipeUpdater.onNext(
-              planIndex,
-              routeSegment.routeWithTimes.nextBefore(routeSegment),
-            )
+            routeSegment.routeWithTimes
+              .nextBefore(routeSegment)
+              .foreach(nextSegment =>
+                segmentUpdater.onNext(
+                  nextSegment,
+                ),
+              )
         },
         cls := "plan-segments box",
         stopInfo(routeSegment,
                  routeSegment.start,
                  routeSegment.routeWithTimes,
                  scheduleSelector,
+                 transition,
         ),
         transitSegment(
           routeSegment,
@@ -348,6 +349,7 @@ object Components {
                  routeSegment.end,
                  routeSegment.routeWithTimes,
                  scheduleSelector,
+                 transition,
         ),
       )
 
@@ -366,6 +368,7 @@ object Components {
     scheduleSelector: Observer[
       Option[(BusScheduleAtStop, RouteSegment)],
     ],
+    transition: Transition,
   ) =
     div(
       width := "100%",
