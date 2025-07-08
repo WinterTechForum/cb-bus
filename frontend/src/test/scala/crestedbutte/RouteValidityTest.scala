@@ -1,7 +1,7 @@
 package crestedbutte
 
 import com.billding.time.WallTime
-import crestedbutte.routes.{RouteWithTimes, RtaNorthbound}
+import crestedbutte.routes.{RTA, RouteWithTimes}
 import zio.test.*
 
 object RouteValidityTest extends ZIOSpecDefault {
@@ -11,7 +11,7 @@ object RouteValidityTest extends ZIOSpecDefault {
         LocationWithTime(Location.GunnisonLibrary, WallTime("07:29")),
         LocationWithTime(Location.Safeway, WallTime("07:34")),
       ),
-      RtaNorthbound.componentName,
+      RTA.Northbound.componentName,
     ).getOrElse(???)
 
   def spec =
