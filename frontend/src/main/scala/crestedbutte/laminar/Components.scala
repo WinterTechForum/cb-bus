@@ -168,7 +168,7 @@ object Components {
       copyButtons($plan.signal),
       children <-- $plan.signal
         .map(_.routePieces.zipWithIndex)
-        .splitTransition(_._1.id) {
+        .splitTransition(_._2) {
           case (_, (routePiece, idx), routePieceSignal, transition) =>
             div(
               child <-- routePieceSignal
