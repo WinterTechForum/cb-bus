@@ -168,7 +168,11 @@ object Components {
       copyButtons($plan.signal),
       children <-- $plan.signal
         .map(_.routePieces.zipWithIndex)
-        .splitTransition(_._2) {
+        // TODO. Nail down key that works for all situations.
+        //    Currently, If I use the index, my swipe transitions are good, but my deletions are bad.
+        //    If I use the id via `_._1.id`, my deletions are good, but my swipe transitions are bad.
+        //    What I really need is an id associated with the RouteSegment that is unique added to a plan, but will be maintained when I do a swipe that updates the start/end times of that element in the plan.
+        .splitTransition(_._1.id) {
           case (_, (routePiece, idx), routePieceSignal, transition) =>
             val legDeleter =
               Observer { (rs: RouteSegment) =>
