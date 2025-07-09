@@ -170,6 +170,33 @@ object Components {
         .map(_.routePieces.zipWithIndex)
         .splitTransition(_._2) {
           case (_, (routePiece, idx), routePieceSignal, transition) =>
+            val legDeleter =
+              Observer { (rs: RouteSegment) =>
+                val plan = $plan.now()
+                println("More narrow deletion")
+                val newPlan =
+                  plan
+                    .copy(l = plan.l.filterNot(_ == rs))
+                db.saveDailyPlanOnly(newPlan)
+                $plan.set(newPlan)
+                if (newPlan.l.isEmpty) {
+                  addingNewRoute.set {
+                    true
+                  }
+                }
+              }
+            val segmentUpdater: Observer[RouteSegment] =
+              $plan.writer
+                .contramap[RouteSegment] { segment =>
+                  val plan = $plan.now()
+                  val updatedPlan =
+                    plan.copy(l =
+                      // hack to unfuck indices now that the gaps get them too
+                      plan.l.updated(idx / 2, segment),
+                    )
+                  db.saveDailyPlanOnly(updatedPlan)
+                  updatedPlan
+                }
             div(
               child <-- routePieceSignal
                 .map {
@@ -190,36 +217,8 @@ object Components {
                             ),
                           )
                         case rs: RouteSegment =>
-                          val legDeleter =
-                            Observer { (rs: RouteSegment) =>
-                              val plan = $plan.now()
-                              println("More narrow deletion")
-                              val newPlan =
-                                plan
-                                  .copy(l = plan.l.filterNot(_ == rs))
-                              db.saveDailyPlanOnly(newPlan)
-                              $plan.set(newPlan)
-                              if (newPlan.l.isEmpty) {
-                                addingNewRoute.set {
-                                  true
-                                }
-                              }
-                            }
-                          val segmentUpdater: Observer[RouteSegment] =
-                            $plan.writer
-                              .contramap[RouteSegment] { segment =>
-                                val plan = $plan.now()
-                                val updatedPlan =
-                                  plan.copy(l =
-                                    // hack to unfuck indices now that the gaps get them too
-                                    plan.l.updated(idx / 2, segment),
-                                  )
-                                db.saveDailyPlanOnly(updatedPlan)
-                                updatedPlan
-                              }
                           RouteLegElement(
                             rs,
-                            db,
                             addingNewRoute,
                             scheduleSelector,
                             transition,
@@ -264,7 +263,6 @@ object Components {
 
   def deleteButton(
     routeSegment: RouteSegment,
-    db: Persistence,
     addingNewRoute: Var[Boolean],
     legDeleter: Observer[RouteSegment],
   ): ReactiveHtmlElement[HTMLAnchorElement] =
@@ -279,7 +277,6 @@ object Components {
 
   def transitSegment(
     routeSegment: RouteSegment,
-    db: Persistence,
     addingNewRoute: Var[Boolean],
     legDeleter: Observer[RouteSegment],
   ) =
@@ -297,12 +294,11 @@ object Components {
           .between(routeSegment.end.t)
           .humanFriendly,
       ),
-      deleteButton(routeSegment, db, addingNewRoute, legDeleter),
+      deleteButton(routeSegment, addingNewRoute, legDeleter),
     )
 
   def RouteLegElement(
     routeSegment: RouteSegment,
-    db: Persistence,
     addingNewRoute: Var[Boolean],
     scheduleSelector: Observer[
       Option[(BusScheduleAtStop, RouteSegment)],
@@ -314,6 +310,7 @@ object Components {
 
     val res =
       div(
+        transition.width,
         TouchControls.swipeProp {
           case Swipe.Left =>
             routeSegment.routeWithTimes
@@ -341,7 +338,6 @@ object Components {
         ),
         transitSegment(
           routeSegment,
-          db,
           addingNewRoute,
           legDeleter,
         ),
@@ -553,24 +549,6 @@ object Components {
               },
             )
         },
-      ),
-    )
-
-  def SafeRideLink(
-    safeRideRecommendation: LateNightRecommendation,
-  ) =
-    div(
-      cls := "late-night-call-button",
-      a(
-        href := s"tel:${safeRideRecommendation.phoneNumber}",
-        cls := "link",
-        button(
-          cls := "button",
-          SvgIcon("glyphicons-basic-465-call.svg").amend(
-            alt := "Call Late Night Shuttle!",
-          ),
-          safeRideRecommendation.message,
-        ),
       ),
     )
 
