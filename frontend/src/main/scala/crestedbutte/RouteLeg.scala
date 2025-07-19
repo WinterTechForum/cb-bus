@@ -19,10 +19,10 @@ case class RouteGap(
 case class RouteSegment private (
   r: RouteName,
   s: LocationWithTime,
-  e: LocationWithTime)
+  e: LocationWithTime,
+  id: Long)
     extends RoutePiece
     derives JsonCodec {
-  val id = random.nextLong()
 
   assert(
     s.l != e.l,
@@ -57,9 +57,9 @@ case class RouteSegment private (
   ): RouteSegment =
     lwt.l match
       case s.l if s.t == previousStartTime =>
-        copy(s = s.copy(t = lwt.t))
+        copy(s = s.copy(t = lwt.t), id = id)
       case e.l if e.t == previousEndTime =>
-        copy(e = e.copy(t = lwt.t))
+        copy(e = e.copy(t = lwt.t), id = id)
       case other => this
 }
 
@@ -72,13 +72,13 @@ object RouteSegment {
     for {
       firstPass <- Either.cond(
         s.l != e.l,
-        RouteSegment(r, s, e),
+        RouteSegment(r, s, e, random.nextLong()),
         "Either: RouteSegment must start and stop at different locations",
       )
 
       secondPass <- Either.cond(
         WallTime.ordering.compare(s.t, e.t) <= 0,
-        RouteSegment(r, s, e),
+        RouteSegment(r, s, e, random.nextLong()),
         "Either: RouteSegment must be in correct order. Start: " + s + "  End: " + e,
       )
     } yield secondPass
@@ -90,6 +90,18 @@ object RouteSegment {
       routeLeg.routeName,
       routeLeg.head,
       routeLeg.last,
+      random.nextLong(),
+    )
+
+  def fromRouteLegWithId(
+    routeLeg: RouteLeg,
+    id: Long,
+  ): RouteSegment =
+    RouteSegment(
+      routeLeg.routeName,
+      routeLeg.head,
+      routeLeg.last,
+      id,
     )
 }
 

@@ -37,7 +37,7 @@ case class RouteWithTimes(
         )
       newRoute <- legs(newIndex)
         .withSameStopsAs(original)
-    yield RouteSegment.fromRouteLeg(newRoute)
+    yield RouteSegment.fromRouteLegWithId(newRoute, original.id)
 
   def nextBefore(
     original: RouteSegment,
@@ -50,7 +50,7 @@ case class RouteWithTimes(
         )
       newRoute <- legs(newIndex)
         .withSameStopsAs(original)
-    yield RouteSegment.fromRouteLeg(newRoute)
+    yield RouteSegment.fromRouteLegWithId(newRoute, original.id)
 
   val allStops: Seq[BusScheduleAtStop] =
     legs.foldLeft(Seq[BusScheduleAtStop]()) { case (acc, leg) =>

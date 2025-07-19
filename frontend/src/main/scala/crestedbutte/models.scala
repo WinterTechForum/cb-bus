@@ -69,7 +69,7 @@ case class Plan(
         .foldLeft[Seq[RoutePiece]](Seq(routeSegments.head)) {
           case (acc, (next, idx)) =>
             acc.last match
-              case RouteSegment(r, s, e) =>
+              case RouteSegment(r, s, e, _) =>
                 // TODO Would be nice to make the gaps in a way such that they don't get re-rendered when the plan changes
                 (acc :+ RouteGap(e.t,
                                  next.start.t,
