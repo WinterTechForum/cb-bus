@@ -1,15 +1,16 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta charset="UTF-8">
-    <title>Crested Butte Bus Schedule</title>
+    <title>Crested Butte Bus Schedule!</title>
     <link rel="stylesheet" href="styling/popup_nojs.css">
     <link rel="stylesheet" href="styling/bulma.min.css">
     <link rel="stylesheet" href="styling/style.css">
     <link rel="icon" href="favicon.ico" type="image/x-icon" />
     <link rel="manifest" href="/manifest.webmanifest">
     <link rel="apple-touch-icon" href="/images/BILLDING_LogoMark-256.png">
-    <meta name="theme-color" content="white"/>
+    <meta name="theme-color" content="white" />
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="apple-mobile-web-app-title" content="CB Buses">
@@ -22,7 +23,7 @@
         if (window.hasOwnProperty('OneSignalDeferred')) {
             console.log("OneSignal available. Setting up Push logic.");
             window.OneSignalDeferred = window.OneSignalDeferred || [];
-            OneSignalDeferred.push(function(OneSignal) {
+            OneSignalDeferred.push(function (OneSignal) {
                 OneSignal.init({
                     appId: "71326ce8-7c5b-4e52-a993-cd32c0605ba9",
                     notifyButton: {
@@ -37,19 +38,21 @@
         }
     </script>
 </head>
-<body>
-<div id="landing-message" class="bill-box">
-    <p>
-        If you are stuck on this page as iOS user, please use Safari.
-        Apple requires that you use their Browser for this app.
-    </p>
 
-    <p>
-        If you are seeing this page for any other reason, please email me: <a href = "mailto: bill@billdingsoftware.com">bill@billdingsoftware.com</a>
-    </p>
-</div>
-<!-- Include Scala.js compiled code -->
-<!--<script type="text/javascript" src="sw-opt.js"></script>-->
-<script type="text/javascript" src="compiledJavascript/main.js"></script>
+<body>
+    <div id="landing-message" class="bill-box">
+        <p>
+            If you are stuck on this page as iOS user, please use Safari.
+            Apple requires that you use their Browser for this app.
+        </p>
+
+        <p>
+            If you are seeing this page for any other reason, please email me: <a
+                href="mailto: bill@billdingsoftware.com">bill@billdingsoftware.com</a>
+        </p>
+    </div>
+    <!-- Include Scala.js compiled code -->
+    <script type="text/javascript" src="compiledJavascript/main.js"></script>
 </body>
+
 </html>
