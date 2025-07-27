@@ -144,7 +144,7 @@ object Components {
                   Experimental.Notifications.createJankyBusAlertInSideEffectyWay,
                 ),
           ),
-          Option.when(pageMode == AppMode.dev)(
+          Option.when(pageMode == AppMode.Local)(
             Experimental.Sandbox(
               timeStamps,
             ),
@@ -371,7 +371,6 @@ object Components {
     transition: Transition,
   ) =
     div(
-      width := "100%",
       cls := "stop-information",
       div(cls := "stop-name", div(stop.l.name)),
       div(cls := "stop-alt-name", div(stop.l.altName)),

@@ -27,7 +27,7 @@ case class BusPage(
       java.time.Clock.fixed(
         OffsetDateTime
           .parse(
-            s"2020-02-21T${fixedTime.get.toEUString}:00.00-07:00",
+            s"2025-02-21T${fixedTime.get.toEUString}:00.00-07:00",
           )
           .toInstant,
         ZoneId.systemDefault(),
