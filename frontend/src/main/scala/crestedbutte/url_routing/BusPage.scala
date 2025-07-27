@@ -17,10 +17,10 @@ import crestedbutte.UrlEncoding
 
 case class BusPage(
   mode: AppMode,
-  time: Option[WallTime],
+  fixedTime: Option[WallTime],
   plan: Option[Plan]) {
 
-  val fixedTime = time
+  println(s"fixedTime: $fixedTime")
 
   val javaClock =
     if (fixedTime.isDefined)
@@ -46,7 +46,7 @@ object BusPage {
   ) =
     page =>
       (Some(page.mode.toString),
-       page.time.map(_.toEUString),
+       page.fixedTime.map(_.toEUString),
        page.plan.map(UrlEncoding.encode),
       )
 
@@ -59,7 +59,7 @@ object BusPage {
       BusPage(
         mode =
           mode.map(AppMode.valueOf).getOrElse(AppMode.Production),
-        time = time.map(WallTime.apply),
+        fixedTime = time.map(WallTime.apply),
         plan = plan.flatMap(UrlEncoding.decodePlan(_).toOption),
       )
   }.tupled

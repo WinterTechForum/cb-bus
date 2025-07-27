@@ -18,6 +18,7 @@ object RoutingStuff {
     (Option[String], Option[String], Option[String]),
     DummyError,
   ] =
+    // TODO Time de-ceralization might be screwed up
     param[
       String,
     ]("mode").? & param[String]("time").? & param[String]("plan").?
@@ -50,7 +51,7 @@ object RoutingStuff {
     routeFallback = _ =>
       BusPage(
         mode = AppMode.Production,
-        time = None,
+        fixedTime = None,
         plan = None,
       ),
   )(

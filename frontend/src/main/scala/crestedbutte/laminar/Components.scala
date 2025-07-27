@@ -26,7 +26,6 @@ object Components {
     javaClock: Clock,
   ) = {
 
-    // Clean up SBG icon references.
     val appMode =
       if (dom.document.URL.contains("localhost")) AppMode.Local
       else AppMode.Production
@@ -53,14 +52,9 @@ object Components {
         javaClock
 
     val timeStamps: Signal[WallTime] = clockTicks.events
-      .scanLeft(
-        initialTime,
-      )(
-        (
-          _,
-          _,
-        ) => currentWallTime(javaClock),
-      )
+      .map(_ => currentWallTime(javaClock))
+      .startWith(initialTime)
+    println("starting with initial time")
 
     val $plan: Var[Plan] = Var(
       db.retrieveDailyPlanOnly.getOrElse(Plan(Seq.empty)),
@@ -117,7 +111,6 @@ object Components {
               timeStamps,
               db,
               $plan,
-              initialTime,
               addingNewRoute,
               selectedStop.writer,
             )
@@ -129,7 +122,7 @@ object Components {
       RepeatingElement()
         .repeatWithInterval( // This acts like a Dune thumper
           (),
-          new FiniteDuration(200,
+          new FiniteDuration(10,
                              scala.concurrent.duration.SECONDS,
           ), // TODO Make low again
         ) --> clockTicks,
@@ -164,7 +157,6 @@ object Components {
     timeStamps: Signal[WallTime],
     db: Persistence,
     $plan: Var[Plan],
-    initialTime: WallTime,
     addingNewRoute: Var[Boolean],
     scheduleSelector: Observer[
       Option[(BusScheduleAtStop, RouteSegment)],

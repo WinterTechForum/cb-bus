@@ -120,8 +120,10 @@ object Experimental {
     val $gpsPosition: Var[Option[GpsCoordinates]] = Var(None)
     div(
       idAttr := "sandbox",
-      timeStamps.map(_ => getLocation($gpsPosition),
-      ) --> $gpsPosition.writer,
+      timeStamps.map { _ =>
+        println("current location: " + getLocation($gpsPosition))
+        getLocation($gpsPosition)
+      } --> $gpsPosition.writer,
 //      Components.FeatureControlCenter(featureUpdates.writer),
       button(
         idAttr := "Get position",
@@ -133,7 +135,7 @@ object Experimental {
       button(
         idAttr := ElementNames.Notifications.requestPermission,
         cls := "button",
-        "Request Notifications Permission",
+        "Enable Notifications",
         onClick --> Notifications.clickObserver,
       ),
     )

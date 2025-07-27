@@ -13,9 +13,7 @@ object UrlEncoding {
 
   def encode(
     plan: Plan,
-  ): String =
-    println(plan.toJson)
-    urlEncoder.encodeToString(plan.toJson.getBytes())
+  ): String = urlEncoder.encodeToString(plan.toJson.getBytes())
 
   def decodePlan(
     raw: String,
