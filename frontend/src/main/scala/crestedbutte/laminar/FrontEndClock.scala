@@ -33,8 +33,6 @@ class FrontEndClock(
     .map(_ => currentWallTime(javaClock))
     .startWith(initialTime)
 
-  println("FrontEndClock initialized")
-
   val clockElement =
     RepeatingElement()
       .repeatWithInterval( // This acts like a Dune thumper
