@@ -22,19 +22,6 @@ object RoutingStuff {
       String,
     ]("mode").? & param[String]("time").? & param[String]("plan").?
 
-  private val devRoute =
-    Route.onlyQuery[BusPage,
-                    (
-                      Option[String],
-                      Option[String],
-                      Option[String],
-                    ),
-    ](
-      encode = BusPage.encodePage,
-      decode = BusPage.decodePage,
-      pattern = (root / "index_dev.html" / endOfSegments) ? params,
-    )
-
   private val prodRoute =
     Route.onlyQuery[BusPage,
                     (
@@ -51,7 +38,6 @@ object RoutingStuff {
   private val router = new Router[BusPage](
     routes = List(
       prodRoute,
-      devRoute,
     ),
     getPageTitle =
       _.toString, // mock page title (displayed in the browser tab next to favicon)
@@ -70,7 +56,7 @@ object RoutingStuff {
   )(
     popStateEvents = L.windowEvents(
       _.onPopState,
-    ), // this is how Waypoint avoids an explicit dependency on Laminar
+    ), // Lets Waypoint avoids an explicit dependency on Laminar
     owner =
       L.unsafeWindowOwner, // this router will live as long as the window
   )
