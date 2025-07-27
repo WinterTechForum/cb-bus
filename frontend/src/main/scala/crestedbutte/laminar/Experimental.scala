@@ -132,12 +132,15 @@ object Experimental {
         ),
         "Get GPS coords",
       ),
-      button(
-        idAttr := ElementNames.Notifications.requestPermission,
-        cls := "button",
-        "Enable Notifications",
-        onClick --> Notifications.clickObserver,
-      ),
+      if (dom.Notification.permission == "granted")
+        span("Notifications are enabled")
+      else
+        button(
+          idAttr := ElementNames.Notifications.requestPermission,
+          cls := "button",
+          "Enable Notifications",
+          onClick --> Notifications.clickObserver,
+        ),
     )
   }
 
