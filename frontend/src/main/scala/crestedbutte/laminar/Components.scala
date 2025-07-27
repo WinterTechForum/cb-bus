@@ -33,28 +33,8 @@ object Components {
     println(s"appMode: $appMode")
     val db: Persistence = Persistence()
 
-    val clockTicks = new EventBus[Unit]
-
-    def currentWallTime(
-      javaClock: Clock,
-    ) =
-      WallTime(
-        OffsetDateTime
-          .now(javaClock)
-          .toLocalTime
-          .format(
-            DateTimeFormatter.ofPattern("HH:mm"),
-          ),
-      )
-
-    val initialTime =
-      currentWallTime:
-        javaClock
-
-    val timeStamps: Signal[WallTime] = clockTicks.events
-      .map(_ => currentWallTime(javaClock))
-      .startWith(initialTime)
-    println("starting with initial time")
+    val frontEndClock = new FrontEndClock(javaClock)
+    val timeStamps = frontEndClock.timeStamps
 
     val $plan: Var[Plan] = Var(
       db.retrieveDailyPlanOnly.getOrElse(Plan(Seq.empty)),
@@ -119,13 +99,7 @@ object Components {
     div(
       onMountCallback: context =>
         db.initializeOrResetStorage(),
-      RepeatingElement()
-        .repeatWithInterval( // This acts like a Dune thumper
-          (),
-          new FiniteDuration(10,
-                             scala.concurrent.duration.SECONDS,
-          ), // TODO Make low again
-        ) --> clockTicks,
+      frontEndClock.clockElement,
       div(
         div(
           cls := ElementNames.BoxClass,
