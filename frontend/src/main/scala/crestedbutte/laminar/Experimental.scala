@@ -120,8 +120,7 @@ object Experimental {
     val $gpsPosition: Var[Option[GpsCoordinates]] = Var(None)
     div(
       idAttr := "sandbox",
-      timeStamps.map(_ =>
-        getLocation($gpsPosition),
+      timeStamps.map(_ => getLocation($gpsPosition),
       ) --> $gpsPosition.writer,
 //      Components.FeatureControlCenter(featureUpdates.writer),
       button(
@@ -221,7 +220,7 @@ object Experimental {
     a(
       cls := "link",
       href := s"https://www.google.com/maps/search/?api=1&query=${gpsCoordinates.latitude},${gpsCoordinates.longitude}",
-      SvgIcon("glyphicons-basic-592-map.svg"),
+      SvgIcon.map(),
     )
 
 }

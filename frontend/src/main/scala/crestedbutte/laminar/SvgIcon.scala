@@ -14,4 +14,21 @@ object SvgIcon {
       alt := "Thanks for riding the bus!",
     )
 
+  // Predefined icon methods
+  def arrowDown(
+    clsName: String = "",
+  ) = apply("glyphicons-basic-211-arrow-down.svg", clsName)
+
+  def squareMinus(
+    clsName: String = "",
+  ) = apply("glyphicons-basic-842-square-minus.svg", clsName)
+
+  def call(
+    clsName: String = "",
+  ) = apply("glyphicons-basic-465-call.svg", clsName)
+
+  def map(
+    clsName: String = "",
+  ) = apply("glyphicons-basic-592-map.svg", clsName)
+
 }

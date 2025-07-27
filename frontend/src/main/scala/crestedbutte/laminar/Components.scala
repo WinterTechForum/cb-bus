@@ -277,11 +277,8 @@ object Components {
   ): ReactiveHtmlElement[HTMLAnchorElement] =
     a(
       cls := "link transit-period-delete",
-      // TODO Define Observer/behavior above, on a per segment basis, so we don't have to pass the whole $plan down here
       onClick.mapTo(routeSegment) --> legDeleter,
-      SvgIcon("glyphicons-basic-842-square-minus.svg",
-              clsName = "delete",
-      ),
+      SvgIcon.squareMinus("delete"),
     )
 
   def transitSegment(
@@ -293,9 +290,7 @@ object Components {
       cls := "transit-period",
       div(
         cls := "transit-period-icon ",
-        SvgIcon("glyphicons-basic-211-arrow-down.svg",
-                "plain-white plan-segment-divider",
-        ),
+        SvgIcon.arrowDown("plain-white plan-segment-divider"),
       ),
       span(
         cls := "transit-period-duration transit-time",

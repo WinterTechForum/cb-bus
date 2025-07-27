@@ -15,9 +15,11 @@ object Graveyard {
         cls := "link",
         button(
           cls := "button",
-          SvgIcon("glyphicons-basic-465-call.svg").amend(
-            alt := "Call Late Night Shuttle!",
-          ),
+          SvgIcon
+            .call()
+            .amend(
+              alt := "Call Late Night Shuttle!",
+            ),
           safeRideRecommendation.message,
         ),
       ),
