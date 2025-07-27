@@ -54,7 +54,7 @@ object PlanSerializationSpec extends ZIOSpecDefault {
               "eyJsIjpbeyJyIjowLCJzIjp7ImwiOjI0LCJ0IjoxMzQwfSwiZSI6eyJsIjoyOCwidCI6MTM2Nn19XX0="
 
             assertTrue(
-              UrlEncoding.decode(input).getOrElse(???) == plan,
+              UrlEncoding.decodePlan(input).getOrElse(???) == plan,
             )
           } @@ TestAspect.ignore,
         ),

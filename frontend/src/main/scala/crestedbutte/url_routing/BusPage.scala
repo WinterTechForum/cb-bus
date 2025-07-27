@@ -60,7 +60,7 @@ object BusPage {
         mode =
           mode.map(AppMode.valueOf).getOrElse(AppMode.Production),
         time = time.map(WallTime.apply),
-        plan = plan.flatMap(UrlEncoding.decode(_).toOption),
+        plan = plan.flatMap(UrlEncoding.decodePlan(_).toOption),
       )
   }.tupled
 

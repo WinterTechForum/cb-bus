@@ -15,15 +15,11 @@ object UrlEncoding {
     plan: Plan,
   ): String =
     println(plan.toJson)
-//    val base64 =
     urlEncoder.encodeToString(plan.toJson.getBytes())
-//    URLEncoder.encode(base64, StandardCharsets.UTF_8.toString);
 
-  def decode(
+  def decodePlan(
     raw: String,
   ) = {
-//    val base64 = URLDecoder
-//      .decode(raw, StandardCharsets.UTF_8.toString)
     val rawJson = String(urlDecoder.decode(raw))
     println("rawJson: " + rawJson)
     val res =

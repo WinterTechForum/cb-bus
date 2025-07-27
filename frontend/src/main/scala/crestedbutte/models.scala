@@ -95,7 +95,7 @@ object Plan {
     readwriter[String].bimap[Plan](
       UrlEncoding.encode,
       s =>
-        UrlEncoding.decode(s) match
+        UrlEncoding.decodePlan(s) match
           case Left(error) =>
             throw new Exception(s"Failed to decode Plan: $error")
           case Right(value) => value,

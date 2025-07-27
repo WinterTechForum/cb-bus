@@ -416,6 +416,7 @@ object Components {
               cls := "button m-2",
               "Copy App Link",
               onClick --> Observer { _ =>
+                // TODO Base this on page mode Parameter and don't hard code URLs at this level
                 val url =
                   if (dom.document.URL.contains("localhost"))
                     s"http://localhost:8000/index_dev.html?plan=${UrlEncoding.encode(plan)}"
