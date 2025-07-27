@@ -66,8 +66,8 @@ object RoutingStuff {
       .collectSignal[BusPage]($loginPage =>
         div(
           child <-- $loginPage.map(busPageInfo =>
-            Components.FullApp(busPageInfo.mode,
-                               busPageInfo.javaClock,
+            Components.FullApp(
+              busPageInfo.javaClock,
             ),
           ),
         ),

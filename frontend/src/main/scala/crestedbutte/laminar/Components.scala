@@ -23,9 +23,15 @@ case class LocationTimeDirection(
 
 object Components {
   def FullApp(
-    pageMode: AppMode,
     javaClock: Clock,
   ) = {
+
+    // Clean up SBG icon references.
+    val appMode =
+      if (dom.document.URL.contains("localhost")) AppMode.Local
+      else AppMode.Production
+
+    println(s"appMode: $appMode")
     val db: Persistence = Persistence()
 
     val clockTicks = new EventBus[Unit]
@@ -144,7 +150,7 @@ object Components {
                   Experimental.Notifications.createJankyBusAlertInSideEffectyWay,
                 ),
           ),
-          Option.when(pageMode == AppMode.Local)(
+          Option.when(appMode == AppMode.Local)(
             Experimental.Sandbox(
               timeStamps,
             ),
@@ -414,7 +420,7 @@ object Components {
                   if (dom.document.URL.contains("localhost"))
                     s"http://localhost:8000/index_dev.html?plan=${UrlEncoding.encode(plan)}"
                   else
-                    s"https://cbbus.netlify.app/?plan=${UrlEncoding.encode(plan)}"
+                    s"https://rtabus.netlify.app/?plan=${UrlEncoding.encode(plan)}"
 
                 dom.window.navigator.clipboard
                   .writeText(url)
