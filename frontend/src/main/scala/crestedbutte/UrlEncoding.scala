@@ -21,7 +21,6 @@ object UrlEncoding {
     raw: String,
   ) = {
     val rawJson = String(urlDecoder.decode(raw))
-    println("rawJson: " + rawJson)
     val res =
       rawJson
         .fromJson[Plan]
