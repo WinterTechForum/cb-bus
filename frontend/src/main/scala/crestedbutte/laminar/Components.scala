@@ -15,6 +15,8 @@ import java.time.format.DateTimeFormatter
 import java.time.{Clock, OffsetDateTime}
 import org.scalajs.dom
 import org.scalajs.dom.{HTMLAnchorElement, HTMLDivElement}
+import scala.scalajs.js
+import scala.scalajs.js.timers._
 import scala.concurrent.duration.FiniteDuration
 
 case class LocationTimeDirection(
@@ -364,14 +366,30 @@ object Components {
           div()
         else
           div(
-            button(
-              cls := "button m-2",
-              "Copy Text",
-              onClick --> Observer { _ =>
-                dom.window.navigator.clipboard
-                  .writeText(plan.plainTextRepresentation)
-              },
-            ),
+            {
+              val isAnimating = Var(false)
+
+              button(
+                cls := "button m-2",
+                // Vibe Coded animation here. TODO As I add more button animations, this should be put in a reusable spot and parameterized.
+                cls.toggle("is-success") <-- isAnimating.signal,
+                styleAttr <-- isAnimating.signal.map { animating =>
+                  if (animating)
+                    "transform: scale(0.95); transition: all 0.2s ease-out;"
+                  else
+                    "transform: scale(1); transition: all 0.2s ease-out;"
+                },
+                "Copy Text",
+                onClick --> Observer { _ =>
+                  isAnimating.set(true)
+                  dom.window.navigator.clipboard
+                    .writeText(plan.plainTextRepresentation)
+                  setTimeout(200) {
+                    isAnimating.set(false)
+                  }
+                },
+              )
+            },
             button(
               cls := "button m-2",
               "Copy App Link",
