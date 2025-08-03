@@ -11,19 +11,16 @@ object BusSchedule {
     firstBus: String,
     lastBus: String,
     timeBetweenBuses: MinuteDuration,
-  ) =
+  ) = {
+    val startTime = WallTime(firstBus)
+    val endTime = WallTime(lastBus)
+
     new BusSchedule(
-      List
-        .range(
-          0L,
-          WallTime(firstBus)
-            .between(WallTime(lastBus))
-            .dividedBy(timeBetweenBuses) + 1,
-        ) // TODO Ugh. Nasty +1
-        .map(index =>
-          WallTime(firstBus)
-            .plus(timeBetweenBuses.times(index.toInt)),
-        ),
+      LazyList
+        .iterate(startTime)(_.plus(timeBetweenBuses))
+        .takeWhile(time => time.isBeforeOrEqualTo(endTime))
+        .toList,
     )
+  }
 
 }
