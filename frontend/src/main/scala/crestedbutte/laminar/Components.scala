@@ -37,8 +37,7 @@ object Components {
     val timeStamps = frontEndClock.timeStamps
 
     val $plan: Var[Plan] = Var(
-      // TODO retrieveDailyPlanOnly is a bad name.
-      db.retrieveDailyPlanOnly.getOrElse(Plan(Seq.empty)),
+      db.getCurrentPlan.getOrElse(Plan(Seq.empty)),
     )
 
     val addingNewRoute: Var[Boolean] = Var(

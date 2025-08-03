@@ -28,8 +28,7 @@ class Persistence():
     }
     ()
 
-  // TODO Rename "getCurrentPlan"
-  def retrieveDailyPlanOnly = {
+  def getCurrentPlan = {
     val previouslyStoredPlan =
       localStorage
         .getItem("today")
@@ -55,7 +54,7 @@ class Persistence():
   ) =
 
     val retrieved =
-      retrieveDailyPlanOnly
+      getCurrentPlan
         .getOrElse(Plan(Seq.empty))
     val updated =
       retrieved.copy(retrieved.l :+ routeLeg)
