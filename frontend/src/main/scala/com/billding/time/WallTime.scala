@@ -208,12 +208,17 @@ object WallTime {
       hours.toInt * 60 + minutes.toInt
     }
     else if (raw.length == 7 || raw.length == 8) {
-      val hourOffset =
-        if (raw.endsWith("AM")) 0
-        else if (raw.endsWith("PM")) 12
-        else throw new IllegalArgumentException(raw)
       val Array(hours, minutes) = raw.dropRight(2).trim.split(":")
-      (hours.toInt + hourOffset) * 60 + minutes.toInt
+      val hourValue = hours.toInt
+      val adjustedHour = 
+        if (raw.endsWith("AM")) {
+          if (hourValue == 12) 0 else hourValue  // 12 AM = 0 (midnight)
+        }
+        else if (raw.endsWith("PM")) {
+          if (hourValue == 12) 12 else hourValue + 12  // 12 PM stays 12, others add 12
+        }
+        else throw new IllegalArgumentException(raw)
+      adjustedHour * 60 + minutes.toInt
     }
     else throw new IllegalArgumentException(raw)
 
