@@ -70,7 +70,6 @@ case class Plan(
           case (acc, (next, idx)) =>
             acc.last match
               case RouteSegment(r, s, e, _) =>
-                // TODO Would be nice to make the gaps in a way such that they don't get re-rendered when the plan changes
                 (acc :+ RouteGap(e.t,
                                  next.start.t,
                                  idx * 1000L,
@@ -87,7 +86,7 @@ case class Plan(
           idx,
         ) => s"${leg.plainTextRepresentation}",
       )
-      .mkString("\n")
+      .mkString("\n\n")
 
 object Plan {
   import upickle.default.*

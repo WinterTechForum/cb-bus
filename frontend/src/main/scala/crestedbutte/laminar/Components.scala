@@ -427,7 +427,9 @@ object Components {
     $plan: Var[Plan],
     db: Persistence,
     $now: Signal[WallTime],
-    addingNewRoute: Var[Boolean], // TODO Smaller type
+    addingNewRoute: Var[
+      Boolean,
+    ], // TODO Make this an Observer[Boolean]
   ) =
     val startingPoint: Var[Option[Location]] = Var(None)
     val $locationsVar: Var[Seq[(Location, Int)]] = Var(Seq.empty)

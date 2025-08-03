@@ -8,8 +8,6 @@ import scala.util.{Failure, Success}
 object ServiceWorkerClient {
   def registerServiceWorker(): Unit = {
     val window = org.scalajs.dom.window
-    // TODO Ew. Try to get this removed after first version of PWA is working
-    import scala.concurrent.ExecutionContext.Implicits.global
 
     val serviceWorker = toServiceWorkerNavigator(
       window.navigator,
@@ -24,6 +22,7 @@ object ServiceWorkerClient {
       )
     }
 
+    import scala.concurrent.ExecutionContext.Implicits.global
     serviceWorker
       .register("./sw-opt.js")
       .toFuture
@@ -36,7 +35,7 @@ object ServiceWorkerClient {
           println(
             s"registerServiceWorker: service worker registration failed > ${error.printStackTrace()}",
           )
-      }
+      }(global)
 
   }
 

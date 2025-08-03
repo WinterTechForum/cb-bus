@@ -10,9 +10,6 @@ object UrlParsing {
     java.net.URI
       .create(rawUrl)
 
-  // TODO HTML encoding
-  // Note: Only works for single values
-
   def getPath(
     url: String,
   ) =

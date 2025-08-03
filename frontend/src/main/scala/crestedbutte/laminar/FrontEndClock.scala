@@ -37,8 +37,6 @@ class FrontEndClock(
     RepeatingElement()
       .repeatWithInterval( // This acts like a Dune thumper
         (),
-        new FiniteDuration(10,
-                           scala.concurrent.duration.SECONDS,
-        ), // TODO Make low again
+        new FiniteDuration(10, scala.concurrent.duration.SECONDS),
       ) --> clockTicks
 }

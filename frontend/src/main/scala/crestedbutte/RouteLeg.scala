@@ -39,17 +39,16 @@ case class RouteSegment private (
 
   lazy val plainTextRepresentation =
     s"""${start.t.toDumbAmericanString}  ${start.l.name}
-       |${end.t.toDumbAmericanString}  ${end.l.name}
-       |""".stripMargin
+       |${end.t.toDumbAmericanString}  ${end.l.name}""".stripMargin
 
-  /** TODO This all feels awkward.
-    *
-    * @param lwt
-    * @param previousStartTime
-    *   this ensures we only update one entry
-    * @param previousEndTime
-    * @return
-    */
+      /** TODO This all feels awkward.
+        *
+        * @param lwt
+        * @param previousStartTime
+        *   this ensures we only update one entry
+        * @param previousEndTime
+        * @return
+        */
   def updateTimeAtLocation(
     lwt: LocationWithTime,
     previousStartTime: WallTime,

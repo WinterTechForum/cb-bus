@@ -12,7 +12,6 @@ import crestedbutte.{
 import com.billding.time.WallTime
 
 case class RouteWithTimes(
-  // TODO Should be a map representing all the connections.
   legs: Seq[RouteLeg]) {
 
   private def indexOfLegThatContains(

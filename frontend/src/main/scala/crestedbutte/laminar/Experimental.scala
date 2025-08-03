@@ -29,7 +29,6 @@ object Experimental {
     var positionResult: Option[GpsCoordinates] = None
 
     if (dom.window.navigator.geolocation != null) {
-      // TODO This callback is screwing me up. I think.
       dom.window.navigator.geolocation.getCurrentPosition(
         successCallback = position => {
           showPosition(position)
@@ -198,7 +197,6 @@ object Experimental {
     featureUpdates: WriteBus[FeatureStatus],
   ) = {
 
-    // TODO Make this a separate component?
     def FeatureToggle(
       feature: Feature,
     ) =
