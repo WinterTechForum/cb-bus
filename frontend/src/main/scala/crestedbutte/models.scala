@@ -40,7 +40,7 @@ case class RouteName(
 
 }
 
-case class LateNightRecommendation( // TODO Rename "LateNight" or something
+case class LateNightRecommendation(
   message: String,
   phoneNumber: String = "970-209-0519")
 
