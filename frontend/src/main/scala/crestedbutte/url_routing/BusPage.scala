@@ -56,6 +56,9 @@ object BusPage {
       time: Option[String],
       plan: Option[String],
     ) =>
+      println("mode: " + mode)
+      println("plan" + plan)
+      println("time in decodePage: " + time)
       BusPage(
         mode =
           mode.map(AppMode.valueOf).getOrElse(AppMode.Production),

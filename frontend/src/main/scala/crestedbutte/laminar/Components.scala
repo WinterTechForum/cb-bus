@@ -214,7 +214,7 @@ object Components {
               cls := "centered",
               button(
                 cls := "button",
-                "Add new route!",
+                "Add new route!!",
                 onClick --> Observer { _ =>
                   addingNewRoute.set {
                     true
@@ -379,7 +379,7 @@ object Components {
                 // TODO Base this on page mode Parameter and don't hard code URLs at this level
                 val url =
                   if (dom.document.URL.contains("localhost"))
-                    s"http://localhost:8000/index_dev.html?plan=${UrlEncoding.encode(plan)}"
+                    s"http://localhost:8000/index.html?plan=${UrlEncoding.encode(plan)}"
                   else
                     s"https://rtabus.netlify.app/?plan=${UrlEncoding.encode(plan)}"
 

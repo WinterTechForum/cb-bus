@@ -18,7 +18,6 @@ object RoutingStuff {
     (Option[String], Option[String], Option[String]),
     DummyError,
   ] =
-    // TODO Time de-ceralization might be screwed up
     param[
       String,
     ]("mode").? & param[String]("time").? & param[String]("plan").?
@@ -33,7 +32,7 @@ object RoutingStuff {
     ](
       encode = BusPage.encodePage,
       decode = BusPage.decodePage,
-      pattern = (root / endOfSegments) ? params,
+      pattern = root ? params,
     )
 
   private val router = new Router[BusPage](
@@ -46,8 +45,10 @@ object RoutingStuff {
       write(page)(
         BusPage.rw,
       ), // serialize page data for storage in History API log
-    deserializePage =
-      pageStr => read(pageStr)(BusPage.rw), // deserialize the above
+    deserializePage = pageStr =>
+      println("pageStr: " + pageStr)
+      read(pageStr)(BusPage.rw)
+    , // deserialize the above
     routeFallback = _ =>
       BusPage(
         mode = AppMode.Production,
@@ -67,6 +68,7 @@ object RoutingStuff {
       .collectSignal[BusPage]($loginPage =>
         div(
           child <-- $loginPage.map(busPageInfo =>
+            println("wtf is going on:" + busPageInfo)
             Components.FullApp(
               busPageInfo.javaClock,
             ),
