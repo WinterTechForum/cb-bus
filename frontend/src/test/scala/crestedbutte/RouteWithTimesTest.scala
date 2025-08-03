@@ -102,5 +102,4 @@ object RouteWithTimesTest extends ZIOSpecDefault {
               .isEmpty,
       ),
     ) @@ TestAspect.ignore
-  // http://localhost:8000/index_dev.html?plan=%7B%22legs%22%3A%5B%7B%22route%22%3A%22Rta+Southbound%22%2C%22start%22%3A%7B%22location%22%3A%22Riverbend%22%2C%22t%22%3A%2210%3A10+PM%22%7D%2C%22end%22%3A%7B%22location%22%3A%22CB+South%22%2C%22t%22%3A%2210%3A20+PM%22%7D%7D%2C%7B%22route%22%3A%22Rta+Southbound%22%2C%22start%22%3A%7B%22location%22%3A%224-way%22%2C%22t%22%3A%2210%3A38+PM%22%7D%2C%22end%22%3A%7B%22location%22%3A%22TallTexan%22%2C%22t%22%3A%2211%3A13+PM%22%7D%7D%5D%7D
 }
