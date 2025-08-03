@@ -357,6 +357,33 @@ object Components {
       ),
     )
 
+  def animatedButton(
+    text: String,
+    additionalClasses: String = "",
+    onClickAction: () => Unit
+  ) = {
+    val isAnimating = Var(false)
+    
+    button(
+      cls := s"button $additionalClasses",
+      cls.toggle("is-success") <-- isAnimating.signal,
+      styleAttr <-- isAnimating.signal.map { animating =>
+        if (animating)
+          "transform: scale(0.95); transition: all 0.2s ease-out;"
+        else
+          "transform: scale(1); transition: all 0.2s ease-out;"
+      },
+      text,
+      onClick --> Observer { _ =>
+        isAnimating.set(true)
+        onClickAction()
+        setTimeout(200) {
+          isAnimating.set(false)
+        }
+      }
+    )
+  }
+
   def copyButtons(
     $plan: Signal[Plan],
   ) =
@@ -366,34 +393,15 @@ object Components {
           div()
         else
           div(
-            {
-              val isAnimating = Var(false)
-
-              button(
-                cls := "button m-2",
-                // Vibe Coded animation here. TODO As I add more button animations, this should be put in a reusable spot and parameterized.
-                cls.toggle("is-success") <-- isAnimating.signal,
-                styleAttr <-- isAnimating.signal.map { animating =>
-                  if (animating)
-                    "transform: scale(0.95); transition: all 0.2s ease-out;"
-                  else
-                    "transform: scale(1); transition: all 0.2s ease-out;"
-                },
-                "Copy Text",
-                onClick --> Observer { _ =>
-                  isAnimating.set(true)
-                  dom.window.navigator.clipboard
-                    .writeText(plan.plainTextRepresentation)
-                  setTimeout(200) {
-                    isAnimating.set(false)
-                  }
-                },
-              )
-            },
-            button(
-              cls := "button m-2",
-              "Copy App Link",
-              onClick --> Observer { _ =>
+            animatedButton(
+              "Copy Text",
+              "m-2",
+              () => dom.window.navigator.clipboard.writeText(plan.plainTextRepresentation)
+            ),
+            animatedButton(
+              "Copy App Link", 
+              "m-2",
+              () => {
                 // TODO Base this on page mode Parameter and don't hard code URLs at this level
                 val url =
                   if (dom.document.URL.contains("localhost"))
@@ -401,9 +409,8 @@ object Components {
                   else
                     s"https://rtabus.netlify.app/?plan=${UrlEncoding.encode(plan)}"
 
-                dom.window.navigator.clipboard
-                  .writeText(url)
-              },
+                dom.window.navigator.clipboard.writeText(url)
+              }
             ),
           )
       },
