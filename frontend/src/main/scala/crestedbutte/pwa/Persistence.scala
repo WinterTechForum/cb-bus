@@ -28,6 +28,7 @@ class Persistence():
     }
     ()
 
+  // TODO Rename "getCurrentPlan"
   def retrieveDailyPlanOnly = {
     val previouslyStoredPlan =
       localStorage

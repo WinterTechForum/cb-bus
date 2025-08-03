@@ -37,6 +37,7 @@ object Components {
     val timeStamps = frontEndClock.timeStamps
 
     val $plan: Var[Plan] = Var(
+      // TODO retrieveDailyPlanOnly is a bad name.
       db.retrieveDailyPlanOnly.getOrElse(Plan(Seq.empty)),
     )
 
@@ -145,7 +146,6 @@ object Components {
             val legDeleter =
               Observer { (rs: RouteSegment) =>
                 val plan = $plan.now()
-                println("More narrow deletion")
                 val newPlan =
                   plan
                     .copy(l = plan.l.filterNot(_ == rs))
@@ -403,11 +403,6 @@ object Components {
       RTA.Southbound.fullSchedule
         .segment(start, end)
         .orElse(RTA.Northbound.fullSchedule.segment(start, end))
-//        .getOrElse(
-//          throw new IllegalStateException(
-//            "No route leg available in either route B",
-//          ),
-//        )
 
     routeSegmentsO
       .flatMap(routeSegments =>
