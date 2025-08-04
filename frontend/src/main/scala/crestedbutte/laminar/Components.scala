@@ -119,7 +119,7 @@ object Components {
                   Experimental.Notifications.createJankyBusAlertInSideEffectyWay,
                 ),
           ),
-          Option.when(appMode == AppMode.Local)(
+          Option.when(appMode == AppMode.Local && false)(
             Experimental.Sandbox(
               timeStamps,
             ),
@@ -360,10 +360,10 @@ object Components {
   def animatedButton(
     text: String,
     additionalClasses: String = "",
-    onClickAction: () => Unit
+    onClickAction: () => Unit,
   ) = {
     val isAnimating = Var(false)
-    
+
     button(
       cls := s"button $additionalClasses",
       cls.toggle("is-success") <-- isAnimating.signal,
@@ -380,7 +380,7 @@ object Components {
         setTimeout(200) {
           isAnimating.set(false)
         }
-      }
+      },
     )
   }
 
@@ -396,10 +396,12 @@ object Components {
             animatedButton(
               "Copy Text",
               "m-2",
-              () => dom.window.navigator.clipboard.writeText(plan.plainTextRepresentation)
+              () =>
+                dom.window.navigator.clipboard
+                  .writeText(plan.plainTextRepresentation),
             ),
             animatedButton(
-              "Copy App Link", 
+              "Copy App Link",
               "m-2",
               () => {
                 // TODO Base this on page mode Parameter and don't hard code URLs at this level
@@ -410,7 +412,7 @@ object Components {
                     s"https://rtabus.netlify.app/?plan=${UrlEncoding.encode(plan)}"
 
                 dom.window.navigator.clipboard.writeText(url)
-              }
+              },
             ),
           )
       },
