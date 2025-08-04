@@ -6,6 +6,12 @@ import com.raquo.laminar.nodes.ReactiveHtmlElement
 import crestedbutte.*
 import crestedbutte.laminar.LocationTimeDirection
 
+sealed trait StopContext
+object StopContext {
+  case object Departure extends StopContext
+  case object Arrival extends StopContext
+}
+
 object BulmaLocal {
   def locationwithTime(
     l: LocationWithTime,
@@ -39,6 +45,7 @@ object BulmaLocal {
     scheduleAtStop: BusScheduleAtStop,
     routeSegment: RouteSegment,
     selectedTimeUpdater: Sink[LocationTimeDirection],
+    context: StopContext,
   ) = {
     val $opacity = Animation.from(0).wait(250).to(1).run
     val $width = Animation.from(0).wait(250).to(100).run
@@ -53,7 +60,10 @@ object BulmaLocal {
         zIndex := "10",
         paddingBottom := "10px",
         h4(textAlign := "center", scheduleAtStop.location.name),
-        h5(textAlign := "center", "Upcoming Arrivals"),
+        h5(textAlign := "center", context match {
+          case StopContext.Arrival => s"arriving at ${scheduleAtStop.location.name} at"
+          case StopContext.Departure => s"leaving ${scheduleAtStop.location.name} at"
+        }),
       ),
       div(
         maxHeight := "70vh",

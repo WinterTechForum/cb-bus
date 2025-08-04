@@ -8,6 +8,7 @@ import crestedbutte.*
 import crestedbutte.NotificationStuff.desiredAlarms
 import crestedbutte.dom.BulmaLocal
 import crestedbutte.dom.BulmaLocal.UpcomingStops
+import crestedbutte.dom.{BulmaLocal, StopContext}
 import crestedbutte.laminar.TouchControls.Swipe
 import crestedbutte.pwa.Persistence
 import crestedbutte.routes.{CompleteStopList, RTA, RouteWithTimes}
@@ -22,6 +23,12 @@ import scala.concurrent.duration.FiniteDuration
 case class LocationTimeDirection(
   locationWithTime: LocationWithTime,
   routeSegment: RouteSegment)
+
+case class SelectedStopInfo(
+  busScheduleAtStop: BusScheduleAtStop,
+  routeSegment: RouteSegment,
+  context: StopContext
+)
 
 object Components {
   def FullApp(
@@ -46,18 +53,18 @@ object Components {
       $plan.now().routeSegments.isEmpty, // If no segments , assume we want to add more
     )
 
-    val selectedStop: Var[Option[(BusScheduleAtStop, RouteSegment)]] =
+    val selectedStop: Var[Option[SelectedStopInfo]] =
       Var(None)
 
     val whatToShowBetter
       : Signal[ReactiveHtmlElement[HTMLDivElement]] =
       selectedStop.signal
         .map {
-          case Some((busScheduleAtStop, routeSegment)) =>
+          case Some(selectedStopInfo) =>
             val res =
               UpcomingStops(
-                busScheduleAtStop,
-                routeSegment,
+                selectedStopInfo.busScheduleAtStop,
+                selectedStopInfo.routeSegment,
                 $plan.writer
                   .contramap[LocationTimeDirection] { ltd =>
                     selectedStop.set(None)
@@ -77,6 +84,7 @@ object Components {
                     }
                     res
                   },
+                selectedStopInfo.context,
               )
 
             import scala.scalajs.js.timers._
@@ -135,7 +143,7 @@ object Components {
     $plan: Var[Plan],
     addingNewRoute: Var[Boolean],
     scheduleSelector: Observer[
-      Option[(BusScheduleAtStop, RouteSegment)],
+      Option[SelectedStopInfo],
     ],
   ) =
     div(
@@ -273,7 +281,7 @@ object Components {
     routeSegment: RouteSegment,
     addingNewRoute: Var[Boolean],
     scheduleSelector: Observer[
-      Option[(BusScheduleAtStop, RouteSegment)],
+      Option[SelectedStopInfo],
     ],
     transition: Transition,
     legDeleter: Observer[RouteSegment],
@@ -306,6 +314,7 @@ object Components {
                  routeSegment.start,
                  routeSegment.routeWithTimes,
                  scheduleSelector,
+                 StopContext.Departure,
         ),
         transitSegment(
           routeSegment,
@@ -316,6 +325,7 @@ object Components {
                  routeSegment.end,
                  routeSegment.routeWithTimes,
                  scheduleSelector,
+                 StopContext.Arrival,
         ),
       )
 
@@ -332,8 +342,9 @@ object Components {
     stop: LocationWithTime,
     routeWithTimes: RouteWithTimes,
     scheduleSelector: Observer[
-      Option[(BusScheduleAtStop, RouteSegment)],
+      Option[SelectedStopInfo],
     ],
+    context: StopContext,
   ) =
     div(
       cls := "stop-information",
@@ -348,6 +359,7 @@ object Components {
                                       scheduleAtStop,
                                       scheduleSelector,
                                       routeSegment,
+                                      context,
               )
             },
         ),
@@ -566,15 +578,16 @@ object Components {
     stopTime: WallTime,
     busScheduleAtStop: BusScheduleAtStop,
     scheduleSelector: Observer[
-      Option[(BusScheduleAtStop, RouteSegment)],
+      Option[SelectedStopInfo],
     ],
     routeSegment: RouteSegment,
+    context: StopContext,
   ): ReactiveHtmlElement[HTMLDivElement] =
     div(
       button(
         cls := "arrival-time button open-arrival-time-modal",
         onClick.preventDefault.map { _ =>
-          Some((busScheduleAtStop, routeSegment))
+          Some(SelectedStopInfo(busScheduleAtStop, routeSegment, context))
         } --> scheduleSelector,
         stopTime.toDumbAmericanString,
       ),
