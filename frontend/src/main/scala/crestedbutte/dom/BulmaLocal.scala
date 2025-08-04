@@ -59,14 +59,24 @@ object BulmaLocal {
         backgroundColor := "white",
         zIndex := "10",
         paddingBottom := "10px",
-        h4(textAlign := "center", scheduleAtStop.location.name),
-        h5(textAlign := "center", context match {
-          case StopContext.Arrival => s"arriving at ${scheduleAtStop.location.name} at"
-          case StopContext.Departure => s"leaving ${scheduleAtStop.location.name} at"
-        }),
+        h5(textAlign := "center",
+           context match {
+             case StopContext.Arrival   => s"Arriving at "
+             case StopContext.Departure => s"Leave from "
+           },
+        ),
+        h2(
+          textAlign := "center",
+          fontWeight := "bold",
+          fontSize := "2.0rem",
+          color := "#363636",
+          textShadow := "0 1px 3px rgba(0,0,0,0.2)",
+          scheduleAtStop.location.name,
+        ),
+        h5(textAlign := "center", "at"),
       ),
       div(
-        maxHeight := "70vh",
+        maxHeight := "70vh", // TODO I don't know if this is safe if the top portion is taking more than 30 VH.
         overflowY := "auto",
         scheduleAtStop.locationsWithTimes.map { l =>
           locationwithTime(l, routeSegment, selectedTimeUpdater)
