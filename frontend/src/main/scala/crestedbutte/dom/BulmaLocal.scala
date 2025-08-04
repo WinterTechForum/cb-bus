@@ -45,11 +45,23 @@ object BulmaLocal {
     div(
       width <-- $width.map(_.toString + "%"),
       opacity <-- $opacity,
-      h4(textAlign := "center", scheduleAtStop.location.name),
-      h5(textAlign := "center", "Upcoming Arrivals"),
-      scheduleAtStop.locationsWithTimes.map { l =>
-        locationwithTime(l, routeSegment, selectedTimeUpdater)
-      },
+      div(
+        // Keeps this text at the top while we scroll through the stops
+        position := "sticky",
+        top := "0",
+        backgroundColor := "white",
+        zIndex := "10",
+        paddingBottom := "10px",
+        h4(textAlign := "center", scheduleAtStop.location.name),
+        h5(textAlign := "center", "Upcoming Arrivals"),
+      ),
+      div(
+        maxHeight := "70vh",
+        overflowY := "auto",
+        scheduleAtStop.locationsWithTimes.map { l =>
+          locationwithTime(l, routeSegment, selectedTimeUpdater)
+        },
+      ),
     )
   }
 
