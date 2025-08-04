@@ -393,9 +393,20 @@ object Components {
             animatedButton(
               "Copy Text",
               "m-2",
-              () =>
-                dom.window.navigator.clipboard
-                  .writeText(plan.plainTextRepresentation),
+              () => {
+                val text = plan.plainTextRepresentation
+                
+                // Try to use Web Share API if available (works on mobile devices)
+                if (js.typeOf(dom.window.navigator.asInstanceOf[js.Dynamic].share) != "undefined") {
+                  dom.window.navigator.asInstanceOf[js.Dynamic].share(js.Dynamic.literal(
+                    title = "Bus Schedule",
+                    text = text
+                  ))
+                } else {
+                  // Fallback to clipboard copy for desktop browsers
+                  dom.window.navigator.clipboard.writeText(text)
+                }
+              },
             ),
             animatedButton(
               "Copy App Link",
