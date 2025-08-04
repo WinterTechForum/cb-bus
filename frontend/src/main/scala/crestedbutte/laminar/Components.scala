@@ -306,7 +306,6 @@ object Components {
                  routeSegment.start,
                  routeSegment.routeWithTimes,
                  scheduleSelector,
-                 transition,
         ),
         transitSegment(
           routeSegment,
@@ -317,7 +316,6 @@ object Components {
                  routeSegment.end,
                  routeSegment.routeWithTimes,
                  scheduleSelector,
-                 transition,
         ),
       )
 
@@ -336,7 +334,6 @@ object Components {
     scheduleSelector: Observer[
       Option[(BusScheduleAtStop, RouteSegment)],
     ],
-    transition: Transition,
   ) =
     div(
       cls := "stop-information",
