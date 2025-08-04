@@ -282,7 +282,7 @@ object Components {
 
     val res =
       div(
-        transition.width,
+        transition.height,
         TouchControls.swipeProp {
           case Swipe.Left =>
             routeSegment.routeWithTimes
@@ -472,7 +472,6 @@ object Components {
         children <-- $locations.splitTransition(identity) {
           case (_, (location, _), _, transition) =>
             div(
-              transition.width,
               transition.height,
               child <-- $now.map {
                 now =>
