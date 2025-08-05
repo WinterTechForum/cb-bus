@@ -191,9 +191,10 @@ object Components {
                       routePieceInner match {
                         case r: RouteGap =>
                           div(
-                            textAlign := "center",
-                            paddingTop := "1.5em",
-                            paddingBottom := "1.5em",
+                            cls := "route-gap",
+                            div(
+                              cls := "route-gap-indicator",
+                            ),
                             span(
                               cls := "time-at-stop",
                               r.endTime
