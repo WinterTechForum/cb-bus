@@ -298,36 +298,28 @@ body {
     font-weight: 600;
     text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
     margin: 0;
-    padding: 4px 8px;
+    padding: 4px 8px 4px 28px;
     background: rgba(255, 255, 255, 0.7);
     border-radius: 6px;
     display: inline-block;
+    position: relative;
 }
 
-/* Add visual connection indicators */
-.route-gap-indicator {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    width: 24px;
-    height: 24px;
-    background: #00998E;
-    border-radius: 50%;
-    border: 3px solid #ffffff;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    z-index: 2;
-}
-
-.route-gap-indicator::before {
+/* Add clock icon to the left of time text */
+.route-gap .time-at-stop::before {
     content: '⏱';
     position: absolute;
+    left: 8px;
     top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: white;
-    font-size: 12px;
+    transform: translateY(-50%);
+    color: #495057;
+    font-size: 14px;
     line-height: 1;
+}
+
+/* Remove the centered indicator circle */
+.route-gap-indicator {
+    display: none;
 }
 
 /* Ensure route segments have proper spacing for connectors */
