@@ -27,8 +27,7 @@ case class LocationTimeDirection(
 case class SelectedStopInfo(
   busScheduleAtStop: BusScheduleAtStop,
   routeSegment: RouteSegment,
-  context: StopContext
-)
+  context: StopContext)
 
 object Components {
   def FullApp(
@@ -349,7 +348,12 @@ object Components {
   ) =
     div(
       cls := "stop-information",
-      div(cls := "stop-name", div(stop.l.name)),
+      div(
+        cls := "stop-name",
+        fontWeight := "bold",
+        fontSize := "1.5rem",
+        div(stop.l.name),
+      ),
       div(cls := "stop-alt-name", div(stop.l.altName)),
       div(
         div(
@@ -408,14 +412,25 @@ object Components {
               "m-2",
               () => {
                 val text = plan.plainTextRepresentation
-                
+
                 // Try to use Web Share API if available (works on mobile devices)
-                if (js.typeOf(dom.window.navigator.asInstanceOf[js.Dynamic].share) != "undefined") {
-                  dom.window.navigator.asInstanceOf[js.Dynamic].share(js.Dynamic.literal(
-                    title = "Bus Schedule",
-                    text = text
-                  ))
-                } else {
+                if (
+                  js.typeOf(
+                    dom.window.navigator
+                      .asInstanceOf[js.Dynamic]
+                      .share,
+                  ) != "undefined"
+                ) {
+                  dom.window.navigator
+                    .asInstanceOf[js.Dynamic]
+                    .share(
+                      js.Dynamic.literal(
+                        title = "Bus Schedule",
+                        text = text,
+                      ),
+                    )
+                }
+                else {
                   // Fallback to clipboard copy for desktop browsers
                   dom.window.navigator.clipboard.writeText(text)
                 }
@@ -433,12 +448,23 @@ object Components {
                     s"https://rtabus.netlify.app/?plan=${UrlEncoding.encode(plan)}"
 
                 // Try to use Web Share API if available (works on mobile devices)
-                if (js.typeOf(dom.window.navigator.asInstanceOf[js.Dynamic].share) != "undefined") {
-                  dom.window.navigator.asInstanceOf[js.Dynamic].share(js.Dynamic.literal(
-                    title = "Bus Schedule Link",
-                    url = url
-                  ))
-                } else {
+                if (
+                  js.typeOf(
+                    dom.window.navigator
+                      .asInstanceOf[js.Dynamic]
+                      .share,
+                  ) != "undefined"
+                ) {
+                  dom.window.navigator
+                    .asInstanceOf[js.Dynamic]
+                    .share(
+                      js.Dynamic.literal(
+                        title = "Bus Schedule Link",
+                        url = url,
+                      ),
+                    )
+                }
+                else {
                   // Fallback to clipboard copy for desktop browsers
                   dom.window.navigator.clipboard.writeText(url)
                 }
@@ -588,7 +614,9 @@ object Components {
       button(
         cls := "arrival-time button open-arrival-time-modal",
         onClick.preventDefault.map { _ =>
-          Some(SelectedStopInfo(busScheduleAtStop, routeSegment, context))
+          Some(
+            SelectedStopInfo(busScheduleAtStop, routeSegment, context),
+          )
         } --> scheduleSelector,
         stopTime.toDumbAmericanString,
       ),
