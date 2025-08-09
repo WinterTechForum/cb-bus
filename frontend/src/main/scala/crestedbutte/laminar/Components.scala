@@ -540,62 +540,100 @@ object Components {
         cls := "plan-segments box",
         child <-- isEditing.signal.map { editing =>
           if !editing then
-            // Normal view with momentum swipe to jump multiple time pairs
+            // Normal view with live-drag multi-step updates and momentum on release
             val normalViewPps = math.max(
               40.0,
               org.scalajs.dom.window.innerWidth.toDouble / 4.0,
             )
+            val normalPreview: Var[RouteSegment] = Var(routeSegment)
+            val dragStartXNV: Var[Double] = Var(0)
+            val dragStartTimeNV: Var[Double] = Var(0)
+            val emittedStepsNV: Var[Int] = Var(0)
+            def applyStepsNV(
+              steps: Int,
+            ): Unit =
+              if steps > 0 then
+                var i = steps
+                while i > 0 do
+                  normalPreview
+                    .now()
+                    .routeWithTimes
+                    .nextAfter(normalPreview.now()) match
+                    case Some(n) => normalPreview.set(n)
+                    case None    => i = 1 // end early
+                  i -= 1
+              else if steps < 0 then
+                var i = -steps
+                while i > 0 do
+                  normalPreview
+                    .now()
+                    .routeWithTimes
+                    .nextBefore(normalPreview.now()) match
+                    case Some(p) => normalPreview.set(p)
+                    case None    => i = 1 // end early
+                  i -= 1
             div(
-              TouchControls.swipeThrowProp(
-                onThrow = (steps: Int) =>
-                  if (steps > 0) {
-                    var i = steps
-                    var current = routeSegment
-                    while (i > 0) {
-                      current.routeWithTimes.nextAfter(
-                        current,
-                      ) match {
-                        case Some(n) => current = n
-                        case None    => i = 1 // end early
-                      }
-                      i -= 1
-                    }
-                    segmentUpdater.onNext(current)
-                  }
-                  else if (steps < 0) {
-                    var i = -steps
-                    var current = routeSegment
-                    while (i > 0) {
-                      current.routeWithTimes.nextBefore(
-                        current,
-                      ) match {
-                        case Some(p) => current = p
-                        case None    => i = 1 // end early
-                      }
-                      i -= 1
-                    }
-                    segmentUpdater.onNext(current)
-                  },
-                normalViewPps,
-              ),
-              stopInfo(routeSegment,
-                       routeSegment.start,
-                       routeSegment.routeWithTimes,
-                       scheduleSelector,
-                       StopContext.Departure,
-              ),
-              transitSegment(
-                routeSegment,
-                addingNewRoute,
-                legDeleter,
-                onEdit = () => isEditing.set(true),
-              ),
-              stopInfo(routeSegment,
-                       routeSegment.end,
-                       routeSegment.routeWithTimes,
-                       scheduleSelector,
-                       StopContext.Arrival,
-              ),
+              TouchControls.onTouchStart.map(
+                _.changedTouches(0).screenX,
+              ) --> dragStartXNV,
+              TouchControls.onTouchStart.map(_ =>
+                scala.scalajs.js.Date.now(),
+              ) --> dragStartTimeNV,
+              TouchControls.onTouchStart.mapTo(0) --> emittedStepsNV,
+              TouchControls.onTouchMove.map(
+                _.changedTouches(0).screenX,
+              ) --> Observer[Double] { currentX =>
+                val startX = dragStartXNV.now()
+                val deltaX = startX - currentX
+                val stepsDouble = deltaX / normalViewPps
+                val idx = stepsDouble.toInt
+                val already = emittedStepsNV.now()
+                if idx != already then
+                  applyStepsNV(idx - already)
+                  emittedStepsNV.set(idx)
+              },
+              TouchControls.onTouchEnd.map(
+                _.changedTouches(0).screenX,
+              ) --> Observer[Double] { endX =>
+                val startX = dragStartXNV.now()
+                val deltaX = startX - endX
+                val magnitude = Math.abs(deltaX)
+                val elapsedMs = Math.max(
+                  1.0,
+                  scala.scalajs.js.Date.now() - dragStartTimeNV.now(),
+                )
+                val pxPerMs = magnitude / elapsedMs
+                val extra =
+                  Math.round(pxPerMs * (200.0 / normalViewPps)).toInt
+                val clamped = Math.max(0, Math.min(6, extra))
+                val sign = if deltaX > 0 then 1 else -1
+                if clamped != 0 then applyStepsNV(sign * clamped)
+                // commit preview to plan
+                segmentUpdater.onNext(normalPreview.now())
+                emittedStepsNV.set(0)
+              },
+              child <-- normalPreview.signal.map { seg =>
+                div(
+                  stopInfo(seg,
+                           seg.start,
+                           seg.routeWithTimes,
+                           scheduleSelector,
+                           StopContext.Departure,
+                  ),
+                  transitSegment(
+                    seg,
+                    addingNewRoute,
+                    legDeleter,
+                    onEdit = () => isEditing.set(true),
+                  ),
+                  stopInfo(seg,
+                           seg.end,
+                           seg.routeWithTimes,
+                           scheduleSelector,
+                           StopContext.Arrival,
+                  ),
+                )
+              },
             )
           else
             // Editor view; apply updates when user confirms
