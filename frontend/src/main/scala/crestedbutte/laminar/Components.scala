@@ -314,22 +314,87 @@ object Components {
 
       val $triplet = localSelection.signal.map(neighbors)
 
+      // Live-drag state and helpers
+      val pixelsPerStep = 80.0
+      val velocityGain = 200.0
+      val maxSteps = 6
+      val dragStartX: Var[Double] = Var(0)
+      val dragStartTimeMs: Var[Double] = Var(0)
+      val emittedSteps: Var[Int] = Var(0)
+      val dragProgress: Var[Double] = Var(0.0) // fractional [-1, 1]
+
+      def applySteps(
+        steps: Int,
+      ): Unit =
+        if steps > 0 then
+          var remaining = steps
+          while remaining > 0 do
+            localSelection
+              .now()
+              .routeWithTimes
+              .nextAfter(localSelection.now()) match
+              case Some(n) => localSelection.set(n)
+              case None    => remaining = 1 // end early
+            remaining -= 1
+        else if steps < 0 then
+          var remaining = -steps
+          while remaining > 0 do
+            localSelection
+              .now()
+              .routeWithTimes
+              .nextBefore(localSelection.now()) match
+              case Some(p) => localSelection.set(p)
+              case None    => remaining = 1 // end early
+            remaining -= 1
+
       div(
         cls := "segment-editor",
-        // Swipe inside editor previews locally
-        TouchControls.swipeProp {
-          case Swipe.Left =>
-            localSelection.update { current =>
-              current.routeWithTimes
-                .nextAfter(current)
-                .getOrElse(current)
-            }
-          case Swipe.Right =>
-            localSelection.update { current =>
-              current.routeWithTimes
-                .nextBefore(current)
-                .getOrElse(current)
-            }
+        // Live-drag: update selection during move, add momentum on release
+        TouchControls.onTouchStart.map(
+          _.changedTouches(0).screenX,
+        ) --> dragStartX,
+        TouchControls.onTouchStart.map(_ =>
+          scala.scalajs.js.Date.now(),
+        ) --> dragStartTimeMs,
+        TouchControls.onTouchStart.mapTo(0) --> emittedSteps,
+        TouchControls.onTouchStart.mapTo(0.0) --> dragProgress,
+        TouchControls.onTouchMove.map(
+          _.changedTouches(0).screenX,
+        ) --> Observer[Double] { currentX =>
+          val startX = dragStartX.now()
+          val deltaX = startX - currentX
+          val stepsDouble = deltaX / pixelsPerStep
+          val stepIndex =
+            stepsDouble.toInt // threshold crossing count
+          val already = emittedSteps.now()
+          if stepIndex > already then
+            applySteps(stepIndex - already)
+            emittedSteps.set(stepIndex)
+          else if stepIndex < already then
+            applySteps(stepIndex - already) // negative steps
+            emittedSteps.set(stepIndex)
+          val frac = stepsDouble - stepIndex
+          val clamped = Math.max(-1.0, Math.min(1.0, frac))
+          dragProgress.set(clamped)
+        },
+        TouchControls.onTouchEnd.map(
+          _.changedTouches(0).screenX,
+        ) --> Observer[Double] { endX =>
+          val startX = dragStartX.now()
+          val deltaX = startX - endX
+          val magnitude = Math.abs(deltaX)
+          val elapsedMs = Math.max(
+            1.0,
+            scala.scalajs.js.Date.now() - dragStartTimeMs.now(),
+          )
+          val pxPerMs = magnitude / elapsedMs
+          val extra =
+            Math.round(pxPerMs * (velocityGain / pixelsPerStep)).toInt
+          val clamped = Math.max(0, Math.min(maxSteps, extra))
+          val sign = if (deltaX > 0) 1 else -1
+          applySteps(sign * clamped)
+          emittedSteps.set(0)
+          dragProgress.set(0.0)
         },
         div(
           cls := "segment-editor-header",
@@ -361,6 +426,13 @@ object Components {
                 onClick --> Observer { _ =>
                   localSelection.set(prev)
                 },
+                // Animate in while dragging right
+                styleAttr <-- dragProgress.signal.map { p =>
+                  val influence = Math.max(0.0, -p)
+                  val scale = 0.95 + 0.05 * Math.min(1.0, influence)
+                  val opacity = 0.2 + 0.6 * Math.min(1.0, influence)
+                  s"transition: transform 120ms ease, opacity 120ms ease; transform: scale(${scale}); opacity: ${opacity};"
+                },
                 div(prev.start.t.toDumbAmericanString),
                 div(prev.end.t.toDumbAmericanString),
               )
@@ -378,6 +450,11 @@ object Components {
             borderRadius := "8px",
             padding := "12px",
             backgroundColor := "#6BB187",
+            styleAttr <-- dragProgress.signal.map { p =>
+              val s = 1.0 - 0.06 * Math.min(1.0, Math.abs(p))
+              val o = 1.0 - 0.4 * Math.min(1.0, Math.abs(p))
+              s"transition: transform 120ms ease, opacity 120ms ease; transform: scale(${s}); opacity: ${o};"
+            },
             child <-- localSelection.signal.map { seg =>
               div(
                 div(
@@ -406,6 +483,13 @@ object Components {
                 padding := "8px",
                 onClick --> Observer { _ =>
                   localSelection.set(next)
+                },
+                // Animate in while dragging left
+                styleAttr <-- dragProgress.signal.map { p =>
+                  val influence = Math.max(0.0, p)
+                  val scale = 0.95 + 0.05 * Math.min(1.0, influence)
+                  val opacity = 0.2 + 0.6 * Math.min(1.0, influence)
+                  s"transition: transform 120ms ease, opacity 120ms ease; transform: scale(${scale}); opacity: ${opacity};"
                 },
                 div(next.start.t.toDumbAmericanString),
                 div(next.end.t.toDumbAmericanString),
@@ -447,17 +531,33 @@ object Components {
         cls := "plan-segments box",
         child <-- isEditing.signal.map { editing =>
           if !editing then
-            // Normal view with swipe to cycle segment immediately
+            // Normal view with momentum swipe to jump multiple time pairs
             div(
-              TouchControls.swipeProp {
-                case Swipe.Left =>
-                  routeSegment.routeWithTimes
-                    .nextAfter(routeSegment)
-                    .foreach(segmentUpdater.onNext)
-                case Swipe.Right =>
-                  routeSegment.routeWithTimes
-                    .nextBefore(routeSegment)
-                    .foreach(segmentUpdater.onNext)
+              TouchControls.swipeThrowProp { steps =>
+                if (steps > 0) {
+                  var i = steps
+                  var current = routeSegment
+                  while (i > 0) {
+                    current.routeWithTimes.nextAfter(current) match {
+                      case Some(n) => current = n
+                      case None    => i = 1 // end early
+                    }
+                    i -= 1
+                  }
+                  segmentUpdater.onNext(current)
+                }
+                else if (steps < 0) {
+                  var i = -steps
+                  var current = routeSegment
+                  while (i > 0) {
+                    current.routeWithTimes.nextBefore(current) match {
+                      case Some(p) => current = p
+                      case None    => i = 1 // end early
+                    }
+                    i -= 1
+                  }
+                  segmentUpdater.onNext(current)
+                }
               },
               stopInfo(routeSegment,
                        routeSegment.start,
