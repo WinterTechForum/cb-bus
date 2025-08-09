@@ -261,6 +261,7 @@ object Components {
     routeSegment: RouteSegment,
     addingNewRoute: Var[Boolean],
     legDeleter: Observer[RouteSegment],
+    onEdit: () => Unit,
   ) =
     div(
       cls := "transit-period",
@@ -275,6 +276,13 @@ object Components {
           .humanFriendly,
       ),
       deleteButton(routeSegment, addingNewRoute, legDeleter),
+      button(
+        cls := "button m-2",
+        "Edit times",
+        onClick --> Observer { _ =>
+          onEdit()
+        },
+      ),
     )
 
   def RouteLegElement(
@@ -288,45 +296,198 @@ object Components {
     segmentUpdater: Observer[RouteSegment],
   ) = {
 
+    val isEditing: Var[Boolean] = Var(false)
+    val localSelection: Var[RouteSegment] = Var(routeSegment)
+
+    def segmentEditorCarousel(
+      onApply: RouteSegment => Unit,
+      onCancel: () => Unit,
+    ) = {
+      def neighbors(
+        seg: RouteSegment,
+      ): (Option[RouteSegment], RouteSegment, Option[RouteSegment]) =
+        (
+          seg.routeWithTimes.nextBefore(seg),
+          seg,
+          seg.routeWithTimes.nextAfter(seg),
+        )
+
+      val $triplet = localSelection.signal.map(neighbors)
+
+      div(
+        cls := "segment-editor",
+        // Swipe inside editor previews locally
+        TouchControls.swipeProp {
+          case Swipe.Left =>
+            localSelection.update { current =>
+              current.routeWithTimes
+                .nextAfter(current)
+                .getOrElse(current)
+            }
+          case Swipe.Right =>
+            localSelection.update { current =>
+              current.routeWithTimes
+                .nextBefore(current)
+                .getOrElse(current)
+            }
+        },
+        div(
+          cls := "segment-editor-header",
+          h4(
+            textAlign := "center",
+            "Edit segment times",
+          ),
+          div(
+            textAlign := "center",
+            s"${routeSegment.start.l.name} → ${routeSegment.end.l.name}",
+          ),
+        ),
+        div(
+          cls := "segment-editor-carousel",
+          display := "flex",
+          justifyContent := "space-between",
+          alignItems := "stretch",
+          gap := "8px",
+          // Previous (left)
+          child <-- $triplet.map(_._1).map {
+            case Some(prev) =>
+              div(
+                cls := "carousel-card prev clickable",
+                flex := "1",
+                opacity := "0.6",
+                border := "1px solid #eee",
+                borderRadius := "8px",
+                padding := "8px",
+                onClick --> Observer { _ =>
+                  localSelection.set(prev)
+                },
+                div(prev.start.t.toDumbAmericanString),
+                div(prev.end.t.toDumbAmericanString),
+              )
+            case None =>
+              div(
+                cls := "carousel-card prev empty",
+                flex := "1",
+              )
+          },
+          // Current (center)
+          div(
+            cls := "carousel-card current",
+            flex := "2",
+            border := "2px solid #3273dc",
+            borderRadius := "8px",
+            padding := "12px",
+            backgroundColor := "#6BB187",
+            child <-- localSelection.signal.map { seg =>
+              div(
+                div(
+                  fontWeight := "bold",
+                  textAlign := "center",
+                  seg.start.t.toDumbAmericanString,
+                ),
+                div(textAlign := "center", "to"),
+                div(
+                  fontWeight := "bold",
+                  textAlign := "center",
+                  seg.end.t.toDumbAmericanString,
+                ),
+              )
+            },
+          ),
+          // Next (right)
+          child <-- $triplet.map(_._3).map {
+            case Some(next) =>
+              div(
+                cls := "carousel-card next clickable",
+                flex := "1",
+                opacity := "0.6",
+                border := "1px solid #eee",
+                borderRadius := "8px",
+                padding := "8px",
+                onClick --> Observer { _ =>
+                  localSelection.set(next)
+                },
+                div(next.start.t.toDumbAmericanString),
+                div(next.end.t.toDumbAmericanString),
+              )
+            case None =>
+              div(
+                cls := "carousel-card next empty",
+                flex := "1",
+              )
+          },
+        ),
+        div(
+          cls := "segment-editor-actions",
+          marginTop := "8px",
+          display := "flex",
+          justifyContent := "center",
+          gap := "8px",
+          button(
+            cls := "button is-primary",
+            "Apply",
+            onClick --> Observer { _ =>
+              onApply(localSelection.now())
+            },
+          ),
+          button(
+            cls := "button",
+            "Cancel",
+            onClick --> Observer { _ =>
+              onCancel()
+            },
+          ),
+        ),
+      )
+    }
+
     val res =
       div(
         transition.height,
-        TouchControls.swipeProp {
-          case Swipe.Left =>
-            routeSegment.routeWithTimes
-              .nextAfter(routeSegment)
-              .foreach(nextSegment =>
-                segmentUpdater.onNext(
-                  nextSegment,
-                ),
-              )
-          case Swipe.Right =>
-            routeSegment.routeWithTimes
-              .nextBefore(routeSegment)
-              .foreach(nextSegment =>
-                segmentUpdater.onNext(
-                  nextSegment,
-                ),
-              )
-        },
         cls := "plan-segments box",
-        stopInfo(routeSegment,
-                 routeSegment.start,
-                 routeSegment.routeWithTimes,
-                 scheduleSelector,
-                 StopContext.Departure,
-        ),
-        transitSegment(
-          routeSegment,
-          addingNewRoute,
-          legDeleter,
-        ),
-        stopInfo(routeSegment,
-                 routeSegment.end,
-                 routeSegment.routeWithTimes,
-                 scheduleSelector,
-                 StopContext.Arrival,
-        ),
+        child <-- isEditing.signal.map { editing =>
+          if !editing then
+            // Normal view with swipe to cycle segment immediately
+            div(
+              TouchControls.swipeProp {
+                case Swipe.Left =>
+                  routeSegment.routeWithTimes
+                    .nextAfter(routeSegment)
+                    .foreach(segmentUpdater.onNext)
+                case Swipe.Right =>
+                  routeSegment.routeWithTimes
+                    .nextBefore(routeSegment)
+                    .foreach(segmentUpdater.onNext)
+              },
+              stopInfo(routeSegment,
+                       routeSegment.start,
+                       routeSegment.routeWithTimes,
+                       scheduleSelector,
+                       StopContext.Departure,
+              ),
+              transitSegment(
+                routeSegment,
+                addingNewRoute,
+                legDeleter,
+                onEdit = () => isEditing.set(true),
+              ),
+              stopInfo(routeSegment,
+                       routeSegment.end,
+                       routeSegment.routeWithTimes,
+                       scheduleSelector,
+                       StopContext.Arrival,
+              ),
+            )
+          else
+            // Editor view; apply updates when user confirms
+            segmentEditorCarousel(
+              onApply = seg => {
+                segmentUpdater.onNext(seg)
+                isEditing.set(false)
+              },
+              onCancel = () => isEditing.set(false),
+            )
+        },
       )
 
     res.ref.addEventListener(
@@ -611,13 +772,8 @@ object Components {
     context: StopContext,
   ): ReactiveHtmlElement[HTMLDivElement] =
     div(
-      button(
-        cls := "arrival-time button open-arrival-time-modal",
-        onClick.preventDefault.map { _ =>
-          Some(
-            SelectedStopInfo(busScheduleAtStop, routeSegment, context),
-          )
-        } --> scheduleSelector,
+      span(
+        cls := "arrival-time label",
         stopTime.toDumbAmericanString,
       ),
     )
