@@ -377,7 +377,7 @@ object Components {
             border := "2px solid #3273dc",
             borderRadius := "8px",
             padding := "12px",
-            backgroundColor := "#f5faff",
+            backgroundColor := "#6BB187",
             child <-- localSelection.signal.map { seg =>
               div(
                 div(
