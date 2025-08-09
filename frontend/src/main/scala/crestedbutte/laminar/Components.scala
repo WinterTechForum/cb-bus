@@ -546,33 +546,38 @@ object Components {
               org.scalajs.dom.window.innerWidth.toDouble / 4.0,
             )
             div(
-              TouchControls.swipeThrowProp { steps =>
-                if (steps > 0) {
-                  var i = steps
-                  var current = routeSegment
-                  while (i > 0) {
-                    current.routeWithTimes.nextAfter(current) match {
-                      case Some(n) => current = n
-                      case None    => i = 1 // end early
+              TouchControls.swipeThrowProp(
+                onThrow = (steps: Int) =>
+                  if (steps > 0) {
+                    var i = steps
+                    var current = routeSegment
+                    while (i > 0) {
+                      current.routeWithTimes.nextAfter(
+                        current,
+                      ) match {
+                        case Some(n) => current = n
+                        case None    => i = 1 // end early
+                      }
+                      i -= 1
                     }
-                    i -= 1
+                    segmentUpdater.onNext(current)
                   }
-                  segmentUpdater.onNext(current)
-                }
-                else if (steps < 0) {
-                  var i = -steps
-                  var current = routeSegment
-                  while (i > 0) {
-                    current.routeWithTimes.nextBefore(current) match {
-                      case Some(p) => current = p
-                      case None    => i = 1 // end early
+                  else if (steps < 0) {
+                    var i = -steps
+                    var current = routeSegment
+                    while (i > 0) {
+                      current.routeWithTimes.nextBefore(
+                        current,
+                      ) match {
+                        case Some(p) => current = p
+                        case None    => i = 1 // end early
+                      }
+                      i -= 1
                     }
-                    i -= 1
-                  }
-                  segmentUpdater.onNext(current)
-                }
-              },
-              normalViewPps,
+                    segmentUpdater.onNext(current)
+                  },
+                normalViewPps,
+              ),
               stopInfo(routeSegment,
                        routeSegment.start,
                        routeSegment.routeWithTimes,
