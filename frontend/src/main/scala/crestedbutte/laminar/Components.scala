@@ -361,14 +361,7 @@ object Components {
         ) --> dragStartTimeMs,
         TouchControls.onTouchStart.mapTo(0) --> emittedSteps,
         TouchControls.onTouchStart.mapTo(0.0) --> dragProgress,
-        // Overlay cancel that doesn't shift layout
-        button(
-          cls := "editor-cancel-overlay",
-          "Cancel",
-          onClick --> Observer { _ =>
-            onCancel()
-          },
-        ),
+        // Removed floating overlay cancel; actions are grouped below
         TouchControls.onTouchMove.map(
           _.changedTouches(0).screenX,
         ) --> Observer[Double] { currentX =>
@@ -516,6 +509,13 @@ object Components {
           display := "flex",
           justifyContent := "center",
           gap := "8px",
+          button(
+            cls := "button",
+            "Cancel",
+            onClick --> Observer { _ =>
+              onCancel()
+            },
+          ),
           button(
             cls := "button is-primary",
             "Apply",
