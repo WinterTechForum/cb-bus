@@ -407,10 +407,6 @@ object Components {
         },
         div(
           cls := "segment-editor-header",
-          h4(
-            textAlign := "center",
-            "Edit segment times",
-          ),
           div(
             textAlign := "center",
             s"${routeSegment.start.l.name} → ${routeSegment.end.l.name}",
@@ -617,10 +613,6 @@ object Components {
                   // Header styled like editor view
                   div(
                     cls := "segment-editor-header",
-                    h4(
-                      textAlign := "center",
-                      "Segment times",
-                    ),
                     div(
                       textAlign := "center",
                       s"${seg.start.l.name} → ${seg.end.l.name}",
@@ -636,10 +628,9 @@ object Components {
                     div(
                       cls := "carousel-card current",
                       flex := "2",
-                      border := "2px solid #3273dc",
-                      borderRadius := "8px",
+                      // borderRadius := "8px",
                       padding := "12px",
-                      backgroundColor := "#6BB187",
+                      // backgroundColor := "#6BB187",
                       div(
                         div(
                           fontWeight := "bold",
