@@ -614,23 +614,53 @@ object Components {
               },
               child <-- normalPreview.signal.map { seg =>
                 div(
-                  stopInfo(seg,
-                           seg.start,
-                           seg.routeWithTimes,
-                           scheduleSelector,
-                           StopContext.Departure,
+                  // Header styled like editor view
+                  div(
+                    cls := "segment-editor-header",
+                    h4(
+                      textAlign := "center",
+                      "Segment times",
+                    ),
+                    div(
+                      textAlign := "center",
+                      s"${seg.start.l.name} → ${seg.end.l.name}",
+                    ),
                   ),
+                  // Single centered card (no side previews)
+                  div(
+                    cls := "segment-editor-carousel",
+                    display := "flex",
+                    justifyContent := "center",
+                    alignItems := "stretch",
+                    gap := "8px",
+                    div(
+                      cls := "carousel-card current",
+                      flex := "2",
+                      border := "2px solid #3273dc",
+                      borderRadius := "8px",
+                      padding := "12px",
+                      backgroundColor := "#6BB187",
+                      div(
+                        div(
+                          fontWeight := "bold",
+                          textAlign := "center",
+                          seg.start.t.toDumbAmericanString,
+                        ),
+                        div(textAlign := "center", "to"),
+                        div(
+                          fontWeight := "bold",
+                          textAlign := "center",
+                          seg.end.t.toDumbAmericanString,
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Keep transit controls (duration, edit button, delete)
                   transitSegment(
                     seg,
                     addingNewRoute,
                     legDeleter,
                     onEdit = () => isEditing.set(true),
-                  ),
-                  stopInfo(seg,
-                           seg.end,
-                           seg.routeWithTimes,
-                           scheduleSelector,
-                           StopContext.Arrival,
                   ),
                 )
               },
