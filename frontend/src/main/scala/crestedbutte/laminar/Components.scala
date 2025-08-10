@@ -276,13 +276,7 @@ object Components {
           .humanFriendly,
       ),
       deleteButton(routeSegment, addingNewRoute, legDeleter),
-      button(
-        cls := "button m-2",
-        "Edit times",
-        onClick --> Observer { _ =>
-          onEdit()
-        },
-      ),
+      // Removed explicit "Edit times" button; times are now clickable to edit
     )
 
   def RouteLegElement(
@@ -350,6 +344,8 @@ object Components {
 
       div(
         cls := "segment-editor",
+        // Positioning context for overlay controls
+        position := "relative",
         // Live-drag: update selection during move, add momentum on release
         TouchControls.onTouchStart.map(
           _.changedTouches(0).screenX,
@@ -365,6 +361,14 @@ object Components {
         ) --> dragStartTimeMs,
         TouchControls.onTouchStart.mapTo(0) --> emittedSteps,
         TouchControls.onTouchStart.mapTo(0.0) --> dragProgress,
+        // Overlay cancel that doesn't shift layout
+        button(
+          cls := "editor-cancel-overlay",
+          "Cancel",
+          onClick --> Observer { _ =>
+            onCancel()
+          },
+        ),
         TouchControls.onTouchMove.map(
           _.changedTouches(0).screenX,
         ) --> Observer[Double] { currentX =>
@@ -519,13 +523,6 @@ object Components {
               onApply(localSelection.now())
             },
           ),
-          button(
-            cls := "button",
-            "Cancel",
-            onClick --> Observer { _ =>
-              onCancel()
-            },
-          ),
         ),
       )
     }
@@ -631,6 +628,9 @@ object Components {
                       // borderRadius := "8px",
                       padding := "12px",
                       // backgroundColor := "#6BB187",
+                      onClick --> Observer { _ =>
+                        isEditing.set(true)
+                      },
                       div(
                         div(
                           fontWeight := "bold",

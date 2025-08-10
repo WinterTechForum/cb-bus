@@ -353,3 +353,23 @@ body {
 .plan-segments::after {
     bottom: -3px;
 }
+
+/* Current carousel card is the edit trigger; no special styling on transit time */
+
+/* Editor overlay cancel button that doesn't shift layout */
+.editor-cancel-overlay {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 10;
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 0.9rem;
+}
+
+.editor-cancel-overlay:hover {
+    background: rgba(0,0,0,0.75);
+}
