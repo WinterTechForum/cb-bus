@@ -354,12 +354,7 @@ body {
     bottom: -3px;
 }
 
-/* Make the transit period time look clickable without layout shift */
-.transit-period-duration.transit-time {
-    cursor: pointer;
-    text-decoration: underline;
-    text-underline-offset: 2px;
-}
+/* Current carousel card is the edit trigger; no special styling on transit time */
 
 /* Editor overlay cancel button that doesn't shift layout */
 .editor-cancel-overlay {

@@ -271,9 +271,6 @@ object Components {
       ),
       span(
         cls := "transit-period-duration transit-time",
-        onClick --> Observer { _ =>
-          onEdit()
-        },
         routeSegment.start.t
           .between(routeSegment.end.t)
           .humanFriendly,
@@ -631,6 +628,9 @@ object Components {
                       // borderRadius := "8px",
                       padding := "12px",
                       // backgroundColor := "#6BB187",
+                      onClick --> Observer { _ =>
+                        isEditing.set(true)
+                      },
                       div(
                         div(
                           fontWeight := "bold",
