@@ -472,17 +472,9 @@ object Components {
       child <-- isEditing.signal.map { editing =>
         if !editing then
           // Normal view with live-drag multi-step updates and momentum on release
-          val normalViewPps = math.max(
-            40.0,
-            org.scalajs.dom.window.innerWidth.toDouble / 4.0,
-          )
           val normalPreview: Var[RouteSegment] = Var(routeSegment)
-          val dragStartXNV: Var[Double] = Var(0)
 
           div(
-            TouchControls.onTouchStart.map(
-              _.changedTouches(0).screenX,
-            ) --> dragStartXNV,
             TouchControls.onTouchEnd.map(
               _.changedTouches(0).screenX,
             ) --> Observer[Double] { endX =>
@@ -496,7 +488,7 @@ object Components {
                   cls := "segment-editor-header",
                   div(
                     textAlign := "center",
-                    s"${seg.start.l.name} → ${seg.end.l.name}",
+                    s"${routeSegment.start.l.name} → ${routeSegment.end.l.name}",
                   ),
                 ),
                 // Single centered card (no side previews)
@@ -519,20 +511,20 @@ object Components {
                       div(
                         fontWeight := "bold",
                         textAlign := "center",
-                        seg.start.t.toDumbAmericanString,
+                        routeSegment.start.t.toDumbAmericanString,
                       ),
                       div(textAlign := "center", "to"),
                       div(
                         fontWeight := "bold",
                         textAlign := "center",
-                        seg.end.t.toDumbAmericanString,
+                        routeSegment.end.t.toDumbAmericanString,
                       ),
                     ),
                   ),
                 ),
                 // Keep transit controls (duration, edit button, delete)
                 transitSegment(
-                  seg,
+                  routeSegment,
                   addingNewRoute,
                   legDeleter,
                   onEdit = () => isEditing.set(true),
