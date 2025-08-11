@@ -478,42 +478,11 @@ object Components {
           )
           val normalPreview: Var[RouteSegment] = Var(routeSegment)
           val dragStartXNV: Var[Double] = Var(0)
-          def applyStepsNV(
-            steps: Int,
-          ): Unit =
-            if steps > 0 then
-              var i = steps
-              while i > 0 do
-                normalPreview
-                  .now()
-                  .routeWithTimes
-                  .nextAfter(normalPreview.now()) match
-                  case Some(n) => normalPreview.set(n)
-                  case None    => i = 1 // end early
-                i -= 1
-            else if steps < 0 then
-              var i = -steps
-              while i > 0 do
-                normalPreview
-                  .now()
-                  .routeWithTimes
-                  .nextBefore(normalPreview.now()) match
-                  case Some(p) => normalPreview.set(p)
-                  case None    => i = 1 // end early
-                i -= 1
+
           div(
             TouchControls.onTouchStart.map(
               _.changedTouches(0).screenX,
             ) --> dragStartXNV,
-            TouchControls.onTouchMove.map(
-              _.changedTouches(0).screenX,
-            ) --> Observer[Double] { currentX =>
-              val startX = dragStartXNV.now()
-              val deltaX = startX - currentX
-              val stepsDouble = deltaX / normalViewPps
-              val idx = stepsDouble.toInt
-              applyStepsNV(idx)
-            },
             TouchControls.onTouchEnd.map(
               _.changedTouches(0).screenX,
             ) --> Observer[Double] { endX =>
