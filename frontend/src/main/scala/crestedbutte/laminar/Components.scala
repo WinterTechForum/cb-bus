@@ -261,7 +261,6 @@ object Components {
     routeSegment: RouteSegment,
     addingNewRoute: Var[Boolean],
     legDeleter: Observer[RouteSegment],
-    onEdit: () => Unit,
   ) =
     div(
       cls := "transit-period",
@@ -285,7 +284,6 @@ object Components {
     segmentUpdater: Observer[RouteSegment],
   ) = {
 
-    val isEditing: Var[Boolean] = Var(false)
     val localSelection: Var[RouteSegment] = Var(routeSegment)
 
     def segmentEditorCarousel() = {
@@ -421,7 +419,6 @@ object Components {
         routeSegment,
         addingNewRoute,
         legDeleter,
-        onEdit = () => (),
       ),
     )
 
