@@ -224,7 +224,7 @@ object Components {
               cls := "centered",
               button(
                 cls := "button",
-                "Add new route!!",
+                "Add new route",
                 onClick --> Observer { _ =>
                   addingNewRoute.set {
                     true
@@ -310,7 +310,6 @@ object Components {
 
       // Live-drag state and helpers
       val dragStartX: Var[Double] = Var(0)
-      val dragStartTimeMs: Var[Double] = Var(0)
       val dragProgress: Var[Double] = Var(0.0) // fractional [-1, 1]
 
       def applySteps(
@@ -345,16 +344,11 @@ object Components {
         TouchControls.onTouchStart.map(
           _.changedTouches(0).screenX,
         ) --> dragStartX,
-        TouchControls.onTouchStart.map(_ =>
-          scala.scalajs.js.Date.now(),
-        ) --> dragStartTimeMs,
         TouchControls.onTouchEnd.map(
           _.changedTouches(0).screenX,
         ) --> Observer[Double] { endX =>
           val startX = dragStartX.now()
-          val deltaX = startX - endX
-          val magnitude = Math.abs(deltaX)
-          val steps = Math.round(magnitude / 100).toInt
+          val steps = if (startX - endX < 0) -1 else 1
           applySteps(steps)
         },
         div(
