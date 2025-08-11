@@ -373,6 +373,56 @@ body {
     bottom: -3px;
 }
 
-/* Current carousel card is the edit trigger; no special styling on transit time */
+/* Route Segment Consistent Styling */
+.segment-editor-header {
+    text-align: center;
+    padding: 8px 0;
+}
 
-/* Cancel/Apply now live in the actions row; overlay styles removed */
+.segment-editor-carousel {
+    display: flex;
+    justify-content: center;
+    align-items: stretch;
+    gap: 8px;
+    padding: 8px 0;
+}
+
+.carousel-card {
+    border-radius: 8px;
+    padding: 12px;
+    transition: transform 120ms ease, opacity 120ms ease;
+}
+
+.carousel-card.current {
+    flex: 2;
+    background-color: #6BB187;
+    font-weight: bold;
+    text-align: center;
+    cursor: pointer;
+}
+
+.carousel-card.prev,
+.carousel-card.next {
+    flex: 1;
+    opacity: 0.4;
+    border: 1px solid #eee;
+    transform: scale(0.95);
+}
+
+.carousel-card.prev.clickable,
+.carousel-card.next.clickable {
+    cursor: pointer;
+}
+
+.carousel-card.prev.empty,
+.carousel-card.next.empty {
+    background: transparent;
+    border: none;
+}
+
+.segment-editor-actions {
+    margin-top: 8px;
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+}

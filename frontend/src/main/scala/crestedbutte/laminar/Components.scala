@@ -350,61 +350,36 @@ object Components {
         },
         div(
           cls := "segment-editor-header",
-          div(
-            textAlign := "center",
-            s"${routeSegment.start.l.name} → ${routeSegment.end.l.name}",
-          ),
+          s"${routeSegment.start.l.name} → ${routeSegment.end.l.name}",
         ),
         div(
           cls := "segment-editor-carousel",
-          display := "flex",
-          justifyContent := "space-between",
-          alignItems := "stretch",
-          gap := "8px", // TODO Suspect
           // Previous (left)
           child <-- $triplet.map(_._1).map {
             case Some(prev) =>
               div(
                 cls := "carousel-card prev clickable",
-                flex := "1",
-                opacity := "0.6",
-                border := "1px solid #eee",
-                borderRadius := "8px",
-                padding := "8px",
                 onClick --> Observer { _ =>
                   localSelection.set(prev)
                 },
-                styleAttr :=
-                  s"transition: transform 120ms ease, opacity 120ms ease; transform: scale(0.95); opacity: 0.4;",
                 div(prev.start.t.toDumbAmericanString),
                 div(prev.end.t.toDumbAmericanString),
               )
             case None =>
               div(
                 cls := "carousel-card prev empty",
-                flex := "1",
               )
           },
           // Current (center)
           div(
             cls := "carousel-card current",
-            flex := "2",
-            borderRadius := "8px",
-            padding := "12px",
-            backgroundColor := "#6BB187",
-            styleAttr :=
-              s"transition: transform 120ms ease, opacity 120ms ease; transform: scale(0.95); opacity: 1.0;",
             child <-- localSelection.signal.map { seg =>
               div(
                 div(
-                  fontWeight := "bold",
-                  textAlign := "center",
                   seg.start.t.toDumbAmericanString,
                 ),
-                div(textAlign := "center", "to"),
+                div("to"),
                 div(
-                  fontWeight := "bold",
-                  textAlign := "center",
                   seg.end.t.toDumbAmericanString,
                 ),
               )
@@ -415,33 +390,20 @@ object Components {
             case Some(next) =>
               div(
                 cls := "carousel-card next clickable",
-                flex := "1",
-                opacity := "0.6",
-                border := "1px solid #eee",
-                borderRadius := "8px",
-                padding := "8px",
                 onClick --> Observer { _ =>
                   localSelection.set(next)
                 },
-                // Animate in while dragging left
-                styleAttr :=
-                  s"transition: transform 120ms ease, opacity 120ms ease; transform: scale(0.95); opacity: 0.4;",
                 div(next.start.t.toDumbAmericanString),
                 div(next.end.t.toDumbAmericanString),
               )
             case None =>
               div(
                 cls := "carousel-card next empty",
-                flex := "1",
               )
           },
         ),
         div(
           cls := "segment-editor-actions",
-          marginTop := "8px",
-          display := "flex",
-          justifyContent := "center",
-          gap := "8px",
           button(
             cls := "button",
             "Cancel",
@@ -470,37 +432,22 @@ object Components {
               // Header styled like editor view
               div(
                 cls := "segment-editor-header",
-                div(
-                  textAlign := "center",
-                  s"${routeSegment.start.l.name} → ${routeSegment.end.l.name}",
-                ),
+                s"${routeSegment.start.l.name} → ${routeSegment.end.l.name}",
               ),
               // Single centered card (no side previews)
               div(
                 cls := "segment-editor-carousel",
-                display := "flex",
-                justifyContent := "center",
-                alignItems := "stretch",
-                gap := "8px", // TODO Suspect
                 div(
                   cls := "carousel-card current",
-                  flex := "2",
-                  // borderRadius := "8px",
-                  padding := "12px",
-                  // backgroundColor := "#6BB187",
                   onClick --> Observer { _ =>
                     isEditing.set(true)
                   },
                   div(
                     div(
-                      fontWeight := "bold",
-                      textAlign := "center",
                       routeSegment.start.t.toDumbAmericanString,
                     ),
-                    div(textAlign := "center", "to"),
+                    div("to"),
                     div(
-                      fontWeight := "bold",
-                      textAlign := "center",
                       routeSegment.end.t.toDumbAmericanString,
                     ),
                   ),
