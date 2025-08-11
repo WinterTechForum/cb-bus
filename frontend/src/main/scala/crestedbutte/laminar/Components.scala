@@ -316,15 +316,12 @@ object Components {
         steps: Int,
       ): Unit =
         if steps > 0 then
-          var remaining = steps
-          while remaining > 0 do
-            localSelection
-              .now()
-              .routeWithTimes
-              .nextAfter(localSelection.now()) match
-              case Some(n) => localSelection.set(n)
-              case None    => remaining = 1 // end early
-            remaining -= 1
+          localSelection
+            .now()
+            .routeWithTimes
+            .nextAfter(localSelection.now()) match
+            case Some(n) => localSelection.set(n)
+            case None    => ()
         else if steps < 0 then
           var remaining = -steps
           while remaining > 0 do
@@ -383,9 +380,8 @@ object Components {
                   localSelection.set(prev)
                 },
                 // Animate in while dragging right
-                styleAttr <-- dragProgress.signal.map { p =>
-                  s"transition: transform 120ms ease, opacity 120ms ease; transform: scale(0.95); opacity: 0.4;"
-                },
+                styleAttr :=
+                  s"transition: transform 120ms ease, opacity 120ms ease; transform: scale(0.95); opacity: 0.4;",
                 div(prev.start.t.toDumbAmericanString),
                 div(prev.end.t.toDumbAmericanString),
               )
@@ -402,9 +398,8 @@ object Components {
             borderRadius := "8px",
             padding := "12px",
             backgroundColor := "#6BB187",
-            styleAttr <-- dragProgress.signal.map { p =>
-              s"transition: transform 120ms ease, opacity 120ms ease; transform: scale(0.95); opacity: 1.0;"
-            },
+            styleAttr :=
+              s"transition: transform 120ms ease, opacity 120ms ease; transform: scale(0.95); opacity: 1.0;",
             child <-- localSelection.signal.map { seg =>
               div(
                 div(
@@ -435,9 +430,8 @@ object Components {
                   localSelection.set(next)
                 },
                 // Animate in while dragging left
-                styleAttr <-- dragProgress.signal.map { p =>
-                  s"transition: transform 120ms ease, opacity 120ms ease; transform: scale(0.95); opacity: 0.4;"
-                },
+                styleAttr :=
+                  s"transition: transform 120ms ease, opacity 120ms ease; transform: scale(0.95); opacity: 0.4;",
                 div(next.start.t.toDumbAmericanString),
                 div(next.end.t.toDumbAmericanString),
               )
