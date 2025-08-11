@@ -348,7 +348,12 @@ object Components {
           _.changedTouches(0).screenX,
         ) --> Observer[Double] { endX =>
           val startX = dragStartX.now()
-          val steps = if (startX - endX < 0) -1 else 1
+          val deltaX = startX - endX
+          val magnitude = Math.abs(deltaX)
+          val steps =
+            if (magnitude > 10)
+              if (startX - endX < 0) -1 else 1
+            else 0
           applySteps(steps)
         },
         div(
@@ -379,10 +384,7 @@ object Components {
                 },
                 // Animate in while dragging right
                 styleAttr <-- dragProgress.signal.map { p =>
-                  val influence = Math.max(0.0, -p)
-                  val scale = 0.95 + 0.05 * Math.min(1.0, influence)
-                  val opacity = 0.2 + 0.6 * Math.min(1.0, influence)
-                  s"transition: transform 120ms ease, opacity 120ms ease; transform: scale(${scale}); opacity: ${opacity};"
+                  s"transition: transform 120ms ease, opacity 120ms ease; transform: scale(0.95); opacity: 0.4;"
                 },
                 div(prev.start.t.toDumbAmericanString),
                 div(prev.end.t.toDumbAmericanString),
@@ -401,9 +403,7 @@ object Components {
             padding := "12px",
             backgroundColor := "#6BB187",
             styleAttr <-- dragProgress.signal.map { p =>
-              val s = 1.0 - 0.06 * Math.min(1.0, Math.abs(p))
-              val o = 1.0 - 0.4 * Math.min(1.0, Math.abs(p))
-              s"transition: transform 120ms ease, opacity 120ms ease; transform: scale(${s}); opacity: ${o};"
+              s"transition: transform 120ms ease, opacity 120ms ease; transform: scale(0.95); opacity: 1.0;"
             },
             child <-- localSelection.signal.map { seg =>
               div(
@@ -436,10 +436,7 @@ object Components {
                 },
                 // Animate in while dragging left
                 styleAttr <-- dragProgress.signal.map { p =>
-                  val influence = Math.max(0.0, p)
-                  val scale = 0.95 + 0.05 * Math.min(1.0, influence)
-                  val opacity = 0.2 + 0.6 * Math.min(1.0, influence)
-                  s"transition: transform 120ms ease, opacity 120ms ease; transform: scale(${scale}); opacity: ${opacity};"
+                  s"transition: transform 120ms ease, opacity 120ms ease; transform: scale(0.95); opacity: 0.4;"
                 },
                 div(next.start.t.toDumbAmericanString),
                 div(next.end.t.toDumbAmericanString),
