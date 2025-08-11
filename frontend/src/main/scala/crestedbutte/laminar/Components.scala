@@ -360,7 +360,7 @@ object Components {
           display := "flex",
           justifyContent := "space-between",
           alignItems := "stretch",
-          gap := "8px",
+          gap := "8px", // TODO Suspect
           // Previous (left)
           child <-- $triplet.map(_._1).map {
             case Some(prev) =>
@@ -374,7 +374,6 @@ object Components {
                 onClick --> Observer { _ =>
                   localSelection.set(prev)
                 },
-                // Animate in while dragging right
                 styleAttr :=
                   s"transition: transform 120ms ease, opacity 120ms ease; transform: scale(0.95); opacity: 0.4;",
                 div(prev.start.t.toDumbAmericanString),
@@ -482,7 +481,7 @@ object Components {
                 display := "flex",
                 justifyContent := "center",
                 alignItems := "stretch",
-                gap := "8px",
+                gap := "8px", // TODO Suspect
                 div(
                   cls := "carousel-card current",
                   flex := "2",
