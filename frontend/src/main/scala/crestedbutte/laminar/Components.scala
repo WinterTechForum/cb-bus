@@ -362,8 +362,9 @@ object Components {
                 onClick --> Observer { _ =>
                   localSelection.set(prev)
                 },
-                div(prev.start.t.toDumbAmericanString),
-                div(prev.end.t.toDumbAmericanString),
+                div(prev.start.t.toDumbAmericanStringWithoutDayTime),
+                div("to"),
+                div(prev.end.t.toDumbAmericanStringWithoutDayTime),
               )
             case None =>
               div(
@@ -393,8 +394,9 @@ object Components {
                 onClick --> Observer { _ =>
                   localSelection.set(next)
                 },
-                div(next.start.t.toDumbAmericanString),
-                div(next.end.t.toDumbAmericanString),
+                div(next.start.t.toDumbAmericanStringWithoutDayTime),
+                div("to"),
+                div(next.end.t.toDumbAmericanStringWithoutDayTime),
               )
             case None =>
               div(

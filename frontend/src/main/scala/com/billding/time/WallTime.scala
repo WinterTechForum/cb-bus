@@ -144,6 +144,15 @@ case class WallTime private (
     s"$paddedHours:$paddedMinutes $dayTime"
   }
 
+  val toDumbAmericanStringWithoutDayTime: String = {
+    val paddedHours =
+      if (hours12 < 10)
+        s"0$hours12"
+      else
+        hours12
+    s"$paddedHours:$paddedMinutes"
+  }
+
   val beginningOfMorningRoutesInHours = 60 * 4
 
   def isLikelyEarlyMorningRatherThanLateNight: Boolean =
