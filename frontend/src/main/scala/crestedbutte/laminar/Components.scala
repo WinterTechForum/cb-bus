@@ -298,10 +298,6 @@ object Components {
 
       val $triplet = localSelection.signal.map(neighbors)
 
-      // Live-drag state and helpers
-      val dragStartX: Var[Double] = Var(0)
-      val dragProgress: Var[Double] = Var(0.0) // fractional [-1, 1]
-
       def applySteps(
         steps: Int,
       ): Unit =
@@ -333,22 +329,6 @@ object Components {
         cls := "segment-editor",
         // Positioning context for overlay controls
         position := "relative",
-        // Live-drag: update selection during move, add momentum on release
-        TouchControls.onTouchStart.map(
-          _.changedTouches(0).screenX,
-        ) --> dragStartX,
-        TouchControls.onTouchEnd.map(
-          _.changedTouches(0).screenX,
-        ) --> Observer[Double] { endX =>
-          val startX = dragStartX.now()
-          val deltaX = startX - endX
-          val magnitude = Math.abs(deltaX)
-          val steps =
-            if (magnitude > 10)
-              if (startX - endX < 0) -1 else 1
-            else 0
-          applySteps(steps)
-        },
         div(
           cls := "segment-editor-header",
           s"${routeSegment.start.l.name} → ${routeSegment.end.l.name}",
