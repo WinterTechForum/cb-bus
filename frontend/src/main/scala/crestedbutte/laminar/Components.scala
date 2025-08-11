@@ -360,28 +360,6 @@ object Components {
           scala.scalajs.js.Date.now(),
         ) --> dragStartTimeMs,
         TouchControls.onTouchStart.mapTo(0) --> emittedSteps,
-        TouchControls.onTouchStart.mapTo(0.0) --> dragProgress,
-        // Removed floating overlay cancel; actions are grouped below
-        TouchControls.onTouchMove.map(
-          _.changedTouches(0).screenX,
-        ) --> Observer[Double] { currentX =>
-          val startX = dragStartX.now()
-          val deltaX = startX - currentX
-          val pps = pixelsPerStepVar.now()
-          val stepsDouble = deltaX / pps
-          val stepIndex =
-            stepsDouble.toInt // threshold crossing count
-          val already = emittedSteps.now()
-          if stepIndex > already then
-            applySteps(stepIndex - already)
-            emittedSteps.set(stepIndex)
-          else if stepIndex < already then
-            applySteps(stepIndex - already) // negative steps
-            emittedSteps.set(stepIndex)
-          val frac = stepsDouble - stepIndex
-          val clamped = Math.max(-1.0, Math.min(1.0, frac))
-          dragProgress.set(clamped)
-        },
         TouchControls.onTouchEnd.map(
           _.changedTouches(0).screenX,
         ) --> Observer[Double] { endX =>
@@ -400,7 +378,6 @@ object Components {
           val sign = if (deltaX > 0) 1 else -1
           applySteps(sign * clamped)
           emittedSteps.set(0)
-          dragProgress.set(0.0)
         },
         div(
           cls := "segment-editor-header",
@@ -527,153 +504,133 @@ object Components {
       )
     }
 
-    val res =
-      div(
-        transition.height,
-        cls := "plan-segments box",
-        child <-- isEditing.signal.map { editing =>
-          if !editing then
-            // Normal view with live-drag multi-step updates and momentum on release
-            val normalViewPps = math.max(
-              40.0,
-              org.scalajs.dom.window.innerWidth.toDouble / 4.0,
-            )
-            val normalPreview: Var[RouteSegment] = Var(routeSegment)
-            val dragStartXNV: Var[Double] = Var(0)
-            val dragStartTimeNV: Var[Double] = Var(0)
-            val emittedStepsNV: Var[Int] = Var(0)
-            def applyStepsNV(
-              steps: Int,
-            ): Unit =
-              if steps > 0 then
-                var i = steps
-                while i > 0 do
-                  normalPreview
-                    .now()
-                    .routeWithTimes
-                    .nextAfter(normalPreview.now()) match
-                    case Some(n) => normalPreview.set(n)
-                    case None    => i = 1 // end early
-                  i -= 1
-              else if steps < 0 then
-                var i = -steps
-                while i > 0 do
-                  normalPreview
-                    .now()
-                    .routeWithTimes
-                    .nextBefore(normalPreview.now()) match
-                    case Some(p) => normalPreview.set(p)
-                    case None    => i = 1 // end early
-                  i -= 1
-            div(
-              TouchControls.onTouchStart.map(
-                _.changedTouches(0).screenX,
-              ) --> dragStartXNV,
-              TouchControls.onTouchStart.map(_ =>
-                scala.scalajs.js.Date.now(),
-              ) --> dragStartTimeNV,
-              TouchControls.onTouchStart.mapTo(0) --> emittedStepsNV,
-              TouchControls.onTouchMove.map(
-                _.changedTouches(0).screenX,
-              ) --> Observer[Double] { currentX =>
-                val startX = dragStartXNV.now()
-                val deltaX = startX - currentX
-                val stepsDouble = deltaX / normalViewPps
-                val idx = stepsDouble.toInt
-                val already = emittedStepsNV.now()
-                if idx != already then
-                  applyStepsNV(idx - already)
-                  emittedStepsNV.set(idx)
-              },
-              TouchControls.onTouchEnd.map(
-                _.changedTouches(0).screenX,
-              ) --> Observer[Double] { endX =>
-                val startX = dragStartXNV.now()
-                val deltaX = startX - endX
-                val magnitude = Math.abs(deltaX)
-                val elapsedMs = Math.max(
-                  1.0,
-                  scala.scalajs.js.Date.now() - dragStartTimeNV.now(),
-                )
-                val pxPerMs = magnitude / elapsedMs
-                val extra =
-                  Math.round(pxPerMs * (200.0 / normalViewPps)).toInt
-                val clamped = Math.max(0, Math.min(6, extra))
-                val sign = if deltaX > 0 then 1 else -1
-                if clamped != 0 then applyStepsNV(sign * clamped)
-                // commit preview to plan
-                segmentUpdater.onNext(normalPreview.now())
-                emittedStepsNV.set(0)
-              },
-              child <-- normalPreview.signal.map { seg =>
+    div(
+      transition.height,
+      cls := "plan-segments box",
+      child <-- isEditing.signal.map { editing =>
+        if !editing then
+          // Normal view with live-drag multi-step updates and momentum on release
+          val normalViewPps = math.max(
+            40.0,
+            org.scalajs.dom.window.innerWidth.toDouble / 4.0,
+          )
+          val normalPreview: Var[RouteSegment] = Var(routeSegment)
+          val dragStartXNV: Var[Double] = Var(0)
+          val dragStartTimeNV: Var[Double] = Var(0)
+          val emittedStepsNV: Var[Int] = Var(0)
+          def applyStepsNV(
+            steps: Int,
+          ): Unit =
+            if steps > 0 then
+              var i = steps
+              while i > 0 do
+                normalPreview
+                  .now()
+                  .routeWithTimes
+                  .nextAfter(normalPreview.now()) match
+                  case Some(n) => normalPreview.set(n)
+                  case None    => i = 1 // end early
+                i -= 1
+            else if steps < 0 then
+              var i = -steps
+              while i > 0 do
+                normalPreview
+                  .now()
+                  .routeWithTimes
+                  .nextBefore(normalPreview.now()) match
+                  case Some(p) => normalPreview.set(p)
+                  case None    => i = 1 // end early
+                i -= 1
+          div(
+            TouchControls.onTouchStart.map(
+              _.changedTouches(0).screenX,
+            ) --> dragStartXNV,
+            TouchControls.onTouchStart.map(_ =>
+              scala.scalajs.js.Date.now(),
+            ) --> dragStartTimeNV,
+            TouchControls.onTouchStart.mapTo(0) --> emittedStepsNV,
+            TouchControls.onTouchMove.map(
+              _.changedTouches(0).screenX,
+            ) --> Observer[Double] { currentX =>
+              val startX = dragStartXNV.now()
+              val deltaX = startX - currentX
+              val stepsDouble = deltaX / normalViewPps
+              val idx = stepsDouble.toInt
+              val already = emittedStepsNV.now()
+              if idx != already then
+                applyStepsNV(idx - already)
+                emittedStepsNV.set(idx)
+            },
+            TouchControls.onTouchEnd.map(
+              _.changedTouches(0).screenX,
+            ) --> Observer[Double] { endX =>
+              // commit preview to plan
+              segmentUpdater.onNext(normalPreview.now())
+              emittedStepsNV.set(0)
+            },
+            child <-- normalPreview.signal.map { seg =>
+              div(
+                // Header styled like editor view
                 div(
-                  // Header styled like editor view
+                  cls := "segment-editor-header",
                   div(
-                    cls := "segment-editor-header",
-                    div(
-                      textAlign := "center",
-                      s"${seg.start.l.name} → ${seg.end.l.name}",
-                    ),
+                    textAlign := "center",
+                    s"${seg.start.l.name} → ${seg.end.l.name}",
                   ),
-                  // Single centered card (no side previews)
+                ),
+                // Single centered card (no side previews)
+                div(
+                  cls := "segment-editor-carousel",
+                  display := "flex",
+                  justifyContent := "center",
+                  alignItems := "stretch",
+                  gap := "8px",
                   div(
-                    cls := "segment-editor-carousel",
-                    display := "flex",
-                    justifyContent := "center",
-                    alignItems := "stretch",
-                    gap := "8px",
+                    cls := "carousel-card current",
+                    flex := "2",
+                    // borderRadius := "8px",
+                    padding := "12px",
+                    // backgroundColor := "#6BB187",
+                    onClick --> Observer { _ =>
+                      isEditing.set(true)
+                    },
                     div(
-                      cls := "carousel-card current",
-                      flex := "2",
-                      // borderRadius := "8px",
-                      padding := "12px",
-                      // backgroundColor := "#6BB187",
-                      onClick --> Observer { _ =>
-                        isEditing.set(true)
-                      },
                       div(
-                        div(
-                          fontWeight := "bold",
-                          textAlign := "center",
-                          seg.start.t.toDumbAmericanString,
-                        ),
-                        div(textAlign := "center", "to"),
-                        div(
-                          fontWeight := "bold",
-                          textAlign := "center",
-                          seg.end.t.toDumbAmericanString,
-                        ),
+                        fontWeight := "bold",
+                        textAlign := "center",
+                        seg.start.t.toDumbAmericanString,
+                      ),
+                      div(textAlign := "center", "to"),
+                      div(
+                        fontWeight := "bold",
+                        textAlign := "center",
+                        seg.end.t.toDumbAmericanString,
                       ),
                     ),
                   ),
-                  // Keep transit controls (duration, edit button, delete)
-                  transitSegment(
-                    seg,
-                    addingNewRoute,
-                    legDeleter,
-                    onEdit = () => isEditing.set(true),
-                  ),
-                )
-              },
-            )
-          else
-            // Editor view; apply updates when user confirms
-            segmentEditorCarousel(
-              onApply = seg => {
-                segmentUpdater.onNext(seg)
-                isEditing.set(false)
-              },
-              onCancel = () => isEditing.set(false),
-            )
-        },
-      )
-
-    res.ref.addEventListener(
-      "long-press",
-      _ => println("Long pressed!"),
+                ),
+                // Keep transit controls (duration, edit button, delete)
+                transitSegment(
+                  seg,
+                  addingNewRoute,
+                  legDeleter,
+                  onEdit = () => isEditing.set(true),
+                ),
+              )
+            },
+          )
+        else
+          // Editor view; apply updates when user confirms
+          segmentEditorCarousel(
+            onApply = seg => {
+              segmentUpdater.onNext(seg)
+              isEditing.set(false)
+            },
+            onCancel = () => isEditing.set(false),
+          )
+      },
     )
 
-    res
   }
 
   def stopInfo(
