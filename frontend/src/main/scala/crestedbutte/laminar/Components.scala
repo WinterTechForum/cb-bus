@@ -309,13 +309,8 @@ object Components {
       val $triplet = localSelection.signal.map(neighbors)
 
       // Live-drag state and helpers
-      // Dynamic step size so that a full-width swipe yields ~4 steps
-      val pixelsPerStepVar: Var[Double] = Var(80.0)
-      val velocityGain = 200.0
-      val maxSteps = 6
       val dragStartX: Var[Double] = Var(0)
       val dragStartTimeMs: Var[Double] = Var(0)
-      val emittedSteps: Var[Int] = Var(0)
       val dragProgress: Var[Double] = Var(0.0) // fractional [-1, 1]
 
       def applySteps(
@@ -350,34 +345,17 @@ object Components {
         TouchControls.onTouchStart.map(
           _.changedTouches(0).screenX,
         ) --> dragStartX,
-        // set dynamic pixels-per-step based on viewport width
-        TouchControls.onTouchStart.map(_ =>
-          math.max(40.0,
-                   org.scalajs.dom.window.innerWidth.toDouble / 4.0,
-          ),
-        ) --> pixelsPerStepVar,
         TouchControls.onTouchStart.map(_ =>
           scala.scalajs.js.Date.now(),
         ) --> dragStartTimeMs,
-        TouchControls.onTouchStart.mapTo(0) --> emittedSteps,
         TouchControls.onTouchEnd.map(
           _.changedTouches(0).screenX,
         ) --> Observer[Double] { endX =>
           val startX = dragStartX.now()
           val deltaX = startX - endX
           val magnitude = Math.abs(deltaX)
-          val elapsedMs = Math.max(
-            1.0,
-            scala.scalajs.js.Date.now() - dragStartTimeMs.now(),
-          )
-          val pxPerMs = magnitude / elapsedMs
-          val pps = pixelsPerStepVar.now()
-          val extra =
-            Math.round(pxPerMs * (velocityGain / pps)).toInt
-          val clamped = Math.max(0, Math.min(maxSteps, extra))
-          val sign = if (deltaX > 0) 1 else -1
-          applySteps(sign * clamped)
-          emittedSteps.set(0)
+          val steps = Math.round(magnitude / 100).toInt
+          applySteps(steps)
         },
         div(
           cls := "segment-editor-header",
