@@ -265,10 +265,6 @@ object Components {
   ) =
     div(
       cls := "transit-period",
-      div(
-        cls := "transit-period-icon ",
-        SvgIcon.arrowDown("plain-white plan-segment-divider"),
-      ),
       span(
         cls := "transit-period-duration transit-time",
         routeSegment.start.t
@@ -276,7 +272,6 @@ object Components {
           .humanFriendly,
       ),
       deleteButton(routeSegment, addingNewRoute, legDeleter),
-      // Removed explicit "Edit times" button; times are now clickable to edit
     )
 
   def RouteLegElement(
@@ -471,66 +466,55 @@ object Components {
       cls := "plan-segments box",
       child <-- isEditing.signal.map { editing =>
         if !editing then
-          // Normal view with live-drag multi-step updates and momentum on release
-          val normalPreview: Var[RouteSegment] = Var(routeSegment)
-
           div(
-            TouchControls.onTouchEnd.map(
-              _.changedTouches(0).screenX,
-            ) --> Observer[Double] { endX =>
-              // commit preview to plan
-              segmentUpdater.onNext(normalPreview.now())
-            },
-            child <-- normalPreview.signal.map { seg =>
+            div(
+              // Header styled like editor view
               div(
-                // Header styled like editor view
+                cls := "segment-editor-header",
                 div(
-                  cls := "segment-editor-header",
-                  div(
-                    textAlign := "center",
-                    s"${routeSegment.start.l.name} → ${routeSegment.end.l.name}",
-                  ),
+                  textAlign := "center",
+                  s"${routeSegment.start.l.name} → ${routeSegment.end.l.name}",
                 ),
-                // Single centered card (no side previews)
+              ),
+              // Single centered card (no side previews)
+              div(
+                cls := "segment-editor-carousel",
+                display := "flex",
+                justifyContent := "center",
+                alignItems := "stretch",
+                gap := "8px",
                 div(
-                  cls := "segment-editor-carousel",
-                  display := "flex",
-                  justifyContent := "center",
-                  alignItems := "stretch",
-                  gap := "8px",
+                  cls := "carousel-card current",
+                  flex := "2",
+                  // borderRadius := "8px",
+                  padding := "12px",
+                  // backgroundColor := "#6BB187",
+                  onClick --> Observer { _ =>
+                    isEditing.set(true)
+                  },
                   div(
-                    cls := "carousel-card current",
-                    flex := "2",
-                    // borderRadius := "8px",
-                    padding := "12px",
-                    // backgroundColor := "#6BB187",
-                    onClick --> Observer { _ =>
-                      isEditing.set(true)
-                    },
                     div(
-                      div(
-                        fontWeight := "bold",
-                        textAlign := "center",
-                        routeSegment.start.t.toDumbAmericanString,
-                      ),
-                      div(textAlign := "center", "to"),
-                      div(
-                        fontWeight := "bold",
-                        textAlign := "center",
-                        routeSegment.end.t.toDumbAmericanString,
-                      ),
+                      fontWeight := "bold",
+                      textAlign := "center",
+                      routeSegment.start.t.toDumbAmericanString,
+                    ),
+                    div(textAlign := "center", "to"),
+                    div(
+                      fontWeight := "bold",
+                      textAlign := "center",
+                      routeSegment.end.t.toDumbAmericanString,
                     ),
                   ),
                 ),
-                // Keep transit controls (duration, edit button, delete)
-                transitSegment(
-                  routeSegment,
-                  addingNewRoute,
-                  legDeleter,
-                  onEdit = () => isEditing.set(true),
-                ),
-              )
-            },
+              ),
+              // Keep transit controls (duration, edit button, delete)
+              transitSegment(
+                routeSegment,
+                addingNewRoute,
+                legDeleter,
+                onEdit = () => isEditing.set(true),
+              ),
+            ),
           )
         else
           // Editor view; apply updates when user confirms
