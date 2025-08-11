@@ -403,7 +403,6 @@ object Components {
           div(
             cls := "carousel-card current",
             flex := "2",
-            border := "2px solid #3273dc",
             borderRadius := "8px",
             padding := "12px",
             backgroundColor := "#6BB187",
@@ -494,8 +493,6 @@ object Components {
           )
           val normalPreview: Var[RouteSegment] = Var(routeSegment)
           val dragStartXNV: Var[Double] = Var(0)
-          val dragStartTimeNV: Var[Double] = Var(0)
-          val emittedStepsNV: Var[Int] = Var(0)
           def applyStepsNV(
             steps: Int,
           ): Unit =
@@ -523,10 +520,6 @@ object Components {
             TouchControls.onTouchStart.map(
               _.changedTouches(0).screenX,
             ) --> dragStartXNV,
-            TouchControls.onTouchStart.map(_ =>
-              scala.scalajs.js.Date.now(),
-            ) --> dragStartTimeNV,
-            TouchControls.onTouchStart.mapTo(0) --> emittedStepsNV,
             TouchControls.onTouchMove.map(
               _.changedTouches(0).screenX,
             ) --> Observer[Double] { currentX =>
@@ -534,17 +527,13 @@ object Components {
               val deltaX = startX - currentX
               val stepsDouble = deltaX / normalViewPps
               val idx = stepsDouble.toInt
-              val already = emittedStepsNV.now()
-              if idx != already then
-                applyStepsNV(idx - already)
-                emittedStepsNV.set(idx)
+              applyStepsNV(idx)
             },
             TouchControls.onTouchEnd.map(
               _.changedTouches(0).screenX,
             ) --> Observer[Double] { endX =>
               // commit preview to plan
               segmentUpdater.onNext(normalPreview.now())
-              emittedStepsNV.set(0)
             },
             child <-- normalPreview.signal.map { seg =>
               div(
