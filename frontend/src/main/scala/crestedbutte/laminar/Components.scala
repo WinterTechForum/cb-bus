@@ -261,7 +261,6 @@ object Components {
     routeSegment: RouteSegment,
     addingNewRoute: Var[Boolean],
     legDeleter: Observer[RouteSegment],
-    onEdit: () => Unit,
   ) =
     div(
       cls := "transit-period",
@@ -285,13 +284,9 @@ object Components {
     segmentUpdater: Observer[RouteSegment],
   ) = {
 
-    val isEditing: Var[Boolean] = Var(false)
     val localSelection: Var[RouteSegment] = Var(routeSegment)
 
-    def segmentEditorCarousel(
-      onApply: RouteSegment => Unit,
-      onCancel: () => Unit,
-    ) = {
+    def segmentEditorCarousel() = {
       def neighbors(
         seg: RouteSegment,
       ): (Option[RouteSegment], RouteSegment, Option[RouteSegment]) =
@@ -310,13 +305,16 @@ object Components {
       def applySteps(
         steps: Int,
       ): Unit =
+        var changed = false
         if steps > 0 then
           localSelection
             .now()
             .routeWithTimes
             .nextAfter(localSelection.now()) match
-            case Some(n) => localSelection.set(n)
-            case None    => ()
+            case Some(n) =>
+              localSelection.set(n)
+              changed = true
+            case None => ()
         else if steps < 0 then
           var remaining = -steps
           while remaining > 0 do
@@ -324,9 +322,12 @@ object Components {
               .now()
               .routeWithTimes
               .nextBefore(localSelection.now()) match
-              case Some(p) => localSelection.set(p)
-              case None    => remaining = 1 // end early
+              case Some(p) =>
+                localSelection.set(p)
+                changed = true
+              case None => remaining = 1 // end early
             remaining -= 1
+        if changed then segmentUpdater.onNext(localSelection.now())
 
       div(
         cls := "segment-editor",
@@ -361,6 +362,7 @@ object Components {
                 cls := "carousel-card prev clickable",
                 onClick --> Observer { _ =>
                   localSelection.set(prev)
+                  segmentUpdater.onNext(prev)
                 },
                 div(prev.start.t.toDumbAmericanStringWithoutDayTime),
                 div("to"),
@@ -393,6 +395,7 @@ object Components {
                 cls := "carousel-card next clickable",
                 onClick --> Observer { _ =>
                   localSelection.set(next)
+                  segmentUpdater.onNext(next)
                 },
                 div(next.start.t.toDumbAmericanStringWithoutDayTime),
                 div("to"),
@@ -404,76 +407,19 @@ object Components {
               )
           },
         ),
-        div(
-          cls := "segment-editor-actions",
-          button(
-            cls := "button",
-            "Cancel",
-            onClick --> Observer { _ =>
-              onCancel()
-            },
-          ),
-          button(
-            cls := "button is-primary",
-            "Apply",
-            onClick --> Observer { _ =>
-              onApply(localSelection.now())
-            },
-          ),
-        ),
       )
     }
 
     div(
       transition.height,
       cls := "plan-segments box",
-      child <-- isEditing.signal.map { editing =>
-        if !editing then
-          div(
-            div(
-              // Header styled like editor view
-              div(
-                cls := "segment-editor-header",
-                s"${routeSegment.start.l.name} → ${routeSegment.end.l.name}",
-              ),
-              // Single centered card (no side previews)
-              div(
-                cls := "segment-editor-carousel",
-                div(
-                  cls := "carousel-card current",
-                  onClick --> Observer { _ =>
-                    isEditing.set(true)
-                  },
-                  div(
-                    div(
-                      routeSegment.start.t.toDumbAmericanString,
-                    ),
-                    div("to"),
-                    div(
-                      routeSegment.end.t.toDumbAmericanString,
-                    ),
-                  ),
-                ),
-              ),
-              // Keep transit controls (duration, edit button, delete)
-              transitSegment(
-                routeSegment,
-                addingNewRoute,
-                legDeleter,
-                onEdit = () => isEditing.set(true),
-              ),
-            ),
-          )
-        else
-          // Editor view; apply updates when user confirms
-          segmentEditorCarousel(
-            onApply = seg => {
-              segmentUpdater.onNext(seg)
-              isEditing.set(false)
-            },
-            onCancel = () => isEditing.set(false),
-          )
-      },
+      segmentEditorCarousel(),
+      // Show transit time and delete segment button alongside the editor
+      transitSegment(
+        routeSegment,
+        addingNewRoute,
+        legDeleter,
+      ),
     )
 
   }
