@@ -355,19 +355,19 @@ body {
     position: absolute;
     left: 50%;
     width: 6px;
-    height: 6px;
-    background: #00998E;
+    /* height: 6px; */
+    /* background: #00998E; */
     border-radius: 50%;
     transform: translateX(-50%);
     z-index: 3;
 }
 
 .plan-segments::before {
-    top: -3px;
+    /* top: -3px; */
 }
 
 .plan-segments::after {
-    bottom: -3px;
+    /* bottom: -3px; */
 }
 
 /* Route Segment Consistent Styling */

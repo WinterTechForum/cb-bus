@@ -76,8 +76,8 @@ object BulmaLocal {
         h5(textAlign := "center", "at"),
       ),
       div(
-        maxHeight := "70vh", // TODO I don't know if this is safe if the top portion is taking more than 30 VH.
-        overflowY := "auto",
+        // maxHeight := "70vh", // TODO I don't know if this is safe if the top portion is taking more than 30 VH.
+        // overflowY := "display",
         scheduleAtStop.locationsWithTimes.map { l =>
           locationwithTime(l, routeSegment, selectedTimeUpdater)
         },
