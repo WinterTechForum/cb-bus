@@ -151,36 +151,6 @@ object Components {
         .map(_.routePieces)
         .splitTransition(_.id) {
           case (_, routePiece, routePieceSignal, transition) =>
-            val legDeleter =
-              Observer { (rs: RouteSegment) =>
-                val plan = $plan.now()
-                val newPlan =
-                  plan
-                    .copy(l = plan.l.filterNot(_ == rs))
-                db.saveDailyPlanOnly(newPlan)
-                $plan.set(newPlan)
-                if (newPlan.l.isEmpty) {
-                  addingNewRoute.set {
-                    true
-                  }
-                }
-              }
-            val segmentUpdater: Observer[RouteSegment] =
-              $plan.writer
-                .contramap[RouteSegment] { segment =>
-                  val plan = $plan.now()
-                  val updatedPlan =
-                    Plan(
-                      plan.l.map {
-                        case rs if rs.id == segment.id =>
-                          segment
-                        case rs =>
-                          rs
-                      },
-                    )
-                  db.saveDailyPlanOnly(updatedPlan)
-                  updatedPlan
-                }
             div(
               child <--
                 routePieceSignal
@@ -209,8 +179,38 @@ object Components {
                               rs,
                               addingNewRoute,
                               scheduleSelector,
-                              legDeleter,
-                              segmentUpdater,
+                              legDeleter =
+                                Observer { (rs: RouteSegment) =>
+                                  val plan = $plan.now()
+                                  val newPlan =
+                                    plan
+                                      .copy(l =
+                                        plan.l.filterNot(_ == rs),
+                                      )
+                                  db.saveDailyPlanOnly(newPlan)
+                                  $plan.set(newPlan)
+                                  if (newPlan.l.isEmpty) {
+                                    addingNewRoute.set {
+                                      true
+                                    }
+                                  }
+                                },
+                              segmentUpdater = $plan.writer
+                                .contramap[RouteSegment] { segment =>
+                                  val plan = $plan.now()
+                                  val updatedPlan =
+                                    Plan(
+                                      plan.l.map {
+                                        case rs
+                                            if rs.id == segment.id =>
+                                          segment
+                                        case rs =>
+                                          rs
+                                      },
+                                    )
+                                  db.saveDailyPlanOnly(updatedPlan)
+                                  updatedPlan
+                                },
                             )
 
                         },
