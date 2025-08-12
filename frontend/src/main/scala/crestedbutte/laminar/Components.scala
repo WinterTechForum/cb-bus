@@ -31,199 +31,6 @@ case class SelectedStopInfo(
 
 object Components {
 
-  def ScrollingWheel[T](
-    items: Seq[T],
-    itemToString: T => String,
-    initialIndex: Int = 0,
-  ): (ReactiveHtmlElement[HTMLDivElement], Signal[T]) = {
-    val itemHeight = 60 // Height of each visible item in pixels
-    val visibleItems = 3
-    val containerHeight = itemHeight * visibleItems
-
-    // Offset so the first item appears in the center (middle visible slot)
-    val centerOffset = itemHeight
-
-    val selectedIndex: Var[Int] = Var(initialIndex)
-    val scrollPosition: Var[Double] = Var(
-      (initialIndex * itemHeight).toDouble,
-    )
-    val isDragging: Var[Boolean] = Var(false)
-    val velocity: Var[Double] = Var(0.0)
-    val lastTouchY: Var[Double] = Var(0.0)
-    val lastTouchTime: Var[Double] = Var(0.0)
-
-    // Animation loop for momentum scrolling
-    var animationId: Option[Int] = None
-
-    def startMomentumAnimation(): Unit = {
-      animationId.foreach(dom.window.cancelAnimationFrame)
-
-      def animate(): Unit =
-        if (math.abs(velocity.now()) > 0.5 && !isDragging.now()) {
-          val currentPos = scrollPosition.now()
-          val newPos = currentPos + velocity.now()
-          val maxScroll = (items.length - 1) * itemHeight
-
-          val clampedPos = math.max(0, math.min(maxScroll, newPos))
-          scrollPosition.set(clampedPos)
-
-          // Apply friction
-          velocity.update(_ * 0.95)
-
-          // Snap to nearest item when velocity gets low
-          if (math.abs(velocity.now()) < 2.0) {
-            val targetIndex =
-              math.round(clampedPos / itemHeight).toInt
-            val clampedIndex =
-              math.max(0, math.min(items.length - 1, targetIndex))
-            val targetPos = clampedIndex * itemHeight
-            scrollPosition.set(targetPos)
-            selectedIndex.set(clampedIndex)
-            velocity.set(0.0)
-          }
-          else {
-            animationId = Some(
-              dom.window.requestAnimationFrame(_ => animate()),
-            )
-          }
-        }
-        else {
-          // Snap to nearest item
-          val currentPos = scrollPosition.now()
-          val targetIndex = math.round(currentPos / itemHeight).toInt
-          val clampedIndex =
-            math.max(0, math.min(items.length - 1, targetIndex))
-          val targetPos = clampedIndex * itemHeight
-          scrollPosition.set(targetPos)
-          selectedIndex.set(clampedIndex)
-        }
-
-      if (math.abs(velocity.now()) > 0.5) {
-        animationId = Some(
-          dom.window.requestAnimationFrame(_ => animate()),
-        )
-      }
-    }
-
-    val wheelElement = div(
-      cls := "scrolling-wheel",
-      styleAttr := s"height: ${containerHeight}px; overflow: hidden; position: relative; border: 2px solid #ddd; border-radius: 8px; background: #f9f9f9;",
-      div(
-        cls := "wheel-mask",
-        styleAttr := "position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; z-index: 10;",
-
-        // Top fade
-        div(
-          styleAttr := s"position: absolute; top: 0; left: 0; right: 0; height: ${itemHeight}px; background: linear-gradient(to bottom, rgba(249,249,249,0.8), transparent); pointer-events: none;",
-        ),
-
-        // Bottom fade
-        div(
-          styleAttr := s"position: absolute; bottom: 0; left: 0; right: 0; height: ${itemHeight}px; background: linear-gradient(to top, rgba(249,249,249,0.8), transparent); pointer-events: none;",
-        ),
-
-        // Center highlight
-        div(
-          styleAttr := s"position: absolute; top: ${itemHeight}px; left: 0; right: 0; height: ${itemHeight}px; border: 2px solid #3273dc; border-left: none; border-right: none; background: rgba(50, 115, 220, 0.1); pointer-events: none;",
-        ),
-      ),
-      div(
-        cls := "wheel-items",
-        styleAttr <-- scrollPosition.signal.map(pos =>
-          s"position: relative; transform: translateY(${centerOffset - pos}px); transition: ${if (isDragging.now()) "none" else "transform 0.2s ease-out"};",
-        ),
-
-        // Actual items
-        items.zipWithIndex.map { case (item, index) =>
-          div(
-            cls := "wheel-item",
-            styleAttr := s"height: ${itemHeight}px; display: flex; align-items: center; justify-content: center; padding: 0 20px; font-size: 16px; font-weight: 500; user-select: none;",
-            itemToString(item),
-          )
-        },
-      ),
-
-      // Touch/mouse event handlers
-      onMouseDown --> Observer { (e: dom.MouseEvent) =>
-        isDragging.set(true)
-        lastTouchY.set(e.clientY)
-        lastTouchTime.set(dom.window.performance.now())
-        velocity.set(0.0)
-        animationId.foreach(dom.window.cancelAnimationFrame)
-      },
-      onMouseMove --> Observer { (e: dom.MouseEvent) =>
-        if (isDragging.now()) {
-          val currentY = e.clientY
-          val deltaY = lastTouchY.now() - currentY
-          val currentTime = dom.window.performance.now()
-          val deltaTime = currentTime - lastTouchTime.now()
-
-          if (deltaTime > 0) {
-            velocity.set(deltaY / deltaTime * 16) // Scale for 60fps
-          }
-
-          val newPos = scrollPosition.now() + deltaY
-          val maxScroll = (items.length - 1) * itemHeight
-          val clampedPos = math.max(0, math.min(maxScroll, newPos))
-
-          scrollPosition.set(clampedPos)
-          lastTouchY.set(currentY)
-          lastTouchTime.set(currentTime)
-        }
-      },
-      onMouseUp --> Observer { (_: dom.MouseEvent) =>
-        isDragging.set(false)
-        startMomentumAnimation()
-      },
-      onMouseLeave --> Observer { (_: dom.MouseEvent) =>
-        isDragging.set(false)
-        startMomentumAnimation()
-      },
-
-      // Touch events for mobile
-      TouchControls.onTouchStart --> Observer { (e: dom.TouchEvent) =>
-        e.preventDefault()
-        isDragging.set(true)
-        val touch = e.touches(0)
-        lastTouchY.set(touch.clientY)
-        lastTouchTime.set(dom.window.performance.now())
-        velocity.set(0.0)
-        animationId.foreach(dom.window.cancelAnimationFrame)
-      },
-      TouchControls.onTouchMove --> Observer { (e: dom.TouchEvent) =>
-        e.preventDefault()
-        if (isDragging.now()) {
-          val touch = e.touches(0)
-          val currentY = touch.clientY
-          val deltaY = lastTouchY.now() - currentY
-          val currentTime = dom.window.performance.now()
-          val deltaTime = currentTime - lastTouchTime.now()
-
-          if (deltaTime > 0) {
-            velocity.set(deltaY / deltaTime * 16)
-          }
-
-          val newPos = scrollPosition.now() + deltaY
-          val maxScroll = (items.length - 1) * itemHeight
-          val clampedPos = math.max(0, math.min(maxScroll, newPos))
-
-          scrollPosition.set(clampedPos)
-          lastTouchY.set(currentY)
-          lastTouchTime.set(currentTime)
-        }
-      },
-      TouchControls.onTouchEnd --> Observer { (e: dom.TouchEvent) =>
-        e.preventDefault()
-        isDragging.set(false)
-        startMomentumAnimation()
-      },
-    )
-
-    val selectedItem = selectedIndex.signal.map(items(_))
-
-    (wheelElement, selectedItem)
-  }
-
   def FullApp(
     javaClock: Clock,
   ) = {
@@ -251,7 +58,7 @@ object Components {
 
     // Demo wheel with sample data
     val demoItems = Seq(
-      "Apple",
+      s"Apple\nto\nAppleDestination",
       "Banana",
       "Cherry",
       "Date",
@@ -265,7 +72,7 @@ object Components {
       "Orange",
     )
     val (wheelElement, selectedValue) =
-      ScrollingWheel(demoItems, identity, 0)
+      ScrollingWheel.ScrollingWheel(demoItems, item => div(item), 0)
 
     val whatToShowBetter
       : Signal[ReactiveHtmlElement[HTMLDivElement]] =
@@ -516,7 +323,24 @@ object Components {
     segmentUpdater: Observer[RouteSegment],
   ) = {
 
+    val allSegments =
+      routeSegment.routeWithTimes
+        .allRouteSegmentsWithSameStartAndStop(routeSegment)
+
+    println(s"allSegments: $allSegments")
+
+    val (wheelElement, selectedValue) =
+      ScrollingWheel.ScrollingWheel(
+        allSegments,
+        item =>
+          div(
+            item.s.t.toDumbAmericanString + " ->" + item.e.t.toDumbAmericanString,
+          ),
+        0,
+      )
+
     val segmentEditorCarousel = {
+      // TODO Generate the full list of RouteSegments with this start/stop point for the entire route.
       val prev = routeSegment.routeWithTimes.nextBefore(routeSegment)
       val current = routeSegment
       val next = routeSegment.routeWithTimes.nextAfter(routeSegment)
@@ -593,6 +417,7 @@ object Components {
       // transition.height,
       cls := "plan-segments box",
       segmentEditorCarousel,
+      wheelElement,
       // Show transit time and delete segment button alongside the editor
       transitSegment(
         routeSegment,

@@ -38,6 +38,15 @@ case class RouteWithTimes(
         .withSameStopsAs(original)
     yield RouteSegment.fromRouteLegWithId(newRoute, original.id)
 
+  def allNextAfter(
+    original: RouteSegment,
+  ): Seq[RouteSegment] =
+    nextAfter(original) match {
+      case Some(next) =>
+        allNextAfter(next) :+ next
+      case None => Seq.empty
+    }
+
   def nextBefore(
     original: RouteSegment,
   ): Option[RouteSegment] =
@@ -50,6 +59,22 @@ case class RouteWithTimes(
       newRoute <- legs(newIndex)
         .withSameStopsAs(original)
     yield RouteSegment.fromRouteLegWithId(newRoute, original.id)
+
+  def allNextBefore(
+    original: RouteSegment,
+  ): Seq[RouteSegment] =
+    nextBefore(original) match {
+      case Some(next) =>
+        next +: allNextBefore(next)
+      case None => Seq.empty
+    }
+
+  def allRouteSegmentsWithSameStartAndStop(
+    original: RouteSegment,
+  ): Seq[RouteSegment] =
+    allNextBefore(original).reverse ++ Seq(original) ++ allNextAfter(
+      original,
+    ).reverse
 
   val allStops: Seq[BusScheduleAtStop] =
     legs.foldLeft(Seq[BusScheduleAtStop]()) { case (acc, leg) =>
