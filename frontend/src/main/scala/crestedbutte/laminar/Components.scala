@@ -148,9 +148,9 @@ object Components {
     div(
       copyButtons($plan.signal),
       children <-- $plan.signal
-        .map(_.routePieces.zipWithIndex)
-        .splitTransition(_._1.id) {
-          case (_, (routePiece, idx), routePieceSignal, transition) =>
+        .map(_.routePieces)
+        .splitTransition(_.id) {
+          case (_, routePiece, routePieceSignal, transition) =>
             val legDeleter =
               Observer { (rs: RouteSegment) =>
                 val plan = $plan.now()
@@ -185,11 +185,12 @@ object Components {
               child <--
                 routePieceSignal
                   .map {
-                    case (routePieceInner, idx) =>
+                    routePieceInner =>
                       div(
                         transition.height,
                         routePieceInner match {
                           case r: RouteGap =>
+                            println(s"RouteGap: ${r.id}")
                             div(
                               cls := "route-gap",
                               div(
