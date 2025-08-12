@@ -22,12 +22,14 @@ body {
     width: 32px;
 }
 
-.button, .adjuster-button {
+.button,
+.adjuster-button {
     font-size: 80%;
     font-weight: bold;
 }
 
-.upcoming-buses-title, .selected-leg-header {
+.upcoming-buses-title,
+.selected-leg-header {
     text-align: center;
 }
 
@@ -161,10 +163,13 @@ body {
     background-color: #6BB187;
     font-weight: bold;
     text-align: center;
+    border-radius: 5px;
 }
 
 .carousel-card.prev,
 .carousel-card.next {
     flex: 1;
+    border-radius: 5px;
     opacity: 0.4;
+    border: 1px solid white;
 }
