@@ -327,8 +327,6 @@ object Components {
 
       div(
         cls := "segment-editor",
-        // Positioning context for overlay controls
-        position := "relative",
         div(
           cls := "segment-editor-header",
           s"${routeSegment.start.l.name} → ${routeSegment.end.l.name}",
@@ -417,8 +415,6 @@ object Components {
       cls := "stop-information",
       div(
         cls := "stop-name",
-        fontWeight := "bold",
-        fontSize := "1.5rem",
         div(stop.l.name),
       ),
       div(cls := "stop-alt-name", div(stop.l.altName)),
@@ -448,12 +444,7 @@ object Components {
     button(
       cls := s"button $additionalClasses",
       cls.toggle("is-success") <-- isAnimating.signal,
-      styleAttr <-- isAnimating.signal.map { animating =>
-        if (animating)
-          "transform: scale(0.95); transition: all 0.2s ease-out;"
-        else
-          "transform: scale(1); transition: all 0.2s ease-out;"
-      },
+      cls.toggle("animating") <-- isAnimating.signal,
       text,
       onClick --> Observer { _ =>
         isAnimating.set(true)
