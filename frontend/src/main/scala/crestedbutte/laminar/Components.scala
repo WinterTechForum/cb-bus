@@ -298,32 +298,33 @@ object Components {
 
       val $triplet = localSelection.signal.map(neighbors)
 
-      def applySteps(
-        steps: Int,
-      ): Unit =
-        var changed = false
-        if steps > 0 then
-          localSelection
-            .now()
-            .routeWithTimes
-            .nextAfter(localSelection.now()) match
-            case Some(n) =>
-              localSelection.set(n)
-              changed = true
-            case None => ()
-        else if steps < 0 then
-          var remaining = -steps
-          while remaining > 0 do
-            localSelection
-              .now()
-              .routeWithTimes
-              .nextBefore(localSelection.now()) match
-              case Some(p) =>
-                localSelection.set(p)
-                changed = true
-              case None => remaining = 1 // end early
-            remaining -= 1
-        if changed then segmentUpdater.onNext(localSelection.now())
+      // Track navigation direction for animations
+      val navigationDirection: Var[Int] = Var(
+        0,
+      ) // -1 for previous, 1 for next, 0 for no change
+
+      // Create animation signals based on navigation direction
+      val $slideAnimation = navigationDirection.signal.changes
+        .map { direction =>
+          println(s"Direction: $direction")
+          direction match {
+            case 1 =>
+              Animation.from(300).to(0).run // Slide in from right
+            case -1 =>
+              Animation.from(-300).to(0).run // Slide in from left
+            case 0 => Animation.from(0).to(0).run // No animation
+          }
+        }
+        .flattenSwitch
+        .startWith(0.0)
+
+      val $fadeAnimation = navigationDirection.signal.changes
+        .map { direction =>
+          if (direction != 0) Animation.from(0.3).to(1.0).run
+          else Animation.from(1.0).to(1.0).run
+        }
+        .flattenSwitch
+        .startWith(1.0)
 
       div(
         cls := "segment-editor",
@@ -333,12 +334,15 @@ object Components {
         ),
         div(
           cls := "segment-editor-carousel",
+          // position.relative,
+          // overflow.hidden,
           // Previous (left)
           child <-- $triplet.map(_._1).map {
             case Some(prev) =>
               div(
                 cls := "carousel-card prev clickable",
                 onClick --> Observer { _ =>
+                  navigationDirection.set(-1)
                   localSelection.set(prev)
                   segmentUpdater.onNext(prev)
                 },
@@ -351,9 +355,13 @@ object Components {
                 cls := "carousel-card prev empty",
               )
           },
-          // Current (center)
+          // Current (center) with slide animation
           div(
             cls := "carousel-card current",
+            transform <-- $slideAnimation.map(x =>
+              s"translateX(${x}px)",
+            ),
+            opacity <-- $fadeAnimation,
             child <-- localSelection.signal.map { seg =>
               div(
                 div(
@@ -372,6 +380,7 @@ object Components {
               div(
                 cls := "carousel-card next clickable",
                 onClick --> Observer { _ =>
+                  navigationDirection.set(1)
                   localSelection.set(next)
                   segmentUpdater.onNext(next)
                 },
@@ -438,7 +447,7 @@ object Components {
     text: String,
     additionalClasses: String = "",
     onClickAction: () => Unit,
-  ) = {
+  ) =
     button(
       cls := s"button $additionalClasses",
       text,
@@ -446,7 +455,6 @@ object Components {
         onClickAction()
       },
     )
-  }
 
   def copyButtons(
     $plan: Signal[Plan],
