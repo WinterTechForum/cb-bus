@@ -182,38 +182,39 @@ object Components {
                   updatedPlan
                 }
             div(
-              child <-- routePieceSignal
-                .map {
-                  case (routePieceInner, idx) =>
-                    div(
-                      transition.height,
-                      routePieceInner match {
-                        case r: RouteGap =>
-                          div(
-                            cls := "route-gap",
+              child <--
+                routePieceSignal
+                  .map {
+                    case (routePieceInner, idx) =>
+                      div(
+                        transition.height,
+                        routePieceInner match {
+                          case r: RouteGap =>
                             div(
-                              cls := "route-gap-indicator",
-                            ),
-                            span(
-                              cls := "time-at-stop",
-                              r.endTime
-                                .between(r.start)
-                                .humanFriendly,
-                            ),
-                          )
-                        case rs: RouteSegment =>
-                          RouteLegElement(
-                            rs,
-                            addingNewRoute,
-                            scheduleSelector,
-                            transition,
-                            legDeleter,
-                            segmentUpdater,
-                          )
+                              cls := "route-gap",
+                              div(
+                                cls := "route-gap-indicator",
+                              ),
+                              span(
+                                cls := "time-at-stop",
+                                r.endTime
+                                  .between(r.start)
+                                  .humanFriendly,
+                              ),
+                            )
+                          case rs: RouteSegment =>
+                            RouteLegElement(
+                              rs,
+                              addingNewRoute,
+                              scheduleSelector,
+                              transition,
+                              legDeleter,
+                              segmentUpdater,
+                            )
 
-                      },
-                    )
-                },
+                        },
+                      )
+                  },
             )
         },
       div(
@@ -287,6 +288,10 @@ object Components {
     val localSelection: Var[RouteSegment] = Var(routeSegment)
 
     def segmentEditorCarousel() = {
+      val prev = routeSegment.routeWithTimes.nextBefore(routeSegment)
+      val current = routeSegment
+      val next = routeSegment.routeWithTimes.nextAfter(routeSegment)
+
       def neighbors(
         seg: RouteSegment,
       ): (Option[RouteSegment], RouteSegment, Option[RouteSegment]) =
@@ -296,54 +301,20 @@ object Components {
           seg.routeWithTimes.nextAfter(seg),
         )
 
-      val $triplet = localSelection.signal.map(neighbors)
-
-      // Track navigation direction for animations
-      val navigationDirection: Var[Int] = Var(
-        0,
-      ) // -1 for previous, 1 for next, 0 for no change
-
-      // Create animation signals based on navigation direction
-      val $slideAnimation = navigationDirection.signal.changes
-        .map { direction =>
-          println(s"Direction: $direction")
-          direction match {
-            case 1 =>
-              Animation.from(300).to(0).run // Slide in from right
-            case -1 =>
-              Animation.from(-300).to(0).run // Slide in from left
-            case 0 => Animation.from(0).to(0).run // No animation
-          }
-        }
-        .flattenSwitch
-        .startWith(0.0)
-
-      val $fadeAnimation = navigationDirection.signal.changes
-        .map { direction =>
-          if (direction != 0) Animation.from(0.3).to(1.0).run
-          else Animation.from(1.0).to(1.0).run
-        }
-        .flattenSwitch
-        .startWith(1.0)
-
       div(
         cls := "segment-editor",
         div(
           cls := "segment-editor-header",
-          s"${routeSegment.start.l.name} → ${routeSegment.end.l.name}",
+          s"${current.start.l.name} → ${current.end.l.name}",
         ),
         div(
           cls := "segment-editor-carousel",
-          // position.relative,
-          // overflow.hidden,
           // Previous (left)
-          child <-- $triplet.map(_._1).map {
+          prev match {
             case Some(prev) =>
               div(
                 cls := "carousel-card prev clickable",
                 onClick --> Observer { _ =>
-                  navigationDirection.set(-1)
-                  localSelection.set(prev)
                   segmentUpdater.onNext(prev)
                 },
                 div(prev.start.t.toDumbAmericanStringWithoutDayTime),
@@ -358,29 +329,22 @@ object Components {
           // Current (center) with slide animation
           div(
             cls := "carousel-card current",
-            transform <-- $slideAnimation.map(x =>
-              s"translateX(${x}px)",
-            ),
-            opacity <-- $fadeAnimation,
-            child <-- localSelection.signal.map { seg =>
+            div(
               div(
-                div(
-                  seg.start.t.toDumbAmericanString,
-                ),
-                div("to"),
-                div(
-                  seg.end.t.toDumbAmericanString,
-                ),
-              )
-            },
+                current.start.t.toDumbAmericanString,
+              ),
+              div("to"),
+              div(
+                current.end.t.toDumbAmericanString,
+              ),
+            ),
           ),
           // Next (right)
-          child <-- $triplet.map(_._3).map {
+          next match {
             case Some(next) =>
               div(
                 cls := "carousel-card next clickable",
                 onClick --> Observer { _ =>
-                  navigationDirection.set(1)
                   localSelection.set(next)
                   segmentUpdater.onNext(next)
                 },
