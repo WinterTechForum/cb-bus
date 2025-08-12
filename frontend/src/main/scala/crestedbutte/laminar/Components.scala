@@ -197,6 +197,7 @@ object Components {
                                 cls := "route-gap-indicator",
                               ),
                               span(
+                                transition.width,
                                 cls := "time-at-stop",
                                 r.endTime
                                   .between(r.start)
