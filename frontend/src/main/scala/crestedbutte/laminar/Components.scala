@@ -207,7 +207,6 @@ object Components {
                               rs,
                               addingNewRoute,
                               scheduleSelector,
-                              transition,
                               legDeleter,
                               segmentUpdater,
                             )
@@ -280,14 +279,11 @@ object Components {
     scheduleSelector: Observer[
       Option[SelectedStopInfo],
     ],
-    transition: Transition,
     legDeleter: Observer[RouteSegment],
     segmentUpdater: Observer[RouteSegment],
   ) = {
 
-    val localSelection: Var[RouteSegment] = Var(routeSegment)
-
-    def segmentEditorCarousel() = {
+    val segmentEditorCarousel = {
       val prev = routeSegment.routeWithTimes.nextBefore(routeSegment)
       val current = routeSegment
       val next = routeSegment.routeWithTimes.nextAfter(routeSegment)
@@ -345,7 +341,6 @@ object Components {
               div(
                 cls := "carousel-card next clickable",
                 onClick --> Observer { _ =>
-                  localSelection.set(next)
                   segmentUpdater.onNext(next)
                 },
                 div(next.start.t.toDumbAmericanStringWithoutDayTime),
@@ -362,9 +357,9 @@ object Components {
     }
 
     div(
-      transition.height,
+      // transition.height,
       cls := "plan-segments box",
-      segmentEditorCarousel(),
+      segmentEditorCarousel,
       // Show transit time and delete segment button alongside the editor
       transitSegment(
         routeSegment,
