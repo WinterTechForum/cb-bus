@@ -337,6 +337,7 @@ object Components {
             item.s.t.toDumbAmericanString + " ->" + item.e.t.toDumbAmericanString,
           ),
         0,
+        Some(routeSegment),
       )
 
     val segmentEditorCarousel = {

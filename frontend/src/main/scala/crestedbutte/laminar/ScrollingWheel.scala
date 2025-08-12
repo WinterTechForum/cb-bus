@@ -27,6 +27,7 @@ object ScrollingWheel {
       HTMLDivElement,
     ], // Should actually turn the item into a full element.
     initialIndex: Int = 0,
+    initialSelectedElement: Option[T] = None,
   ): (ReactiveHtmlElement[HTMLDivElement], Signal[T]) = {
     val itemHeight = 60 // Height of each visible item in pixels
     val visibleItems = 3
@@ -35,9 +36,19 @@ object ScrollingWheel {
     // Offset so the first item appears in the center (middle visible slot)
     val centerOffset = itemHeight
 
-    val selectedIndex: Var[Int] = Var(initialIndex)
+    // Calculate the actual initial index based on the provided element or fallback to initialIndex
+    val actualInitialIndex = initialSelectedElement match {
+      case Some(element) => 
+        items.indexOf(element) match {
+          case -1 => initialIndex // If element not found, use initialIndex
+          case index => index
+        }
+      case None => initialIndex
+    }
+
+    val selectedIndex: Var[Int] = Var(actualInitialIndex)
     val scrollPosition: Var[Double] = Var(
-      (initialIndex * itemHeight).toDouble,
+      (actualInitialIndex * itemHeight).toDouble,
     )
     val isDragging: Var[Boolean] = Var(false)
     val velocity: Var[Double] = Var(0.0)
