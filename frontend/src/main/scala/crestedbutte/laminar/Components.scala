@@ -439,19 +439,11 @@ object Components {
     additionalClasses: String = "",
     onClickAction: () => Unit,
   ) = {
-    val isAnimating = Var(false)
-
     button(
       cls := s"button $additionalClasses",
-      cls.toggle("is-success") <-- isAnimating.signal,
-      cls.toggle("animating") <-- isAnimating.signal,
       text,
       onClick --> Observer { _ =>
-        isAnimating.set(true)
         onClickAction()
-        setTimeout(200) {
-          isAnimating.set(false)
-        }
       },
     )
   }

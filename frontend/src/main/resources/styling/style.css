@@ -13,11 +13,7 @@ body {
 }
 
 .bill-box {
-    background-color: #FFFFFF;
-    color: #000000;
-    border-radius: 5px;
     padding: 5px;
-    font-size: 120%;
     margin-bottom: 10px;
 }
 
@@ -26,42 +22,13 @@ body {
     width: 32px;
 }
 
-.selected-leg-header {
-    text-align: center;
-}
-
-.button {
+.button, .adjuster-button {
     font-size: 80%;
     font-weight: bold;
-    height: 85%;
-    transform: scale(1);
-    transition: all 0.2s ease-out;
 }
 
-.button.animating {
-    transform: scale(0.95);
-}
-
-.adjuster-button {
-    font-size: 80%;
-    font-weight: bold;
-    height: 85%;
-}
-
-.light-background {
-    background-color: white;
-}
-
-.upcoming-buses-title {
+.upcoming-buses-title, .selected-leg-header {
     text-align: center;
-}
-
-.arrival-time {
-    text-align: left;
-}
-
-.wait-time {
-    text-align: left;
 }
 
 .link {
@@ -69,69 +36,40 @@ body {
 }
 
 .transit-period {
-    width: 100%;
     display: grid;
     grid-template-columns: 2fr 4fr 1fr;
-    grid-template-rows: auto 1fr;
-    grid-template-areas:
-        "transit-period-duration transit-period-icon transit-period-delete";
 }
 
 .transit-period-duration {
-    grid-area: transit-period-duration;
     text-align: left;
-    vertical-align: middle;
-    position: relative;
 }
 
 .transit-period-icon {
-    grid-area: transit-period-icon;
     text-align: center;
-    vertical-align: middle;
-    position: relative;
 }
 
 .transit-period-delete {
-    grid-area: transit-period-delete;
     text-align: center;
-    vertical-align: middle;
-    position: relative;
 }
 
 .stop-information {
     display: grid;
     grid-template-columns: 2fr 6fr;
-    grid-template-rows: auto 1fr;
-    grid-template-areas:
-        "upcoming-information stop-name"
-        "upcoming-information stop-alt-name";
-    padding-top: 5px;
-    padding-bottom: 5px;
-}
-
-.map-link {
-    grid-area: map-link;
-    text-align: center;
-    vertical-align: middle;
-    position: relative;
-    top: calc(40% - 10px);
+    padding: 5px 0;
 }
 
 .stop-name {
-    grid-area: stop-name;
     text-align: center;
     font-weight: bold;
     font-size: 1.5rem;
 }
 
 .stop-alt-name {
-    grid-area: stop-alt-name;
     text-align: center;
     font-size: 70%;
 }
 
 .upcoming-information {
-    grid-area: upcoming-information;
     text-align: right;
 }
 
@@ -141,14 +79,11 @@ body {
 }
 
 .route-header_icon {
-    margin-top: auto;
-    margin-bottom: auto;
     padding-left: 5px;
 }
 
 .arrival-time-alarm {
-    padding-left: 5px;
-    padding-bottom: 5px;
+    padding: 5px;
 }
 
 .title {
@@ -157,51 +92,17 @@ body {
 
 .time-picker-simple {
     display: grid;
-    grid-template-columns: minmax(80px, 5%) minmax(80px, 5%) minmax(80px, 5%);
-    grid-template-rows: auto 1fr;
-    grid-template-areas:
-        "hour       minute      amOrPm";
-    padding-top: 5px;
-    padding-bottom: 5px;
+    grid-template-columns: 1fr 1fr 1fr;
+    padding: 5px 0;
     border-bottom: 1px solid white;
-}
-
-.hour {
-    grid-area: hour;
-}
-
-.minute {
-    grid-area: minute;
-}
-
-.amOrPm {
-    grid-area: amOrPm;
 }
 
 .wheel {
     display: grid;
     place-items: center;
-    grid-template-columns: 1fr;
-    grid-template-rows: auto 1fr;
-    grid-template-areas:
-        "tp-inc"
-        "tp-display"
-        "tp-dec";
-    padding-top: 5px;
-    padding-bottom: 5px;
+    grid-template-rows: auto auto auto;
+    padding: 5px 0;
     border-bottom: 1px solid white;
-}
-
-.tp-inc {
-    grid-area: tp-inc;
-}
-
-.tp-display {
-    grid-area: tp-display;
-}
-
-.tp-dec {
-    grid-area: tp-dec;
 }
 
 #sandbox {
@@ -209,30 +110,17 @@ body {
     place-items: center;
 }
 
-.delete {
-    filter: invert(23%) sepia(100%) saturate(7457%) hue-rotate(4deg);
-}
-
-.plain-white {
-    filter: invert(100%);
-}
 
 .plan-segments {
     background-color: #00998E;
     color: #FFFFFF;
-    display: grid;
-    place-items: center;
     margin: 4px 0;
-    position: relative;
+    padding: 8px;
 }
 
 .add-new-route-section {
-    padding-top: 10px;
-    padding-bottom: 10px;
-
-    align-items: center;
-    display: flex;
-    justify-content: center;
+    padding: 10px 0;
+    text-align: center;
 }
 
 .transit-time {
@@ -245,36 +133,11 @@ body {
     font-size: 80%;
 }
 
-/* Route Gap Styles */
 .route-gap {
-    position: relative;
     background: #f8f9fa;
-    border: 1px solid #dee2e6;
-    border-radius: 8px;
-    margin: 8px 16px;
-    padding: 12px 16px;
+    margin: 8px 0;
+    padding: 12px;
     text-align: center;
-}
-
-.route-gap .time-at-stop {
-    color: #495057;
-    font-size: 90%;
-    font-weight: 600;
-}
-
-/* Ensure route segments have proper spacing for connectors */
-.plan-segments {
-    background-color: #00998E;
-    color: #FFFFFF;
-    display: grid;
-    place-items: center;
-    margin: 4px 0;
-    position: relative;
-}
-
-/* Route Segment Consistent Styling */
-.segment-editor {
-    position: relative;
 }
 
 .segment-editor-header {
@@ -285,15 +148,12 @@ body {
 .segment-editor-carousel {
     display: flex;
     justify-content: center;
-    align-items: stretch;
     gap: 8px;
     padding: 8px 0;
 }
 
 .carousel-card {
-    border-radius: 8px;
     padding: 12px;
-    transition: transform 120ms ease, opacity 120ms ease;
 }
 
 .carousel-card.current {
@@ -301,31 +161,10 @@ body {
     background-color: #6BB187;
     font-weight: bold;
     text-align: center;
-    cursor: pointer;
 }
 
 .carousel-card.prev,
 .carousel-card.next {
     flex: 1;
     opacity: 0.4;
-    border: 1px solid #eee;
-    transform: scale(0.95);
-}
-
-.carousel-card.prev.clickable,
-.carousel-card.next.clickable {
-    cursor: pointer;
-}
-
-.carousel-card.prev.empty,
-.carousel-card.next.empty {
-    background: transparent;
-    border: none;
-}
-
-.segment-editor-actions {
-    margin-top: 8px;
-    display: flex;
-    justify-content: center;
-    gap: 8px;
 }
