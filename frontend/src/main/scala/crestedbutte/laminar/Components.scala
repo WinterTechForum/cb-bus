@@ -392,7 +392,7 @@ object Components {
 
     div(
       transition.height,
-      cls := "plan-segments box",
+      cls := "plan-segments",
       segmentEditorCarousel(),
       // Show transit time and delete segment button alongside the editor
       transitSegment(

@@ -77,8 +77,6 @@ body {
     grid-template-rows: auto 1fr;
     grid-template-areas:
         "transit-period-duration transit-period-icon transit-period-delete";
-    padding-top: 5px;
-    padding-bottom: 5px;
 }
 
 .transit-period-duration {
@@ -100,7 +98,6 @@ body {
     text-align: center;
     vertical-align: middle;
     position: relative;
-    top: calc(15%);
 }
 
 .stop-information {
