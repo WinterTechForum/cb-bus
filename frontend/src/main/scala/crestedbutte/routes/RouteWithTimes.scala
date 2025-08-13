@@ -52,17 +52,23 @@ case class RouteWithTimes(
   ): Option[RouteSegment] =
     for
       index <- indexOfLegThatContains(original)
+      _ = println("A")
       newIndex <-
         Option.when(index - 1 >= 0)(
           index - 1,
         )
+      _ = println("B leg: " + legs(newIndex))
       newRoute <- legs(newIndex)
         .withSameStopsAs(original)
-    yield RouteSegment.fromRouteLegWithId(newRoute, original.id)
+      _ = println(s"nextBefore: $newRoute")
+      res = RouteSegment.fromRouteLegWithId(newRoute, original.id)
+      _ = println("Didn't crash")
+    yield res
 
   def allNextBefore(
     original: RouteSegment,
   ): Seq[RouteSegment] =
+    println("allNextBefore: " + original)
     nextBefore(original) match {
       case Some(next) =>
         next +: allNextBefore(next)
