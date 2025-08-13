@@ -214,7 +214,7 @@ object Components {
                             )
                           case rs: RouteSegment =>
                             RouteLegElement(
-                              rs,
+                              rs, // TODO I **must* figure out how to rework this so that RouteLegElement takes a signal, and is not rebuilt every time the segment is updated.
                               addingNewRoute,
                               scheduleSelector,
                               legDeleter =
@@ -327,8 +327,6 @@ object Components {
       routeSegment.routeWithTimes
         .allRouteSegmentsWithSameStartAndStop(routeSegment)
 
-    println(s"allSegments: $allSegments")
-
     val (wheelElement, selectedValue) =
       ScrollingWheel.ScrollingWheel(
         allSegments,
@@ -417,6 +415,7 @@ object Components {
     div(
       // transition.height,
       cls := "plan-segments box",
+      // selectedValue --> segmentUpdater, // TODO Eventually this should be restored
       segmentEditorCarousel,
       wheelElement,
       // Show transit time and delete segment button alongside the editor
