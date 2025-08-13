@@ -134,23 +134,6 @@ object Components {
           idAttr := "container",
 
           // Scrolling wheel demo at the top
-          div(
-            cls := "demo-section",
-            styleAttr := "margin-bottom: 20px; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background: #f8f9fa;",
-            h3(
-              styleAttr := "margin-bottom: 15px; color: #333; text-align: center;",
-              "Scrolling Wheel Demo",
-            ),
-            div(
-              styleAttr := "display: flex; flex-direction: column; align-items: center; gap: 15px;",
-              wheelElement,
-              div(
-                styleAttr := "font-size: 18px; font-weight: bold; color: #3273dc; text-align: center;",
-                "Selected: ",
-                child.text <-- selectedValue,
-              ),
-            ),
-          ),
           child <-- whatToShowBetter, // **THIS IS THE IMPORTANT STUFF** The fact that it's hard to see means I need to remove other bullshit
           timeStamps --> Observer[WallTime](
             onNext = localTime =>
@@ -322,6 +305,7 @@ object Components {
     legDeleter: Observer[RouteSegment],
     segmentUpdater: Observer[RouteSegment],
   ) = {
+    println("Making a new RouteLegElement for : " + routeSegment.id)
 
     val allSegments =
       routeSegment.routeWithTimes
@@ -415,8 +399,12 @@ object Components {
     div(
       // transition.height,
       cls := "plan-segments box",
-      // selectedValue --> segmentUpdater, // TODO Eventually this should be restored
-      segmentEditorCarousel,
+      div(
+        cls := "segment-editor-header",
+        s"${routeSegment.start.l.name} → ${routeSegment.end.l.name}",
+      ),
+      selectedValue --> segmentUpdater, // TODO Eventually this should be restored
+      // segmentEditorCarousel,
       wheelElement,
       // Show transit time and delete segment button alongside the editor
       transitSegment(
