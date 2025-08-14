@@ -38,9 +38,10 @@ object ScrollingWheel {
 
     // Calculate the actual initial index based on the provided element or fallback to initialIndex
     val actualInitialIndex = initialSelectedElement match {
-      case Some(element) => 
+      case Some(element) =>
         items.indexOf(element) match {
-          case -1 => initialIndex // If element not found, use initialIndex
+          case -1 =>
+            initialIndex // If element not found, use initialIndex
           case index => index
         }
       case None => initialIndex
@@ -107,22 +108,12 @@ object ScrollingWheel {
 
     val wheelElement = div(
       cls := "scrolling-wheel",
-      styleAttr := s"height: ${containerHeight}px; overflow: hidden; position: relative; border: 2px solid #ddd; border-radius: 8px; background: #00998E;",
+      styleAttr := s"height: ${containerHeight}px; overflow: hidden; position: relative;",
       div(
         cls := "wheel-mask",
         styleAttr := "position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; z-index: 10;",
 
-        // Top fade
-        div(
-          styleAttr := s"position: absolute; top: 0; left: 0; right: 0; height: ${itemHeight}px; background: linear-gradient(to bottom, rgba(249,249,249,0.8), transparent); pointer-events: none;",
-        ),
-
-        // Bottom fade
-        div(
-          styleAttr := s"position: absolute; bottom: 0; left: 0; right: 0; height: ${itemHeight}px; background: linear-gradient(to top, rgba(249,249,249,0.8), transparent); pointer-events: none;",
-        ),
-
-        // Center highlight
+        // Center highlight only (no background gradients)
         div(
           styleAttr := s"position: absolute; top: ${itemHeight}px; left: 0; right: 0; height: ${itemHeight}px; border: 2px solid #3273dc; border-left: none; border-right: none; background: rgba(50, 115, 220, 0.1); pointer-events: none;",
         ),
@@ -130,7 +121,7 @@ object ScrollingWheel {
       div(
         cls := "wheel-items",
         styleAttr <-- scrollPosition.signal.map(pos =>
-          s"position: relative; transform: translateY(${centerOffset - pos}px); transition: ${if (isDragging.now()) "none" else "transform 0.2s ease-out"};",
+          s"position: relative; transform: translateY(${centerOffset - pos}px); transition: ${if (isDragging.now()) "none" else "transform 0.2s ease-out"}; -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0) 0px, rgba(0,0,0,1) ${itemHeight}px, rgba(0,0,0,1) ${containerHeight - itemHeight}px, rgba(0,0,0,0) ${containerHeight}px); mask-image: linear-gradient(to bottom, rgba(0,0,0,0) 0px, rgba(0,0,0,1) ${itemHeight}px, rgba(0,0,0,1) ${containerHeight - itemHeight}px, rgba(0,0,0,0) ${containerHeight}px);",
         ),
 
         // Actual items
