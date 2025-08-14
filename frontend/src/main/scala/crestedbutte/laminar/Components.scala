@@ -287,6 +287,7 @@ object Components {
   ) =
     div(
       cls := "transit-period",
+      styleAttr := "display: flex; flex-direction: column; align-items: center; gap: 0.5rem;",
       span(
         cls := "transit-period-duration transit-time",
         routeSegment.start.t
