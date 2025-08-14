@@ -119,19 +119,23 @@ object ScrollingWheel {
         ),
       ),
       div(
-        cls := "wheel-items",
-        styleAttr <-- scrollPosition.signal.map(pos =>
-          s"position: relative; transform: translateY(${centerOffset - pos}px); transition: ${if (isDragging.now()) "none" else "transform 0.2s ease-out"}; -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0) 0px, rgba(0,0,0,1) ${itemHeight}px, rgba(0,0,0,1) ${containerHeight - itemHeight}px, rgba(0,0,0,0) ${containerHeight}px); mask-image: linear-gradient(to bottom, rgba(0,0,0,0) 0px, rgba(0,0,0,1) ${itemHeight}px, rgba(0,0,0,1) ${containerHeight - itemHeight}px, rgba(0,0,0,0) ${containerHeight}px);",
-        ),
+        cls := "wheel-viewport",
+        styleAttr := s"-webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0) 0px, rgba(0,0,0,1) ${itemHeight}px, rgba(0,0,0,1) ${containerHeight - itemHeight}px, rgba(0,0,0,0) ${containerHeight}px); mask-image: linear-gradient(to bottom, rgba(0,0,0,0) 0px, rgba(0,0,0,1) ${itemHeight}px, rgba(0,0,0,1) ${containerHeight - itemHeight}px, rgba(0,0,0,0) ${containerHeight}px);",
+        div(
+          cls := "wheel-items",
+          styleAttr <-- scrollPosition.signal.map(pos =>
+            s"position: relative; transform: translateY(${centerOffset - pos}px); transition: ${if (isDragging.now()) "none" else "transform 0.2s ease-out"};",
+          ),
 
-        // Actual items
-        items.zipWithIndex.map { case (item, index) =>
-          div(
-            cls := "wheel-item",
-            styleAttr := s"height: ${itemHeight}px; display: flex; align-items: center; justify-content: center; padding: 0 20px; font-size: 16px; font-weight: 500; user-select: none;",
-            itemToString(item),
-          )
-        },
+          // Actual items
+          items.zipWithIndex.map { case (item, index) =>
+            div(
+              cls := "wheel-item",
+              styleAttr := s"height: ${itemHeight}px; display: flex; align-items: center; justify-content: center; padding: 0 20px; font-size: 16px; font-weight: 500; user-select: none;",
+              itemToString(item),
+            )
+          },
+        ),
       ),
 
       // Touch/mouse event handlers
