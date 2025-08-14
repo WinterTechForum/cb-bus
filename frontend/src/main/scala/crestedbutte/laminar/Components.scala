@@ -287,7 +287,7 @@ object Components {
   ) =
     div(
       cls := "transit-period",
-      styleAttr := "display: flex; flex-direction: column; align-items: center; gap: 0.5rem;",
+      styleAttr := "display: flex; flex-direction: column; align-items: center; justify-content: space-between; height: 100%;",
       span(
         cls := "transit-period-duration transit-time",
         routeSegment.start.t
@@ -336,7 +336,7 @@ object Components {
         wheelElement,
       ),
       div(
-        styleAttr := "flex: 1; display: flex; flex-direction: column; justify-content: center; padding-left: 1rem;",
+        styleAttr := "flex: 1; display: flex; flex-direction: column; justify-content: center; padding-left: 1rem; min-height: 200px;",
         transitSegment(
           routeSegment,
           addingNewRoute,
