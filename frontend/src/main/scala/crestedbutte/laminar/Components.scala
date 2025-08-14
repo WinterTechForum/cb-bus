@@ -316,95 +316,19 @@ object Components {
         allSegments,
         item =>
           div(
-            item.s.t.toDumbAmericanString + " ->" + item.e.t.toDumbAmericanString,
+            item.s.t.toDumbAmericanString + "→" + item.e.t.toDumbAmericanString,
           ),
         0,
         Some(routeSegment),
       )
 
-    val segmentEditorCarousel = {
-      // TODO Generate the full list of RouteSegments with this start/stop point for the entire route.
-      val prev = routeSegment.routeWithTimes.nextBefore(routeSegment)
-      val current = routeSegment
-      val next = routeSegment.routeWithTimes.nextAfter(routeSegment)
-
-      def neighbors(
-        seg: RouteSegment,
-      ): (Option[RouteSegment], RouteSegment, Option[RouteSegment]) =
-        (
-          seg.routeWithTimes.nextBefore(seg),
-          seg,
-          seg.routeWithTimes.nextAfter(seg),
-        )
-
-      div(
-        cls := "segment-editor",
-        div(
-          cls := "segment-editor-header",
-          s"${current.start.l.name} → ${current.end.l.name}",
-        ),
-        div(
-          cls := "segment-editor-carousel",
-          // Previous (left)
-          prev match {
-            case Some(prev) =>
-              div(
-                cls := "carousel-card prev clickable",
-                onClick --> Observer { _ =>
-                  segmentUpdater.onNext(prev)
-                },
-                div(prev.start.t.toDumbAmericanStringWithoutDayTime),
-                div("to"),
-                div(prev.end.t.toDumbAmericanStringWithoutDayTime),
-              )
-            case None =>
-              div(
-                cls := "carousel-card prev empty",
-              )
-          },
-          // Current (center) with slide animation
-          div(
-            cls := "carousel-card current",
-            div(
-              div(
-                current.start.t.toDumbAmericanString,
-              ),
-              div("to"),
-              div(
-                current.end.t.toDumbAmericanString,
-              ),
-            ),
-          ),
-          // Next (right)
-          next match {
-            case Some(next) =>
-              div(
-                cls := "carousel-card next clickable",
-                onClick --> Observer { _ =>
-                  segmentUpdater.onNext(next)
-                },
-                div(next.start.t.toDumbAmericanStringWithoutDayTime),
-                div("to"),
-                div(next.end.t.toDumbAmericanStringWithoutDayTime),
-              )
-            case None =>
-              div(
-                cls := "carousel-card next empty",
-              )
-          },
-        ),
-      )
-    }
-
     div(
-      // transition.height,
       cls := "plan-segments box",
       div(
         cls := "segment-editor-header",
         s"${routeSegment.start.l.name} → ${routeSegment.end.l.name}",
       ),
       selectedValue --> segmentUpdater, // TODO Eventually this should be restored
-      // segmentEditorCarousel,
       wheelElement,
       // Show transit time and delete segment button alongside the editor
       transitSegment(
