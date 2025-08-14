@@ -246,7 +246,7 @@ object Components {
             div(
               cls := "centered",
               button(
-                cls := "button",
+                cls := "button is-info",
                 "Add new route",
                 onClick --> Observer { _ =>
                   addingNewRoute.set {
@@ -277,7 +277,7 @@ object Components {
     a(
       cls := "link transit-period-delete",
       onClick.mapTo(routeSegment) --> legDeleter,
-      SvgIcon.squareMinus("delete"),
+      SvgIcon.squareMinus("delete filter-white"),
     )
 
   def transitSegment(
@@ -454,7 +454,7 @@ object Components {
     onClickAction: () => Unit,
   ) =
     button(
-      cls := s"button $additionalClasses",
+      cls := s"button is-info $additionalClasses",
       text,
       onClick --> Observer { _ =>
         onClickAction()
