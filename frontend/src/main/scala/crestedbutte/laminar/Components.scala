@@ -324,17 +324,23 @@ object Components {
 
     div(
       cls := "plan-segments box",
+      styleAttr := "display: flex; align-items: flex-start;",
       div(
-        cls := "segment-editor-header",
-        s"${routeSegment.start.l.name} → ${routeSegment.end.l.name}",
+        styleAttr := "flex: 3; display: flex; flex-direction: column;",
+        div(
+          cls := "segment-editor-header",
+          s"${routeSegment.start.l.name} → ${routeSegment.end.l.name}",
+        ),
+        selectedValue --> segmentUpdater, // TODO Eventually this should be restored
+        wheelElement,
       ),
-      selectedValue --> segmentUpdater, // TODO Eventually this should be restored
-      wheelElement,
-      // Show transit time and delete segment button alongside the editor
-      transitSegment(
-        routeSegment,
-        addingNewRoute,
-        legDeleter,
+      div(
+        styleAttr := "flex: 1; display: flex; flex-direction: column; justify-content: center; padding-left: 1rem;",
+        transitSegment(
+          routeSegment,
+          addingNewRoute,
+          legDeleter,
+        ),
       ),
     )
 
