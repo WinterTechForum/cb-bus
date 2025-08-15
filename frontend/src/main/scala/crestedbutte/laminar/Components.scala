@@ -232,6 +232,15 @@ object Components {
                                   db.saveDailyPlanOnly(updatedPlan)
                                   updatedPlan
                                 },
+                              // Append a new segment to the end of the plan
+                              segmentAppender = $plan.writer
+                                .contramap[RouteSegment] { newSegment =>
+                                  val plan = $plan.now()
+                                  val updatedPlan = plan.copy(l = plan.l :+ newSegment)
+                                  db.saveDailyPlanOnly(updatedPlan)
+                                  addingNewRoute.set(false)
+                                  updatedPlan
+                                },
                             )
 
                         },
@@ -305,6 +314,7 @@ object Components {
     ],
     legDeleter: Observer[RouteSegment],
     segmentUpdater: Observer[RouteSegment],
+    segmentAppender: Observer[RouteSegment],
   ) = {
     println("Making a new RouteLegElement for : " + routeSegment.id)
 
@@ -341,6 +351,23 @@ object Components {
           routeSegment,
           addingNewRoute,
           legDeleter,
+        ),
+        // Add return trip button
+        animatedButton(
+          "Add return trip",
+          "m-2",
+          () => {
+            val maybeReturn =
+              rightLegOnRightRoute(
+                routeSegment.end.l,
+                routeSegment.start.l,
+                Plan(Seq.empty),
+                routeSegment.end.t,
+              )
+            maybeReturn.foreach { newSeg =>
+              segmentAppender.onNext(newSeg)
+            }
+          },
         ),
       ),
     )

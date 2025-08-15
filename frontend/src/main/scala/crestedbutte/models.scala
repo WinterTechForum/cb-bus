@@ -86,7 +86,7 @@ case class Plan(
           idx,
         ) => s"${leg.plainTextRepresentation}",
       )
-      .mkString("\n\n")
+      .mkString("\n\n") + "\n"
 
 object Plan {
   import upickle.default.*
