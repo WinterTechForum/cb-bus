@@ -1,6 +1,7 @@
 html {
     -webkit-filter: grayscale(100%);
     filter: grayscale(100%);
+    font-size: 18px;
 }
 
 body {
@@ -29,7 +30,7 @@ body {
 
 .button,
 .adjuster-button {
-    font-size: 80%;
+    font-size: 1.125rem;
     font-weight: bold;
     background-color: black;
 }
@@ -83,7 +84,7 @@ body {
 
 .stop-alt-name {
     text-align: center;
-    font-size: 70%;
+    font-size: 0.95rem;
 }
 
 .upcoming-information {
@@ -142,12 +143,12 @@ body {
 
 .transit-time {
     color: white;
-    font-size: 80%;
+    font-size: 1rem;
 }
 
 .time-at-stop {
     color: black;
-    font-size: 80%;
+    font-size: 1rem;
 }
 
 .route-gap {
@@ -191,4 +192,10 @@ body {
 
 .filter-white {
     filter: invert(100%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(100%) contrast(100%);
+}
+
+@media (max-width: 480px) {
+    html {
+        font-size: 19px;
+    }
 }
