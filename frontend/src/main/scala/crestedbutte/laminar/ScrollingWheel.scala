@@ -131,7 +131,7 @@ object ScrollingWheel {
           items.zipWithIndex.map { case (item, index) =>
             div(
               cls := "wheel-item",
-              styleAttr := s"height: ${itemHeight}px; display: flex; align-items: center; justify-content: center; padding: 0 20px; font-size: 16px; font-weight: 500; user-select: none;",
+              styleAttr := s"height: ${itemHeight}px; display: flex; align-items: center; justify-content: center; padding: 0 20px; font-size: 20px; font-weight: 500; user-select: none;",
               itemToString(item),
             )
           },
