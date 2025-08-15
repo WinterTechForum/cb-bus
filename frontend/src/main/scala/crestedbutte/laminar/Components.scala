@@ -346,6 +346,20 @@ object Components {
       "⮌", // Clockwise top semicircle arrow
     )
 
+    val shareSymbols = List(
+      "↗", // Up-right arrow
+      "⤴", // Up-right curved arrow
+      "⇱", // North west arrow to corner
+      "⎋", // Escape
+      "⧉", // Two joined squares
+      "⎘", // Document with turned corner
+      "📤", // Outbox tray
+      "📲", // Mobile phone with arrow
+      "🔗", // Link symbol
+      "⌲", // Forward pipe
+      "⎆", // Enter symbol
+    )
+
     div(
       cls := "plan-segments box",
       styleAttr := "display: flex; align-items: flex-start;",
@@ -366,10 +380,9 @@ object Components {
           legDeleter,
         ),
         // Add return trip button
-        animatedButton(
+        div(
           "↺",
-          "m-2",
-          () => {
+          onClick --> Observer { _ =>
             val maybeReturn =
               rightLegOnRightRoute(
                 routeSegment.end.l,
@@ -377,9 +390,10 @@ object Components {
                 Plan(Seq.empty),
                 routeSegment.end.t,
               )
-            maybeReturn.foreach { newSeg =>
-              segmentAppender.onNext(newSeg)
-            }
+          maybeReturn.foreach { newSeg =>
+            segmentAppender.onNext(newSeg)
+          }
+
           },
         ),
       ),
