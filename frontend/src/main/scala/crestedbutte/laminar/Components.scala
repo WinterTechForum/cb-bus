@@ -335,6 +335,17 @@ object Components {
         Some(routeSegment),
       )
 
+    val returnSymbols = List(
+      "↩", // Return arrow
+      "⮐", // Return symbol
+      "⟲", // Clockwise gapped circle arrow
+      "🔄", // Clockwise arrows
+      "⇄", // Left right arrow
+      "⇋", // Left right wave arrow
+      "↺", // Anticlockwise open circle arrow
+      "⮌", // Clockwise top semicircle arrow
+    )
+
     div(
       cls := "plan-segments box",
       styleAttr := "display: flex; align-items: flex-start;",
@@ -356,7 +367,7 @@ object Components {
         ),
         // Add return trip button
         animatedButton(
-          "Add return trip",
+          "↺",
           "m-2",
           () => {
             val maybeReturn =
