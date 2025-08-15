@@ -234,12 +234,14 @@ object Components {
                                 },
                               // Append a new segment to the end of the plan
                               segmentAppender = $plan.writer
-                                .contramap[RouteSegment] { newSegment =>
-                                  val plan = $plan.now()
-                                  val updatedPlan = plan.copy(l = plan.l :+ newSegment)
-                                  db.saveDailyPlanOnly(updatedPlan)
-                                  addingNewRoute.set(false)
-                                  updatedPlan
+                                .contramap[RouteSegment] {
+                                  newSegment =>
+                                    val plan = $plan.now()
+                                    val updatedPlan = plan
+                                      .copy(l = plan.l :+ newSegment)
+                                    db.saveDailyPlanOnly(updatedPlan)
+                                    addingNewRoute.set(false)
+                                    updatedPlan
                                 },
                             )
 
