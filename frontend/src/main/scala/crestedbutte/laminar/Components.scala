@@ -256,9 +256,10 @@ object Components {
           case false =>
             div(
               cls := "centered",
+              styleAttr := "display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center;",
               button(
                 cls := "button is-info",
-                "Add new route",
+                "New route",
                 onClick --> Observer { _ =>
                   addingNewRoute.set {
                     true
@@ -267,7 +268,7 @@ object Components {
               ),
               button(
                 cls := "button is-info",
-                "Add return leg",
+                "Return trip",
                 onClick --> Observer { _ =>
                   val plan = $plan.now()
                   val maybeLastSeg = plan.l.lastOption
@@ -323,12 +324,6 @@ object Components {
     div(
       cls := "transit-period",
       styleAttr := "display: flex; flex-direction: column; align-items: center; justify-content: space-between; height: 100%;",
-      span(
-        cls := "transit-period-duration transit-time",
-        routeSegment.start.t
-          .between(routeSegment.end.t)
-          .humanFriendly,
-      ),
       deleteButton(routeSegment, addingNewRoute, legDeleter),
     )
 
@@ -492,7 +487,7 @@ object Components {
               },
             ),
             animatedButton(
-              "Copy App Link",
+              "Copy Link",
               "m-2",
               () => {
                 // TODO Base this on page mode Parameter and don't hard code URLs at this level
