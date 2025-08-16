@@ -392,7 +392,7 @@ object Components {
         wheelElement,
       ),
       div(
-        styleAttr := "flex: 1; display: flex; flex-direction: column; justify-content: center; padding-left: 1rem; min-height: 200px;",
+        styleAttr := "flex: 0 0 3rem; display: flex; flex-direction: column; justify-content: center; padding-left: 0.5rem; min-height: 200px;",
         transitSegment(
           routeSegment,
           addingNewRoute,
