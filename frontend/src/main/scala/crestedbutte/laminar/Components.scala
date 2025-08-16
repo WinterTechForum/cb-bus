@@ -190,9 +190,12 @@ object Components {
                               span(
                                 transition.width,
                                 cls := "time-at-stop",
-                                r.endTime
-                                  .between(r.start)
-                                  .humanFriendly,
+                                if (r.endTime.isBefore(r.start))
+                                  "Next Day"
+                                else
+                                  r.endTime
+                                    .between(r.start)
+                                    .humanFriendly,
                               ),
                             )
                           case rs: RouteSegment =>
