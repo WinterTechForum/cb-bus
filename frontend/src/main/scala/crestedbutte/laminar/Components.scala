@@ -265,6 +265,30 @@ object Components {
                   }
                 },
               ),
+              button(
+                cls := "button is-info",
+                "Add return leg",
+                onClick --> Observer { _ =>
+                  val plan = $plan.now()
+                  val maybeLastSeg = plan.l.lastOption
+                  maybeLastSeg.foreach { lastSeg =>
+                    val maybeReturn =
+                      rightLegOnRightRoute(
+                        lastSeg.end.l,
+                        lastSeg.start.l,
+                        Plan(Seq.empty),
+                        lastSeg.end.t,
+                      )
+                    maybeReturn.foreach { newSeg =>
+                      val updatedPlan =
+                        plan.copy(l = plan.l :+ newSeg)
+                      db.saveDailyPlanOnly(updatedPlan)
+                      $plan.set(updatedPlan)
+                      addingNewRoute.set(false)
+                    }
+                  }
+                },
+              ),
             )
           case true =>
             div(
@@ -378,23 +402,6 @@ object Components {
           routeSegment,
           addingNewRoute,
           legDeleter,
-        ),
-        // Add return trip button
-        div(
-          "↺",
-          onClick --> Observer { _ =>
-            val maybeReturn =
-              rightLegOnRightRoute(
-                routeSegment.end.l,
-                routeSegment.start.l,
-                Plan(Seq.empty),
-                routeSegment.end.t,
-              )
-          maybeReturn.foreach { newSeg =>
-            segmentAppender.onNext(newSeg)
-          }
-
-          },
         ),
       ),
     )
