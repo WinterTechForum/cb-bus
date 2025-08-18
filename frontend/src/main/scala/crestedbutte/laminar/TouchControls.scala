@@ -223,4 +223,105 @@ object TouchControls {
     (modifier, allowVerticalDrag)
   }
 
+  /** Threshold-based swipe-to-delete interaction without revealing a
+    * button. While swiping horizontally, `offsetPx` is updated to
+    * reflect the live translation. On release, if the accumulated
+    * offset exceeds the computed trigger threshold, the provided
+    * `onDelete` is invoked. Otherwise, the item snaps back to its
+    * original position (offset = 0).
+    *
+    * The trigger threshold is calculated as the maximum of
+    * `minTriggerPx` and `deleteTriggerRatio * elementWidth` to scale
+    * with larger items while remaining usable on small ones.
+    */
+  def swipeToDelete(
+    deleteTriggerRatio: Double = 0.35,
+    minTriggerPx: Double = 100.0,
+    offsetPx: Var[Double],
+    onDelete: () => Unit,
+    directionThresholdPx: Double = 8.0,
+  ): (Modifier[ReactiveElement.Base], Var[Boolean]) = {
+    val touchStartX: Var[Double] = Var(0.0)
+    val touchStartY: Var[Double] = Var(0.0)
+    val baseOffsetAtStart: Var[Double] = Var(0.0)
+    val gestureLock: Var[Option[String]] = Var(
+      None,
+    ) // "horizontal" | "vertical"
+    val allowVerticalDrag: Var[Boolean] = Var(true)
+
+    val modifier = Modifier { el =>
+      el.amend(
+        onTouchStart --> Observer { (e: dom.TouchEvent) =>
+          gestureLock.set(None)
+          allowVerticalDrag.set(false)
+          val t = e.touches(0)
+          touchStartX.set(t.clientX)
+          touchStartY.set(t.clientY)
+          baseOffsetAtStart.set(0.0)
+        },
+        onTouchMove --> Observer { (e: dom.TouchEvent) =>
+          val t = e.touches(0)
+          val currentX = t.clientX
+          val currentY = t.clientY
+          val dx = Math.abs(touchStartX.now() - currentX)
+          val dy = Math.abs(touchStartY.now() - currentY)
+
+          if (gestureLock.now().isEmpty) {
+            if (dx > directionThresholdPx && dx > dy) {
+              gestureLock.set(Some("horizontal"))
+              allowVerticalDrag.set(false)
+            }
+            else if (dy > directionThresholdPx && dy > dx) {
+              gestureLock.set(Some("vertical"))
+              allowVerticalDrag.set(true)
+            }
+          }
+
+          gestureLock.now() match {
+            case Some("horizontal") =>
+              e.preventDefault()
+              e.stopPropagation()
+              val delta =
+                touchStartX.now() - currentX // left is positive
+              val proposed =
+                Math.max(0.0, baseOffsetAtStart.now() + delta)
+              // Optionally clamp to element width to avoid extreme values
+              val width =
+                el.ref.asInstanceOf[dom.Element].clientWidth.toDouble
+              val clamped =
+                if (width > 0) Math.min(proposed, width) else proposed
+              offsetPx.set(clamped)
+            case Some("vertical") =>
+              ()
+            case _ =>
+              ()
+          }
+        },
+        onTouchEnd --> Observer { (e: dom.TouchEvent) =>
+          gestureLock.now() match {
+            case Some("horizontal") =>
+              e.preventDefault()
+              e.stopPropagation()
+              val width =
+                el.ref.asInstanceOf[dom.Element].clientWidth.toDouble
+              val trigger =
+                Math.max(minTriggerPx, width * deleteTriggerRatio)
+              if (offsetPx.now() >= trigger) {
+                onDelete()
+              }
+              else {
+                offsetPx.set(0.0)
+              }
+            case _ =>
+              ()
+          }
+          gestureLock.set(None)
+          allowVerticalDrag.set(true)
+        },
+      )
+    }
+
+    (modifier, allowVerticalDrag)
+  }
+
 }

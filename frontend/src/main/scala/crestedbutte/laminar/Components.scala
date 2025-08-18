@@ -356,18 +356,14 @@ object Components {
       "⮌", // Clockwise top semicircle arrow
     )
 
-    val deleteRevealWidthPx: Double = 72.0
-    val isRevealed: Var[Boolean] = Var(false)
     val offsetPx: Var[Double] = Var(0.0)
 
     val (swipeModifier, allowVerticalDrag) =
-      TouchControls.swipeToRevealWithDelete(
-        deleteRevealWidthPx = deleteRevealWidthPx,
-        isRevealed = isRevealed,
+      TouchControls.swipeToDelete(
+        deleteTriggerRatio = 0.35,
+        minTriggerPx = 100.0,
         offsetPx = offsetPx,
         onDelete = () => legDeleter.onNext(routeSegment),
-        revealTriggerDeltaPx = 40.0,
-        revealThresholdRatio = 0.4,
       )
 
     val (wheelElement, selectedValue) =
@@ -385,19 +381,7 @@ object Components {
     div(
       cls := "plan-segments box",
       styleAttr := "position: relative; overflow: hidden;",
-      // Delete overlay revealed from the right
-      div(
-        styleAttr := s"position: absolute; top: 0; right: 0; width: ${deleteRevealWidthPx}px; height: 100%; display: flex; align-items: center; justify-content: center; background: #c0392b;",
-        styleProp("z-index") := "0",
-        styleProp("opacity") <-- offsetPx.signal.map(px =>
-          if (px == 0) "0" else "1",
-        ),
-        styleProp("pointer-events") <-- offsetPx.signal.map(px =>
-          if (px == 0) "none" else "auto",
-        ),
-        deleteButton(routeSegment, addingNewRoute, legDeleter),
-      ),
-      // Slidable content on top
+      // Slidable content
       div(
         styleAttr := "display: flex; align-items: flex-start; width: 100%;",
         styleProp("position") := "relative",
