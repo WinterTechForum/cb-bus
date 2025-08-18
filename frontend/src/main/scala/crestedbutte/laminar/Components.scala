@@ -327,7 +327,6 @@ object Components {
     div(
       cls := "transit-period",
       styleAttr := "display: flex; flex-direction: column; align-items: center; justify-content: space-between; height: 100%;",
-      deleteButton(routeSegment, addingNewRoute, legDeleter),
     )
 
   def RouteLegElement(
@@ -368,38 +367,89 @@ object Components {
       "⮌", // Clockwise top semicircle arrow
     )
 
-    val shareSymbols = List(
-      "↗", // Up-right arrow
-      "⤴", // Up-right curved arrow
-      "⇱", // North west arrow to corner
-      "⎋", // Escape
-      "⧉", // Two joined squares
-      "⎘", // Document with turned corner
-      "📤", // Outbox tray
-      "📲", // Mobile phone with arrow
-      "🔗", // Link symbol
-      "⌲", // Forward pipe
-      "⎆", // Enter symbol
-    )
+    val deleteRevealWidthPx: Double = 72.0
+    val isRevealed: Var[Boolean] = Var(false)
+    val offsetPx: Var[Double] = Var(0.0)
+    val touchStartX: Var[Double] = Var(0.0)
+    val baseOffsetAtStart: Var[Double] = Var(0.0)
 
     div(
       cls := "plan-segments box",
-      styleAttr := "display: flex; align-items: flex-start;",
+      styleAttr := "position: relative; overflow: hidden;",
+      // Delete overlay revealed from the right
       div(
-        styleAttr := "flex: 3; display: flex; flex-direction: column;",
-        div(
-          cls := "segment-editor-header",
-          s"${routeSegment.start.l.name} → ${routeSegment.end.l.name}",
+        styleAttr := s"position: absolute; top: 0; right: 0; width: ${deleteRevealWidthPx}px; height: 100%; display: flex; align-items: center; justify-content: center; background: #c0392b;",
+        styleProp("z-index") := "0",
+        styleProp("opacity") <-- offsetPx.signal.map(px =>
+          if (px == 0) "0" else "1",
         ),
-        selectedValue --> segmentUpdater, // TODO Eventually this should be restored
-        wheelElement,
+        styleProp("pointer-events") <-- offsetPx.signal.map(px =>
+          if (px == 0) "none" else "auto",
+        ),
+        deleteButton(routeSegment, addingNewRoute, legDeleter),
       ),
+      // Slidable content on top
       div(
-        styleAttr := "flex: 0 0 3rem; display: flex; flex-direction: column; justify-content: center; padding-left: 0.5rem; min-height: 200px;",
-        transitSegment(
-          routeSegment,
-          addingNewRoute,
-          legDeleter,
+        styleAttr := "display: flex; align-items: flex-start; width: 100%;",
+        styleProp("position") := "relative",
+        styleProp("z-index") := "1",
+        styleProp("transition") := "transform 180ms ease",
+        styleProp("transform") <-- offsetPx.signal.map(px =>
+          s"translateX(-${px}px)",
+        ),
+        // Touch handlers for swipe-to-reveal
+        TouchControls.onTouchStart --> Observer {
+          (e: dom.TouchEvent) =>
+            val x = e.touches(0).clientX
+            touchStartX.set(x)
+            baseOffsetAtStart.set(
+              if (isRevealed.now()) deleteRevealWidthPx else 0.0,
+            )
+        },
+        TouchControls.onTouchMove --> Observer {
+          (e: dom.TouchEvent) =>
+            val currentX = e.touches(0).clientX
+            val delta =
+              touchStartX.now() - currentX // left is positive
+            val proposed =
+              math.max(0.0,
+                       math.min(deleteRevealWidthPx,
+                                baseOffsetAtStart.now() + delta,
+                       ),
+              )
+            offsetPx.set(proposed)
+        },
+        TouchControls.onTouchEnd --> Observer { (e: dom.TouchEvent) =>
+          val endX = e.changedTouches(0).clientX
+          val delta = touchStartX.now() - endX
+          if (isRevealed.now() && delta > 40) {
+            legDeleter.onNext(routeSegment)
+          }
+          else {
+            val shouldReveal =
+              offsetPx.now() > (deleteRevealWidthPx * 0.4)
+            isRevealed.set(shouldReveal)
+            offsetPx.set(
+              if (shouldReveal) deleteRevealWidthPx else 0.0,
+            )
+          }
+        },
+        div(
+          styleAttr := "flex: 3; display: flex; flex-direction: column;",
+          div(
+            cls := "segment-editor-header",
+            s"${routeSegment.start.l.name} → ${routeSegment.end.l.name}",
+          ),
+          selectedValue --> segmentUpdater, // TODO Eventually this should be restored
+          wheelElement,
+        ),
+        div(
+          styleAttr := "flex: 1; display: flex; flex-direction: column; justify-content: center; padding-left: 1rem; min-height: 200px;",
+          transitSegment(
+            routeSegment,
+            addingNewRoute,
+            legDeleter,
+          ),
         ),
       ),
     )
