@@ -28,6 +28,7 @@ object ScrollingWheel {
     ], // Should actually turn the item into a full element.
     initialIndex: Int = 0,
     initialSelectedElement: Option[T] = None,
+    allowVerticalDrag: Var[Boolean] = Var(true),
   ): (ReactiveHtmlElement[HTMLDivElement], Signal[T]) = {
     val itemHeight = 60 // Height of each visible item in pixels
     val visibleItems = 3
@@ -177,17 +178,19 @@ object ScrollingWheel {
 
       // Touch events for mobile
       TouchControls.onTouchStart --> Observer { (e: dom.TouchEvent) =>
-        e.preventDefault()
-        isDragging.set(true)
-        val touch = e.touches(0)
-        lastTouchY.set(touch.clientY)
-        lastTouchTime.set(dom.window.performance.now())
-        velocity.set(0.0)
-        animationId.foreach(dom.window.cancelAnimationFrame)
+        if (allowVerticalDrag.now()) {
+          e.preventDefault()
+          isDragging.set(true)
+          val touch = e.touches(0)
+          lastTouchY.set(touch.clientY)
+          lastTouchTime.set(dom.window.performance.now())
+          velocity.set(0.0)
+          animationId.foreach(dom.window.cancelAnimationFrame)
+        }
       },
       TouchControls.onTouchMove --> Observer { (e: dom.TouchEvent) =>
-        e.preventDefault()
-        if (isDragging.now()) {
+        if (allowVerticalDrag.now() && isDragging.now()) {
+          e.preventDefault()
           val touch = e.touches(0)
           val currentY = touch.clientY
           val deltaY = lastTouchY.now() - currentY
@@ -208,9 +211,11 @@ object ScrollingWheel {
         }
       },
       TouchControls.onTouchEnd --> Observer { (e: dom.TouchEvent) =>
-        e.preventDefault()
-        isDragging.set(false)
-        startMomentumAnimation()
+        if (allowVerticalDrag.now()) {
+          e.preventDefault()
+          isDragging.set(false)
+          startMomentumAnimation()
+        }
       },
     )
 

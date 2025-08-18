@@ -345,17 +345,6 @@ object Components {
       routeSegment.routeWithTimes
         .allRouteSegmentsWithSameStartAndStop(routeSegment)
 
-    val (wheelElement, selectedValue) =
-      ScrollingWheel.ScrollingWheel(
-        allSegments,
-        item =>
-          div(
-            item.s.t.toDumbAmericanString + "→" + item.e.t.toDumbAmericanString,
-          ),
-        0,
-        Some(routeSegment),
-      )
-
     val returnSymbols = List(
       "↩", // Return arrow
       "⮐", // Return symbol
@@ -370,8 +359,28 @@ object Components {
     val deleteRevealWidthPx: Double = 72.0
     val isRevealed: Var[Boolean] = Var(false)
     val offsetPx: Var[Double] = Var(0.0)
-    val touchStartX: Var[Double] = Var(0.0)
-    val baseOffsetAtStart: Var[Double] = Var(0.0)
+
+    val (swipeModifier, allowVerticalDrag) =
+      TouchControls.swipeToRevealWithDelete(
+        deleteRevealWidthPx = deleteRevealWidthPx,
+        isRevealed = isRevealed,
+        offsetPx = offsetPx,
+        onDelete = () => legDeleter.onNext(routeSegment),
+        revealTriggerDeltaPx = 40.0,
+        revealThresholdRatio = 0.4,
+      )
+
+    val (wheelElement, selectedValue) =
+      ScrollingWheel.ScrollingWheel(
+        allSegments,
+        item =>
+          div(
+            item.s.t.toDumbAmericanString + "→" + item.e.t.toDumbAmericanString,
+          ),
+        0,
+        Some(routeSegment),
+        allowVerticalDrag,
+      )
 
     div(
       cls := "plan-segments box",
@@ -397,43 +406,8 @@ object Components {
         styleProp("transform") <-- offsetPx.signal.map(px =>
           s"translateX(-${px}px)",
         ),
-        // Touch handlers for swipe-to-reveal
-        TouchControls.onTouchStart --> Observer {
-          (e: dom.TouchEvent) =>
-            val x = e.touches(0).clientX
-            touchStartX.set(x)
-            baseOffsetAtStart.set(
-              if (isRevealed.now()) deleteRevealWidthPx else 0.0,
-            )
-        },
-        TouchControls.onTouchMove --> Observer {
-          (e: dom.TouchEvent) =>
-            val currentX = e.touches(0).clientX
-            val delta =
-              touchStartX.now() - currentX // left is positive
-            val proposed =
-              math.max(0.0,
-                       math.min(deleteRevealWidthPx,
-                                baseOffsetAtStart.now() + delta,
-                       ),
-              )
-            offsetPx.set(proposed)
-        },
-        TouchControls.onTouchEnd --> Observer { (e: dom.TouchEvent) =>
-          val endX = e.changedTouches(0).clientX
-          val delta = touchStartX.now() - endX
-          if (isRevealed.now() && delta > 40) {
-            legDeleter.onNext(routeSegment)
-          }
-          else {
-            val shouldReveal =
-              offsetPx.now() > (deleteRevealWidthPx * 0.4)
-            isRevealed.set(shouldReveal)
-            offsetPx.set(
-              if (shouldReveal) deleteRevealWidthPx else 0.0,
-            )
-          }
-        },
+        // Touch handlers for swipe-to-reveal (encapsulated)
+        swipeModifier,
         div(
           styleAttr := "flex: 3; display: flex; flex-direction: column;",
           div(

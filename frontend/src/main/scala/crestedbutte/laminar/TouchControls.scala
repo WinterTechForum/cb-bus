@@ -1,6 +1,7 @@
 package crestedbutte.laminar
 
 import com.raquo.laminar.api.L.*
+import com.raquo.laminar.nodes.ReactiveElement
 import crestedbutte.*
 import org.scalajs.dom
 import org.scalajs.dom.TouchEvent
@@ -107,5 +108,119 @@ object TouchControls {
         },
       )
     }
+
+  /** Direction-locked swipe helper for the common "swipe to reveal
+    * delete" UX.
+    *   - Locks gesture to horizontal vs vertical based on initial
+    *     movement.
+    *   - When horizontal, updates `offsetPx` and blocks vertical
+    *     wheel scrolling.
+    *   - When vertical, re-enables wheel scrolling and ignores
+    *     horizontal logic. Returns a Modifier to attach to the
+    *     interactive element, and a Var that can be passed to
+    *     components like the scrolling wheel to allow vertical
+    *     dragging.
+    */
+  def swipeToRevealWithDelete(
+    deleteRevealWidthPx: Double,
+    isRevealed: Var[Boolean],
+    offsetPx: Var[Double],
+    onDelete: () => Unit,
+    revealTriggerDeltaPx: Double = 40.0,
+    revealThresholdRatio: Double = 0.4,
+    directionThresholdPx: Double = 8.0,
+  ): (Modifier[ReactiveElement.Base], Var[Boolean]) = {
+    val touchStartX: Var[Double] = Var(0.0)
+    val touchStartY: Var[Double] = Var(0.0)
+    val baseOffsetAtStart: Var[Double] = Var(0.0)
+    val gestureLock: Var[Option[String]] = Var(
+      None,
+    ) // "horizontal" | "vertical"
+    val allowVerticalDrag: Var[Boolean] = Var(true)
+
+    val modifier = Modifier { el =>
+      el.amend(
+        onTouchStart --> Observer { (e: dom.TouchEvent) =>
+          gestureLock.set(None)
+          // Disable wheel until we know it's a vertical gesture
+          allowVerticalDrag.set(false)
+          val t = e.touches(0)
+          val x = t.clientX
+          val y = t.clientY
+          touchStartX.set(x)
+          touchStartY.set(y)
+          baseOffsetAtStart.set(
+            if (isRevealed.now()) deleteRevealWidthPx else 0.0,
+          )
+        },
+        onTouchMove --> Observer { (e: dom.TouchEvent) =>
+          val t = e.touches(0)
+          val currentX = t.clientX
+          val currentY = t.clientY
+          val dx = Math.abs(touchStartX.now() - currentX)
+          val dy = Math.abs(touchStartY.now() - currentY)
+
+          if (gestureLock.now().isEmpty) {
+            if (dx > directionThresholdPx && dx > dy) {
+              gestureLock.set(Some("horizontal"))
+              allowVerticalDrag.set(false)
+            }
+            else if (dy > directionThresholdPx && dy > dx) {
+              gestureLock.set(Some("vertical"))
+              allowVerticalDrag.set(true)
+            }
+          }
+
+          gestureLock.now() match {
+            case Some("horizontal") =>
+              e.preventDefault()
+              e.stopPropagation()
+              val delta =
+                touchStartX.now() - currentX // left is positive
+              val proposed =
+                Math.max(
+                  0.0,
+                  Math.min(
+                    deleteRevealWidthPx,
+                    baseOffsetAtStart.now() + delta,
+                  ),
+                )
+              offsetPx.set(proposed)
+            case Some("vertical") =>
+              () // let vertical consumer handle it
+            case _ =>
+              ()
+          }
+        },
+        onTouchEnd --> Observer { (e: dom.TouchEvent) =>
+          gestureLock.now() match {
+            case Some("horizontal") =>
+              e.preventDefault()
+              e.stopPropagation()
+              val endX = e.changedTouches(0).clientX
+              val delta = touchStartX.now() - endX
+              if (isRevealed.now() && delta > revealTriggerDeltaPx) {
+                onDelete()
+              }
+              else {
+                val shouldReveal =
+                  offsetPx
+                    .now() > (deleteRevealWidthPx * revealThresholdRatio)
+                isRevealed.set(shouldReveal)
+                offsetPx.set(
+                  if (shouldReveal) deleteRevealWidthPx else 0.0,
+                )
+              }
+            case _ =>
+              ()
+          }
+          gestureLock.set(None)
+          allowVerticalDrag.set(true)
+        },
+      )
+    }
+
+    (modifier, allowVerticalDrag)
+  }
 
 }
