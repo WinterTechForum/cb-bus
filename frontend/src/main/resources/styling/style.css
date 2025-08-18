@@ -194,6 +194,16 @@ body {
     filter: invert(100%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(100%) contrast(100%);
 }
 
+/* Make the time scrolling wheel only as wide as its content and center it
+   so there is dead space on either side for dragging the page */
+.scrolling-wheel {
+    display: inline-block;
+    align-self: center;
+    width: max-content;
+    margin-left: auto;
+    margin-right: auto;
+}
+
 @media (max-width: 480px) {
     html {
         font-size: 19px;
