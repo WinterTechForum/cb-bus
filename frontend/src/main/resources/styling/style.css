@@ -194,6 +194,26 @@ body {
     filter: invert(100%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(100%) contrast(100%);
 }
 
+/* Subtle swipe hint enhancements (grayscale-safe) */
+.swipe-hint-icon {
+    width: 18px;
+    height: 18px;
+    opacity: 0.95;
+}
+
+.rotate-left {
+    transform: rotate(90deg);
+}
+
+.swipe-hint-breath {
+    animation: swipe-nudge-mr 1.6s ease-in-out infinite alternate;
+}
+
+@keyframes swipe-nudge-mr {
+    from { margin-right: 0; }
+    to { margin-right: 3px; }
+}
+
 /* Make the time scrolling wheel only as wide as its content and center it
    so there is dead space on either side for dragging the page */
 .scrolling-wheel {

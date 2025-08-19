@@ -410,9 +410,9 @@ object Components {
       ),
       div(
         styleAttr :=
-          "position: absolute; top: 50%; right: 10px; transform: translateY(-50%); pointer-events: none; z-index: 5; font-size: 18px; line-height: 1; color: rgba(255,255,255,0.85);",
+          "position: absolute; top: 50%; right: 10px; transform: translateY(-50%); pointer-events: none; z-index: 5;",
         styleProp("opacity") <-- offsetPx.signal.map(px => if (px <= 4) "1" else "0"),
-        "‹",
+        SvgIcon.arrowDown("filter-white swipe-hint-icon rotate-left swipe-hint-breath"),
       ),
     )
 
