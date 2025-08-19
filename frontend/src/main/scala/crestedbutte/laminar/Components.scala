@@ -402,6 +402,18 @@ object Components {
           wheelElement,
         ),
       ),
+      // Subtle right-edge swipe hint (non-interactive)
+      div(
+        styleAttr :=
+          "position: absolute; top: 0; right: 0; height: 100%; width: 36px; pointer-events: none; background: linear-gradient(to left, rgba(255,255,255,0.35), rgba(255,255,255,0)); border-left: 1px solid rgba(255,255,255,0.25); z-index: 5;",
+        styleProp("opacity") <-- offsetPx.signal.map(px => if (px <= 4) "0.6" else "0"),
+      ),
+      div(
+        styleAttr :=
+          "position: absolute; top: 50%; right: 10px; transform: translateY(-50%); pointer-events: none; z-index: 5;",
+        styleProp("opacity") <-- offsetPx.signal.map(px => if (px <= 4) "1" else "0"),
+        SvgIcon.arrowDown("filter-white swipe-hint-icon rotate-left swipe-hint-breath"),
+      ),
     )
 
   }
