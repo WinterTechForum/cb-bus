@@ -507,7 +507,8 @@ object Components {
 
             // Share button
             div(
-              cls := "absolute w-full flex justify-center",
+              cls := "absolute w-full flex justify-center items-center",
+              styleAttr := "top: 0;",
               inContext { elem =>
                 Seq(
                   opacity <-- $shareButtonOpacity.map(_.toString),
@@ -531,8 +532,9 @@ object Components {
 
             // Copy buttons container
             div(
-              cls := "absolute flex justify-center w-full",
+              cls := "absolute w-full flex justify-center items-center",
               onClick.stopPropagation --> { _ => },
+              styleAttr := "top: 0;",
               inContext { elem =>
                 Seq(
                   opacity <-- $copyButtonsOpacity.map(_.toString),
@@ -542,94 +544,99 @@ object Components {
                 )
               },
 
-              // Copy Text button
+              // Both buttons in a flex container
               div(
-                inContext { elem =>
-                  transform <-- $copyButtonsTransform.map(v =>
-                    s"translateX(${-60 * v}px)",
-                  )
-                },
-                animatedButton(
-                  "Copy Text",
-                  "m-2",
-                  () => {
-                    val text = plan.plainTextRepresentation
+                cls := "flex items-center",
 
-                    // Try to use Web Share API if available (works on mobile devices)
-                    if (
-                      js.typeOf(
+                // Copy Text button
+                div(
+                  inContext { elem =>
+                    transform <-- $copyButtonsTransform.map(v =>
+                      s"translateX(${-30 * v}px)",
+                    )
+                  },
+                  animatedButton(
+                    "Copy Text",
+                    "m-2",
+                    () => {
+                      val text = plan.plainTextRepresentation
+
+                      // Try to use Web Share API if available (works on mobile devices)
+                      if (
+                        js.typeOf(
+                          dom.window.navigator
+                            .asInstanceOf[js.Dynamic]
+                            .share,
+                        ) != "undefined"
+                      ) {
                         dom.window.navigator
                           .asInstanceOf[js.Dynamic]
-                          .share,
-                      ) != "undefined"
-                    ) {
-                      dom.window.navigator
-                        .asInstanceOf[js.Dynamic]
-                        .share(
-                          js.Dynamic.literal(
-                            title = "Bus Schedule",
-                            text = text,
-                          ),
-                        )
-                    }
-                    else {
-                      // Fallback to clipboard copy for desktop browsers
-                      dom.window.navigator.clipboard.writeText(text)
-                    }
+                          .share(
+                            js.Dynamic.literal(
+                              title = "Bus Schedule",
+                              text = text,
+                            ),
+                          )
+                      }
+                      else {
+                        // Fallback to clipboard copy for desktop browsers
+                        dom.window.navigator.clipboard.writeText(text)
+                      }
 
-                    // Reset the state after copying
-                    js.timers.setTimeout(100) {
-                      isExpanded.set(false)
-                    }
-                  },
+                      // Reset the state after copying
+                      js.timers.setTimeout(100) {
+                        isExpanded.set(false)
+                      }
+                    },
+                  ),
                 ),
-              ),
 
-              // Copy Link button
-              div(
-                inContext { elem =>
-                  transform <-- $copyButtonsTransform.map(v =>
-                    s"translateX(${60 * v}px)",
-                  )
-                },
-                animatedButton(
-                  "Copy Link",
-                  "m-2",
-                  () => {
-                    // TODO Base this on page mode Parameter and don't hard code URLs at this level
-                    val url =
-                      if (dom.document.URL.contains("localhost"))
-                        s"http://localhost:8000/index.html?plan=${UrlEncoding.encode(plan)}"
-                      else
-                        s"https://rtabus.netlify.app/?plan=${UrlEncoding.encode(plan)}"
+                // Copy Link button
+                div(
+                  inContext { elem =>
+                    transform <-- $copyButtonsTransform.map(v =>
+                      s"translateX(${30 * v}px)",
+                    )
+                  },
+                  animatedButton(
+                    "Copy Link",
+                    "m-2",
+                    () => {
+                      // TODO Base this on page mode Parameter and don't hard code URLs at this level
+                      val url =
+                        if (dom.document.URL.contains("localhost"))
+                          s"http://localhost:8000/index.html?plan=${UrlEncoding.encode(plan)}"
+                        else
+                          s"https://rtabus.netlify.app/?plan=${UrlEncoding.encode(plan)}"
 
-                    // Try to use Web Share API if available (works on mobile devices)
-                    if (
-                      js.typeOf(
+                      // Try to use Web Share API if available (works on mobile devices)
+                      if (
+                        js.typeOf(
+                          dom.window.navigator
+                            .asInstanceOf[js.Dynamic]
+                            .share,
+                        ) != "undefined"
+                      ) {
                         dom.window.navigator
                           .asInstanceOf[js.Dynamic]
-                          .share,
-                      ) != "undefined"
-                    ) {
-                      dom.window.navigator
-                        .asInstanceOf[js.Dynamic]
-                        .share(
-                          js.Dynamic.literal(
-                            title = "Bus Schedule Link",
-                            url = url,
-                          ),
-                        )
-                    }
-                    else {
-                      // Fallback to clipboard copy for desktop browsers
-                      dom.window.navigator.clipboard.writeText(url)
-                    }
+                          .share(
+                            js.Dynamic.literal(
+                              title = "Bus Schedule Link",
+                              url = url,
+                            ),
+                          )
+                      }
+                      else {
+                        // Fallback to clipboard copy for desktop browsers
+                        dom.window.navigator.clipboard.writeText(url)
+                      }
 
-                    // Reset the state after copying
-                    js.timers.setTimeout(100) {
-                      isExpanded.set(false)
-                    }
-                  },
+                      // Reset the state after copying
+                      js.timers.setTimeout(100) {
+                        isExpanded.set(false)
+                      }
+                    },
+                  ),
                 ),
               ),
             ),
