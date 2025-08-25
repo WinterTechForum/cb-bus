@@ -462,49 +462,61 @@ object Components {
         else {
           // State to track if the share button is expanded
           val isExpanded = Var(false)
-          
+
           // Animation signals for the split effect
-          val $shareButtonOpacity = isExpanded.signal.flatMap { expanded =>
-            if (expanded) Animation.from(1).to(0).run else Signal.fromValue(1)
-          }
-          
-          val $copyButtonsOpacity = isExpanded.signal.flatMap { expanded =>
-            if (expanded) Animation.from(0).wait(200).to(1).run else Signal.fromValue(0)
-          }
-          
-          val $copyButtonsTransform = isExpanded.signal.flatMap { expanded =>
-            if (expanded) {
-              Animation.from(0).wait(100).to(1).run
-            } else {
-              Signal.fromValue(0.0)
+          val $shareButtonOpacity =
+            isExpanded.signal.flatMap { expanded =>
+              if (expanded) Animation.from(1).to(0).run
+              else Signal.fromValue(1)
             }
-          }
-          
-          val $shareButtonTransform = isExpanded.signal.flatMap { expanded =>
-            if (expanded) {
-              Animation.from(1).to(0).run
-            } else {
-              Signal.fromValue(1.0)
+
+          val $copyButtonsOpacity =
+            isExpanded.signal.flatMap { expanded =>
+              if (expanded) Animation.from(0).wait(200).to(1).run
+              else Signal.fromValue(0)
             }
-          }
-          
+
+          val $copyButtonsTransform =
+            isExpanded.signal.flatMap { expanded =>
+              if (expanded) {
+                Animation.from(0).wait(100).to(1).run
+              }
+              else {
+                Signal.fromValue(0.0)
+              }
+            }
+
+          val $shareButtonTransform =
+            isExpanded.signal.flatMap { expanded =>
+              if (expanded) {
+                Animation.from(1).to(0).run
+              }
+              else {
+                Signal.fromValue(1.0)
+              }
+            }
+
           div(
             cls := "relative",
             styleAttr := "min-height: 48px;", // Maintain consistent height
-            
+
             // Click outside to close
             onClick --> { _ =>
               if (isExpanded.now()) isExpanded.set(false)
             },
-            
+
             // Share button
             div(
               cls := "absolute w-full flex justify-center",
               inContext { elem =>
                 Seq(
                   opacity <-- $shareButtonOpacity.map(_.toString),
-                  transform <-- $shareButtonTransform.map(v => s"scale($v)"),
-                  pointerEvents <-- isExpanded.signal.map(if (_) "none" else "auto"),
+                  transform <-- $shareButtonTransform.map(v =>
+                    s"scale($v)",
+                  ),
+                  pointerEvents <-- isExpanded.signal.map(
+                    if (_) "none" else "auto",
+                  ),
                 )
               },
               div(
@@ -516,7 +528,7 @@ object Components {
                 ),
               ),
             ),
-            
+
             // Copy buttons container
             div(
               cls := "absolute flex justify-center w-full",
@@ -524,14 +536,18 @@ object Components {
               inContext { elem =>
                 Seq(
                   opacity <-- $copyButtonsOpacity.map(_.toString),
-                  pointerEvents <-- isExpanded.signal.map(if (_) "auto" else "none"),
+                  pointerEvents <-- isExpanded.signal.map(
+                    if (_) "auto" else "none",
+                  ),
                 )
               },
-              
+
               // Copy Text button
               div(
                 inContext { elem =>
-                  transform <-- $copyButtonsTransform.map(v => s"translateX(${-60 * v}px)")
+                  transform <-- $copyButtonsTransform.map(v =>
+                    s"translateX(${-60 * v}px)",
+                  )
                 },
                 animatedButton(
                   "Copy Text",
@@ -560,7 +576,7 @@ object Components {
                       // Fallback to clipboard copy for desktop browsers
                       dom.window.navigator.clipboard.writeText(text)
                     }
-                    
+
                     // Reset the state after copying
                     js.timers.setTimeout(100) {
                       isExpanded.set(false)
@@ -568,11 +584,13 @@ object Components {
                   },
                 ),
               ),
-              
+
               // Copy Link button
               div(
                 inContext { elem =>
-                  transform <-- $copyButtonsTransform.map(v => s"translateX(${60 * v}px)")
+                  transform <-- $copyButtonsTransform.map(v =>
+                    s"translateX(${60 * v}px)",
+                  )
                 },
                 animatedButton(
                   "Copy Link",
@@ -606,7 +624,7 @@ object Components {
                       // Fallback to clipboard copy for desktop browsers
                       dom.window.navigator.clipboard.writeText(url)
                     }
-                    
+
                     // Reset the state after copying
                     js.timers.setTimeout(100) {
                       isExpanded.set(false)
