@@ -3,6 +3,7 @@ package crestedbutte.laminar
 import animus.*
 import com.billding.time.WallTime
 import com.raquo.laminar.api.L.*
+import com.raquo.airstream.flatten.FlattenStrategy.allowFlatMap
 import com.raquo.laminar.nodes.ReactiveHtmlElement
 import crestedbutte.*
 import crestedbutte.NotificationStuff.desiredAlarms
@@ -458,72 +459,189 @@ object Components {
       child <-- $plan.map { plan =>
         if (plan.routeSegments.isEmpty)
           div()
-        else
+        else {
+          // State to track if the share button is expanded
+          val isExpanded = Var(false)
+
+          // Animation signals for the split effect
+          val $shareButtonOpacity =
+            isExpanded.signal.flatMap { expanded =>
+              if (expanded) Animation.from(1).to(0).run
+              else Signal.fromValue(1)
+            }
+
+          val $copyButtonsOpacity =
+            isExpanded.signal.flatMap { expanded =>
+              if (expanded) Animation.from(0).wait(200).to(1).run
+              else Signal.fromValue(0)
+            }
+
+          val $copyButtonsTransform =
+            isExpanded.signal.flatMap { expanded =>
+              if (expanded) {
+                Animation.from(0).wait(100).to(1).run
+              }
+              else {
+                Signal.fromValue(0.0)
+              }
+            }
+
+          val $shareButtonTransform =
+            isExpanded.signal.flatMap { expanded =>
+              if (expanded) {
+                Animation.from(1).to(0).run
+              }
+              else {
+                Signal.fromValue(1.0)
+              }
+            }
+
           div(
-            animatedButton(
-              "Copy Text",
-              "m-2",
-              () => {
-                val text = plan.plainTextRepresentation
+            cls := "relative",
+            styleAttr := "min-height: 48px;", // Maintain consistent height
 
-                // Try to use Web Share API if available (works on mobile devices)
-                if (
-                  js.typeOf(
-                    dom.window.navigator
-                      .asInstanceOf[js.Dynamic]
-                      .share,
-                  ) != "undefined"
-                ) {
-                  dom.window.navigator
-                    .asInstanceOf[js.Dynamic]
-                    .share(
-                      js.Dynamic.literal(
-                        title = "Bus Schedule",
-                        text = text,
-                      ),
-                    )
-                }
-                else {
-                  // Fallback to clipboard copy for desktop browsers
-                  dom.window.navigator.clipboard.writeText(text)
-                }
+            // Click outside to close
+            onClick --> { _ =>
+              if (isExpanded.now()) isExpanded.set(false)
+            },
+
+            // Share button
+            div(
+              cls := "absolute w-full flex justify-center items-center",
+              styleAttr := "top: 0;",
+              inContext { elem =>
+                Seq(
+                  opacity <-- $shareButtonOpacity.map(_.toString),
+                  transform <-- $shareButtonTransform.map(v =>
+                    s"scale($v)",
+                  ),
+                  pointerEvents <-- isExpanded.signal.map(
+                    if (_) "none" else "auto",
+                  ),
+                )
               },
+              div(
+                onClick.stopPropagation --> { _ => },
+                animatedButton(
+                  "Share",
+                  "m-2",
+                  () => isExpanded.set(true),
+                ),
+              ),
             ),
-            animatedButton(
-              "Copy Link",
-              "m-2",
-              () => {
-                // TODO Base this on page mode Parameter and don't hard code URLs at this level
-                val url =
-                  if (dom.document.URL.contains("localhost"))
-                    s"http://localhost:8000/index.html?plan=${UrlEncoding.encode(plan)}"
-                  else
-                    s"https://rtabus.netlify.app/?plan=${UrlEncoding.encode(plan)}"
 
-                // Try to use Web Share API if available (works on mobile devices)
-                if (
-                  js.typeOf(
-                    dom.window.navigator
-                      .asInstanceOf[js.Dynamic]
-                      .share,
-                  ) != "undefined"
-                ) {
-                  dom.window.navigator
-                    .asInstanceOf[js.Dynamic]
-                    .share(
-                      js.Dynamic.literal(
-                        title = "Bus Schedule Link",
-                        url = url,
-                      ),
-                    )
-                }
-                else {
-                  // Fallback to clipboard copy for desktop browsers
-                  dom.window.navigator.clipboard.writeText(url)
-                }
+            // Copy buttons container
+            div(
+              cls := "absolute w-full flex justify-center items-center",
+              onClick.stopPropagation --> { _ => },
+              styleAttr := "top: 0;",
+              inContext { elem =>
+                Seq(
+                  opacity <-- $copyButtonsOpacity.map(_.toString),
+                  pointerEvents <-- isExpanded.signal.map(
+                    if (_) "auto" else "none",
+                  ),
+                )
               },
+
+              // Both buttons in a flex container
+              div(
+                cls := "flex items-center",
+
+                // Copy Text button
+                div(
+                  inContext { elem =>
+                    transform <-- $copyButtonsTransform.map(v =>
+                      s"translateX(${-30 * v}px)",
+                    )
+                  },
+                  animatedButton(
+                    "Copy Text",
+                    "m-2",
+                    () => {
+                      val text = plan.plainTextRepresentation
+
+                      // Try to use Web Share API if available (works on mobile devices)
+                      if (
+                        js.typeOf(
+                          dom.window.navigator
+                            .asInstanceOf[js.Dynamic]
+                            .share,
+                        ) != "undefined"
+                      ) {
+                        dom.window.navigator
+                          .asInstanceOf[js.Dynamic]
+                          .share(
+                            js.Dynamic.literal(
+                              title = "Bus Schedule",
+                              text = text,
+                            ),
+                          )
+                      }
+                      else {
+                        // Fallback to clipboard copy for desktop browsers
+                        dom.window.navigator.clipboard.writeText(text)
+                      }
+
+                      // Reset the state after copying
+                      js.timers.setTimeout(100) {
+                        isExpanded.set(false)
+                      }
+                    },
+                  ),
+                ),
+
+                // Copy Link button
+                div(
+                  inContext { elem =>
+                    transform <-- $copyButtonsTransform.map(v =>
+                      s"translateX(${30 * v}px)",
+                    )
+                  },
+                  animatedButton(
+                    "Copy Link",
+                    "m-2",
+                    () => {
+                      // TODO Base this on page mode Parameter and don't hard code URLs at this level
+                      val url =
+                        if (dom.document.URL.contains("localhost"))
+                          s"http://localhost:8000/index.html?plan=${UrlEncoding.encode(plan)}"
+                        else
+                          s"https://rtabus.netlify.app/?plan=${UrlEncoding.encode(plan)}"
+
+                      // Try to use Web Share API if available (works on mobile devices)
+                      if (
+                        js.typeOf(
+                          dom.window.navigator
+                            .asInstanceOf[js.Dynamic]
+                            .share,
+                        ) != "undefined"
+                      ) {
+                        dom.window.navigator
+                          .asInstanceOf[js.Dynamic]
+                          .share(
+                            js.Dynamic.literal(
+                              title = "Bus Schedule Link",
+                              url = url,
+                            ),
+                          )
+                      }
+                      else {
+                        // Fallback to clipboard copy for desktop browsers
+                        dom.window.navigator.clipboard.writeText(url)
+                      }
+
+                      // Reset the state after copying
+                      js.timers.setTimeout(100) {
+                        isExpanded.set(false)
+                      }
+                    },
+                  ),
+                ),
+              ),
             ),
           )
+        }
       },
     )
 
