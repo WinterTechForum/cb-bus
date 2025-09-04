@@ -59,6 +59,10 @@ object ScrollingWheel {
 
     // Animation loop for momentum scrolling
     var animationId: Option[Int] = None
+    // When momentum decides a snap target, remember it to avoid a second
+    // rounding decision that could select a different index and cause a
+    // jarring follow-up animation.
+    var pendingSnapIndex: Option[Int] = None
 
     def startMomentumAnimation(): Unit = {
       animationId.foreach(dom.window.cancelAnimationFrame)
@@ -85,6 +89,7 @@ object ScrollingWheel {
             scrollPosition.set(targetPos)
             selectedIndex.set(clampedIndex)
             velocity.set(0.0)
+            pendingSnapIndex = Some(clampedIndex)
           }
           else {
             animationId = Some(
@@ -95,12 +100,15 @@ object ScrollingWheel {
         else {
           // Snap to nearest item
           val currentPos = scrollPosition.now()
-          val targetIndex = math.round(currentPos / itemHeight).toInt
-          val clampedIndex =
+          val clampedIndex = pendingSnapIndex.getOrElse {
+            val targetIndex =
+              math.round(currentPos / itemHeight).toInt
             math.max(0, math.min(items.length - 1, targetIndex))
+          }
           val targetPos = clampedIndex * itemHeight
           scrollPosition.set(targetPos)
           selectedIndex.set(clampedIndex)
+          pendingSnapIndex = None
         }
 
       // Always trigger the animation function, which will either start momentum or snap immediately
