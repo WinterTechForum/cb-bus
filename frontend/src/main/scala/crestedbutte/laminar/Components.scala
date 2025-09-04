@@ -226,9 +226,27 @@ object Components {
                             div(
                               child <-- pendingUndo.signal.map {
                                 case Some(seg) if seg.id == rs.id =>
+                                  val $opacity =
+                                    Animation
+                                      .from(0.0)
+                                      .wait(140)
+                                      .to(1.0)
+                                      .run
+                                  val $slidePx =
+                                    Animation
+                                      .from(16.0)
+                                      .wait(340)
+                                      .to(0.0)
+                                      .run
                                   div(
                                     cls := "plan-segments box",
                                     styleAttr := "display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;",
+                                    opacity <-- $opacity,
+                                    styleProp(
+                                      "transform",
+                                    ) <-- $slidePx.map(px =>
+                                      s"translateX(-${px}px)",
+                                    ),
                                     span("Segment deleted."),
                                     button(
                                       cls := "button is-small is-link is-light",
@@ -403,13 +421,21 @@ object Components {
     )
 
     val offsetPx: Var[Double] = Var(0.0)
+    val containerWidthPx: Var[Double] = Var(0.0)
 
     val (swipeModifier, allowVerticalDrag) =
       TouchControls.swipeToDelete(
         deleteTriggerRatio = 0.35,
         minTriggerPx = 100.0,
         offsetPx = offsetPx,
-        onDelete = () => legDeleter.onNext(routeSegment),
+        onDelete = () => {
+          val width = containerWidthPx.now()
+          val slideDistance = if (width > 0) width else 320.0
+          offsetPx.set(slideDistance)
+          setTimeout(240) {
+            legDeleter.onNext(routeSegment)
+          }
+        },
       )
 
     val (wheelElement, selectedValue) =
@@ -432,12 +458,29 @@ object Components {
         styleAttr := "display: flex; align-items: flex-start; width: 100%;",
         styleProp("position") := "relative",
         styleProp("z-index") := "1",
-        styleProp("transition") := "transform 180ms ease",
+        styleProp(
+          "transition",
+        ) := "transform 180ms ease, opacity 180ms ease",
         styleProp("transform") <-- offsetPx.signal.map(px =>
           s"translateX(-${px}px)",
         ),
+        // Fade out as it slides away to complement the reveal
+        opacity <-- offsetPx.signal
+          .combineWith(containerWidthPx.signal)
+          .map { case (off, width) =>
+            val denom = if (width <= 0.0) 320.0 else width
+            val ratio = Math.min(1.0, off / denom)
+            1.0 - ratio
+          },
         // Touch handlers for swipe-to-reveal (encapsulated)
         swipeModifier,
+        onMountCallback { ctx =>
+          val w = ctx.thisNode.ref
+            .asInstanceOf[dom.Element]
+            .clientWidth
+            .toDouble
+          containerWidthPx.set(w)
+        },
         div(
           styleAttr := "flex: 3; display: flex; flex-direction: column;",
           div(
