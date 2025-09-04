@@ -283,14 +283,13 @@ object TouchControls {
               e.stopPropagation()
               val delta =
                 touchStartX.now() - currentX // left is positive
-              val proposed = baseOffsetAtStart.now() + delta
-              // Clamp symmetrically to element width in both directions
+              val proposed =
+                Math.max(0.0, baseOffsetAtStart.now() + delta)
+              // Optionally clamp to element width to avoid extreme values
               val width =
                 el.ref.asInstanceOf[dom.Element].clientWidth.toDouble
               val clamped =
-                if (width > 0)
-                  Math.max(-width, Math.min(proposed, width))
-                else proposed
+                if (width > 0) Math.min(proposed, width) else proposed
               offsetPx.set(clamped)
             case Some("vertical") =>
               ()
@@ -307,12 +306,7 @@ object TouchControls {
                 el.ref.asInstanceOf[dom.Element].clientWidth.toDouble
               val trigger =
                 Math.max(minTriggerPx, width * deleteTriggerRatio)
-              val endX = e.changedTouches(0).clientX
-              val totalDelta =
-                touchStartX
-                  .now() - endX // left positive, right negative
-              val absDelta = Math.abs(totalDelta)
-              if (absDelta >= trigger) {
+              if (offsetPx.now() >= trigger) {
                 onDelete()
               }
               else {

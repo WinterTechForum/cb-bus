@@ -56,21 +56,12 @@ object ScrollingWheel {
     val velocity: Var[Double] = Var(0.0)
     val lastTouchY: Var[Double] = Var(0.0)
     val lastTouchTime: Var[Double] = Var(0.0)
-    // Momentum/run-state flags to align with Laminar reactive style
-    var momentumActive: Boolean = false
-    val isMomentum: Var[Boolean] = Var(false)
-    val isMounted: Var[Boolean] = Var(false)
 
     // Animation loop for momentum scrolling
     var animationId: Option[Int] = None
-    // When momentum decides a snap target, remember it to avoid a second
-    // rounding decision that could select a different index and cause a
-    // jarring follow-up animation.
-    var pendingSnapIndex: Option[Int] = None
 
     def startMomentumAnimation(): Unit = {
       animationId.foreach(dom.window.cancelAnimationFrame)
-      isMomentum.set(true)
 
       def animate(): Unit =
         if (math.abs(velocity.now()) > 0.5 && !isDragging.now()) {
@@ -94,9 +85,6 @@ object ScrollingWheel {
             scrollPosition.set(targetPos)
             selectedIndex.set(clampedIndex)
             velocity.set(0.0)
-            pendingSnapIndex = Some(clampedIndex)
-            isMomentum.set(false)
-            momentumActive = false
           }
           else {
             animationId = Some(
@@ -107,42 +95,17 @@ object ScrollingWheel {
         else {
           // Snap to nearest item
           val currentPos = scrollPosition.now()
-          val clampedIndex = pendingSnapIndex.getOrElse {
-            val targetIndex =
-              math.round(currentPos / itemHeight).toInt
+          val targetIndex = math.round(currentPos / itemHeight).toInt
+          val clampedIndex =
             math.max(0, math.min(items.length - 1, targetIndex))
-          }
           val targetPos = clampedIndex * itemHeight
           scrollPosition.set(targetPos)
           selectedIndex.set(clampedIndex)
-          pendingSnapIndex = None
-          isMomentum.set(false)
-          momentumActive = false
         }
 
       // Always trigger the animation function, which will either start momentum or snap immediately
       animate()
     }
-
-    def scheduleMomentum(): Unit =
-      if (!momentumActive) {
-        momentumActive = true
-        startMomentumAnimation()
-      }
-
-    val transitionSignal: Signal[String] =
-      isDragging.signal
-        .combineWithFn(isMomentum.signal)(
-          (
-            drag,
-            mom,
-          ) => (drag, mom),
-        )
-        .combineWithFn(isMounted.signal) {
-          case ((drag, mom), mounted) =>
-            if (drag || mom || !mounted) "none"
-            else "transform 0.2s ease-out"
-        }
 
     val wheelElement = div(
       cls := "scrolling-wheel",
@@ -161,11 +124,9 @@ object ScrollingWheel {
         styleAttr := s"-webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0) 0px, rgba(0,0,0,1) ${itemHeight}px, rgba(0,0,0,1) ${containerHeight - itemHeight}px, rgba(0,0,0,0) ${containerHeight}px); mask-image: linear-gradient(to bottom, rgba(0,0,0,0) 0px, rgba(0,0,0,1) ${itemHeight}px, rgba(0,0,0,1) ${containerHeight - itemHeight}px, rgba(0,0,0,0) ${containerHeight}px);",
         div(
           cls := "wheel-items",
-          styleAttr <-- scrollPosition.signal
-            .combineWith(transitionSignal)
-            .map { case (pos, transition) =>
-              s"position: relative; transform: translateY(${centerOffset - pos}px); transition: ${transition};"
-            },
+          styleAttr <-- scrollPosition.signal.map(pos =>
+            s"position: relative; transform: translateY(${centerOffset - pos}px); transition: ${if (isDragging.now()) "none" else "transform 0.2s ease-out"};",
+          ),
 
           // Actual items
           items.zipWithIndex.map { case (item, index) =>
@@ -208,11 +169,11 @@ object ScrollingWheel {
       },
       onMouseUp --> Observer { (_: dom.MouseEvent) =>
         isDragging.set(false)
-        scheduleMomentum()
+        startMomentumAnimation()
       },
       onMouseLeave --> Observer { (_: dom.MouseEvent) =>
         isDragging.set(false)
-        scheduleMomentum()
+        startMomentumAnimation()
       },
 
       // Touch events for mobile
@@ -253,13 +214,8 @@ object ScrollingWheel {
         if (allowVerticalDrag.now()) {
           e.preventDefault()
           isDragging.set(false)
-          scheduleMomentum()
+          startMomentumAnimation()
         }
-      },
-      onMountCallback { _ =>
-        // Prevent initial mount animation; enable transitions next frame
-        isMounted.set(false)
-        dom.window.requestAnimationFrame(_ => isMounted.set(true))
       },
     )
 
