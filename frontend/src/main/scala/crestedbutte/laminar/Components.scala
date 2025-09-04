@@ -194,128 +194,105 @@ object Components {
       copyButtons($plan.signal),
       children <-- $plan.signal
         .map(_.routePieces)
-        .splitTransition(_.id) {
-          case (_, routePiece, routePieceSignal, transition) =>
-            div(
-              child <--
-                routePieceSignal
-                  .map {
-                    routePieceInner =>
-                      div(
-                        transition.height,
-                        routePieceInner match {
-                          case r: RouteGap =>
-                            println(s"RouteGap: ${r.id}")
-                            div(
-                              cls := "route-gap",
-                              div(
-                                cls := "route-gap-indicator",
-                              ),
-                              span(
-                                transition.width,
-                                cls := "time-at-stop",
-                                if (r.endTime.isBefore(r.start))
-                                  "Next Day"
-                                else
-                                  r.endTime
-                                    .between(r.start)
-                                    .humanFriendly,
-                              ),
-                            )
-                          case rs: RouteSegment =>
-                            div(
-                              child <-- pendingUndo.signal.map {
-                                case Some(seg) if seg.id == rs.id =>
-                                  val $opacity =
-                                    Animation
-                                      .from(0.0)
-                                      .wait(140)
-                                      .to(1.0)
-                                      .run
-                                  val $slidePx =
-                                    Animation
-                                      .from(16.0)
-                                      .wait(340)
-                                      .to(0.0)
-                                      .run
-                                  div(
-                                    cls := "plan-segments box",
-                                    styleAttr := "display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;",
-                                    opacity <-- $opacity,
-                                    styleProp(
-                                      "transform",
-                                    ) <-- $slidePx.map(px =>
-                                      s"translateX(-${px}px)",
-                                    ),
-                                    span("Segment deleted."),
-                                    button(
-                                      cls := "button is-small is-link is-light",
-                                      "Undo",
-                                      onClick --> Observer { _ =>
-                                        pendingUndoTimer
-                                          .foreach(clearTimeout)
-                                        pendingUndoTimer = None
-                                        pendingUndo.set(None)
-                                      },
-                                    ),
-                                  )
-                                case _ =>
-                                  RouteLegElement(
-                                    rs, // TODO I **must* figure out how to rework this so that RouteLegElement takes a signal, and is not rebuilt every time the segment is updated.
-                                    addingNewRoute,
-                                    scheduleSelector,
-                                    legDeleter = Observer {
-                                      (toDelete: RouteSegment) =>
-                                        // If another undo is pending, finalize it first
-                                        pendingUndo
-                                          .now()
-                                          .foreach(finalizeRemoval)
-                                        pendingUndo
-                                          .set(Some(toDelete))
-                                        startUndoTimer()
-                                    },
-                                    segmentUpdater = $plan.writer
-                                      .contramap[RouteSegment] {
-                                        segment =>
-                                          val plan = $plan.now()
-                                          val updatedPlan =
-                                            Plan(
-                                              plan.l.map {
-                                                case rs
-                                                    if rs.id == segment.id =>
-                                                  segment
-                                                case rs =>
-                                                  rs
-                                              },
-                                            )
-                                          db.saveDailyPlanOnly(
-                                            updatedPlan,
-                                          )
-                                          updatedPlan
-                                      },
-                                    // Append a new segment to the end of the plan
-                                    segmentAppender = $plan.writer
-                                      .contramap[RouteSegment] {
-                                        newSegment =>
-                                          val plan = $plan.now()
-                                          val updatedPlan = plan
-                                            .copy(l =
-                                              plan.l :+ newSegment,
-                                            )
-                                          db.saveDailyPlanOnly(
-                                            updatedPlan,
-                                          )
-                                          addingNewRoute.set(false)
-                                          updatedPlan
-                                      },
-                                  )
+        .splitTransition(_.id) { case (_, routePiece, routePieceSignal, transition) =>
+          div(
+            child <--
+              routePieceSignal
+                .map { routePieceInner =>
+                  div(
+                    transition.height,
+                    routePieceInner match {
+                      case r: RouteGap =>
+                        println(s"RouteGap: ${r.id}")
+                        div(
+                          cls := "route-gap",
+                          div(
+                            cls := "route-gap-indicator",
+                          ),
+                          span(
+                            transition.width,
+                            cls := "time-at-stop",
+                            if (r.endTime.isBefore(r.start))
+                              "Next Day"
+                            else
+                              r.endTime
+                                .between(r.start)
+                                .humanFriendly,
+                          ),
+                        )
+                      case rs: RouteSegment =>
+                        div(
+                          RouteLegElement(
+                            rs, // TODO I **must* figure out how to rework this so that RouteLegElement takes a signal, and is not rebuilt every time the segment is updated.
+                            addingNewRoute,
+                            scheduleSelector,
+                            // Start the undo overlay animation immediately when delete is triggered (via swipe)
+                            onDeleteStart =
+                              Observer { (seg: RouteSegment) =>
+                                // If another undo is pending, finalize it first
+                                pendingUndo
+                                  .now()
+                                  .foreach(finalizeRemoval)
+                                // Set new pending undo and start timer
+                                pendingUndo.set(Some(seg))
+                                startUndoTimer()
                               },
-                            )
+                            // Used by delete button or delayed completion hooks; avoid restarting if already pending
+                            legDeleter =
+                              Observer { (toDelete: RouteSegment) =>
+                                pendingUndo.now() match {
+                                  case Some(existing)
+                                      if existing.id == toDelete.id =>
+                                    () // already pending; do nothing
+                                  case _ =>
+                                    pendingUndo.set(Some(toDelete))
+                                    startUndoTimer()
+                                }
+                              },
+                            isPendingUndo = pendingUndo.signal
+                              .map(_.exists(_.id == rs.id)),
+                            onUndo = () => {
+                              pendingUndoTimer.foreach(clearTimeout)
+                              pendingUndoTimer = None
+                              pendingUndo.set(None)
+                            },
+                            segmentUpdater = $plan.writer
+                              .contramap[RouteSegment] { segment =>
+                                val plan = $plan.now()
+                                val updatedPlan =
+                                  Plan(
+                                    plan.l.map {
+                                      case rs
+                                          if rs.id == segment.id =>
+                                        segment
+                                      case rs =>
+                                        rs
+                                    },
+                                  )
+                                db.saveDailyPlanOnly(
+                                  updatedPlan,
+                                )
+                                updatedPlan
+                              },
+                            // Append a new segment to the end of the plan
+                            segmentAppender = $plan.writer
+                              .contramap[RouteSegment] { newSegment =>
+                                val plan = $plan.now()
+                                val updatedPlan = plan
+                                  .copy(l = plan.l :+ newSegment)
+                                db.saveDailyPlanOnly(
+                                  updatedPlan,
+                                )
+                                addingNewRoute.set(false)
+                                updatedPlan
+                              },
+                          ),
+                        )
 
-                        },
-                      )
-                  },
-            )
+                    },
+                  )
+                },
+          )
         },
       div(
         cls := "add-new-route-section",
@@ -399,7 +376,10 @@ object Components {
     scheduleSelector: Observer[
       Option[SelectedStopInfo],
     ],
+    onDeleteStart: Observer[RouteSegment],
     legDeleter: Observer[RouteSegment],
+    isPendingUndo: Signal[Boolean],
+    onUndo: () => Unit,
     segmentUpdater: Observer[RouteSegment],
     segmentAppender: Observer[RouteSegment],
   ) = {
@@ -429,12 +409,10 @@ object Components {
         minTriggerPx = 100.0,
         offsetPx = offsetPx,
         onDelete = () => {
+          onDeleteStart.onNext(routeSegment)
           val width = containerWidthPx.now()
           val slideDistance = if (width > 0) width else 320.0
           offsetPx.set(slideDistance)
-          setTimeout(240) {
-            legDeleter.onNext(routeSegment)
-          }
         },
       )
 
@@ -491,6 +469,56 @@ object Components {
           wheelElement,
         ),
       ),
+      // Incoming undo overlay that slides in from the right exactly as content slides out
+      child <-- isPendingUndo.map { pending =>
+        if (!pending) div()
+        else {
+          val overlayOpacity = offsetPx.signal
+            .combineWith(containerWidthPx.signal)
+            .map { case (off, width) =>
+              val denom = if (width <= 0.0) 320.0 else width
+              Math.min(1.0, off / denom)
+            }
+          val overlayTranslate = offsetPx.signal
+            .combineWith(containerWidthPx.signal)
+            .map { case (off, width) =>
+              val w = if (width <= 0.0) 320.0 else width
+              val px = Math.max(w - off, 0.0)
+              s"translateX(${px}px)"
+            }
+          div(
+            styleProp("position") := "absolute",
+            styleProp("top") := "0",
+            styleProp("left") := "0",
+            styleProp("height") := "100%",
+            styleProp("width") := "100%",
+            styleProp("display") := "flex",
+            styleProp("align-items") := "center",
+            styleProp("justify-content") := "space-between",
+            styleProp("gap") := "0.5rem",
+            styleProp("padding") := "0.75rem 0.75rem",
+            styleProp("z-index") := "2",
+            styleProp(
+              "background",
+            ) := "var(--bulma-scheme-main, #1f2937)",
+            styleProp("color") := "var(--bulma-text, #fff)",
+            styleProp(
+              "transition",
+            ) := "transform 180ms ease, opacity 180ms ease",
+            styleProp("transform") <-- overlayTranslate,
+            opacity <-- overlayOpacity,
+            span("Segment deleted."),
+            button(
+              cls := "button is-small is-link is-light",
+              "Undo",
+              onClick --> Observer { _ =>
+                onUndo()
+                offsetPx.set(0.0)
+              },
+            ),
+          )
+        }
+      },
     )
 
   }
