@@ -166,15 +166,25 @@ object Components {
       Option[SelectedStopInfo],
     ],
   ) =
-    // Track a recently deleted segment and its original index for undo
-    val pendingUndo: Var[Option[(RouteSegment, Int)]] = Var(None)
+    // Track a recently deleted segment for inline undo
+    val pendingUndo: Var[Option[RouteSegment]] = Var(None)
     var pendingUndoTimer: Option[SetTimeoutHandle] = None
+
+    def finalizeRemoval(
+      seg: RouteSegment,
+    ): Unit =
+      val plan = $plan.now()
+      val newPlan = plan.copy(l = plan.l.filterNot(_ == seg))
+      db.saveDailyPlanOnly(newPlan)
+      $plan.set(newPlan)
+      if newPlan.l.isEmpty then addingNewRoute.set(true)
 
     def startUndoTimer(): Unit =
       // Reset any previous timer
       pendingUndoTimer.foreach(clearTimeout)
       pendingUndoTimer = Some(
         setTimeout(4000) {
+          pendingUndo.now().foreach(finalizeRemoval)
           pendingUndo.set(None)
           pendingUndoTimer = None
         },
@@ -213,61 +223,75 @@ object Components {
                               ),
                             )
                           case rs: RouteSegment =>
-                            RouteLegElement(
-                              rs, // TODO I **must* figure out how to rework this so that RouteLegElement takes a signal, and is not rebuilt every time the segment is updated.
-                              addingNewRoute,
-                              scheduleSelector,
-                              legDeleter =
-                                Observer {
-                                  (rs: RouteSegment) =>
-                                    val plan = $plan.now()
-                                    val originalIndex =
-                                      plan.l.indexOf(rs)
-                                    val newPlan =
-                                      plan.copy(l =
-                                        plan.l.filterNot(_ == rs),
-                                      )
-
-                                    // Apply deletion immediately
-                                    db.saveDailyPlanOnly(newPlan)
-                                    $plan.set(newPlan)
-                                    if newPlan.l.isEmpty then
-                                      addingNewRoute.set(true)
-
-                                    // Enable undo for a few seconds
-                                    if originalIndex >= 0 then
-                                      pendingUndo.set(
-                                        Some((rs, originalIndex)),
-                                      )
-                                      startUndoTimer()
-                                },
-                              segmentUpdater = $plan.writer
-                                .contramap[RouteSegment] { segment =>
-                                  val plan = $plan.now()
-                                  val updatedPlan =
-                                    Plan(
-                                      plan.l.map {
-                                        case rs
-                                            if rs.id == segment.id =>
-                                          segment
-                                        case rs =>
-                                          rs
+                            div(
+                              child <-- pendingUndo.signal.map {
+                                case Some(seg) if seg.id == rs.id =>
+                                  div(
+                                    cls := "plan-segments box",
+                                    styleAttr := "display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;",
+                                    span("Segment deleted."),
+                                    button(
+                                      cls := "button is-small is-link is-light",
+                                      "Undo",
+                                      onClick --> Observer { _ =>
+                                        pendingUndoTimer
+                                          .foreach(clearTimeout)
+                                        pendingUndoTimer = None
+                                        pendingUndo.set(None)
                                       },
-                                    )
-                                  db.saveDailyPlanOnly(updatedPlan)
-                                  updatedPlan
-                                },
-                              // Append a new segment to the end of the plan
-                              segmentAppender = $plan.writer
-                                .contramap[RouteSegment] {
-                                  newSegment =>
-                                    val plan = $plan.now()
-                                    val updatedPlan = plan
-                                      .copy(l = plan.l :+ newSegment)
-                                    db.saveDailyPlanOnly(updatedPlan)
-                                    addingNewRoute.set(false)
-                                    updatedPlan
-                                },
+                                    ),
+                                  )
+                                case _ =>
+                                  RouteLegElement(
+                                    rs, // TODO I **must* figure out how to rework this so that RouteLegElement takes a signal, and is not rebuilt every time the segment is updated.
+                                    addingNewRoute,
+                                    scheduleSelector,
+                                    legDeleter = Observer {
+                                      (toDelete: RouteSegment) =>
+                                        // If another undo is pending, finalize it first
+                                        pendingUndo
+                                          .now()
+                                          .foreach(finalizeRemoval)
+                                        pendingUndo
+                                          .set(Some(toDelete))
+                                        startUndoTimer()
+                                    },
+                                    segmentUpdater = $plan.writer
+                                      .contramap[RouteSegment] {
+                                        segment =>
+                                          val plan = $plan.now()
+                                          val updatedPlan =
+                                            Plan(
+                                              plan.l.map {
+                                                case rs
+                                                    if rs.id == segment.id =>
+                                                  segment
+                                                case rs =>
+                                                  rs
+                                              },
+                                            )
+                                          db.saveDailyPlanOnly(
+                                            updatedPlan,
+                                          )
+                                          updatedPlan
+                                      },
+                                    // Append a new segment to the end of the plan
+                                    segmentAppender = $plan.writer
+                                      .contramap[RouteSegment] {
+                                        newSegment =>
+                                          val plan = $plan.now()
+                                          val updatedPlan = plan
+                                            .copy(l =
+                                              plan.l :+ newSegment,
+                                            )
+                                          db.saveDailyPlanOnly(
+                                            updatedPlan,
+                                          )
+                                          addingNewRoute.set(false)
+                                          updatedPlan
+                                      },
+                                  )
+                              },
                             )
 
                         },
@@ -328,36 +352,6 @@ object Components {
             )
         },
       ),
-      // Small undo UI that appears for a few seconds after deletion
-      child <-- pendingUndo.signal.map {
-        case Some((seg, idx)) =>
-          div(
-            cls := "undo-banner",
-            styleAttr := "display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-top: 0.5rem;",
-            span("Segment deleted."),
-            button(
-              cls := "button is-small is-link is-light",
-              "Undo",
-              onClick --> Observer { _ =>
-                pendingUndo.now().foreach { case (s, i) =>
-                  val planNow = $plan.now()
-                  val restoredPlan =
-                    planNow.copy(l =
-                      (planNow.l.take(i) :+ s) ++ planNow.l.drop(i),
-                    )
-                  db.saveDailyPlanOnly(restoredPlan)
-                  $plan.set(restoredPlan)
-                  addingNewRoute.set(false)
-                }
-                pendingUndoTimer.foreach(clearTimeout)
-                pendingUndoTimer = None
-                pendingUndo.set(None)
-              },
-            ),
-          )
-        case None =>
-          div()
-      },
     )
 
   def deleteButton(
