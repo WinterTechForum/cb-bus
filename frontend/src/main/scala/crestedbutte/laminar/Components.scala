@@ -642,7 +642,7 @@ object Components {
                     cls <-- startingPoint.signal.map {
                       case Some(startingPointNow)
                           if startingPointNow == location =>
-                        "is-primary"
+                        "is-info is-selected-stop"
                       case Some(_) => "is-info"
                       case None    => "is-info"
                     },
