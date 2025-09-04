@@ -166,6 +166,20 @@ object Components {
       Option[SelectedStopInfo],
     ],
   ) =
+    // Track a recently deleted segment and its original index for undo
+    val pendingUndo: Var[Option[(RouteSegment, Int)]] = Var(None)
+    var pendingUndoTimer: Option[SetTimeoutHandle] = None
+
+    def startUndoTimer(): Unit =
+      // Reset any previous timer
+      pendingUndoTimer.foreach(clearTimeout)
+      pendingUndoTimer = Some(
+        setTimeout(4000) {
+          pendingUndo.set(None)
+          pendingUndoTimer = None
+        },
+      )
+
     div(
       copyButtons($plan.signal),
       children <-- $plan.signal
@@ -204,20 +218,28 @@ object Components {
                               addingNewRoute,
                               scheduleSelector,
                               legDeleter =
-                                Observer { (rs: RouteSegment) =>
-                                  val plan = $plan.now()
-                                  val newPlan =
-                                    plan
-                                      .copy(l =
+                                Observer {
+                                  (rs: RouteSegment) =>
+                                    val plan = $plan.now()
+                                    val originalIndex =
+                                      plan.l.indexOf(rs)
+                                    val newPlan =
+                                      plan.copy(l =
                                         plan.l.filterNot(_ == rs),
                                       )
-                                  db.saveDailyPlanOnly(newPlan)
-                                  $plan.set(newPlan)
-                                  if (newPlan.l.isEmpty) {
-                                    addingNewRoute.set {
-                                      true
-                                    }
-                                  }
+
+                                    // Apply deletion immediately
+                                    db.saveDailyPlanOnly(newPlan)
+                                    $plan.set(newPlan)
+                                    if newPlan.l.isEmpty then
+                                      addingNewRoute.set(true)
+
+                                    // Enable undo for a few seconds
+                                    if originalIndex >= 0 then
+                                      pendingUndo.set(
+                                        Some((rs, originalIndex)),
+                                      )
+                                      startUndoTimer()
                                 },
                               segmentUpdater = $plan.writer
                                 .contramap[RouteSegment] { segment =>
@@ -306,6 +328,36 @@ object Components {
             )
         },
       ),
+      // Small undo UI that appears for a few seconds after deletion
+      child <-- pendingUndo.signal.map {
+        case Some((seg, idx)) =>
+          div(
+            cls := "undo-banner",
+            styleAttr := "display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-top: 0.5rem;",
+            span("Segment deleted."),
+            button(
+              cls := "button is-small is-link is-light",
+              "Undo",
+              onClick --> Observer { _ =>
+                pendingUndo.now().foreach { case (s, i) =>
+                  val planNow = $plan.now()
+                  val restoredPlan =
+                    planNow.copy(l =
+                      (planNow.l.take(i) :+ s) ++ planNow.l.drop(i),
+                    )
+                  db.saveDailyPlanOnly(restoredPlan)
+                  $plan.set(restoredPlan)
+                  addingNewRoute.set(false)
+                }
+                pendingUndoTimer.foreach(clearTimeout)
+                pendingUndoTimer = None
+                pendingUndo.set(None)
+              },
+            ),
+          )
+        case None =>
+          div()
+      },
     )
 
   def deleteButton(
