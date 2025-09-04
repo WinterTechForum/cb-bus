@@ -412,7 +412,8 @@ object Components {
           onDeleteStart.onNext(routeSegment)
           val width = containerWidthPx.now()
           val slideDistance = if (width > 0) width else 320.0
-          offsetPx.set(slideDistance)
+          val sign = if (offsetPx.now() >= 0.0) 1.0 else -1.0
+          offsetPx.set(sign * slideDistance)
         },
       )
 
@@ -439,15 +440,15 @@ object Components {
         styleProp(
           "transition",
         ) := "transform 180ms ease, opacity 180ms ease",
-        styleProp("transform") <-- offsetPx.signal.map(px =>
-          s"translateX(-${px}px)",
-        ),
+        styleProp("transform") <-- offsetPx.signal.map { px =>
+          s"translateX(${-px}px)"
+        },
         // Fade out as it slides away to complement the reveal
         opacity <-- offsetPx.signal
           .combineWith(containerWidthPx.signal)
           .map { case (off, width) =>
             val denom = if (width <= 0.0) 320.0 else width
-            val ratio = Math.min(1.0, off / denom)
+            val ratio = Math.min(1.0, Math.abs(off) / denom)
             1.0 - ratio
           },
         // Touch handlers for swipe-to-reveal (encapsulated)
@@ -477,13 +478,16 @@ object Components {
             .combineWith(containerWidthPx.signal)
             .map { case (off, width) =>
               val denom = if (width <= 0.0) 320.0 else width
-              Math.min(1.0, off / denom)
+              Math.min(1.0, Math.abs(off) / denom)
             }
           val overlayTranslate = offsetPx.signal
             .combineWith(containerWidthPx.signal)
             .map { case (off, width) =>
               val w = if (width <= 0.0) 320.0 else width
-              val px = Math.max(w - off, 0.0)
+              val px =
+                if (off >= 0.0)
+                  Math.max(w - off, 0.0) // slide in from right
+                else -Math.max(w + off, 0.0) // slide in from left
               s"translateX(${px}px)"
             }
           div(
