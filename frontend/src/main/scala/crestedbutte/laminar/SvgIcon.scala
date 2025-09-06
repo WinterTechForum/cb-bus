@@ -31,4 +31,8 @@ object SvgIcon {
     clsName: String = "",
   ) = apply("glyphicons-basic-592-map.svg", clsName)
 
+  def share(
+    clsName: String = "",
+  ) = apply("glyphicons-basic-324-share.svg", clsName)
+
 }

@@ -453,17 +453,76 @@ object Components {
 
   def copyButtons(
     $plan: Signal[Plan],
-  ) =
+  ) = {
+    val isExpanded: Var[Boolean] = Var(false)
+    
+    // Add click handler to collapse when clicking outside
+    val documentClickHandler = Observer[dom.MouseEvent] { event =>
+      val target = event.target.asInstanceOf[dom.Element]
+      val containerElement = dom.document.querySelector(".share-button-container")
+      if (containerElement != null && !containerElement.contains(target)) {
+        isExpanded.set(false)
+      }
+    }
+    
     div(
+      onMountCallback { ctx =>
+        dom.document.addEventListener("click", documentClickHandler.toJsFn)
+      },
+      onUnmountCallback { _ =>
+        dom.document.removeEventListener("click", documentClickHandler.toJsFn)
+      },
       child <-- $plan.map { plan =>
         if (plan.routeSegments.isEmpty)
           div()
-        else
+        else {
+          val buttonWidth = 120 // Width of each button in pixels
+          val buttonGap = 8 // Gap between buttons in pixels
+          val totalExpandedWidth = buttonWidth * 2 + buttonGap
+          
+          // Animation values with staggered timing for laminar effect
+          val shareButtonOpacity = Animation.from(1).to(0).run(isExpanded.signal)
+          val copyButtonsOpacity = Animation.from(0).wait(150).to(1).run(isExpanded.signal)
+          val containerWidth = Animation.from(buttonWidth).to(totalExpandedWidth).ease(Easing.easeOutCubic).run(isExpanded.signal)
+          val copyTextTranslateX = Animation.from(0).to(-(buttonWidth / 2 + buttonGap / 2)).ease(Easing.easeOutBack).run(isExpanded.signal)
+          val copyLinkTranslateX = Animation.from(0).wait(50).to(buttonWidth / 2 + buttonGap / 2).ease(Easing.easeOutBack).run(isExpanded.signal)
+          val copyTextScale = Animation.from(0.8).wait(100).to(1).ease(Easing.easeOutBack).run(isExpanded.signal)
+          val copyLinkScale = Animation.from(0.8).wait(150).to(1).ease(Easing.easeOutBack).run(isExpanded.signal)
+          
           div(
-            animatedButton(
+            cls := "share-button-container",
+            styleAttr := "position: relative; display: inline-flex; justify-content: center; align-items: center; margin: 0.5rem;",
+            styleProp("width") <-- containerWidth.signal.map(w => s"${w}px"),
+            styleProp("height") := "40px",
+            styleProp("transition") := "width 300ms ease",
+            
+            // Share button (visible when collapsed)
+            button(
+              cls := "button is-info",
+              styleAttr := "position: absolute; left: 0; top: 0; width: 120px; display: flex; align-items: center; justify-content: center; gap: 0.5rem;",
+              styleProp("opacity") <-- shareButtonOpacity.signal.map(_.toString),
+              styleProp("pointer-events") <-- isExpanded.signal.map(expanded => if (expanded) "none" else "auto"),
+              styleProp("transition") := "opacity 200ms ease",
+              SvgIcon.share("filter-white"),
+              span("Share"),
+              onClick --> Observer { _ =>
+                isExpanded.set(true)
+              },
+            ),
+            
+            // Copy Text button (visible when expanded)
+            button(
+              cls := "button is-info",
               "Copy Text",
-              "m-2",
-              () => {
+              styleAttr := "position: absolute; width: 120px;",
+              styleProp("left") := "50%",
+              styleProp("transform") <-- copyTextTranslateX.signal.combineWith(copyTextScale.signal).map { case (x, scale) => 
+                s"translateX(${x}px) scale(${scale})"
+              },
+              styleProp("opacity") <-- copyButtonsOpacity.signal.map(_.toString),
+              styleProp("pointer-events") <-- isExpanded.signal.map(expanded => if (expanded) "auto" else "none"),
+              styleProp("transition") := "transform 400ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 300ms ease",
+              onClick --> Observer { _ =>
                 val text = plan.plainTextRepresentation
 
                 // Try to use Web Share API if available (works on mobile devices)
@@ -487,12 +546,27 @@ object Components {
                   // Fallback to clipboard copy for desktop browsers
                   dom.window.navigator.clipboard.writeText(text)
                 }
+                
+                // Collapse back after action
+                setTimeout(300) {
+                  isExpanded.set(false)
+                }
               },
             ),
-            animatedButton(
+            
+            // Copy Link button (visible when expanded)
+            button(
+              cls := "button is-info",
               "Copy Link",
-              "m-2",
-              () => {
+              styleAttr := "position: absolute; width: 120px;",
+              styleProp("left") := "50%",
+              styleProp("transform") <-- copyLinkTranslateX.signal.combineWith(copyLinkScale.signal).map { case (x, scale) => 
+                s"translateX(${x}px) scale(${scale})"
+              },
+              styleProp("opacity") <-- copyButtonsOpacity.signal.map(_.toString),
+              styleProp("pointer-events") <-- isExpanded.signal.map(expanded => if (expanded) "auto" else "none"),
+              styleProp("transition") := "transform 400ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 300ms ease",
+              onClick --> Observer { _ =>
                 // TODO Base this on page mode Parameter and don't hard code URLs at this level
                 val url =
                   if (dom.document.URL.contains("localhost"))
@@ -521,11 +595,18 @@ object Components {
                   // Fallback to clipboard copy for desktop browsers
                   dom.window.navigator.clipboard.writeText(url)
                 }
+                
+                // Collapse back after action
+                setTimeout(300) {
+                  isExpanded.set(false)
+                }
               },
             ),
           )
+        }
       },
     )
+  }
 
   def rightLegOnRightRoute(
     start: Location,
