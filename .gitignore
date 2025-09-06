@@ -6,6 +6,9 @@ frontend/project/target/
 /frontend/src/main/resources/compiledJavascript/
 /frontend/src/main/resources/sw-opt.js
 /frontend/src/main/resources/sw-opt.js.map
+# Build artifacts in resources directory
+/frontend/src/main/resources/project/target/
+/frontend/src/main/resources/target/
 /sw/target/
 .env
 .bsp/sbt.json
