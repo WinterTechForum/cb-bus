@@ -457,7 +457,7 @@ object Components {
     val isExpanded: Var[Boolean] = Var(false)
     
     // Add click handler to collapse when clicking outside
-    val documentClickHandler = Observer[dom.MouseEvent] { event =>
+    val documentClickHandler: js.Function1[dom.MouseEvent, Unit] = (event: dom.MouseEvent) => {
       val target = event.target.asInstanceOf[dom.Element]
       val containerElement = dom.document.querySelector(".share-button-container")
       if (containerElement != null && !containerElement.contains(target)) {
@@ -467,10 +467,10 @@ object Components {
     
     div(
       onMountCallback { ctx =>
-        dom.document.addEventListener("click", documentClickHandler.toJsFn)
+        dom.document.addEventListener("click", documentClickHandler)
       },
       onUnmountCallback { _ =>
-        dom.document.removeEventListener("click", documentClickHandler.toJsFn)
+        dom.document.removeEventListener("click", documentClickHandler)
       },
       child <-- $plan.map { plan =>
         if (plan.routeSegments.isEmpty)
@@ -480,19 +480,12 @@ object Components {
           val buttonGap = 8 // Gap between buttons in pixels
           val totalExpandedWidth = buttonWidth * 2 + buttonGap
           
-          // Animation values with staggered timing for laminar effect
-          val shareButtonOpacity = Animation.from(1).to(0).run(isExpanded.signal)
-          val copyButtonsOpacity = Animation.from(0).wait(150).to(1).run(isExpanded.signal)
-          val containerWidth = Animation.from(buttonWidth).to(totalExpandedWidth).ease(Easing.easeOutCubic).run(isExpanded.signal)
-          val copyTextTranslateX = Animation.from(0).to(-(buttonWidth / 2 + buttonGap / 2)).ease(Easing.easeOutBack).run(isExpanded.signal)
-          val copyLinkTranslateX = Animation.from(0).wait(50).to(buttonWidth / 2 + buttonGap / 2).ease(Easing.easeOutBack).run(isExpanded.signal)
-          val copyTextScale = Animation.from(0.8).wait(100).to(1).ease(Easing.easeOutBack).run(isExpanded.signal)
-          val copyLinkScale = Animation.from(0.8).wait(150).to(1).ease(Easing.easeOutBack).run(isExpanded.signal)
-          
           div(
             cls := "share-button-container",
             styleAttr := "position: relative; display: inline-flex; justify-content: center; align-items: center; margin: 0.5rem;",
-            styleProp("width") <-- containerWidth.signal.map(w => s"${w}px"),
+            styleProp("width") <-- isExpanded.signal.map(expanded => 
+              if (expanded) s"${totalExpandedWidth}px" else s"${buttonWidth}px"
+            ),
             styleProp("height") := "40px",
             styleProp("transition") := "width 300ms ease",
             
@@ -500,7 +493,7 @@ object Components {
             button(
               cls := "button is-info",
               styleAttr := "position: absolute; left: 0; top: 0; width: 120px; display: flex; align-items: center; justify-content: center; gap: 0.5rem;",
-              styleProp("opacity") <-- shareButtonOpacity.signal.map(_.toString),
+              styleProp("opacity") <-- isExpanded.signal.map(expanded => if (expanded) "0" else "1"),
               styleProp("pointer-events") <-- isExpanded.signal.map(expanded => if (expanded) "none" else "auto"),
               styleProp("transition") := "opacity 200ms ease",
               SvgIcon.share("filter-white"),
@@ -516,10 +509,12 @@ object Components {
               "Copy Text",
               styleAttr := "position: absolute; width: 120px;",
               styleProp("left") := "50%",
-              styleProp("transform") <-- copyTextTranslateX.signal.combineWith(copyTextScale.signal).map { case (x, scale) => 
-                s"translateX(${x}px) scale(${scale})"
+              styleProp("transform") <-- isExpanded.signal.map { expanded =>
+                val translateX = if (expanded) -(buttonWidth / 2 + buttonGap / 2) else 0
+                val scale = if (expanded) 1.0 else 0.8
+                s"translateX(${translateX}px) scale(${scale})"
               },
-              styleProp("opacity") <-- copyButtonsOpacity.signal.map(_.toString),
+              styleProp("opacity") <-- isExpanded.signal.map(expanded => if (expanded) "1" else "0"),
               styleProp("pointer-events") <-- isExpanded.signal.map(expanded => if (expanded) "auto" else "none"),
               styleProp("transition") := "transform 400ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 300ms ease",
               onClick --> Observer { _ =>
@@ -560,12 +555,14 @@ object Components {
               "Copy Link",
               styleAttr := "position: absolute; width: 120px;",
               styleProp("left") := "50%",
-              styleProp("transform") <-- copyLinkTranslateX.signal.combineWith(copyLinkScale.signal).map { case (x, scale) => 
-                s"translateX(${x}px) scale(${scale})"
+              styleProp("transform") <-- isExpanded.signal.map { expanded =>
+                val translateX = if (expanded) (buttonWidth / 2 + buttonGap / 2) else 0
+                val scale = if (expanded) 1.0 else 0.8
+                s"translateX(${translateX}px) scale(${scale})"
               },
-              styleProp("opacity") <-- copyButtonsOpacity.signal.map(_.toString),
+              styleProp("opacity") <-- isExpanded.signal.map(expanded => if (expanded) "1" else "0"),
               styleProp("pointer-events") <-- isExpanded.signal.map(expanded => if (expanded) "auto" else "none"),
-              styleProp("transition") := "transform 400ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 300ms ease",
+              styleProp("transition") := "transform 400ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 300ms ease 50ms",
               onClick --> Observer { _ =>
                 // TODO Base this on page mode Parameter and don't hard code URLs at this level
                 val url =
