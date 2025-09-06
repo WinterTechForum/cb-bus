@@ -2,7 +2,10 @@ frontend/target
 frontend/project/project/
 frontend/project/target/
 /.idea/
-# /src/main/resources/compiledJavascript/
+# Compiled JavaScript files (generated during build)
+/frontend/src/main/resources/compiledJavascript/
+/frontend/src/main/resources/sw-opt.js
+/frontend/src/main/resources/sw-opt.js.map
 /sw/target/
 .env
 .bsp/sbt.json
