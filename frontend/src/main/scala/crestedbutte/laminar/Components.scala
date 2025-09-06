@@ -497,7 +497,7 @@ object Components {
             styleProp("width") <-- isExpanded.signal.map(expanded =>
               if (expanded) "100%" else s"${buttonWidth}px",
             ),
-            styleProp("height") := "40px",
+            styleProp("height") := "56px",
             styleProp("transition") := "width 300ms ease",
 
             // Share button (visible when collapsed)
