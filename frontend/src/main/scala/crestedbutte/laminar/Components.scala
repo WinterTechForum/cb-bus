@@ -257,41 +257,114 @@ object Components {
         cls := "add-new-route-section",
         child <-- addingNewRoute.signal.map {
           case false =>
+            val tripExpanded: Var[Boolean] = Var(false)
+            val buttonWidth = 100
+            val buttonGap = 8
+            val extraSpacing = 12
+
+            val documentClickHandler
+              : js.Function1[dom.MouseEvent, Unit] =
+              (event: dom.MouseEvent) => {
+                val target = event.target.asInstanceOf[dom.Element]
+                val containerElement =
+                  dom.document.querySelector(".trip-button-container")
+                if (
+                  containerElement != null && !containerElement
+                    .contains(
+                      target,
+                    )
+                ) {
+                  tripExpanded.set(false)
+                }
+              }
+
             div(
+              onMountCallback { _ =>
+                dom.document.addEventListener("click",
+                                              documentClickHandler,
+                )
+              },
+              onUnmountCallback { _ =>
+                dom.document.removeEventListener("click",
+                                                 documentClickHandler,
+                )
+              },
               cls := "centered",
-              styleAttr := "display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center;",
-              button(
-                cls := "button is-info",
-                "New route",
-                onClick --> Observer { _ =>
-                  addingNewRoute.set {
-                    true
-                  }
-                },
-              ),
-              button(
-                cls := "button is-info",
-                "Return trip",
-                onClick --> Observer { _ =>
-                  val plan = $plan.now()
-                  val maybeLastSeg = plan.l.lastOption
-                  maybeLastSeg.foreach { lastSeg =>
-                    val maybeReturn =
-                      rightLegOnRightRoute(
-                        lastSeg.end.l,
-                        lastSeg.start.l,
-                        Plan(Seq.empty),
-                        lastSeg.end.t,
-                      )
-                    maybeReturn.foreach { newSeg =>
-                      val updatedPlan =
-                        plan.copy(l = plan.l :+ newSeg)
-                      db.saveDailyPlanOnly(updatedPlan)
-                      $plan.set(updatedPlan)
-                      addingNewRoute.set(false)
-                    }
-                  }
-                },
+              styleAttr := "display: flex; justify-content: center;",
+              div(
+                cls := "trip-button-container",
+                styleAttr := "position: relative; display: flex; justify-content: center; align-items: center; margin: 0.5rem;",
+                styleProp("width") := "100%",
+                styleProp("height") := "56px",
+                styleProp("transition") := "width 300ms ease",
+
+                // Collapsed + Trip button
+                button(
+                  cls := "button is-info",
+                  styleAttr := s"position: absolute; left: 50%; transform: translateX(-50%); top: 0; width: ${buttonWidth}px; display: flex; align-items: center; justify-content: center; gap: 0.5rem;",
+                  styleProp("opacity") <-- tripExpanded.signal.map(
+                    expanded => if (expanded) "0" else "1",
+                  ),
+                  styleProp("pointer-events") <-- tripExpanded.signal
+                    .map(expanded => if (expanded) "none" else "auto",
+                    ),
+                  styleProp("transition") := "opacity 200ms ease",
+                  span("+"),
+                  onClick --> Observer { _ =>
+                    tripExpanded.set(true)
+                  },
+                ),
+
+                // Expanded buttons container
+                div(
+                  styleAttr := s"position: relative; width: 100%; display: flex; justify-content: center; align-items: center; gap: ${buttonGap + extraSpacing}px;",
+                  styleProp("opacity") <-- tripExpanded.signal.map(
+                    expanded => if (expanded) "1" else "0",
+                  ),
+                  styleProp("pointer-events") <-- tripExpanded.signal
+                    .map(expanded => if (expanded) "auto" else "none",
+                    ),
+                  styleProp("transition") := "opacity 250ms ease",
+
+                  // New route button
+                  button(
+                    cls := "button is-info",
+                    "New trip",
+                    styleAttr := s"width: ${buttonWidth}px;",
+                    onClick --> Observer { _ =>
+                      addingNewRoute.set(true)
+                      setTimeout(300)(tripExpanded.set(false))
+                    },
+                  ),
+
+                  // Return trip button
+                  button(
+                    cls := "button is-info",
+                    "Return trip",
+                    styleAttr := s"width: ${buttonWidth}px;",
+                    onClick --> Observer { _ =>
+                      val plan = $plan.now()
+                      val maybeLastSeg = plan.l.lastOption
+                      maybeLastSeg.foreach { lastSeg =>
+                        val maybeReturn =
+                          rightLegOnRightRoute(
+                            lastSeg.end.l,
+                            lastSeg.start.l,
+                            Plan(Seq.empty),
+                            lastSeg.end.t,
+                          )
+                        maybeReturn.foreach { newSeg =>
+                          val updatedPlan =
+                            plan.copy(l = plan.l :+ newSeg)
+                          db.saveDailyPlanOnly(updatedPlan)
+                          $plan.set(updatedPlan)
+                          addingNewRoute.set(false)
+                          setTimeout(300)(tripExpanded.set(false))
+                        }
+                      }
+                    },
+                  ),
+                ),
               ),
             )
           case true =>
