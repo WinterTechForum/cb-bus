@@ -455,46 +455,62 @@ object Components {
     $plan: Signal[Plan],
   ) = {
     val isExpanded: Var[Boolean] = Var(false)
-    
+
     // Add click handler to collapse when clicking outside
-    val documentClickHandler: js.Function1[dom.MouseEvent, Unit] = (event: dom.MouseEvent) => {
-      val target = event.target.asInstanceOf[dom.Element]
-      val containerElement = dom.document.querySelector(".share-button-container")
-      if (containerElement != null && !containerElement.contains(target)) {
-        isExpanded.set(false)
+    val documentClickHandler: js.Function1[dom.MouseEvent, Unit] =
+      (event: dom.MouseEvent) => {
+        val target = event.target.asInstanceOf[dom.Element]
+        val containerElement =
+          dom.document.querySelector(".share-button-container")
+        if (
+          containerElement != null && !containerElement.contains(
+            target,
+          )
+        ) {
+          isExpanded.set(false)
+        }
       }
-    }
-    
+
     div(
       onMountCallback { ctx =>
         dom.document.addEventListener("click", documentClickHandler)
       },
       onUnmountCallback { _ =>
-        dom.document.removeEventListener("click", documentClickHandler)
+        dom.document.removeEventListener("click",
+                                         documentClickHandler,
+        )
       },
       child <-- $plan.map { plan =>
         if (plan.routeSegments.isEmpty)
           div()
         else {
-          val buttonWidth = 120 // Width of each button in pixels
-          val buttonGap = 8 // Gap between buttons in pixels
-          val totalExpandedWidth = buttonWidth * 2 + buttonGap
-          
+          val buttonWidth = 100 // Width of each button in pixels
+          val buttonGap = 8 // Base gap between buttons in pixels
+          val extraSpacing =
+            12 // Extra spacing to ensure clear separation at rest
+          val totalExpandedWidth =
+            buttonWidth * 2 + buttonGap + extraSpacing
+
           div(
             cls := "share-button-container",
             styleAttr := "position: relative; display: inline-flex; justify-content: center; align-items: center; margin: 0.5rem;",
-            styleProp("width") <-- isExpanded.signal.map(expanded => 
-              if (expanded) s"${totalExpandedWidth}px" else s"${buttonWidth}px"
+            styleProp("width") <-- isExpanded.signal.map(expanded =>
+              if (expanded) s"${totalExpandedWidth}px"
+              else s"${buttonWidth}px",
             ),
             styleProp("height") := "40px",
             styleProp("transition") := "width 300ms ease",
-            
+
             // Share button (visible when collapsed)
             button(
               cls := "button is-info",
-              styleAttr := "position: absolute; left: 0; top: 0; width: 120px; display: flex; align-items: center; justify-content: center; gap: 0.5rem;",
-              styleProp("opacity") <-- isExpanded.signal.map(expanded => if (expanded) "0" else "1"),
-              styleProp("pointer-events") <-- isExpanded.signal.map(expanded => if (expanded) "none" else "auto"),
+              styleAttr := s"position: absolute; left: 0; top: 0; width: ${buttonWidth}px; display: flex; align-items: center; justify-content: center; gap: 0.5rem;",
+              styleProp("opacity") <-- isExpanded.signal.map(
+                expanded => if (expanded) "0" else "1",
+              ),
+              styleProp("pointer-events") <-- isExpanded.signal.map(
+                expanded => if (expanded) "none" else "auto",
+              ),
               styleProp("transition") := "opacity 200ms ease",
               SvgIcon.share("filter-white"),
               span("Share"),
@@ -502,102 +518,80 @@ object Components {
                 isExpanded.set(true)
               },
             ),
-            
-            // Copy Text button (visible when expanded)
-            button(
-              cls := "button is-info",
-              "Copy Text",
-              styleAttr := "position: absolute; width: 120px;",
-              styleProp("left") := "50%",
-              styleProp("transform") <-- isExpanded.signal.map { expanded =>
-                val translateX = if (expanded) -(buttonWidth / 2 + buttonGap / 2) else 0
-                val scale = if (expanded) 1.0 else 0.8
-                s"translateX(${translateX}px) scale(${scale})"
-              },
-              styleProp("opacity") <-- isExpanded.signal.map(expanded => if (expanded) "1" else "0"),
-              styleProp("pointer-events") <-- isExpanded.signal.map(expanded => if (expanded) "auto" else "none"),
-              styleProp("transition") := "transform 400ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 300ms ease",
-              onClick --> Observer { _ =>
-                val text = plan.plainTextRepresentation
 
-                // Try to use Web Share API if available (works on mobile devices)
-                if (
-                  js.typeOf(
+            // Expanded buttons container to guarantee separation
+            div(
+              styleAttr := s"position: absolute; left: 0; top: 0; width: 100%; display: flex; justify-content: center; align-items: center; gap: ${buttonGap + extraSpacing}px;",
+              styleProp("opacity") <-- isExpanded.signal.map(
+                expanded => if (expanded) "1" else "0",
+              ),
+              styleProp("pointer-events") <-- isExpanded.signal.map(
+                expanded => if (expanded) "auto" else "none",
+              ),
+              styleProp("transition") := "opacity 250ms ease",
+
+              // Text button
+              button(
+                cls := "button is-info",
+                "Text",
+                styleAttr := s"width: ${buttonWidth}px;",
+                onClick --> Observer { _ =>
+                  val text = plan.plainTextRepresentation
+                  if (
+                    js.typeOf(
+                      dom.window.navigator
+                        .asInstanceOf[js.Dynamic]
+                        .share,
+                    ) != "undefined"
+                  ) {
                     dom.window.navigator
                       .asInstanceOf[js.Dynamic]
-                      .share,
-                  ) != "undefined"
-                ) {
-                  dom.window.navigator
-                    .asInstanceOf[js.Dynamic]
-                    .share(
-                      js.Dynamic.literal(
-                        title = "Bus Schedule",
-                        text = text,
-                      ),
-                    )
-                }
-                else {
-                  // Fallback to clipboard copy for desktop browsers
-                  dom.window.navigator.clipboard.writeText(text)
-                }
-                
-                // Collapse back after action
-                setTimeout(300) {
-                  isExpanded.set(false)
-                }
-              },
-            ),
-            
-            // Copy Link button (visible when expanded)
-            button(
-              cls := "button is-info",
-              "Copy Link",
-              styleAttr := "position: absolute; width: 120px;",
-              styleProp("left") := "50%",
-              styleProp("transform") <-- isExpanded.signal.map { expanded =>
-                val translateX = if (expanded) (buttonWidth / 2 + buttonGap / 2) else 0
-                val scale = if (expanded) 1.0 else 0.8
-                s"translateX(${translateX}px) scale(${scale})"
-              },
-              styleProp("opacity") <-- isExpanded.signal.map(expanded => if (expanded) "1" else "0"),
-              styleProp("pointer-events") <-- isExpanded.signal.map(expanded => if (expanded) "auto" else "none"),
-              styleProp("transition") := "transform 400ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 300ms ease 50ms",
-              onClick --> Observer { _ =>
-                // TODO Base this on page mode Parameter and don't hard code URLs at this level
-                val url =
-                  if (dom.document.URL.contains("localhost"))
-                    s"http://localhost:8000/index.html?plan=${UrlEncoding.encode(plan)}"
-                  else
-                    s"https://rtabus.netlify.app/?plan=${UrlEncoding.encode(plan)}"
+                      .share(
+                        js.Dynamic.literal(title = "Bus Schedule",
+                                           text = text,
+                        ),
+                      )
+                  }
+                  else {
+                    dom.window.navigator.clipboard.writeText(text)
+                  }
+                  setTimeout(300)(isExpanded.set(false))
+                },
+              ),
 
-                // Try to use Web Share API if available (works on mobile devices)
-                if (
-                  js.typeOf(
+              // Link button
+              button(
+                cls := "button is-info",
+                "Link",
+                styleAttr := s"width: ${buttonWidth}px;",
+                onClick --> Observer { _ =>
+                  val url =
+                    if (dom.document.URL.contains("localhost"))
+                      s"http://localhost:8000/index.html?plan=${UrlEncoding.encode(plan)}"
+                    else
+                      s"https://rtabus.netlify.app/?plan=${UrlEncoding.encode(plan)}"
+                  if (
+                    js.typeOf(
+                      dom.window.navigator
+                        .asInstanceOf[js.Dynamic]
+                        .share,
+                    ) != "undefined"
+                  ) {
                     dom.window.navigator
                       .asInstanceOf[js.Dynamic]
-                      .share,
-                  ) != "undefined"
-                ) {
-                  dom.window.navigator
-                    .asInstanceOf[js.Dynamic]
-                    .share(
-                      js.Dynamic.literal(
-                        title = "Bus Schedule Link",
-                        url = url,
-                      ),
-                    )
-                }
-                else {
-                  // Fallback to clipboard copy for desktop browsers
-                  dom.window.navigator.clipboard.writeText(url)
-                }
-                
-                // Collapse back after action
-                setTimeout(300) {
-                  isExpanded.set(false)
-                }
-              },
+                      .share(
+                        js.Dynamic.literal(title =
+                                             "Bus Schedule Link",
+                                           url = url,
+                        ),
+                      )
+                  }
+                  else {
+                    dom.window.navigator.clipboard.writeText(url)
+                  }
+                  setTimeout(300)(isExpanded.set(false))
+                },
+              ),
             ),
           )
         }

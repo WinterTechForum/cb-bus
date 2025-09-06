@@ -11,7 +11,6 @@ object SvgIcon {
     img(
       cls := s"glyphicon $clsName",
       src := s"/glyphicons/svg/individual-svg/$name",
-      alt := "Thanks for riding the bus!",
     )
 
   // Predefined icon methods
