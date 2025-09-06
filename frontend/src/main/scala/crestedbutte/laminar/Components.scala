@@ -493,10 +493,9 @@ object Components {
 
           div(
             cls := "share-button-container",
-            styleAttr := "position: relative; display: inline-flex; justify-content: center; align-items: center; margin: 0.5rem;",
+            styleAttr := "position: relative; display: flex; justify-content: center; align-items: center; margin: 0.5rem;",
             styleProp("width") <-- isExpanded.signal.map(expanded =>
-              if (expanded) s"${totalExpandedWidth}px"
-              else s"${buttonWidth}px",
+              if (expanded) "100%" else s"${buttonWidth}px",
             ),
             styleProp("height") := "40px",
             styleProp("transition") := "width 300ms ease",
@@ -512,7 +511,6 @@ object Components {
                 expanded => if (expanded) "none" else "auto",
               ),
               styleProp("transition") := "opacity 200ms ease",
-              SvgIcon.share("filter-white"),
               span("Share"),
               onClick --> Observer { _ =>
                 isExpanded.set(true)
@@ -521,7 +519,7 @@ object Components {
 
             // Expanded buttons container to guarantee separation
             div(
-              styleAttr := s"position: absolute; left: 0; top: 0; width: 100%; display: flex; justify-content: center; align-items: center; gap: ${buttonGap + extraSpacing}px;",
+              styleAttr := s"position: relative; width: 100%; display: flex; justify-content: center; align-items: center; gap: ${buttonGap + extraSpacing}px;",
               styleProp("opacity") <-- isExpanded.signal.map(
                 expanded => if (expanded) "1" else "0",
               ),
