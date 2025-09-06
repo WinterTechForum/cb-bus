@@ -494,16 +494,14 @@ object Components {
           div(
             cls := "share-button-container",
             styleAttr := "position: relative; display: flex; justify-content: center; align-items: center; margin: 0.5rem;",
-            styleProp("width") <-- isExpanded.signal.map(expanded =>
-              if (expanded) "100%" else s"${buttonWidth}px",
-            ),
+            styleProp("width") := "100%",
             styleProp("height") := "56px",
             styleProp("transition") := "width 300ms ease",
 
             // Share button (visible when collapsed)
             button(
               cls := "button is-info",
-              styleAttr := s"position: absolute; left: 0; top: 0; width: ${buttonWidth}px; display: flex; align-items: center; justify-content: center; gap: 0.5rem;",
+              styleAttr := s"position: absolute; left: 50%; transform: translateX(-50%); top: 0; width: ${buttonWidth}px; display: flex; align-items: center; justify-content: center; gap: 0.5rem;",
               styleProp("opacity") <-- isExpanded.signal.map(
                 expanded => if (expanded) "0" else "1",
               ),
