@@ -11,7 +11,6 @@ object SvgIcon {
     img(
       cls := s"glyphicon $clsName",
       src := s"/glyphicons/svg/individual-svg/$name",
-      alt := "Thanks for riding the bus!",
     )
 
   // Predefined icon methods
@@ -30,5 +29,9 @@ object SvgIcon {
   def map(
     clsName: String = "",
   ) = apply("glyphicons-basic-592-map.svg", clsName)
+
+  def share(
+    clsName: String = "",
+  ) = apply("glyphicons-basic-324-share.svg", clsName)
 
 }

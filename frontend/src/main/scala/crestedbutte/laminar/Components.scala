@@ -453,79 +453,147 @@ object Components {
 
   def copyButtons(
     $plan: Signal[Plan],
-  ) =
+  ) = {
+    val isExpanded: Var[Boolean] = Var(false)
+
+    // Add click handler to collapse when clicking outside
+    val documentClickHandler: js.Function1[dom.MouseEvent, Unit] =
+      (event: dom.MouseEvent) => {
+        val target = event.target.asInstanceOf[dom.Element]
+        val containerElement =
+          dom.document.querySelector(".share-button-container")
+        if (
+          containerElement != null && !containerElement.contains(
+            target,
+          )
+        ) {
+          isExpanded.set(false)
+        }
+      }
+
     div(
+      onMountCallback { ctx =>
+        dom.document.addEventListener("click", documentClickHandler)
+      },
+      onUnmountCallback { _ =>
+        dom.document.removeEventListener("click",
+                                         documentClickHandler,
+        )
+      },
       child <-- $plan.map { plan =>
         if (plan.routeSegments.isEmpty)
           div()
-        else
-          div(
-            animatedButton(
-              "Copy Text",
-              "m-2",
-              () => {
-                val text = plan.plainTextRepresentation
+        else {
+          val buttonWidth = 100 // Width of each button in pixels
+          val buttonGap = 8 // Base gap between buttons in pixels
+          val extraSpacing =
+            12 // Extra spacing to ensure clear separation at rest
+          val totalExpandedWidth =
+            buttonWidth * 2 + buttonGap + extraSpacing
 
-                // Try to use Web Share API if available (works on mobile devices)
-                if (
-                  js.typeOf(
-                    dom.window.navigator
-                      .asInstanceOf[js.Dynamic]
-                      .share,
-                  ) != "undefined"
-                ) {
-                  dom.window.navigator
-                    .asInstanceOf[js.Dynamic]
-                    .share(
-                      js.Dynamic.literal(
-                        title = "Bus Schedule",
-                        text = text,
-                      ),
-                    )
-                }
-                else {
-                  // Fallback to clipboard copy for desktop browsers
-                  dom.window.navigator.clipboard.writeText(text)
-                }
+          div(
+            cls := "share-button-container",
+            styleAttr := "position: relative; display: flex; justify-content: center; align-items: center; margin: 0.5rem;",
+            styleProp("width") := "100%",
+            styleProp("height") := "56px",
+            styleProp("transition") := "width 300ms ease",
+
+            // Share button (visible when collapsed)
+            button(
+              cls := "button is-info",
+              styleAttr := s"position: absolute; left: 50%; transform: translateX(-50%); top: 0; width: ${buttonWidth}px; display: flex; align-items: center; justify-content: center; gap: 0.5rem;",
+              styleProp("opacity") <-- isExpanded.signal.map(
+                expanded => if (expanded) "0" else "1",
+              ),
+              styleProp("pointer-events") <-- isExpanded.signal.map(
+                expanded => if (expanded) "none" else "auto",
+              ),
+              styleProp("transition") := "opacity 200ms ease",
+              span("Share"),
+              onClick --> Observer { _ =>
+                isExpanded.set(true)
               },
             ),
-            animatedButton(
-              "Copy Link",
-              "m-2",
-              () => {
-                // TODO Base this on page mode Parameter and don't hard code URLs at this level
-                val url =
-                  if (dom.document.URL.contains("localhost"))
-                    s"http://localhost:8000/index.html?plan=${UrlEncoding.encode(plan)}"
-                  else
-                    s"https://rtabus.netlify.app/?plan=${UrlEncoding.encode(plan)}"
 
-                // Try to use Web Share API if available (works on mobile devices)
-                if (
-                  js.typeOf(
+            // Expanded buttons container to guarantee separation
+            div(
+              styleAttr := s"position: relative; width: 100%; display: flex; justify-content: center; align-items: center; gap: ${buttonGap + extraSpacing}px;",
+              styleProp("opacity") <-- isExpanded.signal.map(
+                expanded => if (expanded) "1" else "0",
+              ),
+              styleProp("pointer-events") <-- isExpanded.signal.map(
+                expanded => if (expanded) "auto" else "none",
+              ),
+              styleProp("transition") := "opacity 250ms ease",
+
+              // Text button
+              button(
+                cls := "button is-info",
+                "Text",
+                styleAttr := s"width: ${buttonWidth}px;",
+                onClick --> Observer { _ =>
+                  val text = plan.plainTextRepresentation
+                  if (
+                    js.typeOf(
+                      dom.window.navigator
+                        .asInstanceOf[js.Dynamic]
+                        .share,
+                    ) != "undefined"
+                  ) {
                     dom.window.navigator
                       .asInstanceOf[js.Dynamic]
-                      .share,
-                  ) != "undefined"
-                ) {
-                  dom.window.navigator
-                    .asInstanceOf[js.Dynamic]
-                    .share(
-                      js.Dynamic.literal(
-                        title = "Bus Schedule Link",
-                        url = url,
-                      ),
-                    )
-                }
-                else {
-                  // Fallback to clipboard copy for desktop browsers
-                  dom.window.navigator.clipboard.writeText(url)
-                }
-              },
+                      .share(
+                        js.Dynamic.literal(title = "Bus Schedule",
+                                           text = text,
+                        ),
+                      )
+                  }
+                  else {
+                    dom.window.navigator.clipboard.writeText(text)
+                  }
+                  setTimeout(300)(isExpanded.set(false))
+                },
+              ),
+
+              // Link button
+              button(
+                cls := "button is-info",
+                "Link",
+                styleAttr := s"width: ${buttonWidth}px;",
+                onClick --> Observer { _ =>
+                  val url =
+                    if (dom.document.URL.contains("localhost"))
+                      s"http://localhost:8000/index.html?plan=${UrlEncoding.encode(plan)}"
+                    else
+                      s"https://rtabus.netlify.app/?plan=${UrlEncoding.encode(plan)}"
+                  if (
+                    js.typeOf(
+                      dom.window.navigator
+                        .asInstanceOf[js.Dynamic]
+                        .share,
+                    ) != "undefined"
+                  ) {
+                    dom.window.navigator
+                      .asInstanceOf[js.Dynamic]
+                      .share(
+                        js.Dynamic.literal(title =
+                                             "Bus Schedule Link",
+                                           url = url,
+                        ),
+                      )
+                  }
+                  else {
+                    dom.window.navigator.clipboard.writeText(url)
+                  }
+                  setTimeout(300)(isExpanded.set(false))
+                },
+              ),
             ),
           )
+        }
       },
     )
+  }
 
   def rightLegOnRightRoute(
     start: Location,
