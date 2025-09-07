@@ -2,11 +2,11 @@ html {
     -webkit-filter: grayscale(100%);
     filter: grayscale(100%);
     font-size: 18px;
+    background-color: black;
 }
 
 body {
     margin: 5px;
-    background-color: white;
 }
 
 .scrollable-route-leg {
@@ -32,7 +32,7 @@ body {
 .adjuster-button {
     font-size: 1.125rem;
     font-weight: bold;
-    background-color: black;
+    background-color: white;
     box-sizing: border-box;
     transition: box-shadow 0.2s ease;
     min-width: 8em;
@@ -43,7 +43,7 @@ body {
 
 .button.is-primary {
     background-color: gray;
-    box-shadow: inset 0 0 0 3px white;
+    box-shadow: inset 0 0 0 3px black;
     position: relative;
     padding-right: 2.5em;
     justify-content: flex-start;
@@ -62,7 +62,7 @@ body {
 }
 
 .button.is-info {
-    background-color: black;
+    background-color: white;
 }
 
 .button:disabled {
@@ -76,7 +76,7 @@ body {
 }
 
 .link {
-    color: white;
+    color: black;
 }
 
 .transit-period {
@@ -94,7 +94,7 @@ body {
 
 .transit-period-delete {
     text-align: center;
-    color: white;
+    color: black;
 }
 
 .stop-information {
@@ -132,14 +132,14 @@ body {
 }
 
 .title {
-    color: white;
+    color: black;
 }
 
 .time-picker-simple {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     padding: 5px 0;
-    border-bottom: 1px solid white;
+    border-bottom: 1px solid black;
 }
 
 .wheel {
@@ -147,7 +147,7 @@ body {
     place-items: center;
     grid-template-rows: auto auto auto;
     padding: 5px 0;
-    border-bottom: 1px solid white;
+    border-bottom: 1px solid black;
 }
 
 #sandbox {
@@ -157,8 +157,8 @@ body {
 
 
 .plan-segments {
-    background-color: black;
-    color: white;
+    background-color: white;
+    color: black;
     margin: 4px 0;
     padding: 8px;
 }
@@ -169,12 +169,12 @@ body {
 }
 
 .transit-time {
-    color: white;
+    color: black;
     font-size: 1rem;
 }
 
 .time-at-stop {
-    color: black;
+    color: white;
     font-size: 1rem;
 }
 
@@ -203,7 +203,7 @@ body {
 
 .carousel-card.current {
     flex: 2;
-    background-color: black;
+    background-color: white;
     font-weight: bold;
     text-align: center;
     border-radius: 5px;
@@ -214,21 +214,23 @@ body {
     flex: 1;
     border-radius: 5px;
     opacity: 0.4;
-    border: 1px solid white;
+    border: 1px solid black;
 }
 
-.filter-white {
+.filter-black {
     filter: invert(100%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(100%) contrast(100%);
 }
 
 /* Share button container styling */
 .share-button-container {
     min-height: 40px;
+    color: black;
 }
 
 .share-button-container .glyphicon {
     width: 20px;
     height: 20px;
+    color: black;
 }
 
 /* Make the time scrolling wheel only as wide as its content and center it

@@ -300,7 +300,7 @@ object Components {
 
                 // Collapsed + Trip button
                 button(
-                  cls := "button is-info",
+                  cls := "button",
                   styleAttr := s"position: absolute; left: 50%; transform: translateX(-50%); top: 0; width: ${buttonWidth}px; display: flex; align-items: center; justify-content: center; gap: 0.5rem;",
                   styleProp("opacity") <-- tripExpanded.signal.map(
                     expanded => if (expanded) "0" else "1",
@@ -328,7 +328,7 @@ object Components {
 
                   // New route button
                   button(
-                    cls := "button is-info",
+                    cls := "button",
                     "New trip",
                     styleAttr := s"width: ${buttonWidth}px;",
                     onClick --> Observer { _ =>
@@ -339,7 +339,7 @@ object Components {
 
                   // Return trip button
                   button(
-                    cls := "button is-info",
+                    cls := "button",
                     "Return trip",
                     styleAttr := s"width: ${buttonWidth}px;",
                     onClick --> Observer { _ =>
@@ -517,7 +517,7 @@ object Components {
     onClickAction: () => Unit,
   ) =
     button(
-      cls := s"button is-info $additionalClasses",
+      cls := s"button $additionalClasses",
       text,
       onClick --> Observer { _ =>
         onClickAction()
@@ -573,7 +573,7 @@ object Components {
 
             // Share button (visible when collapsed)
             button(
-              cls := "button is-info",
+              cls := "button",
               styleAttr := s"position: absolute; left: 50%; transform: translateX(-50%); top: 0; width: ${buttonWidth}px; display: flex; align-items: center; justify-content: center; gap: 0.5rem;",
               styleProp("opacity") <-- isExpanded.signal.map(
                 expanded => if (expanded) "0" else "1",
@@ -601,7 +601,7 @@ object Components {
 
               // Text button
               button(
-                cls := "button is-info",
+                cls := "button",
                 "Text",
                 styleAttr := s"width: ${buttonWidth}px;",
                 onClick --> Observer { _ =>
@@ -630,7 +630,7 @@ object Components {
 
               // Link button
               button(
-                cls := "button is-info",
+                cls := "button",
                 "Link",
                 styleAttr := s"width: ${buttonWidth}px;",
                 onClick --> Observer { _ =>
@@ -779,13 +779,6 @@ object Components {
                           case None =>
                             Some(location)
                         }
-                    },
-                    cls <-- startingPoint.signal.map {
-                      case Some(startingPointNow)
-                          if startingPointNow == location =>
-                        "is-primary"
-                      case Some(_) => "is-info"
-                      case None    => "is-info"
                     },
                     location.name,
                   )

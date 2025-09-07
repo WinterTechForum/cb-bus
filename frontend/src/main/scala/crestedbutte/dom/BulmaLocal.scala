@@ -56,7 +56,7 @@ object BulmaLocal {
         // Keeps this text at the top while we scroll through the stops
         position := "sticky",
         top := "0",
-        backgroundColor := "white",
+        backgroundColor := "black",
         zIndex := "10",
         paddingBottom := "10px",
         h5(textAlign := "center",
