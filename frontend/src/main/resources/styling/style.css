@@ -42,7 +42,7 @@ body {
     justify-content: center;
 }
 
-.button.is-primary {
+.button.selected-starting-point {
     background-color: gray;
     box-shadow: inset 0 0 0 3px black;
     position: relative;
@@ -50,7 +50,7 @@ body {
     justify-content: flex-start;
 }
 
-.button.is-primary::after {
+.button.selected-starting-point::after {
     content: "✓";
     position: absolute;
     right: 0.5em;
@@ -62,7 +62,7 @@ body {
 }
 
 .button.is-info {
-    background-color: white;
+    background-color: gray;
 }
 
 .button:disabled {
