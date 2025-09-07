@@ -54,8 +54,7 @@ object ServiceWorker {
         println(
           s"activate: service worker activated > ${event.toString}",
         )
-        println("Invalidating cache!")
-        invalidateCache() // TODO Do I need this at all?
+        // Keep existing cache so users can work offline; SW will update in background
         self.clients.claim()
       },
     )
@@ -67,12 +66,17 @@ object ServiceWorker {
 
     self.addEventListener(
       "fetch",
-      (event: FetchEvent) =>
-        event.respondWith(
-          fromCache(event.request).recoverWith { case error =>
-            fetch(event.request).toFuture
-          }.toJSPromise,
-        ),
+      (event: FetchEvent) => {
+        val request = event.request
+        if (request.method.toString != "GET") {
+          event.respondWith(fetch(request).toFuture.toJSPromise)
+        }
+        else {
+          event.respondWith(
+            LLMGenerated.staleWhileRevalidate(event).toJSPromise,
+          )
+        }
+      },
     )
 
     println("main: ServiceWorker installing!")
@@ -115,5 +119,90 @@ object ServiceWorker {
           },
       )
       .get
+
+  object LLMGenerated {
+    def staleWhileRevalidate(
+      event: FetchEvent,
+    ): Future[Response] = {
+      val request = event.request
+      self.caches
+        .map(
+          _.open(busCache).toFuture.flatMap { cache =>
+            cache
+              .`match`(request)
+              .toFuture
+              .flatMap {
+                case cached: Response =>
+                  val updateF = fetch(request).toFuture
+                    .flatMap { networkResp =>
+                      if (networkResp != null && networkResp.ok) {
+                        val changed = hasUpdated(cached, networkResp)
+                        cache
+                          .put(request, networkResp.clone())
+                          .toFuture
+                          .flatMap { _ =>
+                            if (changed) reloadAllWindows()
+                            else Future.unit
+                          }
+                      }
+                      else Future.unit
+                    }
+                    .recover { case _ => () }
+                  event.waitUntil(updateF.toJSPromise)
+                  Future.successful(cached)
+                case _ =>
+                  fetch(request).toFuture.flatMap { networkResp =>
+                    if (networkResp != null && networkResp.ok) {
+                      cache
+                        .put(request, networkResp.clone())
+                        .toFuture
+                        .map(_ => networkResp)
+                    }
+                    else Future.successful(networkResp)
+                  }
+              }
+          },
+        )
+        .getOrElse(fetch(request).toFuture)
+    }
+
+    private def headerValue(
+      headers: Headers,
+      name: String,
+    ): Option[String] = Option(headers.get(name))
+
+    private def hasUpdated(
+      cached: Response,
+      fresh: Response,
+    ): Boolean = {
+      val cachedEtag = headerValue(cached.headers, "ETag")
+      val freshEtag = headerValue(fresh.headers, "ETag")
+      val cachedLm = headerValue(cached.headers, "Last-Modified")
+      val freshLm = headerValue(fresh.headers, "Last-Modified")
+      (cachedEtag, freshEtag, cachedLm, freshLm) match {
+        case (Some(a), Some(b), _, _) if a != b => true
+        case (_, _, Some(a), Some(b)) if a != b => true
+        case _                                  => false
+      }
+    }
+
+    private def reloadAllWindows(): Future[Unit] =
+      self.clients
+        .matchAll()
+        .toFuture
+        .flatMap { clients =>
+          val reloads = clients.toSeq.flatMap { c =>
+            val dyn = c.asInstanceOf[js.Dynamic]
+            val hasNavigate =
+              !js.isUndefined(dyn.selectDynamic("navigate"))
+            if (hasNavigate) {
+              val wc = c.asInstanceOf[serviceworkers.WindowClient]
+              Some(wc.navigate(wc.url).toFuture.map(_ => ()))
+            }
+            else None
+          }
+          Future.sequence(reloads).map(_ => ())
+        }
+  }
 
 }

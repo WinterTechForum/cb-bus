@@ -8,7 +8,8 @@ import com.billding.time.WallTime
 import crestedbutte.routes.RTA
 
 object MyApp extends App {
-  // ServiceWorkerClient.registerServiceWorker() // TODO Restore before pushing
+  ServiceWorkerClient
+    .registerServiceWorker() // TODO Restore before pushing
   val appHolder = dom.document.getElementById("landing-message")
   appHolder.innerHTML = ""
   val plan =
