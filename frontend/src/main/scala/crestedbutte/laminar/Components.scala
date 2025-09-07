@@ -306,7 +306,8 @@ object Components {
                     expanded => if (expanded) "0" else "1",
                   ),
                   styleProp("pointer-events") <-- tripExpanded.signal
-                    .map(expanded => if (expanded) "none" else "auto",
+                    .map(expanded =>
+                      if (expanded) "none" else "auto",
                     ),
                   styleProp("transition") := "opacity 200ms ease",
                   span("+"),
@@ -322,7 +323,8 @@ object Components {
                     expanded => if (expanded) "1" else "0",
                   ),
                   styleProp("pointer-events") <-- tripExpanded.signal
-                    .map(expanded => if (expanded) "auto" else "none",
+                    .map(expanded =>
+                      if (expanded) "auto" else "none",
                     ),
                   styleProp("transition") := "opacity 250ms ease",
 
@@ -452,7 +454,7 @@ object Components {
       )
 
     div(
-      cls := "plan-segments box",
+      cls := "plan-segments",
       styleAttr := "position: relative; overflow: hidden;",
       // Slidable content
       div(

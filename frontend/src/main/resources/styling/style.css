@@ -157,8 +157,9 @@ body {
 
 
 .plan-segments {
-    background-color: white;
-    color: black;
+    border: 1px solid white;
+    border-radius: 5px;
+    color: white;
     margin: 4px 0;
     padding: 8px;
 }
@@ -179,7 +180,6 @@ body {
 }
 
 .route-gap {
-    background: #f8f9fa;
     margin: 8px 0;
     padding: 12px;
     text-align: center;
