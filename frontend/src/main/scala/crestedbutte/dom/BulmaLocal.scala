@@ -32,7 +32,7 @@ object BulmaLocal {
       paddingBottom := "3px",
       cls := "time",
       button(
-        cls := s"button clickable-time button m-2 $buttonModifier",
+        cls := s"button clickable-time button m-2",
         onClick.mapTo {
           LocationTimeDirection(l, segment)
         } --> updates,

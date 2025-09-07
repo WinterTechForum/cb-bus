@@ -21,7 +21,6 @@ object TimeCalculations {
           Left("WTF Invalid: " + ltd)
     } yield {
 
-      println("ltd.routeSegment.route: " + ltd.routeSegment.route)
       val routeWithTimes =
         ltd.routeSegment.route match
           case Southbound.componentName =>

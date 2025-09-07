@@ -42,11 +42,8 @@ object MyApp extends App {
     "bookmark" -> "🔖",
     "check"    -> "✅",
   )
-  println("Saved plans: " + persistence.listPlanNames())
   persistence.savePlanByName("Test", plan)
   persistence.savePlanByName("Test2", plan2)
-  println("Saved plan: " + persistence.getPlanByName("Test"))
-  println("Saved plan: " + persistence.getPlanByName("Test2"))
   com.raquo.laminar.api.L.render(
     appHolder,
     RoutingStuff.app,

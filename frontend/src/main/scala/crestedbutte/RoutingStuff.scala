@@ -45,10 +45,8 @@ object RoutingStuff {
       write(page)(
         BusPage.rw,
       ), // serialize page data for storage in History API log
-    deserializePage = pageStr =>
-      println("pageStr: " + pageStr)
-      read(pageStr)(BusPage.rw)
-    , // deserialize the above
+    deserializePage =
+      pageStr => read(pageStr)(BusPage.rw), // deserialize the above
     routeFallback = _ =>
       BusPage(
         mode = AppMode.Production,
@@ -68,7 +66,6 @@ object RoutingStuff {
       .collectSignal[BusPage]($loginPage =>
         div(
           child <-- $loginPage.map(busPageInfo =>
-            println("wtf is going on:" + busPageInfo)
             Components.FullApp(
               busPageInfo.javaClock,
             ),

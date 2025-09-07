@@ -166,10 +166,6 @@ body {
     padding: 12px;
 }
 
-.segment-editor-header {
-    padding: 8px 0;
-}
-
 .segment-editor-carousel {
     display: flex;
     justify-content: center;
@@ -200,17 +196,6 @@ body {
     filter: invert(100%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(100%) contrast(100%);
 }
 
-/* Share button container styling */
-.share-button-container {
-    min-height: 40px;
-    color: black;
-}
-
-.share-button-container .glyphicon {
-    width: 20px;
-    height: 20px;
-    color: black;
-}
 
 /* Make the time scrolling wheel only as wide as its content and center it
    so there is dead space on either side for dragging the page */
@@ -220,10 +205,4 @@ body {
     width: max-content;
     margin-left: auto;
     margin-right: auto;
-}
-
-@media (max-width: 480px) {
-    html {
-        font-size: 19px;
-    }
 }

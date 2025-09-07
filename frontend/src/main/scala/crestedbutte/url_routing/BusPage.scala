@@ -20,8 +20,6 @@ case class BusPage(
   fixedTime: Option[WallTime],
   plan: Option[Plan]) {
 
-  println(s"fixedTime: $fixedTime")
-
   val javaClock =
     if (fixedTime.isDefined)
       java.time.Clock.fixed(
@@ -56,9 +54,6 @@ object BusPage {
       time: Option[String],
       plan: Option[String],
     ) =>
-      println("mode: " + mode)
-      println("plan" + plan)
-      println("time in decodePage: " + time)
       BusPage(
         mode =
           mode.map(AppMode.valueOf).getOrElse(AppMode.Production),
