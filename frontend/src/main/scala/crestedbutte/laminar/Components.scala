@@ -381,27 +381,6 @@ object Components {
       ),
     )
 
-  def deleteButton(
-    routeSegment: RouteSegment,
-    addingNewRoute: Var[Boolean],
-    legDeleter: Observer[RouteSegment],
-  ): ReactiveHtmlElement[HTMLAnchorElement] =
-    a(
-      cls := "link transit-period-delete",
-      onClick.mapTo(routeSegment) --> legDeleter,
-      SvgIcon.squareMinus("delete filter-white"),
-    )
-
-  def transitSegment(
-    routeSegment: RouteSegment,
-    addingNewRoute: Var[Boolean],
-    legDeleter: Observer[RouteSegment],
-  ) =
-    div(
-      cls := "transit-period",
-      styleAttr := "display: flex; flex-direction: column; align-items: center; justify-content: space-between; height: 100%;",
-    )
-
   def RouteLegElement(
     routeSegment: RouteSegment,
     addingNewRoute: Var[Boolean],
