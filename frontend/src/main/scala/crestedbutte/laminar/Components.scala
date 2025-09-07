@@ -6,9 +6,7 @@ import com.raquo.laminar.api.L.*
 import com.raquo.laminar.nodes.ReactiveHtmlElement
 import crestedbutte.*
 import crestedbutte.NotificationStuff.desiredAlarms
-import crestedbutte.dom.BulmaLocal
-import crestedbutte.dom.BulmaLocal.UpcomingStops
-import crestedbutte.dom.{BulmaLocal, StopContext}
+import crestedbutte.dom.StopContext
 import crestedbutte.laminar.TouchControls.Swipe
 import crestedbutte.pwa.Persistence
 import crestedbutte.routes.{CompleteStopList, RTA, RouteWithTimes}
@@ -76,52 +74,17 @@ object Components {
     val whatToShowBetter
       : Signal[ReactiveHtmlElement[HTMLDivElement]] =
       selectedStop.signal
-        .map {
-          case Some(selectedStopInfo) =>
-            val res =
-              UpcomingStops(
-                selectedStopInfo.busScheduleAtStop,
-                selectedStopInfo.routeSegment,
-                $plan.writer
-                  .contramap[LocationTimeDirection] { ltd =>
-                    selectedStop.set(None)
-                    val res =
-                      TimeCalculations
-                        .updateSegmentFromArbitrarySelection(
-                          ltd,
-                          $plan.now(),
-                        ) match {
-                        case Left(failure) =>
-                          throw new Exception(failure)
-                        case Right(segment) => segment
-                      }
-                    db.saveDailyPlanOnly(res)
-                    addingNewRoute.set {
-                      false
-                    }
-                    res
-                  },
-                selectedStopInfo.context,
-              )
-
-            import scala.scalajs.js.timers._
-            setTimeout(200)(
-              dom.document
-                .getElementById("selected-time")
-                .scrollIntoView(
-                  top = false,
-                ),
-            )
-            res
-          case None =>
-            Components.PlanElement(
-              timeStamps,
-              db,
-              $plan,
-              addingNewRoute,
-              selectedStop.writer,
-            )
+        .map { case None =>
+          Components.PlanElement(
+            timeStamps,
+            db,
+            $plan,
+            addingNewRoute,
+            selectedStop.writer,
+          )
         }
+
+    println("for real?")
 
     div(
       onMountCallback: context =>
@@ -133,7 +96,13 @@ object Components {
           idAttr := "container",
 
           // Scrolling wheel demo at the top
-          child <-- whatToShowBetter, // **THIS IS THE IMPORTANT STUFF** The fact that it's hard to see means I need to remove other bullshit
+          Components.PlanElement(
+            timeStamps,
+            db,
+            $plan,
+            addingNewRoute,
+            selectedStop.writer,
+          ),
           timeStamps --> Observer[WallTime](
             onNext = localTime =>
               desiredAlarms
@@ -304,8 +273,7 @@ object Components {
                     expanded => if (expanded) "0" else "1",
                   ),
                   styleProp("pointer-events") <-- tripExpanded.signal
-                    .map(expanded =>
-                      if (expanded) "none" else "auto",
+                    .map(expanded => if (expanded) "none" else "auto",
                     ),
                   styleProp("transition") := "opacity 200ms ease",
                   span("+"),
@@ -321,8 +289,7 @@ object Components {
                     expanded => if (expanded) "1" else "0",
                   ),
                   styleProp("pointer-events") <-- tripExpanded.signal
-                    .map(expanded =>
-                      if (expanded) "auto" else "none",
+                    .map(expanded => if (expanded) "auto" else "none",
                     ),
                   styleProp("transition") := "opacity 250ms ease",
 

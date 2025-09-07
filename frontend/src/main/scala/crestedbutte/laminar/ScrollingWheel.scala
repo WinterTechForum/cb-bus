@@ -6,9 +6,7 @@ import com.raquo.laminar.api.L.*
 import com.raquo.laminar.nodes.ReactiveHtmlElement
 import crestedbutte.*
 import crestedbutte.NotificationStuff.desiredAlarms
-import crestedbutte.dom.BulmaLocal
-import crestedbutte.dom.BulmaLocal.UpcomingStops
-import crestedbutte.dom.{BulmaLocal, StopContext}
+import crestedbutte.dom.StopContext
 import crestedbutte.laminar.TouchControls.Swipe
 import crestedbutte.pwa.Persistence
 import crestedbutte.routes.{CompleteStopList, RTA, RouteWithTimes}
