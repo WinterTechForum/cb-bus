@@ -106,11 +106,10 @@ object ScrollingWheel {
     }
 
     val wheelElement = div(
-      cls := "scrolling-wheel",
-      styleAttr := s"height: ${containerHeight}px; overflow: hidden; position: relative;",
+      cls := "scrolling-wheel scrolling-wheel-container",
+      styleProp("height") := s"${containerHeight}px",
       div(
         cls := "wheel-mask",
-        styleAttr := "position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; z-index: 10;",
 
         // Center highlight only (no background gradients)
         div(
@@ -123,14 +122,14 @@ object ScrollingWheel {
         div(
           cls := "wheel-items",
           styleAttr <-- scrollPosition.signal.map(pos =>
-            s"position: relative; transform: translateY(${centerOffset - pos}px); transition: ${if (isDragging.now()) "none" else "transform 0.2s ease-out"};",
+            s"transform: translateY(${centerOffset - pos}px); transition: ${if (isDragging.now()) "none" else "transform 0.2s ease-out"};",
           ),
 
           // Actual items
           items.zipWithIndex.map { case (item, index) =>
             div(
               cls := "wheel-item",
-              styleAttr := s"height: ${itemHeight}px; display: flex; align-items: center; justify-content: center; padding: 0 20px; user-select: none;",
+              styleProp("height") := s"${itemHeight}px",
               itemToString(item),
             )
           },

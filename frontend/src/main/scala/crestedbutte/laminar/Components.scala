@@ -240,18 +240,16 @@ object Components {
                 )
               },
               cls := "centered",
-              styleAttr := "display: flex; justify-content: center;",
               div(
                 cls := "trip-button-container",
-                styleAttr := "position: relative; display: flex; justify-content: center; align-items: center; margin: 0.5rem;",
                 styleProp("width") := "100%",
                 styleProp("height") := "56px",
                 styleProp("transition") := "width 300ms ease",
 
                 // Collapsed + Trip button
                 button(
-                  cls := "button",
-                  styleAttr := s"position: absolute; left: 50%; transform: translateX(-50%); top: 0; width: ${buttonWidth}px; display: flex; align-items: center; justify-content: center; gap: 0.5rem;",
+                  cls := "button floating-center-button",
+                  styleProp("width") := s"${buttonWidth}px",
                   styleProp("opacity") <-- tripExpanded.signal.map(
                     expanded => if (expanded) "0" else "1",
                   ),
@@ -268,7 +266,10 @@ object Components {
 
                 // Expanded buttons container
                 div(
-                  styleAttr := s"position: relative; width: 100%; display: flex; justify-content: center; align-items: center; gap: ${buttonGap + extraSpacing}px;",
+                  cls := "expanded-buttons-row",
+                  styleProp(
+                    "gap",
+                  ) := s"${buttonGap + extraSpacing}px",
                   styleProp("opacity") <-- tripExpanded.signal.map(
                     expanded => if (expanded) "1" else "0",
                   ),
@@ -282,7 +283,7 @@ object Components {
                   button(
                     cls := "button",
                     "New trip",
-                    styleAttr := s"width: ${buttonWidth}px;",
+                    styleProp("width") := s"${buttonWidth}px",
                     onClick --> Observer { _ =>
                       addingNewRoute.set(true)
                       setTimeout(300)(tripExpanded.set(false))
@@ -293,7 +294,7 @@ object Components {
                   button(
                     cls := "button",
                     "Return trip",
-                    styleAttr := s"width: ${buttonWidth}px;",
+                    styleProp("width") := s"${buttonWidth}px",
                     onClick --> Observer { _ =>
                       val plan = $plan.now()
                       val maybeLastSeg = plan.l.lastOption
@@ -382,10 +383,10 @@ object Components {
 
     div(
       cls := "plan-segments",
-      styleAttr := "position: relative; overflow: hidden;",
       // Slidable content
       div(
-        styleAttr := "display: flex; align-items: flex-start; width: 100%;",
+        cls := "plan-segments_row",
+        // TODO These hard-coded styleProp values should move to style.css
         styleProp("position") := "relative",
         styleProp("z-index") := "1",
         styleProp("transition") := "transform 180ms ease",
@@ -395,7 +396,7 @@ object Components {
         // Touch handlers for swipe-to-reveal (encapsulated)
         swipeModifier,
         div(
-          styleAttr := "flex: 3; display: flex; flex-direction: column;",
+          cls := "plan-segments_left",
           div(
             s"${routeSegment.start.l.name} → ${routeSegment.end.l.name}",
           ),
@@ -494,15 +495,14 @@ object Components {
 
           div(
             cls := "share-button-container",
-            styleAttr := "position: relative; display: flex; justify-content: center; align-items: center; margin: 0.5rem;",
             styleProp("width") := "100%",
             styleProp("height") := "56px",
             styleProp("transition") := "width 300ms ease",
 
             // Share button (visible when collapsed)
             button(
-              cls := "button",
-              styleAttr := s"position: absolute; left: 50%; transform: translateX(-50%); top: 0; width: ${buttonWidth}px; display: flex; align-items: center; justify-content: center; gap: 0.5rem;",
+              cls := "button floating-center-button",
+              styleProp("width") := s"${buttonWidth}px",
               styleProp("opacity") <-- isExpanded.signal.map(
                 expanded => if (expanded) "0" else "1",
               ),
@@ -518,7 +518,8 @@ object Components {
 
             // Expanded buttons container to guarantee separation
             div(
-              styleAttr := s"position: relative; width: 100%; display: flex; justify-content: center; align-items: center; gap: ${buttonGap + extraSpacing}px;",
+              cls := "expanded-buttons-row",
+              styleProp("gap") := s"${buttonGap + extraSpacing}px",
               styleProp("opacity") <-- isExpanded.signal.map(
                 expanded => if (expanded) "1" else "0",
               ),
@@ -531,7 +532,7 @@ object Components {
               button(
                 cls := "button",
                 "Text",
-                styleAttr := s"width: ${buttonWidth}px;",
+                styleProp("width") := s"${buttonWidth}px",
                 onClick --> Observer { _ =>
                   val text = plan.plainTextRepresentation
                   if (
@@ -560,7 +561,7 @@ object Components {
               button(
                 cls := "button",
                 "Link",
-                styleAttr := s"width: ${buttonWidth}px;",
+                styleProp("width") := s"${buttonWidth}px",
                 onClick --> Observer { _ =>
                   val url =
                     if (dom.document.URL.contains("localhost"))

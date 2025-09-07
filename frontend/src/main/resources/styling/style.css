@@ -176,3 +176,83 @@ body {
     margin-left: auto;
     margin-right: auto;
 }
+
+/* Wheel container and items */
+.scrolling-wheel-container {
+    overflow: hidden;
+    position: relative;
+}
+
+.wheel-mask {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.wheel-items {
+    position: relative;
+}
+
+.wheel-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 20px;
+    user-select: none;
+}
+
+/* Centered helper */
+.centered {
+    display: flex;
+    justify-content: center;
+}
+
+/* Trip/share button containers and buttons */
+.trip-button-container,
+.share-button-container {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0.5rem;
+}
+
+.floating-center-button {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    top: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.expanded-buttons-row {
+    position: relative;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.plan-segments {
+    position: relative;
+    overflow: hidden;
+}
+
+.plan-segments_row {
+    display: flex;
+    align-items: flex-start;
+    width: 100%;
+}
+
+.plan-segments_left {
+    flex: 3;
+    display: flex;
+    flex-direction: column;
+}
