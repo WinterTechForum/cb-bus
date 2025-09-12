@@ -6,6 +6,7 @@ import com.raquo.laminar.api.L.*
 import com.raquo.laminar.nodes.ReactiveHtmlElement
 import crestedbutte.*
 import crestedbutte.NotificationStuff.desiredAlarms
+import crestedbutte.NotificationCountdown
 import crestedbutte.dom.StopContext
 import crestedbutte.laminar.TouchControls.Swipe
 import crestedbutte.pwa.Persistence
@@ -28,6 +29,40 @@ case class SelectedStopInfo(
   context: StopContext)
 
 object Components {
+  
+  def NotificationToggleButton(
+    $plan: Signal[Plan],
+    timeStamps: Signal[WallTime],
+    buttonWidth: Int,
+  ) = {
+    val notificationsEnabled: Var[Boolean] = Var(false)
+    
+    button(
+      cls := "button",
+      styleAttr := s"width: ${buttonWidth}px;",
+      child <-- notificationsEnabled.signal.map { enabled =>
+        if (enabled) "🔔 On" else "🔕 Off"
+      },
+      onClick --> Observer { _ =>
+        val currentEnabled = notificationsEnabled.now()
+        
+        if (!currentEnabled) {
+          // Request permission if needed
+          NotificationCountdown.requestPermissionIfNeeded()
+          
+          // Check if we have permission
+          if (NotificationCountdown.hasPermission) {
+            notificationsEnabled.set(true)
+            NotificationCountdown.startCountdownNotifications($plan, timeStamps)
+          }
+        } else {
+          // Turn off notifications
+          notificationsEnabled.set(false)
+          NotificationCountdown.stopCountdownNotifications()
+        }
+      },
+    )
+  }
 
   def FullApp(
     javaClock: Clock,
@@ -315,6 +350,13 @@ object Components {
                         }
                       }
                     },
+                  ),
+                  
+                  // Notification toggle button
+                  NotificationToggleButton(
+                    $plan.signal,
+                    timeStamps,
+                    buttonWidth,
                   ),
                 ),
               ),
