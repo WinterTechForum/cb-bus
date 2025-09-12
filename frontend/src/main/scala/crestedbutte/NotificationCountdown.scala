@@ -1,16 +1,16 @@
 package crestedbutte
 
 import com.billding.time.WallTime
-import com.raquo.laminar.api.L.*
+import com.raquo.laminar.api.L._
 import org.scalajs.dom
-import org.scalajs.dom.{Notification, NotificationOptions}
+import org.scalajs.dom.experimental.{Notification, NotificationOptions}
 import scala.scalajs.js
-import scala.scalajs.js.timers.*
-import scala.concurrent.duration.*
+import scala.scalajs.js.timers._
+import scala.concurrent.duration._
 
 object NotificationCountdown {
-  private val NOTIFICATION_TAG = "route-countdown"
   private var updateInterval: Option[SetIntervalHandle] = None
+  private var lastNotification: Option[Notification] = None
   
   def requestPermissionIfNeeded(): Unit = {
     if (dom.Notification.permission == "default") {
@@ -22,16 +22,43 @@ object NotificationCountdown {
   
   def hasPermission: Boolean = dom.Notification.permission == "granted"
   
-  def startCountdownNotifications($plan: Signal[Plan], timeStamps: Signal[WallTime]): Unit = {
+  def startCountdownNotifications($plan: Var[Plan], timeStampsSignal: Signal[WallTime]): Unit = {
     // Clear any existing interval
     stopCountdownNotifications()
     
+    // Keep track of current time
+    var currentTime: WallTime = null
+    
+    // Subscribe to time updates
+    timeStampsSignal.foreach { time =>
+      currentTime = time
+    }(unsafeWindowOwner)
+    
+    // Function to update the notification
+    def update(): Unit = {
+      if (currentTime != null) {
+        val plan = $plan.now()
+        findNextSegmentTime(plan, currentTime) match {
+          case Some((segmentTime, routeName)) =>
+            // Calculate minutes until segment start
+            val minutesUntil = if (segmentTime.isAfter(currentTime)) {
+              val diff = segmentTime.localTime.value - currentTime.localTime.value
+              if (diff > 0) diff else 0
+            } else 0
+            
+            showNotification(minutesUntil.toLong, routeName)
+          case None =>
+            clearNotification()
+        }
+      }
+    }
+    
     // Update immediately
-    updateNotification($plan.now(), timeStamps.now())
+    update()
     
     // Then update every 30 seconds
     updateInterval = Some(setInterval(30.seconds) {
-      updateNotification($plan.now(), timeStamps.now())
+      update()
     })
   }
   
@@ -41,24 +68,17 @@ object NotificationCountdown {
     clearNotification()
   }
   
-  private def updateNotification(plan: Plan, currentTime: WallTime): Unit = {
-    findNextSegmentTime(plan, currentTime) match {
-      case Some((segmentTime, routeName)) =>
-        val minutesUntil = segmentTime.between(currentTime).toMinutes
-        showNotification(minutesUntil, routeName)
-      case None =>
-        clearNotification()
-    }
-  }
-  
   private def findNextSegmentTime(plan: Plan, currentTime: WallTime): Option[(WallTime, String)] = {
     plan.routeSegments
-      .map(segment => (segment.s.t, segment.routeWithTimes.componentName))
+      .map(segment => (segment.s.t, segment.route.userFriendlyName))
       .find { case (segmentTime, _) => segmentTime.isAfter(currentTime) }
   }
   
   private def showNotification(minutesUntil: Long, routeName: String): Unit = {
     if (hasPermission) {
+      // Close any existing notification
+      lastNotification.foreach(_.close())
+      
       val message = if (minutesUntil <= 0) {
         s"$routeName route starting now!"
       } else if (minutesUntil == 1) {
@@ -67,33 +87,19 @@ object NotificationCountdown {
         s"$routeName route starts in $minutesUntil minutes"
       }
       
-      new Notification(
+      val notification = new Notification(
         message,
         NotificationOptions(
-          tag = NOTIFICATION_TAG,
-          requireInteraction = false,
-          silent = true,
-          renotify = false
+          vibrate = js.Array(100d)
         )
       )
+      
+      lastNotification = Some(notification)
     }
   }
   
   private def clearNotification(): Unit = {
-    // There's no direct way to clear a notification in the web API,
-    // but creating a new one with the same tag will replace the old one
-    if (hasPermission) {
-      val notification = new Notification(
-        "",
-        NotificationOptions(
-          tag = NOTIFICATION_TAG,
-          silent = true
-        )
-      )
-      // Close it immediately
-      js.timers.setTimeout(0) {
-        notification.close()
-      }
-    }
+    lastNotification.foreach(_.close())
+    lastNotification = None
   }
 }

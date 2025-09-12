@@ -31,7 +31,7 @@ case class SelectedStopInfo(
 object Components {
   
   def NotificationToggleButton(
-    $plan: Signal[Plan],
+    $plan: Var[Plan],
     timeStamps: Signal[WallTime],
     buttonWidth: Int,
   ) = {
@@ -354,7 +354,7 @@ object Components {
                   
                   // Notification toggle button
                   NotificationToggleButton(
-                    $plan.signal,
+                    $plan,
                     timeStamps,
                     buttonWidth,
                   ),
