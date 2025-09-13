@@ -24,7 +24,7 @@ object ServiceWorkerClient {
 
     import scala.concurrent.ExecutionContext.Implicits.global
     serviceWorker
-      .register("./sw-opt.js")
+      .register("./sw.js")
       .toFuture
       .onComplete {
         case Success(registration) =>

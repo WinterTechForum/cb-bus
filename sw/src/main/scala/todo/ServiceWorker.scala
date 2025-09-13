@@ -21,7 +21,7 @@ object ServiceWorker {
   val busCache = "cb-bus"
   val pointless = "does this make the sw js file change?"
   assert(pointless != null)
-  
+
   // Notification state
   private var notificationInterval: Option[SetIntervalHandle] = None
   private var currentPlan: Option[js.Dynamic] = None
@@ -45,6 +45,7 @@ object ServiceWorker {
   def main(
     args: Array[String],
   ): Unit = {
+    println("main: ServiceWorker installing!")
     self.addEventListener(
       "install",
       (event: ExtendableEvent) => {
@@ -69,35 +70,41 @@ object ServiceWorker {
     self.addEventListener(
       "message",
       (event: MessageEvent) => {
+        println("message: ServiceWorker received message")
         val data = event.data.asInstanceOf[js.Dynamic]
         val action = data.action.asInstanceOf[String]
-        
+
         action match {
           case "START_NOTIFICATIONS" =>
+            println("Service worker, starting notifications")
             notificationsEnabled = true
             currentPlan = Some(data.plan)
             startNotificationTimer()
             // Send acknowledgment back
             val ports = event.ports.asInstanceOf[js.Array[js.Dynamic]]
             if (ports.length > 0) {
-              ports(0).postMessage(js.Dynamic.literal(status = "started"))
+              ports(0).postMessage(
+                js.Dynamic.literal(status = "started"),
+              )
             }
-            
+
           case "STOP_NOTIFICATIONS" =>
             notificationsEnabled = false
             stopNotificationTimer()
             // Send acknowledgment back
             val ports = event.ports.asInstanceOf[js.Array[js.Dynamic]]
             if (ports.length > 0) {
-              ports(0).postMessage(js.Dynamic.literal(status = "stopped"))
+              ports(0).postMessage(
+                js.Dynamic.literal(status = "stopped"),
+              )
             }
-            
+
           case "UPDATE_PLAN" =>
             currentPlan = Some(data.plan)
             if (notificationsEnabled) {
               updateNotification()
             }
-            
+
           case _ =>
             println(s"Unknown action: $action")
         }
@@ -244,44 +251,50 @@ object ServiceWorker {
           Future.sequence(reloads).map(_ => ())
         }
   }
-  
+
   private def startNotificationTimer(): Unit = {
     stopNotificationTimer()
     updateNotification()
-    
+
     // Update every 30 seconds
     notificationInterval = Some(setInterval(30.seconds) {
       updateNotification()
     })
   }
-  
+
   private def stopNotificationTimer(): Unit = {
     notificationInterval.foreach(clearInterval)
     notificationInterval = None
   }
-  
-  private def updateNotification(): Unit = {
+
+  private def updateNotification(): Unit =
     currentPlan.foreach { planData =>
-      val segments = planData.routeSegments.asInstanceOf[js.Array[js.Dynamic]]
-      
+      val segments =
+        planData.routeSegments.asInstanceOf[js.Array[js.Dynamic]]
+
       // Find next segment
       val now = new js.Date().getTime()
       val nextSegmentOpt = segments.find { segment =>
-        val startTime = parseTime(segment.s.t.asInstanceOf[js.Dynamic])
+        val startTime =
+          parseTime(segment.s.t.asInstanceOf[js.Dynamic])
         startTime > now
       }
-      
+
       nextSegmentOpt.foreach { segment =>
-        val startTime = parseTime(segment.s.t.asInstanceOf[js.Dynamic])
-        val routeName = segment.route.userFriendlyName.asInstanceOf[String]
-        val minutesUntil = Math.max(0, ((startTime - now) / 60000).toLong)
-        
+        val startTime =
+          parseTime(segment.s.t.asInstanceOf[js.Dynamic])
+        val routeName =
+          segment.route.userFriendlyName.asInstanceOf[String]
+        val minutesUntil =
+          Math.max(0, ((startTime - now) / 60000).toLong)
+
         showNotification(minutesUntil, routeName)
       }
     }
-  }
-  
-  private def parseTime(timeObj: js.Dynamic): Double = {
+
+  private def parseTime(
+    timeObj: js.Dynamic,
+  ): Double = {
     // Parse the time object - this will need to match your actual time format
     val minutes = timeObj.localTime.value.asInstanceOf[Int]
     val today = new js.Date()
@@ -290,16 +303,21 @@ object ServiceWorker {
     today.setSeconds(0)
     today.getTime()
   }
-  
-  private def showNotification(minutesUntil: Long, routeName: String): Unit = {
+
+  private def showNotification(
+    minutesUntil: Long,
+    routeName: String,
+  ): Unit = {
     val message = if (minutesUntil <= 0) {
       s"$routeName route starting now!"
-    } else if (minutesUntil == 1) {
+    }
+    else if (minutesUntil == 1) {
       s"$routeName route starts in 1 minute"
-    } else {
+    }
+    else {
       s"$routeName route starts in $minutesUntil minutes"
     }
-    
+
     // Use the service worker registration to show notification
     val options = js.Dynamic.literal(
       body = message,
@@ -308,11 +326,13 @@ object ServiceWorker {
       tag = "route-countdown",
       requireInteraction = false,
       silent = true,
-      renotify = false
+      renotify = false,
     )
-    
+
     // Call showNotification dynamically
-    self.registration.asInstanceOf[js.Dynamic].showNotification("Route Countdown", options)
+    self.registration
+      .asInstanceOf[js.Dynamic]
+      .showNotification("Route Countdown", options)
   }
 
 }

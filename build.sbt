@@ -39,9 +39,9 @@ lazy val sw = (project in file("sw"))
   .settings(
     Compile / fullOptJS := (Compile / fullOptJS).dependsOn(Compile / scalafmt).value,
     Compile / fastOptJS / artifactPath := 
-      baseDirectory.value.getParentFile / "frontend" / "src" / "main" / "resources" / "sw-opt.js",
+      baseDirectory.value.getParentFile / "frontend" / "src" / "main" / "resources" / "sw.js",
     Compile / fullOptJS / artifactPath := 
-      baseDirectory.value.getParentFile / "frontend" / "src" / "main" / "resources" / "sw-opt.js",
+      baseDirectory.value.getParentFile / "frontend" / "src" / "main" / "resources" / "sw.js",
     scalaJSUseMainModuleInitializer := true,
     libraryDependencies ++= Seq(
       "org.scala-js" %%% "scalajs-dom" % "2.8.0"
