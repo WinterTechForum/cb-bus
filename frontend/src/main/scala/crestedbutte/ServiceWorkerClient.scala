@@ -84,6 +84,20 @@ object ServiceWorkerClient {
           serviceWorker.oncontrollerchange =
             (_: Event) => println("SWC: controller changed")
 
+          // On localhost, send a TEST_NOTIFY to verify SW messaging & notifications
+          val isLocal =
+            window.location.hostname == "localhost" || window.location.hostname == "127.0.0.1"
+          if (isLocal) {
+            serviceWorker.ready.toFuture.foreach { reg =>
+              val mc = new dom.MessageChannel()
+              mc.port1.onmessage = (e: dom.MessageEvent) =>
+                println(s"SWC <- test ack: ${e.data}")
+              val msg = js.Dynamic.literal(action = "TEST_NOTIFY")
+              reg.active.postMessage(msg, js.Array(mc.port2))
+              println("SWC: sent TEST_NOTIFY to service worker")
+            }(global)
+          }
+
         case Failure(error) =>
           println(
             s"SWC: registration failed: ${error.getMessage}",

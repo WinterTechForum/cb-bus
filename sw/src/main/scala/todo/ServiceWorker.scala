@@ -100,6 +100,20 @@ object ServiceWorker {
               )
             }
 
+          case "TEST_NOTIFY" =>
+            println(
+              "Service worker, TEST_NOTIFY received — showing test notification",
+            )
+            // Show an immediate test notification
+            showNotification(1L, "Test Route")
+            // Send acknowledgment back
+            val ports = event.ports.asInstanceOf[js.Array[js.Dynamic]]
+            if (ports.length > 0) {
+              ports(0).postMessage(
+                js.Dynamic.literal(status = "test_shown"),
+              )
+            }
+
           case "UPDATE_PLAN" =>
             currentPlan = Some(data.plan)
             if (notificationsEnabled) {
