@@ -20,6 +20,7 @@ import scala.concurrent.duration.*
 object ServiceWorker {
   val busCache = "cb-bus"
   val pointless = "does this make the sw js file change?"
+  println("pointless: " + pointless)
   assert(pointless != null)
 
   // Notification state
@@ -45,14 +46,21 @@ object ServiceWorker {
   def main(
     args: Array[String],
   ): Unit = {
-    println("main: ServiceWorker installing!")
+    println("SW: main starting up (global scope)")
+    logToClients("SW: main starting up (global scope)")
     self.addEventListener(
       "install",
       (event: ExtendableEvent) => {
         println(
-          s"install: service worker with message handler installed > ${event.toString}",
+          s"SW: install event received > ${event.toString}",
         )
-        event.waitUntil(toCache().toJSPromise)
+        // Cache core assets, then activate new SW immediately
+        val work = toCache()
+          .map { _ =>
+            logToClients("SW: assets cached; calling skipWaiting()")
+            self.skipWaiting()
+          }
+        event.waitUntil(work.toJSPromise)
       },
     )
 
@@ -60,17 +68,18 @@ object ServiceWorker {
       "activate",
       (event: ExtendableEvent) => {
         println(
-          s"activate: service worker activated > ${event.toString}",
+          s"SW: activate event received > ${event.toString}",
         )
-        // Keep existing cache so users can work offline; SW will update in background
+        // Take control of uncontrolled clients right away
         self.clients.claim()
+        logToClients("SW: activated and clients.claim() called")
       },
     )
 
     self.addEventListener(
       "message",
       (event: MessageEvent) => {
-        println("message: ServiceWorker received message")
+        println("SW: message event received")
         val data = event.data.asInstanceOf[js.Dynamic]
         val action = data.action.asInstanceOf[String]
 
@@ -106,7 +115,8 @@ object ServiceWorker {
             }
 
           case _ =>
-            println(s"Unknown action: $action")
+            println(s"SW: Unknown action: $action")
+            logToClients(s"SW: Unknown action: $action")
         }
       },
     )
@@ -126,8 +136,25 @@ object ServiceWorker {
       },
     )
 
-    println("main: ServiceWorker installing!")
+    println("SW: main initialized and event listeners registered")
+    logToClients(
+      "SW: main initialized and event listeners registered",
+    )
   }
+
+  private def logToClients(
+    message: String,
+  ): Unit =
+    self.clients
+      .matchAll()
+      .toFuture
+      .foreach { clientList =>
+        clientList.foreach { client =>
+          client.postMessage(
+            js.Dynamic.literal(kind = "sw-log", message = message),
+          )
+        }
+      }
 
   def toCache(): Future[Unit] =
     self.caches

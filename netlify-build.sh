@@ -25,4 +25,4 @@ echo "Build completed successfully!"
 # List the generated files for verification
 echo "Generated files:"
 ls -la frontend/src/main/resources/compiledJavascript/
-ls -la frontend/src/main/resources/sw-opt.js*
+ls -la frontend/src/main/resources/sw.js*
