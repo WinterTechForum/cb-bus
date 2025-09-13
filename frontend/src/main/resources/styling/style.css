@@ -55,73 +55,11 @@ body {
     width: 1.2em;
 }
 
-.button.is-info {
-    background-color: gray;
-}
-
 .button:disabled {
     opacity: 0.4;
     cursor: not-allowed;
 }
 
-.link {
-    color: black;
-}
-
-.stop-information {
-    display: grid;
-    grid-template-columns: 2fr 6fr;
-    padding: 5px 0;
-}
-
-.stop-name {
-    font-weight: bold;
-}
-
-.route-header {
-    font-weight: bold;
-}
-
-.route-header_icon {
-    padding-left: 5px;
-}
-
-.arrival-time-alarm {
-    padding: 5px;
-}
-
-.title {
-    color: black;
-}
-
-.time-picker-simple {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    padding: 5px 0;
-    border-bottom: 1px solid black;
-}
-
-.wheel {
-    display: grid;
-    place-items: center;
-    grid-template-rows: auto auto auto;
-    padding: 5px 0;
-    border-bottom: 1px solid black;
-}
-
-#sandbox {
-    display: grid;
-    place-items: center;
-}
-
-
-.plan-segments {
-    border: 3px solid white;
-    border-radius: 5px;
-    color: white;
-    margin: 4px 0;
-    padding: 8px;
-}
 
 .add-new-route-section {
     padding: 10px 0;
@@ -146,25 +84,6 @@ body {
     justify-content: center;
     gap: 8px;
     padding: 8px 0;
-}
-
-.carousel-card {
-    padding: 12px;
-}
-
-.carousel-card.current {
-    flex: 2;
-    background-color: white;
-    font-weight: bold;
-    border-radius: 5px;
-}
-
-.carousel-card.prev,
-.carousel-card.next {
-    flex: 1;
-    border-radius: 5px;
-    opacity: 0.4;
-    border: 1px solid black;
 }
 
 /* Make the time scrolling wheel only as wide as its content and center it
@@ -241,6 +160,11 @@ body {
 }
 
 .plan-segments {
+    border: 3px solid white;
+    border-radius: 5px;
+    color: white;
+    margin: 4px 0;
+    padding: 8px;
     position: relative;
     overflow: hidden;
 }

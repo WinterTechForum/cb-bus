@@ -254,8 +254,7 @@ object Components {
                     expanded => if (expanded) "0" else "1",
                   ),
                   styleProp("pointer-events") <-- tripExpanded.signal
-                    .map(expanded =>
-                      if (expanded) "none" else "auto",
+                    .map(expanded => if (expanded) "none" else "auto",
                     ),
                   styleProp("transition") := "opacity 200ms ease",
                   span("+"),
@@ -274,8 +273,7 @@ object Components {
                     expanded => if (expanded) "1" else "0",
                   ),
                   styleProp("pointer-events") <-- tripExpanded.signal
-                    .map(expanded =>
-                      if (expanded) "auto" else "none",
+                    .map(expanded => if (expanded) "auto" else "none",
                     ),
                   styleProp("transition") := "opacity 250ms ease",
 
@@ -407,38 +405,6 @@ object Components {
     )
 
   }
-
-  def stopInfo(
-    routeSegment: RouteSegment,
-    stop: LocationWithTime,
-    routeWithTimes: RouteWithTimes,
-    scheduleSelector: Observer[
-      Option[SelectedStopInfo],
-    ],
-    context: StopContext,
-  ) =
-    div(
-      cls := "stop-information",
-      div(
-        cls := "stop-name",
-        div(stop.l.name),
-      ),
-      div(cls := "stop-alt-name", div(stop.l.altName)),
-      div(
-        div(
-          routeWithTimes.allStops
-            .filter(_.location == stop.l)
-            .map { scheduleAtStop =>
-              StopTimeInfoForLocation(stop.t,
-                                      scheduleAtStop,
-                                      scheduleSelector,
-                                      routeSegment,
-                                      context,
-              )
-            },
-        ),
-      ),
-    )
 
   def animatedButton(
     text: String,
