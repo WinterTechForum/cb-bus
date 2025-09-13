@@ -3,20 +3,17 @@ package crestedbutte
 import com.billding.time.WallTime
 import com.raquo.laminar.api.L._
 import org.scalajs.dom
-import org.scalajs.dom.experimental.{Notification, NotificationOptions}
 import scala.scalajs.js
 import scala.scalajs.js.timers._
 import scala.concurrent.duration._
 
 object NotificationCountdown {
   private var updateInterval: Option[SetIntervalHandle] = None
-  private var lastNotification: Option[Notification] = None
+  private var lastNotification: Option[dom.Notification] = None
   
   def requestPermissionIfNeeded(): Unit = {
     if (dom.Notification.permission == "default") {
-      dom.Notification.requestPermission { response =>
-        println(s"Notification permission response: $response")
-      }
+      dom.Notification.requestPermission(_ => ())
     }
   }
   
@@ -87,12 +84,8 @@ object NotificationCountdown {
         s"$routeName route starts in $minutesUntil minutes"
       }
       
-      val notification = new Notification(
-        message,
-        NotificationOptions(
-          vibrate = js.Array(100d)
-        )
-      )
+      // Create notification using the simpler API
+      val notification = new dom.Notification(message)
       
       lastNotification = Some(notification)
     }
