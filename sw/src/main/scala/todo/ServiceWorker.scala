@@ -28,20 +28,26 @@ object ServiceWorker {
   private var currentPlan: Option[js.Dynamic] = None
   private var notificationsEnabled: Boolean = false
 
-  val todoAssets: js.Array[RequestInfo] = List[RequestInfo](
-    "/",
-    "/index.html",
-    "/manifest.webmanifest",
-    "/compiledJavascript/main.js",
-    "/compiledJavascript/main.js.map",
-    "/favicon.ico",
-    "/images/BILLDING_LogoMark-256.png",
-    "/styling/style.css",
-    "/glyphicons/svg/individual-svg/glyphicons-basic-32-bus.svg",
-    "/glyphicons/svg/individual-svg/glyphicons-basic-592-map.svg",
-    "/styling/popup_nojs.css",
-    "/styling/bulma.min.css",
-  ).toJSArray
+  val todoAssets: js.Array[RequestInfo] =
+    if (false) {
+      List[RequestInfo](
+        "/",
+        "/index.html",
+        "/manifest.webmanifest",
+        "/compiledJavascript/main.js",
+        "/compiledJavascript/main.js.map",
+        "/favicon.ico",
+        "/images/BILLDING_LogoMark-256.png",
+        "/styling/style.css",
+        "/glyphicons/svg/individual-svg/glyphicons-basic-32-bus.svg",
+        "/glyphicons/svg/individual-svg/glyphicons-basic-592-map.svg",
+        "/styling/popup_nojs.css",
+        "/styling/bulma.min.css",
+      ).toJSArray
+    }
+    else {
+      List.empty.toJSArray
+    }
 
   def main(
     args: Array[String],
@@ -52,6 +58,16 @@ object ServiceWorker {
       (event: ExtendableEvent) => {
         println(
           s"install: service worker with message handler installed > ${event.toString}",
+        )
+        self.skipWaiting();
+        event.waitUntil(toCache().toJSPromise)
+      },
+    )
+    self.addEventListener(
+      "register",
+      (event: ExtendableEvent) => {
+        println(
+          s"register: service worker with message handler installed > ${event.toString}",
         )
         event.waitUntil(toCache().toJSPromise)
       },
@@ -97,20 +113,6 @@ object ServiceWorker {
             if (ports.length > 0) {
               ports(0).postMessage(
                 js.Dynamic.literal(status = "stopped"),
-              )
-            }
-
-          case "TEST_NOTIFY" =>
-            println(
-              "Service worker, TEST_NOTIFY received — showing test notification",
-            )
-            // Show an immediate test notification
-            showNotification(1L, "Test Route")
-            // Send acknowledgment back
-            val ports = event.ports.asInstanceOf[js.Array[js.Dynamic]]
-            if (ports.length > 0) {
-              ports(0).postMessage(
-                js.Dynamic.literal(status = "test_shown"),
               )
             }
 
@@ -272,7 +274,7 @@ object ServiceWorker {
     updateNotification()
 
     // Update every 30 seconds
-    notificationInterval = Some(setInterval(30.seconds) {
+    notificationInterval = Some(setInterval(5.seconds) {
       updateNotification()
     })
   }
