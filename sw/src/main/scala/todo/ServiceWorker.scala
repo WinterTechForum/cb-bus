@@ -16,13 +16,15 @@ import scala.scalajs.js
 import scala.scalajs.js.JSConverters.*
 import scala.scalajs.js.timers.*
 import scala.concurrent.duration.*
+import scala.scalajs.js.JSON
 
 object ServiceWorker {
   val busCache = "cb-bus"
 
   // Notification state
   private var notificationInterval: Option[SetIntervalHandle] = None
-  private var currentPlan: Option[js.Dynamic] = None
+  private var currentPlan: Option[js.Dynamic] =
+    None // TODO Convert to strongly typedPlan
   private var notificationsEnabled: Boolean = false
 
   val todoAssets: js.Array[RequestInfo] =
@@ -92,6 +94,11 @@ object ServiceWorker {
             println("Service worker, starting notifications")
             notificationsEnabled = true
             currentPlan = Some(data.plan)
+            println(
+              "Service worker, current plan: " + JSON.stringify(
+                data.plan,
+              ),
+            )
             startNotificationTimer()
             // Send acknowledgment back
             val ports = event.ports.asInstanceOf[js.Array[js.Dynamic]]
