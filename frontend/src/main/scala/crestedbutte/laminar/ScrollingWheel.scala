@@ -10,7 +10,7 @@ import crestedbutte.dom.StopContext
 import crestedbutte.laminar.TouchControls.Swipe
 import crestedbutte.pwa.Persistence
 import crestedbutte.{RTA, RouteWithTimes}
-import crestedbutte.routes.CompleteStopList
+import crestedbutte.CompleteStopList
 import java.time.format.DateTimeFormatter
 import java.time.{Clock, OffsetDateTime}
 import org.scalajs.dom

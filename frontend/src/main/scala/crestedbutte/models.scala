@@ -626,3 +626,28 @@ case class BusScheduleAtStop(
     times.map(t => LocationWithTime(location, t))
 
 }
+
+object CompleteStopList {
+  val values =
+    Seq(
+      Location.MountaineerSquare,
+      Location.FourwayGunnison,
+      Location.Riverbend,
+      Location.BrushCreek,
+      Location.Riverland,
+      Location.CBSouth,
+      Location.Almont,
+      Location.OhioCreek,
+      Location.TallTexan,
+      Location.RecCenter,
+      Location.GunnisonLibrary,
+      Location.GunnisonCommunitySchools,
+      Location.EleventhAndVirginia,
+      Location.Safeway,
+      Location.TellerAndHighwayFifty,
+      Location.Western,
+      Location.DenverAndHighwayOneThirtyFive,
+      Location.SpencerAndHighwayOneThirtyFive,
+    )
+
+}
