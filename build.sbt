@@ -3,11 +3,20 @@ ThisBuild / scalaVersion := "3.3.6"
 version := "0.2"
 
 lazy val root = (project in file("."))
-  .aggregate(frontend, sw)
+  .aggregate(common, frontend, sw)
+
+lazy val common = (project in file("common"))
+  .enablePlugins(ScalaJSPlugin)
+  .settings(
+    libraryDependencies ++= Seq(
+      "com.lihaoyi" %%% "upickle" % "3.1.3",
+    )
+  )
 
 lazy val frontend = (project in file("frontend"))
   .enablePlugins(ScalaJSPlugin)
   .enablePlugins(WebScalaJSBundlerPlugin)
+  .dependsOn(common)
   .settings(
     pipelineStages in Assets := Seq(scalaJSPipeline),
     scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.CommonJSModule) },
@@ -36,6 +45,7 @@ lazy val frontend = (project in file("frontend"))
 
 lazy val sw = (project in file("sw"))
   .enablePlugins(ScalaJSPlugin)
+  .dependsOn(common)
   .settings(
     Compile / fullOptJS := (Compile / fullOptJS).dependsOn(Compile / scalafmt).value,
     Compile / fastOptJS / artifactPath := 
