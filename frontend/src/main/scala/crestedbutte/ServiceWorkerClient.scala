@@ -11,13 +11,9 @@ import scala.util.{Failure, Success}
 object ServiceWorkerClient {
   def registerServiceWorker(): Unit = {
     val window = org.scalajs.dom.window
-    println("SWC: attempting to register service worker...")
 
     val navigatorDyn = window.navigator.asInstanceOf[js.Dynamic]
     if (js.isUndefined(navigatorDyn.selectDynamic("serviceWorker"))) {
-      println(
-        "SWC: service workers unsupported or insecure context; skipping registration",
-      )
       return
     }
 
@@ -59,19 +55,12 @@ object ServiceWorkerClient {
       .toFuture
       .onComplete {
         case Success(registration) =>
-          println(
-            "SWC: registered service worker with scope: " + registration.scope,
-          )
           // Log install/update state changes for visibility
           registration.onupdatefound = (_: Event) => {
-            println("SWC: update found for service worker")
             val installing = registration.installing
             if (installing != null) {
               val swDyn = installing.asInstanceOf[js.Dynamic]
               swDyn.updateDynamic("onstatechange")({ (_: Event) =>
-                println(
-                  "SWC: installing worker state -> " + installing.state,
-                )
               }: js.Function1[Event, Any])
             }
           }
@@ -94,7 +83,6 @@ object ServiceWorkerClient {
                 println(s"SWC <- test ack: ${e.data}")
               val msg = js.Dynamic.literal(action = "TEST_NOTIFY")
               reg.active.postMessage(msg, js.Array(mc.port2))
-              println("SWC: sent TEST_NOTIFY to service worker")
             }(global)
           }
 
