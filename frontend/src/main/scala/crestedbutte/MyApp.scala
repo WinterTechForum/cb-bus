@@ -5,7 +5,7 @@ import crestedbutte.pwa.Persistence
 import org.scalajs.dom
 import crestedbutte.laminar.AppMode
 import com.billding.time.WallTime
-import crestedbutte.routes.RTA
+import crestedbutte.RTA
 
 object MyApp extends App {
   ServiceWorkerClient

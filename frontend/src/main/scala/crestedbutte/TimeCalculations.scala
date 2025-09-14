@@ -1,8 +1,8 @@
 package crestedbutte
 
 import com.billding.time.WallTime
-import crestedbutte.routes.RTA.{Northbound, Southbound}
-import crestedbutte.routes.RouteWithTimes
+import crestedbutte.RTA.{Northbound, Southbound}
+import crestedbutte.RouteWithTimes
 import crestedbutte.laminar.LocationTimeDirection
 import scala.util.{Either, Left, Right}
 

@@ -1,7 +1,6 @@
 package crestedbutte
 
 import com.billding.time.WallTime
-import crestedbutte.routes.RouteWithTimes
 
 case class NamedRoute(
   componentName: RouteName,

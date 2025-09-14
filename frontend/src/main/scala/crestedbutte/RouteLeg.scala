@@ -1,7 +1,6 @@
 package crestedbutte
 
 import com.billding.time.{MinuteDuration, WallTime}
-import crestedbutte.routes.RouteWithTimes
 import zio.json.JsonCodec
 
 trait RoutePiece {

@@ -6,11 +6,11 @@ import com.raquo.laminar.api.L.*
 import com.raquo.laminar.nodes.ReactiveHtmlElement
 import crestedbutte.*
 import crestedbutte.NotificationStuff.desiredAlarms
-import crestedbutte.NotificationCountdown
 import crestedbutte.dom.StopContext
 import crestedbutte.laminar.TouchControls.Swipe
 import crestedbutte.pwa.Persistence
-import crestedbutte.routes.{CompleteStopList, RTA, RouteWithTimes}
+import crestedbutte.routes.CompleteStopList
+import crestedbutte.{RTA, RouteWithTimes}
 import java.time.format.DateTimeFormatter
 import java.time.{Clock, OffsetDateTime}
 import org.scalajs.dom
@@ -29,14 +29,13 @@ case class SelectedStopInfo(
   context: StopContext)
 
 object Components {
-  
   def NotificationToggleButton(
     $plan: Var[Plan],
     timeStamps: Signal[WallTime],
     buttonWidth: Int,
   ) = {
     val notificationsEnabled: Var[Boolean] = Var(false)
-    
+
     button(
       cls := "button",
       styleAttr := s"width: ${buttonWidth}px;",
@@ -45,17 +44,21 @@ object Components {
       },
       onClick --> Observer { _ =>
         val currentEnabled = notificationsEnabled.now()
-        
+
         if (!currentEnabled) {
           // Request permission if needed
           NotificationCountdown.requestPermissionIfNeeded()
-          
+
           // Check if we have permission
           if (NotificationCountdown.hasPermission) {
             notificationsEnabled.set(true)
-            NotificationCountdown.startCountdownNotifications($plan, timeStamps)
+            NotificationCountdown.startCountdownNotifications(
+              $plan,
+              timeStamps,
+            )
           }
-        } else {
+        }
+        else {
           // Turn off notifications
           notificationsEnabled.set(false)
           NotificationCountdown.stopCountdownNotifications()
@@ -289,7 +292,8 @@ object Components {
                     expanded => if (expanded) "0" else "1",
                   ),
                   styleProp("pointer-events") <-- tripExpanded.signal
-                    .map(expanded => if (expanded) "none" else "auto",
+                    .map(expanded =>
+                      if (expanded) "none" else "auto",
                     ),
                   styleProp("transition") := "opacity 200ms ease",
                   span("+"),
@@ -308,7 +312,8 @@ object Components {
                     expanded => if (expanded) "1" else "0",
                   ),
                   styleProp("pointer-events") <-- tripExpanded.signal
-                    .map(expanded => if (expanded) "auto" else "none",
+                    .map(expanded =>
+                      if (expanded) "auto" else "none",
                     ),
                   styleProp("transition") := "opacity 250ms ease",
 
@@ -350,7 +355,7 @@ object Components {
                       }
                     },
                   ),
-                  
+
                   // Notification toggle button
                   NotificationToggleButton(
                     $plan,

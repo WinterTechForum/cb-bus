@@ -9,7 +9,8 @@ import crestedbutte.NotificationStuff.desiredAlarms
 import crestedbutte.dom.StopContext
 import crestedbutte.laminar.TouchControls.Swipe
 import crestedbutte.pwa.Persistence
-import crestedbutte.routes.{CompleteStopList, RTA, RouteWithTimes}
+import crestedbutte.{RTA, RouteWithTimes}
+import crestedbutte.routes.CompleteStopList
 import java.time.format.DateTimeFormatter
 import java.time.{Clock, OffsetDateTime}
 import org.scalajs.dom
