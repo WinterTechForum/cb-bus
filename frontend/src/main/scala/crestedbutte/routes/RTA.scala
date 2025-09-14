@@ -2,7 +2,13 @@ package crestedbutte.routes
 
 import com.billding.time.MinuteDuration.toMinuteDuration
 import com.billding.time.WallTime
-import crestedbutte.*
+import crestedbutte.{
+  Location,
+  LocationWithTime,
+  NamedRoute,
+  RouteLeg,
+  RouteName,
+}
 
 object RTA {
   object Northbound {

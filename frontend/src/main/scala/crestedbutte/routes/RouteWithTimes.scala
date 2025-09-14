@@ -102,6 +102,22 @@ case class RouteWithTimes(
 }
 
 object RouteWithTimes {
+  def lookupRouteWithTimes(
+    routeName: RouteName,
+  ): RouteWithTimes = {
+
+    import crestedbutte.routes.RTA.{Northbound, Southbound}
+    routeName match {
+      case Southbound.componentName =>
+        Southbound.fullSchedule.routeWithTimes
+      case Northbound.componentName =>
+        Northbound.fullSchedule.routeWithTimes
+      case _ =>
+        throw new IllegalArgumentException(
+          s"Unknown route: $routeName",
+        )
+    }
+  }
 
   def sched(
     routeName: RouteName,
