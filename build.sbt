@@ -10,6 +10,7 @@ lazy val common = (project in file("common"))
   .settings(
     libraryDependencies ++= Seq(
       "com.lihaoyi" %%% "upickle" % "3.1.3",
+      "dev.zio" %%% "zio-json" % "0.6.2",
     )
   )
 
