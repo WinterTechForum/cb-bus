@@ -612,3 +612,8 @@ case class NamedRoute(
       result
     }
 }
+
+case class LocationWithTime(
+  l: Location,
+  t: WallTime)
+    derives JsonCodec
