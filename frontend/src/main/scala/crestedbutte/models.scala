@@ -79,6 +79,7 @@ case class Plan(
       .mkString("\n\n") + "\n"
 
 object Plan {
+  // TODO Move this to frontend, so that we can move models to common. I think this is the last major hangup.
   import upickle.default.*
   implicit val planRw: ReadWriter[Plan] =
     readwriter[String].bimap[Plan](
