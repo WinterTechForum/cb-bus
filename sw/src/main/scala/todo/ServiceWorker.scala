@@ -55,7 +55,7 @@ object ServiceWorker {
       "install",
       (event: ExtendableEvent) => {
         println(
-          s"install: service worker with message handler installed > ${event.toString}",
+          s"SW install: service worker with message handler installed > ${event.toString}",
         )
         self.skipWaiting();
         event.waitUntil(toCache().toJSPromise)
