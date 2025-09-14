@@ -19,9 +19,6 @@ import scala.concurrent.duration.*
 
 object ServiceWorker {
   val busCache = "cb-bus"
-  val pointless = "does this make the sw js file change?"
-  println("pointless: " + pointless)
-  assert(pointless != null)
 
   // Notification state
   private var notificationInterval: Option[SetIntervalHandle] = None
@@ -52,7 +49,6 @@ object ServiceWorker {
   def main(
     args: Array[String],
   ): Unit = {
-    println("main: ServiceWorker installing!")
     self.addEventListener(
       "install",
       (event: ExtendableEvent) => {
@@ -87,7 +83,7 @@ object ServiceWorker {
     self.addEventListener(
       "message",
       (event: MessageEvent) => {
-        println("message: ServiceWorker received message")
+        println("message: ServiceWorker received message: " + event)
         val data = event.data.asInstanceOf[js.Dynamic]
         val action = data.action.asInstanceOf[String]
 
@@ -143,13 +139,11 @@ object ServiceWorker {
       },
     )
 
-    println("main: ServiceWorker installing!")
   }
 
   def toCache(): Future[Unit] =
     self.caches
       .flatMap(_.open(busCache).toFuture.flatMap { cache =>
-        println("toCache: caching assets...")
         cache.addAll(todoAssets).toFuture
       })
       .getOrElse(throw new Exception("ServiceWorker.toCache failure"))
@@ -164,7 +158,6 @@ object ServiceWorker {
             case response: Response =>
               Future.successful(response)
             case other =>
-              println(s"fromCache: missed request > ${request.url}")
               Future.failed(
                 new Exception("Could not find cached request"),
               )
@@ -257,6 +250,7 @@ object ServiceWorker {
         .flatMap { clients =>
           val reloads = clients.toSeq.flatMap { c =>
             val dyn = c.asInstanceOf[js.Dynamic]
+            println("dyn.navigate: " + dyn.navigate)
             val hasNavigate =
               !js.isUndefined(dyn.selectDynamic("navigate"))
             if (hasNavigate) {
@@ -286,6 +280,9 @@ object ServiceWorker {
 
   private def updateNotification(): Unit =
     currentPlan.foreach { planData =>
+      println(
+        s"SW. updateNotification: updating notification for $planData",
+      )
       val segments =
         planData.routeSegments.asInstanceOf[js.Array[js.Dynamic]]
 
@@ -325,6 +322,9 @@ object ServiceWorker {
     minutesUntil: Long,
     routeName: String,
   ): Unit = {
+    println(
+      s"showNotification: showing notification for $routeName in $minutesUntil minutes",
+    )
     val message = if (minutesUntil <= 0) {
       s"$routeName route starting now!"
     }
