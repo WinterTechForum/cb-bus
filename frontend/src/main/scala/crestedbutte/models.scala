@@ -40,14 +40,6 @@ case class RouteName(
 
 }
 
-case class LateNightRecommendation(
-  message: String,
-  phoneNumber: String = "970-209-0519")
-
-case class GpsCoordinates(
-  latitude: Double,
-  longitude: Double)
-
 import zio.json._
 implicit val wallTimeCodec: JsonCodec[WallTime] =
   JsonCodec.int.transform(WallTime.fromMinutes, _.localTime.value)
