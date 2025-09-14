@@ -617,3 +617,12 @@ case class LocationWithTime(
   l: Location,
   t: WallTime)
     derives JsonCodec
+
+case class BusScheduleAtStop(
+  location: Location,
+  times: Seq[WallTime],
+  routeName: RouteName) {
+  val locationsWithTimes =
+    times.map(t => LocationWithTime(location, t))
+
+}
