@@ -14,11 +14,8 @@ if ! command -v sbt &> /dev/null; then
 fi
 
 # Run the build using the local sbt script
-echo "Building frontend with fullOptJS..."
-./sbt 'frontend/fullOptJS'
-
-echo "Building service worker with fullOptJS..."
-./sbt 'sw/fullOptJS'
+echo "Building application with fullOptJS..."
+./sbt 'fullOptJS'
 
 echo "Build completed successfully!"
 
