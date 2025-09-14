@@ -98,17 +98,6 @@ object models {
   )
 }
 
-import crestedbutte.{
-  BusSchedule,
-  BusScheduleAtStop,
-  Location,
-  LocationWithTime,
-  RouteLeg,
-  RouteName,
-  RouteSegment,
-}
-import com.billding.time.WallTime
-
 case class RouteWithTimes(
   legs: Seq[RouteLeg]) {
 
