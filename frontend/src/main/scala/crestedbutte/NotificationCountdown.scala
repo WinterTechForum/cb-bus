@@ -7,7 +7,8 @@ import scala.scalajs.js
 import scala.scalajs.js.JSConverters._
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
-import upickle.default._
+import crestedbutte.Plan
+import zio.json.*
 
 object NotificationCountdown {
 
@@ -24,29 +25,29 @@ object NotificationCountdown {
     timeStampsSignal: Signal[WallTime],
   ): Unit = {
     // Send message to service worker to start notifications
-    sendToServiceWorker("START_NOTIFICATIONS", $plan.now()).foreach {
-      response =>
+    sendToServiceWorker("START_NOTIFICATIONS", Some($plan.now()))
+      .foreach { response =>
         println(
-          s"Service worker notification started: ${response.toJson}",
+          s"Service worker notification started: ${response}",
         )
-    }
+      }
 
     // Subscribe to plan changes to update service worker
     $plan.signal.foreach { plan =>
-      sendToServiceWorker("UPDATE_PLAN", plan)
+      sendToServiceWorker("UPDATE_PLAN", Some(plan))
     }(unsafeWindowOwner)
   }
 
   def stopCountdownNotifications(): Unit =
     // Send message to service worker to stop notifications
-    sendToServiceWorker("STOP_NOTIFICATIONS", null).foreach {
+    sendToServiceWorker("STOP_NOTIFICATIONS", None).foreach {
       response =>
         println(s"Service worker notification stopped: $response")
     }
 
   private def sendToServiceWorker(
     action: String,
-    plan: Plan,
+    plan: Option[Plan],
   ): Future[js.Dynamic] = {
     val navigator = dom.window.navigator.asInstanceOf[js.Dynamic]
 
@@ -72,39 +73,14 @@ object NotificationCountdown {
                 event.data.asInstanceOf[js.Dynamic],
               )
 
-          val message = if (plan != null) {
-            // Convert plan to a simple JS object for the service worker
-            val planData = js.Dynamic.literal(
-              routeSegments = plan.routeSegments.map { segment =>
-                js.Dynamic.literal(
-                  s = js.Dynamic.literal(
-                    t = js.Dynamic.literal(
-                      localTime = js.Dynamic.literal(
-                        value = segment.s.t.localTime.value,
-                      ),
-                    ),
-                  ),
-                  route = js.Dynamic.literal(
-                    userFriendlyName = segment.route.userFriendlyName,
-                  ),
-                )
-              }.toJSArray,
-            )
-
-            js.Dynamic.literal(
-              action = action,
-              plan = planData,
-            )
-          }
-          else {
-            js.Dynamic.literal(action = action)
-          }
-
           println(
             "NotificationCountdown: sending message to service worker",
           )
           registration.active.postMessage(
-            message,
+            ServiceWorkerMessage(
+              action = action,
+              plan = plan, // TODO Should just be plan.toJson,
+            ).toJson,
             js.Array(messageChannel.port2),
           )
 

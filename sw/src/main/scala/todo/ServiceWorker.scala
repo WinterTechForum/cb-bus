@@ -9,6 +9,13 @@ import org.scalajs.dom.experimental.serviceworkers.{
 }
 import org.scalajs.dom.experimental._
 import org.scalajs.dom.raw.MessageEvent
+import crestedbutte.Plan
+import crestedbutte.ServiceWorkerMessage
+import com.billding.time.WallTime
+import zio.json.*
+
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -23,7 +30,7 @@ object ServiceWorker {
 
   // Notification state
   private var notificationInterval: Option[SetIntervalHandle] = None
-  private var currentPlan: Option[js.Dynamic] =
+  private var currentPlan: Option[Plan] =
     None // TODO Convert to strongly typedPlan
   private var notificationsEnabled: Boolean = false
 
@@ -86,18 +93,29 @@ object ServiceWorker {
       "message",
       (event: MessageEvent) => {
         println("message: ServiceWorker received message: " + event)
-        val data = event.data.asInstanceOf[js.Dynamic]
-        val action = data.action.asInstanceOf[String]
+        println(
+          "JSON.stringify(event.data.toString): " + JSON.stringify(
+            event.data.asInstanceOf[js.Dynamic],
+          ),
+        )
+        val data =
+          event.data.toString
+            .fromJson[ServiceWorkerMessage]
+            .getOrElse(
+              throw new Exception(
+                "Error parsing ServiceWorkerMessage",
+              ),
+            )
+        val action = data.action
 
         action match {
           case "START_NOTIFICATIONS" =>
             println("Service worker, starting notifications")
             notificationsEnabled = true
-            currentPlan = Some(data.plan)
+            currentPlan = data.plan
             println(
-              "Service worker, current plan: " + JSON.stringify(
+              "Service worker, current plan: " +
                 data.plan,
-              ),
             )
             startNotificationTimer()
             // Send acknowledgment back
@@ -120,7 +138,7 @@ object ServiceWorker {
             }
 
           case "UPDATE_PLAN" =>
-            currentPlan = Some(data.plan)
+            currentPlan = data.plan
             if (notificationsEnabled) {
               updateNotification()
             }
@@ -286,28 +304,35 @@ object ServiceWorker {
   }
 
   private def updateNotification(): Unit =
+    import scala.scalajs.js.JSON
     currentPlan.foreach { planData =>
       println(
         s"SW. updateNotification: updating notification for $planData",
       )
       val segments =
-        planData.routeSegments.asInstanceOf[js.Array[js.Dynamic]]
+        planData.routeSegments
 
       // Find next segment
-      val now = new js.Date().getTime()
+      val now =
+        WallTime(
+          LocalTime
+            .now()
+            .format(
+              DateTimeFormatter.ofPattern("HH:mm"),
+            ),
+        )
       val nextSegmentOpt = segments.find { segment =>
-        val startTime =
-          parseTime(segment.s.t.asInstanceOf[js.Dynamic])
-        startTime > now
+        val startTime = segment.s.t
+        startTime.isAfter(now)
       }
 
       nextSegmentOpt.foreach { segment =>
         val startTime =
-          parseTime(segment.s.t.asInstanceOf[js.Dynamic])
+          segment.s.t
         val routeName =
           segment.route.userFriendlyName.asInstanceOf[String]
         val minutesUntil =
-          Math.max(0, ((startTime - now) / 60000).toLong)
+          now.between(startTime).minutes.value
 
         showNotification(minutesUntil, routeName)
       }

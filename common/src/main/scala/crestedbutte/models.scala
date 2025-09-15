@@ -652,3 +652,10 @@ object CompleteStopList {
     )
 
 }
+
+case class ServiceWorkerMessage(
+  action: String,
+  plan: Option[
+    Plan,
+  ]) // TODO Should actually be a different type of message
+    derives JsonCodec
