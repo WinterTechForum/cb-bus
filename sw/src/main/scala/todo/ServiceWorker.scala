@@ -292,7 +292,6 @@ object ServiceWorker {
     stopNotificationTimer()
     updateNotification()
 
-    // Update every 30 seconds
     notificationInterval = Some(setInterval(5.seconds) {
       updateNotification()
     })
@@ -368,19 +367,31 @@ object ServiceWorker {
     }
 
     // Use the service worker registration to show notification
-    val options = js.Dynamic.literal(
+    /*
+    val options = new org.scalajs.dom.NotificationOptions {
+      override var body: js.UndefOr[String] = message
+      override var icon: js.UndefOr[String] =
+        "/images/BILLDING_LogoMark-256.png"
+      // badge = "/images/BILLDING_LogoMark-256.png"
+      override var tag: js.UndefOr[String] = "route-countdown"
+      // val requireInteraction = false
+      // val silent = true
+      override var renotify: js.UndefOr[Boolean] = false
+    }
+     */
+
+    val options = org.scalajs.dom.NotificationOptions(
       body = message,
       icon = "/images/BILLDING_LogoMark-256.png",
-      badge = "/images/BILLDING_LogoMark-256.png",
+      // badge = "/images/BILLDING_LogoMark-256.png"
       tag = "route-countdown",
-      requireInteraction = false,
-      silent = true,
+      // val requireInteraction = false
+      // val silent = true
       renotify = false,
     )
 
     // Call showNotification dynamically
     self.registration
-      .asInstanceOf[js.Dynamic]
       .showNotification("Route Countdown", options)
   }
 
