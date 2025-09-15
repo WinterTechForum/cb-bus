@@ -55,7 +55,9 @@ lazy val sw = (project in file("sw"))
       baseDirectory.value.getParentFile / "frontend" / "src" / "main" / "resources" / "sw.js",
     scalaJSUseMainModuleInitializer := true,
     libraryDependencies ++= Seq(
-      "org.scala-js" %%% "scalajs-dom" % "2.8.0"
+      "dev.zio" %%% "zio-json" % "0.6.2",
+      "org.scala-js" %%% "scalajs-dom" % "2.8.0",
+      "io.github.cquiroz" %%% "scala-java-time" % "2.5.0",
     )
   )
 
