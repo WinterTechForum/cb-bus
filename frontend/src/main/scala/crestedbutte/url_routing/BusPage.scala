@@ -14,6 +14,7 @@ import com.raquo.laminar.api.L
 import com.raquo.laminar.api.L.*
 import com.raquo.waypoint.*
 import crestedbutte.UrlEncoding
+import crestedbutte.pwa.Persistence
 
 case class BusPage(
   mode: AppMode,
@@ -58,7 +59,17 @@ object BusPage {
         mode =
           mode.map(AppMode.valueOf).getOrElse(AppMode.Production),
         fixedTime = time.map(WallTime.apply),
-        plan = plan.flatMap(UrlEncoding.decodePlan(_).toOption),
+        plan = plan.flatMap { planUrl =>
+          val res = UrlEncoding.decodePlan(planUrl).toOption
+          try
+            Persistence().saveDailyPlanOnly(
+              res.getOrElse(???),
+            ) // TODO Should NOT be here.
+          catch {
+            case ex => println("Probably not running in a browser")
+          }
+          res
+        },
       )
   }.tupled
 

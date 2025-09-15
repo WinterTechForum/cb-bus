@@ -1,7 +1,5 @@
 package crestedbutte
 
-import crestedbutte.pwa.Persistence
-
 object UrlEncoding {
   import zio.json.*
 
@@ -22,11 +20,6 @@ object UrlEncoding {
     val res =
       rawJson
         .fromJson[Plan]
-    try
-      Persistence().saveDailyPlanOnly(res.getOrElse(???))
-    catch {
-      case ex => println("Probably not running in a browser")
-    }
     println("saved plan")
     res
   }
