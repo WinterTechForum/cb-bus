@@ -61,32 +61,21 @@ object ServiceWorker {
     self.addEventListener(
       "install",
       (event: ExtendableEvent) => {
-        println(
-          s"SW install: service worker with message handler installed > ${event.toString}",
-        )
         self.skipWaiting();
         event.waitUntil(toCache().toJSPromise)
       },
     )
     self.addEventListener(
       "register",
-      (event: ExtendableEvent) => {
-        println(
-          s"register: service worker with message handler installed > ${event.toString}",
-        )
-        event.waitUntil(toCache().toJSPromise)
-      },
+      (event: ExtendableEvent) =>
+        event.waitUntil(toCache().toJSPromise),
     )
 
     self.addEventListener(
       "activate",
-      (event: ExtendableEvent) => {
-        println(
-          s"activate: service worker activated > ${event.toString}",
-        )
+      (event: ExtendableEvent) =>
         // Keep existing cache so users can work offline; SW will update in background
-        self.clients.claim()
-      },
+        self.clients.claim(),
     )
 
     self.addEventListener(
@@ -337,25 +326,10 @@ object ServiceWorker {
       }
     }
 
-  private def parseTime(
-    timeObj: js.Dynamic,
-  ): Double = {
-    // Parse the time object - this will need to match your actual time format
-    val minutes = timeObj.localTime.value.asInstanceOf[Int]
-    val today = new js.Date()
-    today.setHours(minutes / 60)
-    today.setMinutes(minutes % 60)
-    today.setSeconds(0)
-    today.getTime()
-  }
-
   private def showNotification(
     minutesUntil: Long,
     routeName: String,
   ): Unit = {
-    println(
-      s"showNotification: showing notification for $routeName in $minutesUntil minutes",
-    )
     val message = if (minutesUntil <= 0) {
       s"$routeName route starting now!"
     }
