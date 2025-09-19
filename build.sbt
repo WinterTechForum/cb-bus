@@ -11,7 +11,10 @@ lazy val common = (project in file("common"))
     libraryDependencies ++= Seq(
       "com.lihaoyi" %%% "upickle" % "3.1.3",
       "dev.zio" %%% "zio-json" % "0.6.2",
-    )
+      "dev.zio" %%% "zio-test" % zioVersion % Test,
+      "dev.zio" %%% "zio-test-sbt" % zioVersion % Test,
+    ),
+    Test / testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
   )
 
 lazy val frontend = (project in file("frontend"))

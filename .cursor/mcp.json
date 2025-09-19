@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "cb-bus-metals": {
+      "url": "http://localhost:49883/sse"
+    }
+  }
+}
