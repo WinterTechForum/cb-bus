@@ -653,8 +653,46 @@ object CompleteStopList {
 
 }
 
+enum ServiceWorkerAction:
+  case StartNotifications
+  case StopNotifications
+  case UpdatePlan
+  case TestNotify
+
+object ServiceWorkerAction {
+  import zio.json.*
+  implicit val codec: JsonCodec[ServiceWorkerAction] =
+    JsonCodec.string.transform(
+      // decode
+      s =>
+        s match
+          case "START_NOTIFICATIONS" | "StartNotifications" =>
+            ServiceWorkerAction.StartNotifications
+          case "STOP_NOTIFICATIONS" | "StopNotifications" =>
+            ServiceWorkerAction.StopNotifications
+          case "UPDATE_PLAN" | "UpdatePlan" =>
+            ServiceWorkerAction.UpdatePlan
+          case "TEST_NOTIFY" | "TestNotify" =>
+            ServiceWorkerAction.TestNotify
+          case other =>
+            throw new Exception(
+              s"Unknown ServiceWorkerAction: ${other}",
+            )
+      ,
+      // encode
+      a =>
+        a match
+          case ServiceWorkerAction.StartNotifications =>
+            "START_NOTIFICATIONS"
+          case ServiceWorkerAction.StopNotifications =>
+            "STOP_NOTIFICATIONS"
+          case ServiceWorkerAction.UpdatePlan => "UPDATE_PLAN"
+          case ServiceWorkerAction.TestNotify => "TEST_NOTIFY",
+    )
+}
+
 case class ServiceWorkerMessage(
-  action: String,
+  action: ServiceWorkerAction,
   plan: Option[
     Plan,
   ]) // TODO Should actually be a different type of message

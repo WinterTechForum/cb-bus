@@ -10,7 +10,7 @@ import org.scalajs.dom.experimental.serviceworkers.{
 import org.scalajs.dom.experimental._
 import org.scalajs.dom.raw.MessageEvent
 import crestedbutte.Plan
-import crestedbutte.ServiceWorkerMessage
+import crestedbutte.{ServiceWorkerAction, ServiceWorkerMessage}
 import com.billding.time.WallTime
 import zio.json.*
 
@@ -98,7 +98,7 @@ object ServiceWorker {
         val action = data.action
 
         action match {
-          case "START_NOTIFICATIONS" =>
+          case ServiceWorkerAction.StartNotifications =>
             println("Service worker, starting notifications")
             notificationsEnabled = true
             currentPlan = data.plan
@@ -115,7 +115,7 @@ object ServiceWorker {
               )
             }
 
-          case "STOP_NOTIFICATIONS" =>
+          case ServiceWorkerAction.StopNotifications =>
             notificationsEnabled = false
             stopNotificationTimer()
             // Send acknowledgment back
@@ -126,14 +126,21 @@ object ServiceWorker {
               )
             }
 
-          case "UPDATE_PLAN" =>
+          case ServiceWorkerAction.UpdatePlan =>
             currentPlan = data.plan
             if (notificationsEnabled) {
               updateNotification()
             }
 
-          case _ =>
-            println(s"Unknown action: $action")
+          case ServiceWorkerAction.TestNotify =>
+            // For local testing: show an immediate notification
+            currentPlan.foreach(_ => updateNotification())
+            val ports = event.ports.asInstanceOf[js.Array[js.Dynamic]]
+            if (ports.length > 0) {
+              ports(0).postMessage(
+                js.Dynamic.literal(status = "test-notified"),
+              )
+            }
         }
       },
     )

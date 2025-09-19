@@ -81,7 +81,11 @@ object ServiceWorkerClient {
               val mc = new dom.MessageChannel()
               mc.port1.onmessage = (e: dom.MessageEvent) =>
                 println(s"SWC <- test ack: ${e.data}")
-              val msg = js.Dynamic.literal(action = "TEST_NOTIFY")
+              import zio.json.*
+              val msg = ServiceWorkerMessage(
+                action = ServiceWorkerAction.TestNotify,
+                plan = None,
+              ).toJson
               reg.active.postMessage(msg, js.Array(mc.port2))
             }(global)
           }

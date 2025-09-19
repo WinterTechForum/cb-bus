@@ -8,6 +8,7 @@ import scala.scalajs.js.JSConverters._
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 import crestedbutte.Plan
+import crestedbutte.ServiceWorkerAction
 import zio.json.*
 
 object NotificationCountdown {
@@ -25,7 +26,9 @@ object NotificationCountdown {
     timeStampsSignal: Signal[WallTime],
   ): Unit = {
     // Send message to service worker to start notifications
-    sendToServiceWorker("START_NOTIFICATIONS", Some($plan.now()))
+    sendToServiceWorker(ServiceWorkerAction.StartNotifications,
+                        Some($plan.now()),
+    )
       .foreach { response =>
         println(
           s"Service worker notification started: ${response}",
@@ -34,19 +37,19 @@ object NotificationCountdown {
 
     // Subscribe to plan changes to update service worker
     $plan.signal.foreach { plan =>
-      sendToServiceWorker("UPDATE_PLAN", Some(plan))
+      sendToServiceWorker(ServiceWorkerAction.UpdatePlan, Some(plan))
     }(unsafeWindowOwner)
   }
 
   def stopCountdownNotifications(): Unit =
     // Send message to service worker to stop notifications
-    sendToServiceWorker("STOP_NOTIFICATIONS", None).foreach {
-      response =>
+    sendToServiceWorker(ServiceWorkerAction.StopNotifications, None)
+      .foreach { response =>
         println(s"Service worker notification stopped: $response")
-    }
+      }
 
   private def sendToServiceWorker(
-    action: String,
+    action: ServiceWorkerAction,
     plan: Option[Plan],
   ): Future[js.Dynamic] = {
     val navigator = dom.window.navigator.asInstanceOf[js.Dynamic]
