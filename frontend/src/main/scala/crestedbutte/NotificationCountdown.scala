@@ -26,8 +26,8 @@ object NotificationCountdown {
     timeStampsSignal: Signal[WallTime],
   ): Unit = {
     // Send message to service worker to start notifications
-    sendToServiceWorker(ServiceWorkerAction.StartNotifications,
-                        Some($plan.now()),
+    sendToServiceWorker(
+      ServiceWorkerAction.StartNotifications($plan.now()),
     )
       .foreach { response =>
         println(
@@ -37,20 +37,19 @@ object NotificationCountdown {
 
     // Subscribe to plan changes to update service worker
     $plan.signal.foreach { plan =>
-      sendToServiceWorker(ServiceWorkerAction.UpdatePlan, Some(plan))
+      sendToServiceWorker(ServiceWorkerAction.UpdatePlan(plan))
     }(unsafeWindowOwner)
   }
 
   def stopCountdownNotifications(): Unit =
     // Send message to service worker to stop notifications
-    sendToServiceWorker(ServiceWorkerAction.StopNotifications, None)
+    sendToServiceWorker(ServiceWorkerAction.StopNotifications)
       .foreach { response =>
         println(s"Service worker notification stopped: $response")
       }
 
   private def sendToServiceWorker(
     action: ServiceWorkerAction,
-    plan: Option[Plan],
   ): Future[js.Dynamic] = {
     val navigator = dom.window.navigator.asInstanceOf[js.Dynamic]
 
@@ -80,10 +79,7 @@ object NotificationCountdown {
             "NotificationCountdown: sending message to service worker",
           )
           registration.active.postMessage(
-            ServiceWorkerMessage(
-              action = action,
-              plan = plan, // TODO Should just be plan.toJson,
-            ).toJson,
+            action.toJson,
             js.Array(messageChannel.port2),
           )
 

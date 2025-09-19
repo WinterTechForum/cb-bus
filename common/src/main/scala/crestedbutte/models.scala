@@ -654,14 +654,9 @@ object CompleteStopList {
 }
 
 enum ServiceWorkerAction derives JsonCodec:
-  case StartNotifications
+  case StartNotifications(
+    plan: Plan)
   case StopNotifications
-  case UpdatePlan
+  case UpdatePlan(
+    plan: Plan)
   case TestNotify
-
-case class ServiceWorkerMessage(
-  action: ServiceWorkerAction,
-  plan: Option[
-    Plan,
-  ]) // TODO Should actually be a different type of message
-    derives JsonCodec

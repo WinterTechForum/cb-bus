@@ -10,7 +10,7 @@ import org.scalajs.dom.experimental.serviceworkers.{
 import org.scalajs.dom.experimental._
 import org.scalajs.dom.raw.MessageEvent
 import crestedbutte.Plan
-import crestedbutte.{ServiceWorkerAction, ServiceWorkerMessage}
+import crestedbutte.ServiceWorkerAction
 import com.billding.time.WallTime
 import zio.json.*
 
@@ -87,24 +87,23 @@ object ServiceWorker {
             event.data.asInstanceOf[js.Dynamic],
           ),
         )
-        val data =
+        val action =
           event.data.toString
-            .fromJson[ServiceWorkerMessage]
+            .fromJson[ServiceWorkerAction]
             .getOrElse(
               throw new Exception(
-                "Error parsing ServiceWorkerMessage",
+                "Error parsing ServiceWorkerAction",
               ),
             )
-        val action = data.action
 
         action match {
-          case ServiceWorkerAction.StartNotifications =>
+          case ServiceWorkerAction.StartNotifications(plan) =>
             println("Service worker, starting notifications")
             notificationsEnabled = true
-            currentPlan = data.plan
+            currentPlan = Some(plan)
             println(
               "Service worker, current plan: " +
-                data.plan,
+                plan,
             )
             startNotificationTimer()
             // Send acknowledgment back
@@ -126,8 +125,8 @@ object ServiceWorker {
               )
             }
 
-          case ServiceWorkerAction.UpdatePlan =>
-            currentPlan = data.plan
+          case ServiceWorkerAction.UpdatePlan(plan) =>
+            currentPlan = Some(plan)
             if (notificationsEnabled) {
               updateNotification()
             }
