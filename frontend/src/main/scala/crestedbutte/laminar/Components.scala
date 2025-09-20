@@ -17,6 +17,7 @@ import org.scalajs.dom.{HTMLAnchorElement, HTMLDivElement}
 import scala.scalajs.js
 import scala.scalajs.js.timers._
 import scala.concurrent.duration.FiniteDuration
+import crestedbutte.facades.{ShareData, NavigatorShareExtensions}
 
 case class LocationTimeDirection(
   locationWithTime: LocationWithTime,
@@ -547,23 +548,15 @@ object Components {
                 styleProp("width") := s"${buttonWidth}px",
                 onClick --> Observer { _ =>
                   val text = plan.plainTextRepresentation
-                  if (
-                    js.typeOf(
-                      dom.window.navigator
-                        .asInstanceOf[js.Dynamic]
-                        .share,
-                    ) != "undefined"
-                  ) {
-                    dom.window.navigator
-                      .asInstanceOf[js.Dynamic]
-                      .share(
-                        js.Dynamic.literal(title = "Bus Schedule",
-                                           text = text,
-                        ),
-                      )
-                  }
-                  else {
-                    dom.window.navigator.clipboard.writeText(text)
+                  import NavigatorShareExtensions._
+                  dom.window.navigator.shareOption match {
+                    case Some(shareApi) =>
+                      shareApi.share(ShareData(
+                        title = "Bus Schedule",
+                        text = text
+                      ))
+                    case None =>
+                      dom.window.navigator.clipboard.writeText(text)
                   }
                   setTimeout(300)(isExpanded.set(false))
                 },
@@ -580,24 +573,15 @@ object Components {
                       s"http://localhost:8000/index.html?plan=${UrlEncoding.encode(plan)}"
                     else
                       s"https://rtabus.netlify.app/?plan=${UrlEncoding.encode(plan)}"
-                  if (
-                    js.typeOf(
-                      dom.window.navigator
-                        .asInstanceOf[js.Dynamic]
-                        .share,
-                    ) != "undefined"
-                  ) {
-                    dom.window.navigator
-                      .asInstanceOf[js.Dynamic]
-                      .share(
-                        js.Dynamic.literal(title =
-                                             "Bus Schedule Link",
-                                           url = url,
-                        ),
-                      )
-                  }
-                  else {
-                    dom.window.navigator.clipboard.writeText(url)
+                  import NavigatorShareExtensions._
+                  dom.window.navigator.shareOption match {
+                    case Some(shareApi) =>
+                      shareApi.share(ShareData(
+                        title = "Bus Schedule Link",
+                        url = url
+                      ))
+                    case None =>
+                      dom.window.navigator.clipboard.writeText(url)
                   }
                   setTimeout(300)(isExpanded.set(false))
                 },
