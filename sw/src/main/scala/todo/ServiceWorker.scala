@@ -8,7 +8,7 @@ import org.scalajs.dom.experimental.serviceworkers.{
   FetchEvent,
 }
 import org.scalajs.dom.experimental._
-import org.scalajs.dom.raw.MessageEvent
+import org.scalajs.dom.MessageEvent
 import crestedbutte.Plan
 import crestedbutte.ServiceWorkerAction
 import com.billding.time.WallTime
@@ -24,6 +24,8 @@ import scala.scalajs.js.JSConverters.*
 import scala.scalajs.js.timers.*
 import scala.concurrent.duration.*
 import scala.scalajs.js.JSON
+import todo.facades.{ServiceWorkerResponse, ExtendableMessageEvent, WindowClientExtensions}
+import WindowClientExtensions._
 
 object ServiceWorker {
   val busCache = "cb-bus"
@@ -80,7 +82,8 @@ object ServiceWorker {
 
     self.addEventListener(
       "message",
-      (event: MessageEvent) => {
+      (e: MessageEvent) => {
+        val event = e.asInstanceOf[ExtendableMessageEvent]
         println("message: ServiceWorker received message: " + event)
         println(
           "JSON.stringify(event.data.toString): " + JSON.stringify(
@@ -107,10 +110,9 @@ object ServiceWorker {
             )
             startNotificationTimer()
             // Send acknowledgment back
-            val ports = event.ports.asInstanceOf[js.Array[js.Dynamic]]
-            if (ports.length > 0) {
-              ports(0).postMessage(
-                js.Dynamic.literal(status = "started"),
+            if (event.ports.length > 0) {
+              event.ports(0).postMessage(
+                ServiceWorkerResponse("started"),
               )
             }
 
@@ -118,10 +120,9 @@ object ServiceWorker {
             notificationsEnabled = false
             stopNotificationTimer()
             // Send acknowledgment back
-            val ports = event.ports.asInstanceOf[js.Array[js.Dynamic]]
-            if (ports.length > 0) {
-              ports(0).postMessage(
-                js.Dynamic.literal(status = "stopped"),
+            if (event.ports.length > 0) {
+              event.ports(0).postMessage(
+                ServiceWorkerResponse("stopped"),
               )
             }
 
@@ -134,10 +135,9 @@ object ServiceWorker {
           case ServiceWorkerAction.TestNotify =>
             // For local testing: show an immediate notification
             currentPlan.foreach(_ => updateNotification())
-            val ports = event.ports.asInstanceOf[js.Array[js.Dynamic]]
-            if (ports.length > 0) {
-              ports(0).postMessage(
-                js.Dynamic.literal(status = "test-notified"),
+            if (event.ports.length > 0) {
+              event.ports(0).postMessage(
+                ServiceWorkerResponse("test-notified"),
               )
             }
         }
@@ -269,15 +269,15 @@ object ServiceWorker {
         .toFuture
         .flatMap { clients =>
           val reloads = clients.toSeq.flatMap { c =>
-            val dyn = c.asInstanceOf[js.Dynamic]
-            println("dyn.navigate: " + dyn.navigate)
-            val hasNavigate =
-              !js.isUndefined(dyn.selectDynamic("navigate"))
-            if (hasNavigate) {
-              val wc = c.asInstanceOf[serviceworkers.WindowClient]
-              Some(wc.navigate(wc.url).toFuture.map(_ => ()))
+            val wc = c.asInstanceOf[serviceworkers.WindowClient]
+            wc.navigateOption match {
+              case Some(navigate) =>
+                println(s"Navigating client: ${wc.url}")
+                Some(navigate(wc.url).toFuture.map(_ => ()))
+              case None =>
+                println("Client does not support navigation")
+                None
             }
-            else None
           }
           Future.sequence(reloads).map(_ => ())
         }

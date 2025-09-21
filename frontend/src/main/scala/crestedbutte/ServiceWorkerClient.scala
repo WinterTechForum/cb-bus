@@ -5,6 +5,7 @@ import org.scalajs.dom.experimental.serviceworkers.toServiceWorkerNavigator
 import org.scalajs.dom
 import org.scalajs.dom.Event
 import scala.scalajs.js
+import crestedbutte.facades.ServiceWorkerMessageData
 
 import scala.util.{Failure, Success}
 
@@ -12,14 +13,14 @@ object ServiceWorkerClient {
   def registerServiceWorker(): Unit = {
     val window = org.scalajs.dom.window
 
-    val navigatorDyn = window.navigator.asInstanceOf[js.Dynamic]
-    if (js.isUndefined(navigatorDyn.selectDynamic("serviceWorker"))) {
-      return
+    // Use try-catch to check for serviceWorker support
+    val serviceWorker = try {
+      toServiceWorkerNavigator(window.navigator).serviceWorker
+    } catch {
+      case _: Exception =>
+        println("ServiceWorker not supported")
+        return
     }
-
-    val serviceWorker = toServiceWorkerNavigator(
-      window.navigator,
-    ).serviceWorker
 
     if (window.hasOwnProperty("OneSignalDeferred")) {
       serviceWorker.register(
@@ -33,19 +34,15 @@ object ServiceWorkerClient {
     import scala.concurrent.ExecutionContext.Implicits.global
     // Listen for messages from the SW and log them
     serviceWorker.onmessage = (e: dom.MessageEvent) => {
-      val data = e.data.asInstanceOf[js.Dynamic]
-      val kind = data
-        .selectDynamic("kind")
-        .asInstanceOf[js.UndefOr[String]]
-        .toOption
-        .getOrElse("")
-      val msg = data
-        .selectDynamic("message")
-        .asInstanceOf[js.UndefOr[String]]
-        .toOption
-        .getOrElse(data.toString)
-      if (kind == "sw-log") println(s"SWC <- ${msg}")
-      else println(s"SWC <- message: ${msg}")
+      ServiceWorkerMessageData.unapply(e.data) match {
+        case Some(data) =>
+          val kind = data.kind.toOption.getOrElse("")
+          val msg = data.message.toOption.getOrElse(e.data.toString)
+          if (kind == "sw-log") println(s"SWC <- ${msg}")
+          else println(s"SWC <- message: ${msg}")
+        case None =>
+          println(s"SWC <- raw message: ${e.data}")
+      }
     }
 
     serviceWorker
@@ -59,9 +56,9 @@ object ServiceWorkerClient {
           registration.onupdatefound = (_: Event) => {
             val installing = registration.installing
             if (installing != null) {
-              val swDyn = installing.asInstanceOf[js.Dynamic]
-              swDyn.updateDynamic("onstatechange")({ (_: Event) =>
-              }: js.Function1[Event, Any])
+              installing.onstatechange = (_: Event) => {
+                println(s"SWC: installing state change: ${installing.state}")
+              }
             }
           }
           registration.update()
