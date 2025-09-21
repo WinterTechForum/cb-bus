@@ -8,7 +8,7 @@ import org.scalajs.dom.experimental.serviceworkers.{
   FetchEvent,
 }
 import org.scalajs.dom.experimental._
-import org.scalajs.dom.raw.MessageEvent
+import org.scalajs.dom.MessageEvent
 import crestedbutte.Plan
 import crestedbutte.ServiceWorkerAction
 import com.billding.time.WallTime
@@ -25,6 +25,7 @@ import scala.scalajs.js.timers.*
 import scala.concurrent.duration.*
 import scala.scalajs.js.JSON
 import todo.facades.{ServiceWorkerResponse, ExtendableMessageEvent, WindowClientExtensions}
+import WindowClientExtensions._
 
 object ServiceWorker {
   val busCache = "cb-bus"
@@ -267,7 +268,6 @@ object ServiceWorker {
         .matchAll()
         .toFuture
         .flatMap { clients =>
-          import WindowClientExtensions._
           val reloads = clients.toSeq.flatMap { c =>
             val wc = c.asInstanceOf[serviceworkers.WindowClient]
             wc.navigateOption match {

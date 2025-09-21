@@ -2,7 +2,7 @@ package crestedbutte.facades
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation._
-import org.scalajs.dom.Navigator
+import org.scalajs.dom
 
 // Typed facade for Web Share API
 @js.native
@@ -33,7 +33,7 @@ trait NavigatorShare extends js.Object {
 
 // Extension methods to check for share support
 object NavigatorShareExtensions {
-  implicit class NavigatorOps(val navigator: Navigator) extends AnyVal {
+  implicit class NavigatorOps(val navigator: dom.Navigator) extends AnyVal {
     def shareOption: Option[NavigatorShare] = {
       // Use js.typeOf to check for share method existence
       if (js.typeOf(navigator.asInstanceOf[js.Dynamic].share) != "undefined") {

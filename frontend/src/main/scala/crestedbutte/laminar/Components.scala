@@ -18,6 +18,7 @@ import scala.scalajs.js
 import scala.scalajs.js.timers._
 import scala.concurrent.duration.FiniteDuration
 import crestedbutte.facades.{ShareData, NavigatorShareExtensions}
+import NavigatorShareExtensions._
 
 case class LocationTimeDirection(
   locationWithTime: LocationWithTime,
@@ -548,12 +549,11 @@ object Components {
                 styleProp("width") := s"${buttonWidth}px",
                 onClick --> Observer { _ =>
                   val text = plan.plainTextRepresentation
-                  import NavigatorShareExtensions._
                   dom.window.navigator.shareOption match {
                     case Some(shareApi) =>
                       shareApi.share(ShareData(
-                        title = "Bus Schedule",
-                        text = text
+                        title = js.defined("Bus Schedule"),
+                        text = js.defined(text)
                       ))
                     case None =>
                       dom.window.navigator.clipboard.writeText(text)
@@ -573,12 +573,11 @@ object Components {
                       s"http://localhost:8000/index.html?plan=${UrlEncoding.encode(plan)}"
                     else
                       s"https://rtabus.netlify.app/?plan=${UrlEncoding.encode(plan)}"
-                  import NavigatorShareExtensions._
                   dom.window.navigator.shareOption match {
                     case Some(shareApi) =>
                       shareApi.share(ShareData(
-                        title = "Bus Schedule Link",
-                        url = url
+                        title = js.defined("Bus Schedule Link"),
+                        url = js.defined(url)
                       ))
                     case None =>
                       dom.window.navigator.clipboard.writeText(url)
