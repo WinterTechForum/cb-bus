@@ -26,6 +26,16 @@ object NotificationCountdown {
     timeStampsSignal: Signal[WallTime],
   ): Unit = {
     // Send message to service worker to start notifications
+
+    import scala.concurrent.duration.FiniteDuration
+    import scala.concurrent.duration.DurationInt
+    import scala.scalajs.js
+
+    js.timers.setInterval(5.seconds) {
+      sendToServiceWorker(
+        ServiceWorkerAction.StartNotifications($plan.now()),
+      )
+    }
     sendToServiceWorker(
       ServiceWorkerAction.StartNotifications($plan.now()),
     )
@@ -66,6 +76,14 @@ object NotificationCountdown {
         .toFuture
         .flatMap { registration =>
           val messageChannel = new dom.MessageChannel()
+          println("periodic-sync: " + registration.periodicSync)
+
+          // navigator.permissions.query({name: "periodic-background-sync"});
+          // if (status.state === 'granted') {
+          //   // Periodic background sync can be used.
+          // } else {
+          //   // Periodic background sync cannot be used.
+          // }
 
           val responsePromise = scala.concurrent.Promise[js.Dynamic]()
 

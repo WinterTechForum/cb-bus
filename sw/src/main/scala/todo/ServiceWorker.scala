@@ -366,7 +366,7 @@ object ServiceWorker {
       // badge = "/images/BILLDING_LogoMark-256.png"
       tag = "route-countdown",
       // val requireInteraction = false
-      // val silent = true
+      silent = true,
       renotify = true,
     )
 
