@@ -328,7 +328,7 @@ object ServiceWorker {
         val minutesUntil =
           now.between(startTime).minutes.value
 
-        showNotification(minutesUntil, routeName)
+        showNotification(minutesUntil, segment.start.l.name)
       }
     }
 
@@ -337,13 +337,13 @@ object ServiceWorker {
     routeName: String,
   ): Unit = {
     val message = if (minutesUntil <= 0) {
-      s"$routeName route starting now!"
+      s"$routeName bus leaves now!"
     }
     else if (minutesUntil == 1) {
-      s"$routeName route starts in 1 minute"
+      s"$routeName bus leaves in 1 minute"
     }
     else {
-      s"$routeName route starts in $minutesUntil minutes"
+      s"$routeName bus leaves in $minutesUntil minutes"
     }
 
     // Use the service worker registration to show notification
@@ -367,7 +367,7 @@ object ServiceWorker {
       tag = "route-countdown",
       // val requireInteraction = false
       // val silent = true
-      renotify = false,
+      renotify = true,
     )
 
     // Call showNotification dynamically
