@@ -511,7 +511,7 @@ object Components {
             styleProp("height") := "56px",
             styleProp("transition") := "width 300ms ease",
 
-            // Share button (visible when collapsed)
+            // Distribute button (visible when collapsed)
             button(
               cls := "button floating-center-button",
               styleProp("width") := s"${buttonWidth}px",
@@ -522,7 +522,7 @@ object Components {
                 expanded => if (expanded) "none" else "auto",
               ),
               styleProp("transition") := "opacity 200ms ease",
-              span("Share"),
+              span("Distribute"),
               onClick --> Observer { _ =>
                 isExpanded.set(true)
               },
