@@ -3,9 +3,11 @@ package crestedbutte
 import com.billding.time.WallTime
 import com.raquo.laminar.api.L._
 import org.scalajs.dom
+import org.scalajs.dom.experimental.serviceworkers.toServiceWorkerNavigator
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters._
 import scala.concurrent.Future
+import crestedbutte.facades.ServiceWorkerMessageData
 import scala.concurrent.ExecutionContext.Implicits.global
 import crestedbutte.Plan
 import crestedbutte.ServiceWorkerAction
@@ -61,19 +63,11 @@ object NotificationCountdown {
   private def sendToServiceWorker(
     action: ServiceWorkerAction,
   ): Future[js.Dynamic] = {
-    val navigator = dom.window.navigator.asInstanceOf[js.Dynamic]
-
-    if (
-      !js.isUndefined(
-        navigator.serviceWorker,
-      ) && navigator.serviceWorker != null
-    ) {
+    try {
+      val serviceWorker = toServiceWorkerNavigator(dom.window.navigator).serviceWorker
       println("NotificationCountdown: service worker available")
-      val serviceWorker = navigator.serviceWorker
 
-      serviceWorker.ready
-        .asInstanceOf[js.Promise[js.Dynamic]]
-        .toFuture
+      serviceWorker.ready.toFuture
         .flatMap { registration =>
           val messageChannel = new dom.MessageChannel()
           println("periodic-sync: " + registration.periodicSync)
@@ -103,9 +97,9 @@ object NotificationCountdown {
 
           responsePromise.future
         }
-    }
-    else {
-      Future.failed(new Exception("Service Worker not available"))
+    } catch {
+      case _: Exception =>
+        Future.failed(new Exception("Service Worker not available"))
     }
   }
 }
