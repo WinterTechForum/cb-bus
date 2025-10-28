@@ -142,6 +142,24 @@ object Components {
           ),
         ),
       ),
+      // Notification permission button at the bottom
+      div(
+        cls := "notification-permission-container",
+        styleAttr := "position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 1000; width: auto;",
+        child <-- Signal.fromValue(()).map { _ =>
+          if (dom.Notification.permission == "granted") {
+            div() // Don't show button if permission already granted
+          } else {
+            button(
+              idAttr := ElementNames.Notifications.requestPermission,
+              cls := "button",
+              styleAttr := "padding: 0.75rem 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.3);",
+              "Enable Notifications",
+              onClick --> Experimental.Notifications.clickObserver,
+            )
+          }
+        },
+      ),
     )
   }
 
