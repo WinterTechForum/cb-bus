@@ -271,7 +271,8 @@ object Components {
                     expanded => if (expanded) "0" else "1",
                   ),
                   styleProp("pointer-events") <-- tripExpanded.signal
-                    .map(expanded => if (expanded) "none" else "auto",
+                    .map(expanded =>
+                      if (expanded) "none" else "auto",
                     ),
                   span("+"),
                   onClick --> Observer { _ =>
@@ -286,7 +287,8 @@ object Components {
                     expanded => if (expanded) "1" else "0",
                   ),
                   styleProp("pointer-events") <-- tripExpanded.signal
-                    .map(expanded => if (expanded) "auto" else "none",
+                    .map(expanded =>
+                      if (expanded) "auto" else "none",
                     ),
 
                   // New route button
