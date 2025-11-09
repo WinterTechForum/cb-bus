@@ -157,6 +157,9 @@ body {
     justify-content: center;
     align-items: center;
     margin: 0.5rem;
+    width: 100%;
+    height: 56px;
+    transition: width 300ms ease;
 }
 
 .floating-center-button {
@@ -168,6 +171,7 @@ body {
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
+    transition: opacity 200ms ease;
 }
 
 .expanded-buttons-row {
@@ -176,6 +180,7 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
+    transition: opacity 250ms ease;
 }
 
 .plan-segments {
@@ -192,6 +197,9 @@ body {
     display: flex;
     align-items: flex-start;
     width: 100%;
+    position: relative;
+    z-index: 1;
+    transition: transform 180ms ease;
 }
 
 .plan-segments_left {

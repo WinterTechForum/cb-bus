@@ -267,9 +267,6 @@ object Components {
               cls := "centered",
               div(
                 cls := "trip-button-container",
-                styleProp("width") := "100%",
-                styleProp("height") := "56px",
-                styleProp("transition") := "width 300ms ease",
 
                 // Collapsed + Trip button
                 button(
@@ -279,10 +276,8 @@ object Components {
                     expanded => if (expanded) "0" else "1",
                   ),
                   styleProp("pointer-events") <-- tripExpanded.signal
-                    .map(expanded =>
-                      if (expanded) "none" else "auto",
+                    .map(expanded => if (expanded) "none" else "auto",
                     ),
-                  styleProp("transition") := "opacity 200ms ease",
                   span("+"),
                   onClick --> Observer { _ =>
                     tripExpanded.set(true)
@@ -299,10 +294,8 @@ object Components {
                     expanded => if (expanded) "1" else "0",
                   ),
                   styleProp("pointer-events") <-- tripExpanded.signal
-                    .map(expanded =>
-                      if (expanded) "auto" else "none",
+                    .map(expanded => if (expanded) "auto" else "none",
                     ),
-                  styleProp("transition") := "opacity 250ms ease",
 
                   // New route button
                   button(
@@ -419,10 +412,6 @@ object Components {
       // Slidable content
       div(
         cls := "plan-segments_row",
-        // TODO These hard-coded styleProp values should move to style.css
-        styleProp("position") := "relative",
-        styleProp("z-index") := "1",
-        styleProp("transition") := "transform 180ms ease",
         styleProp("transform") <-- offsetPx.signal.map(px =>
           if (px >= 0) s"translateX(-${px}px)" else s"translateX(${-px}px)",
         ),
@@ -496,9 +485,6 @@ object Components {
 
           div(
             cls := "share-button-container",
-            styleProp("width") := "100%",
-            styleProp("height") := "56px",
-            styleProp("transition") := "width 300ms ease",
 
             // Share button (visible when collapsed)
             button(
@@ -510,7 +496,6 @@ object Components {
               styleProp("pointer-events") <-- isExpanded.signal.map(
                 expanded => if (expanded) "none" else "auto",
               ),
-              styleProp("transition") := "opacity 200ms ease",
               span("Share"),
               onClick --> Observer { _ =>
                 isExpanded.set(true)
@@ -527,7 +512,6 @@ object Components {
               styleProp("pointer-events") <-- isExpanded.signal.map(
                 expanded => if (expanded) "auto" else "none",
               ),
-              styleProp("transition") := "opacity 250ms ease",
 
               // Text button
               button(
