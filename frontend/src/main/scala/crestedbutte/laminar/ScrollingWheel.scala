@@ -108,7 +108,7 @@ object ScrollingWheel {
 
     val wheelElement = div(
       cls := "scrolling-wheel scrolling-wheel-container",
-      styleProp("height") := s"${containerHeight}px",
+      styleAttr := s"--wheel-item-height: ${itemHeight}px; --wheel-container-height: ${containerHeight}px; height: ${containerHeight}px",
       div(
         cls := "wheel-mask",
 
@@ -119,7 +119,6 @@ object ScrollingWheel {
       ),
       div(
         cls := "wheel-viewport",
-        styleAttr := s"-webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0) 0px, rgba(0,0,0,1) rgba(0,0,0,1) ${containerHeight - itemHeight}px, rgba(0,0,0,0) ${containerHeight}px); mask-image: linear-gradient(to bottom, rgba(0,0,0,0) 0px, rgba(0,0,0,1) ${itemHeight}px, rgba(0,0,0,1) ${containerHeight - itemHeight}px, rgba(0,0,0,0) ${containerHeight}px);",
         div(
           cls := "wheel-items",
           styleAttr <-- scrollPosition.signal.map(pos =>
@@ -130,7 +129,6 @@ object ScrollingWheel {
           items.zipWithIndex.map { case (item, index) =>
             div(
               cls := "wheel-item",
-              styleProp("height") := s"${itemHeight}px",
               itemToString(item),
             )
           },
