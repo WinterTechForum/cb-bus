@@ -36,8 +36,7 @@ object Components {
     val notificationsEnabled: Var[Boolean] = Var(false)
 
     button(
-      cls := "button",
-      styleAttr := s"width: ${buttonWidth}px;",
+      cls := "button button-fixed-width",
       child <-- notificationsEnabled.signal.map { enabled =>
         if (enabled) "🔔 On" else "🔕 Off"
       },
@@ -233,9 +232,6 @@ object Components {
         child <-- addingNewRoute.signal.map {
           case false =>
             val tripExpanded: Var[Boolean] = Var(false)
-            val buttonWidth = 100
-            val buttonGap = 8
-            val extraSpacing = 12
 
             val documentClickHandler
               : js.Function1[dom.MouseEvent, Unit] =
@@ -270,8 +266,7 @@ object Components {
 
                 // Collapsed + Trip button
                 button(
-                  cls := "button floating-center-button",
-                  styleProp("width") := s"${buttonWidth}px",
+                  cls := "button floating-center-button button-fixed-width",
                   styleProp("opacity") <-- tripExpanded.signal.map(
                     expanded => if (expanded) "0" else "1",
                   ),
@@ -287,9 +282,6 @@ object Components {
                 // Expanded buttons container
                 div(
                   cls := "expanded-buttons-row",
-                  styleProp(
-                    "gap",
-                  ) := s"${buttonGap + extraSpacing}px",
                   styleProp("opacity") <-- tripExpanded.signal.map(
                     expanded => if (expanded) "1" else "0",
                   ),
@@ -299,9 +291,8 @@ object Components {
 
                   // New route button
                   button(
-                    cls := "button",
+                    cls := "button button-fixed-width",
                     "New trip",
-                    styleProp("width") := s"${buttonWidth}px",
                     onClick --> Observer { _ =>
                       addingNewRoute.set(true)
                       setTimeout(300)(tripExpanded.set(false))
@@ -310,9 +301,8 @@ object Components {
 
                   // Return trip button
                   button(
-                    cls := "button",
+                    cls := "button button-fixed-width",
                     "Return trip",
-                    styleProp("width") := s"${buttonWidth}px",
                     onClick --> Observer { _ =>
                       val plan = $plan.now()
                       val maybeLastSeg = plan.l.lastOption
@@ -476,20 +466,12 @@ object Components {
         if (plan.routeSegments.isEmpty)
           div()
         else {
-          val buttonWidth = 100 // Width of each button in pixels
-          val buttonGap = 8 // Base gap between buttons in pixels
-          val extraSpacing =
-            12 // Extra spacing to ensure clear separation at rest
-          val totalExpandedWidth =
-            buttonWidth * 2 + buttonGap + extraSpacing
-
           div(
             cls := "share-button-container",
 
             // Share button (visible when collapsed)
             button(
-              cls := "button floating-center-button",
-              styleProp("width") := s"${buttonWidth}px",
+              cls := "button floating-center-button button-fixed-width",
               styleProp("opacity") <-- isExpanded.signal.map(
                 expanded => if (expanded) "0" else "1",
               ),
@@ -505,7 +487,6 @@ object Components {
             // Expanded buttons container to guarantee separation
             div(
               cls := "expanded-buttons-row",
-              styleProp("gap") := s"${buttonGap + extraSpacing}px",
               styleProp("opacity") <-- isExpanded.signal.map(
                 expanded => if (expanded) "1" else "0",
               ),
@@ -515,9 +496,8 @@ object Components {
 
               // Text button
               button(
-                cls := "button",
+                cls := "button button-fixed-width",
                 "Text",
-                styleProp("width") := s"${buttonWidth}px",
                 onClick --> Observer { _ =>
                   val text = plan.plainTextRepresentation
                   if (
@@ -544,9 +524,8 @@ object Components {
 
               // Link button
               button(
-                cls := "button",
+                cls := "button button-fixed-width",
                 "Link",
-                styleProp("width") := s"${buttonWidth}px",
                 onClick --> Observer { _ =>
                   val url =
                     if (dom.document.URL.contains("localhost"))

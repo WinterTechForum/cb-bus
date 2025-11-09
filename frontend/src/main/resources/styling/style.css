@@ -60,6 +60,10 @@ body {
     cursor: not-allowed;
 }
 
+.button-fixed-width {
+    width: 100px;
+}
+
 
 .add-new-route-section {
     padding: 10px 0;
@@ -100,6 +104,9 @@ body {
 .scrolling-wheel-container {
     overflow: hidden;
     position: relative;
+    height: 180px;
+    --wheel-item-height: 60px;
+    --wheel-container-height: 180px;
 }
 
 .wheel-mask {
@@ -180,6 +187,7 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
+    gap: 20px;
     transition: opacity 250ms ease;
 }
 

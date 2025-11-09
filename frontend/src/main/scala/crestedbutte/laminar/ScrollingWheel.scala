@@ -108,7 +108,6 @@ object ScrollingWheel {
 
     val wheelElement = div(
       cls := "scrolling-wheel scrolling-wheel-container",
-      styleAttr := s"--wheel-item-height: ${itemHeight}px; --wheel-container-height: ${containerHeight}px; height: ${containerHeight}px",
       div(
         cls := "wheel-mask",
 
