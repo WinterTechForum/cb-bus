@@ -75,41 +75,6 @@ object Experimental {
           ),
     )
 
-    def createJankyBusAlertInSideEffectyWay(
-      busTime: WallTime,
-    ) =
-      new Notification(
-        s"The ${busTime.toString} bus is arriving in ${headsUpAmount.toMinutes} minutes!",
-        NotificationOptions(
-          vibrate = js.Array(100d),
-        ),
-      )
-
-    def AlarmIcon(
-      name: String,
-      classes: String,
-      busTime: WallTime,
-    ) = {
-      val clickObserverNarrow = Observer[WallTime](
-        onNext = ev => {
-          println("Clicked alarm")
-          // This will give the user an idea of what the eventual notification will look/sound like
-          // While also letting them know that they successfully scheduled it.
-          new Notification(
-            s"You will be alerted with a Notification like this when the bus is ${NotificationStuff.headsUpAmount.toMinutes} minutes away.",
-            NotificationOptions(
-              vibrate = js.Array(100d),
-            ),
-          )
-          desiredAlarms.append(ev)
-        },
-      )
-      SvgIcon(name)
-        .amend(
-          verticalAlign := "middle",
-          onClick.map(_ => busTime) --> clickObserverNarrow,
-        )
-    }
   }
 
   def Sandbox(

@@ -123,18 +123,6 @@ object Components {
             addingNewRoute,
             selectedStop.writer,
           ),
-          timeStamps --> Observer[WallTime](
-            onNext = localTime =>
-              desiredAlarms
-                .dequeueAll(busTime =>
-                  localTime
-                    .between(busTime)
-                    .toMinutes <= NotificationStuff.headsUpAmount.toMinutes,
-                )
-                .foreach(
-                  Experimental.Notifications.createJankyBusAlertInSideEffectyWay,
-                ),
-          ),
           Option.when(appMode == AppMode.Local && false)(
             Experimental.Sandbox(
               timeStamps,
@@ -356,11 +344,12 @@ object Components {
                   ),
 
                   // Notification toggle button
-                  NotificationToggleButton(
-                    $plan,
-                    timeStamps,
-                    buttonWidth,
-                  ),
+                  // TODO Re-enable if I can ever get it working reliably
+                  // NotificationToggleButton(
+                  //   $plan,
+                  //   timeStamps,
+                  //   buttonWidth,
+                  // ),
                 ),
               ),
             )
@@ -662,6 +651,7 @@ object Components {
           ),
         )
       },
+      h2("Select your origin and destination"),
       div(
         children <-- $locations.splitTransition(identity) {
           case (_, (location, _), _, transition) =>
