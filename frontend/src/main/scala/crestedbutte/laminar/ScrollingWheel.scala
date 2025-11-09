@@ -119,7 +119,7 @@ object ScrollingWheel {
       ),
       div(
         cls := "wheel-viewport",
-        styleAttr := s"-webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0) 0px, rgba(0,0,0,1) ${itemHeight}px, rgba(0,0,0,1) ${containerHeight - itemHeight}px, rgba(0,0,0,0) ${containerHeight}px); mask-image: linear-gradient(to bottom, rgba(0,0,0,0) 0px, rgba(0,0,0,1) ${itemHeight}px, rgba(0,0,0,1) ${containerHeight - itemHeight}px, rgba(0,0,0,0) ${containerHeight}px);",
+        styleAttr := s"-webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0) 0px, rgba(0,0,0,1) rgba(0,0,0,1) ${containerHeight - itemHeight}px, rgba(0,0,0,0) ${containerHeight}px); mask-image: linear-gradient(to bottom, rgba(0,0,0,0) 0px, rgba(0,0,0,1) ${itemHeight}px, rgba(0,0,0,1) ${containerHeight - itemHeight}px, rgba(0,0,0,0) ${containerHeight}px);",
         div(
           cls := "wheel-items",
           styleAttr <-- scrollPosition.signal.map(pos =>
