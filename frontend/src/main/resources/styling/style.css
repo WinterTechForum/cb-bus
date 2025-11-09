@@ -1,7 +1,7 @@
 html {
-    -webkit-filter: grayscale(100%);
-    filter: grayscale(100%);
-    background-color: black;
+    /* -webkit-filter: grayscale(100%); */
+    /* filter: grayscale(100%); */
+    background-color: white;
     text-align: center;
 }
 
@@ -28,10 +28,10 @@ body {
     width: 32px;
 }
 
-.button,
-.adjuster-button {
+.button {
+    color: white;
     font-weight: bold;
-    background-color: white;
+    background-color: #019c8f;
     box-sizing: border-box;
     transition: box-shadow 0.2s ease;
     min-width: 8em;
@@ -70,7 +70,7 @@ body {
 }
 
 .time-at-stop {
-    color: white;
+    color: black;
     /* Redundent? */
 }
 
@@ -160,9 +160,9 @@ body {
 }
 
 .plan-segments {
-    border: 3px solid white;
+    border: 3px solid #019c8f;
     border-radius: 5px;
-    color: white;
+    color: black;
     margin: 4px 0;
     padding: 8px;
     position: relative;

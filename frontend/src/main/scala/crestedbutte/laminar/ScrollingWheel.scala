@@ -114,7 +114,7 @@ object ScrollingWheel {
 
         // Center highlight only (no background gradients)
         div(
-          styleAttr := s"position: absolute; top: ${itemHeight}px; left: 0; right: 0; height: ${itemHeight}px; border: 2px solid #3273dc; border-left: none; border-right: none; background: rgba(50, 115, 220, 0.1); pointer-events: none;",
+          styleAttr := s"position: absolute; top: ${itemHeight}px; left: 0; right: 0; height: ${itemHeight}px; border: 2px solid #019c8f; border-left: none; border-right: none; background: rgba(50, 115, 220, 0.1); pointer-events: none;",
         ),
       ),
       div(
