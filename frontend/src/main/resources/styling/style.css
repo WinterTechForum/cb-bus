@@ -124,6 +124,19 @@ body {
     user-select: none;
 }
 
+.wheel-center-highlight {
+    position: absolute;
+    top: 60px;
+    left: 0;
+    right: 0;
+    height: 60px;
+    border: 2px solid #019c8f;
+    border-left: none;
+    border-right: none;
+    background: rgba(50, 115, 220, 0.1);
+    pointer-events: none;
+}
+
 /* Centered helper */
 .centered {
     display: flex;
