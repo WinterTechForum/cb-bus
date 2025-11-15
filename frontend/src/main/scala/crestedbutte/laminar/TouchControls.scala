@@ -283,13 +283,14 @@ object TouchControls {
               e.stopPropagation()
               val delta =
                 touchStartX.now() - currentX // left is positive
-              val proposed =
-                Math.max(0.0, baseOffsetAtStart.now() + delta)
-              // Optionally clamp to element width to avoid extreme values
+              val proposed = baseOffsetAtStart.now() + delta
+              // Allow sliding beyond element width to slide off screen
+              // Clamp to reasonable bounds to prevent extreme values
               val width =
                 el.ref.asInstanceOf[dom.Element].clientWidth.toDouble
+              val maxOffset = if (width > 0) width * 2.0 else 1000.0
               val clamped =
-                if (width > 0) Math.min(proposed, width) else proposed
+                Math.max(-maxOffset, Math.min(proposed, maxOffset))
               offsetPx.set(clamped)
             case Some("vertical") =>
               ()
@@ -306,7 +307,8 @@ object TouchControls {
                 el.ref.asInstanceOf[dom.Element].clientWidth.toDouble
               val trigger =
                 Math.max(minTriggerPx, width * deleteTriggerRatio)
-              if (offsetPx.now() >= trigger) {
+              // Use absolute value to support both left and right swipes
+              if (Math.abs(offsetPx.now()) >= trigger) {
                 onDelete()
               }
               else {
