@@ -424,7 +424,7 @@ object Components {
         styleProp("z-index") := "1",
         styleProp("transition") := "transform 180ms ease",
         styleProp("transform") <-- offsetPx.signal.map(px =>
-          s"translateX(-${px}px)",
+          if (px >= 0) s"translateX(-${px}px)" else s"translateX(${-px}px)",
         ),
         // Touch handlers for swipe-to-reveal (encapsulated)
         swipeModifier,

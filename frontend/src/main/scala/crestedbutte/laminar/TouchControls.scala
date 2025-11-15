@@ -284,15 +284,13 @@ object TouchControls {
               val delta =
                 touchStartX.now() - currentX // left is positive
               val proposed = baseOffsetAtStart.now() + delta
-              // Clamp to element width bounds (both positive and negative)
+              // Allow sliding beyond element width to slide off screen
+              // Clamp to reasonable bounds to prevent extreme values
               val width =
                 el.ref.asInstanceOf[dom.Element].clientWidth.toDouble
+              val maxOffset = if (width > 0) width * 2.0 else 1000.0
               val clamped =
-                if (width > 0) {
-                  Math.max(-width, Math.min(proposed, width))
-                } else {
-                  proposed
-                }
+                Math.max(-maxOffset, Math.min(proposed, maxOffset))
               offsetPx.set(clamped)
             case Some("vertical") =>
               ()
