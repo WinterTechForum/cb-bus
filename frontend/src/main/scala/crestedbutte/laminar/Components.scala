@@ -309,10 +309,12 @@ object Components {
                       val plan = $plan.now()
                       val maybeLastSeg = plan.l.lastOption
                       maybeLastSeg.foreach { lastSeg =>
+                        val (returnStart, returnEnd) =
+                          returnTripEndpoints(lastSeg)
                         val maybeReturn =
                           rightLegOnRightRoute(
-                            lastSeg.end.l,
-                            lastSeg.start.l,
+                            returnStart,
+                            returnEnd,
                             Plan(Seq.empty),
                             lastSeg.end.t,
                           )
@@ -561,6 +563,32 @@ object Components {
         }
       },
     )
+  }
+
+  /** Apply the rec-center/spencer special-casing requested for return trips
+    * while keeping the opposite stop unchanged.
+    */
+  private[laminar] def returnTripEndpoints(
+    lastSegment: RouteSegment,
+  ): (Location, Location) = {
+    val swappedStart = lastSegment.end.l
+    val swappedEnd = lastSegment.start.l
+
+    val adjustedStart =
+      if (
+        lastSegment.route == RTA.Southbound.componentName &&
+        lastSegment.end.l == Location.RecCenter
+      ) Location.SpencerAndHighwayOneThirtyFive
+      else swappedStart
+
+    val adjustedEnd =
+      if (
+        lastSegment.route == RTA.Northbound.componentName &&
+        lastSegment.start.l == Location.SpencerAndHighwayOneThirtyFive
+      ) Location.RecCenter
+      else swappedEnd
+
+    (adjustedStart, adjustedEnd)
   }
 
   def rightLegOnRightRoute(
