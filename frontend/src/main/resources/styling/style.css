@@ -161,7 +161,10 @@ body {
 /* Centered helper */
 .centered {
     display: flex;
+    flex-direction: column;
     justify-content: center;
+    align-items: center;
+    width: 100%;
 }
 
 /* Trip/share button containers and buttons */
