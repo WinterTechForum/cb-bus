@@ -258,20 +258,25 @@ object Components {
                 pendingReturnChoice.set(None)
               else
                 latestSegmentO.foreach { lastSeg =>
-                  rightLegOnRightRoute(
-                    start,
-                    end,
-                    currentPlan,
-                    lastSeg.end.t,
-                  ).foreach { newSeg =>
-                    val updatedPlan =
-                      currentPlan.copy(l = currentPlan.l :+ newSeg)
-                    db.saveDailyPlanOnly(updatedPlan)
-                    $plan.set(updatedPlan)
-                    addingNewRoute.set(false)
-                    pendingReturnChoice.set(None)
-                    setTimeout(300)(tripExpanded.set(false))
-                  }
+                  val maybeReturnLeg =
+                    rightLegOnRightRoute(
+                      start,
+                      end,
+                      currentPlan,
+                      lastSeg.end.t,
+                    )
+                  maybeReturnLeg match
+                    case Some(newSeg) =>
+                      val updatedPlan =
+                        currentPlan.copy(l = currentPlan.l :+ newSeg)
+                      db.saveDailyPlanOnly(updatedPlan)
+                      $plan.set(updatedPlan)
+                      addingNewRoute.set(false)
+                      pendingReturnChoice.set(None)
+                      setTimeout(300)(tripExpanded.set(false))
+                    case None =>
+                      // Clear choice when a matching return leg can't be found
+                      pendingReturnChoice.set(None)
                 }
 
             val documentClickHandler
