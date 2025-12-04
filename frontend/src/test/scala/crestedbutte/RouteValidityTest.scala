@@ -1,7 +1,7 @@
 package crestedbutte
 
 import com.billding.time.WallTime
-import crestedbutte.routes.{RTA, RouteWithTimes}
+import crestedbutte.{RTA, RouteWithTimes}
 import zio.test.*
 
 object RouteValidityTest extends ZIOSpecDefault {

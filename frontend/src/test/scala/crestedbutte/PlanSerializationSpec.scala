@@ -1,7 +1,7 @@
 package crestedbutte
 
 import com.billding.time.WallTime
-import crestedbutte.routes.RTA
+import crestedbutte.RTA
 import zio.json.*
 import zio.test.*
 import zio.*
