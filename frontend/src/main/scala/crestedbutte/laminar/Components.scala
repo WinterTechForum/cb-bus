@@ -257,22 +257,26 @@ object Components {
               if !isMatchingSegment then
                 pendingReturnChoice.set(None)
               else
-                latestSegmentO.foreach { lastSeg =>
-                  rightLegOnRightRoute(
-                    start,
-                    end,
-                    currentPlan,
-                    lastSeg.end.t,
-                  ).foreach { newSeg =>
-                    val updatedPlan =
-                      currentPlan.copy(l = currentPlan.l :+ newSeg)
-                    db.saveDailyPlanOnly(updatedPlan)
-                    $plan.set(updatedPlan)
-                    addingNewRoute.set(false)
+                latestSegmentO match
+                  case Some(lastSeg) =>
+                    rightLegOnRightRoute(
+                      start,
+                      end,
+                      currentPlan,
+                      lastSeg.end.t,
+                    ) match
+                      case Some(newSeg) =>
+                        val updatedPlan =
+                          currentPlan.copy(l = currentPlan.l :+ newSeg)
+                        db.saveDailyPlanOnly(updatedPlan)
+                        $plan.set(updatedPlan)
+                        addingNewRoute.set(false)
+                        pendingReturnChoice.set(None)
+                        setTimeout(300)(tripExpanded.set(false))
+                      case None =>
+                        pendingReturnChoice.set(None)
+                  case None =>
                     pendingReturnChoice.set(None)
-                    setTimeout(300)(tripExpanded.set(false))
-                  }
-                }
 
             val documentClickHandler
               : js.Function1[dom.MouseEvent, Unit] =
