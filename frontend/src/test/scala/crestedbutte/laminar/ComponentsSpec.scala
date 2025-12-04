@@ -43,5 +43,30 @@ object ComponentsSpec extends ZIOSpecDefault {
           end == Location.RecCenter,
         )
       },
+      test(
+        "rightLegOnRightRoute falls back to same direction when opposite misses",
+      ) {
+        val northLeg =
+          RTA.Northbound.fullSchedule
+            .segment(Location.Safeway,
+                     Location.SpencerAndHighwayOneThirtyFive,
+            )
+            .flatMap(_.headOption)
+            .getOrElse(???)
+        val plan = Plan(Seq(northLeg))
+
+        val maybeSegment =
+          Components
+            .rightLegOnRightRoute(
+              Location.FourWayUphill,
+              Location.MountaineerSquare,
+              plan,
+              northLeg.end.t,
+            )
+
+        assertTrue(
+          maybeSegment.exists(_.route == RTA.Northbound.componentName),
+        )
+      },
     )
 }

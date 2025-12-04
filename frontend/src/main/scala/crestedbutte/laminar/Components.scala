@@ -315,7 +315,7 @@ object Components {
                           rightLegOnRightRoute(
                             returnStart,
                             returnEnd,
-                            Plan(Seq.empty),
+                            plan,
                             lastSeg.end.t,
                           )
                         maybeReturn.foreach { newSeg =>
@@ -594,10 +594,22 @@ object Components {
     pageLoadTime: WallTime,
   ): Option[RouteSegment] = {
 
+    val defaultOrder =
+      Seq(RTA.Southbound.fullSchedule, RTA.Northbound.fullSchedule)
+
+    val routesInPreferenceOrder =
+      plan.l.lastOption match
+        case Some(lastSeg) if lastSeg.route == RTA.Southbound.componentName =>
+          Seq(RTA.Northbound.fullSchedule, RTA.Southbound.fullSchedule)
+        case Some(lastSeg) if lastSeg.route == RTA.Northbound.componentName =>
+          Seq(RTA.Southbound.fullSchedule, RTA.Northbound.fullSchedule)
+        case _ => defaultOrder
+
     val routeSegmentsO =
-      RTA.Southbound.fullSchedule
-        .segment(start, end)
-        .orElse(RTA.Northbound.fullSchedule.segment(start, end))
+      routesInPreferenceOrder.foldLeft(Option.empty[Seq[RouteSegment]]) {
+        case (acc, route) =>
+          acc.orElse(route.segment(start, end))
+      }
 
     routeSegmentsO
       .flatMap(routeSegments =>
