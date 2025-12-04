@@ -236,12 +236,47 @@ object Components {
             case class PendingReturnTrip(
               lastSegmentId: Long,
               options: ReturnTripOptions,
+              adjustedAvailable: Boolean,
+              originalAvailable: Boolean,
+              generalMessage: Option[String] = None,
             )
 
             val pendingReturnChoice
               : Var[Option[PendingReturnTrip]] =
               Var(None)
-            val returnTripError: Var[Option[String]] = Var(None)
+
+            def evaluatePendingReturn(
+              lastSegment: RouteSegment,
+              plan: Plan,
+              options: ReturnTripOptions,
+            ): PendingReturnTrip =
+              val lastEndTime = lastSegment.end.t
+              def hasReturnLeg(start: Location, end: Location) =
+                rightLegOnRightRoute(
+                  start,
+                  end,
+                  plan,
+                  lastEndTime,
+                ).nonEmpty
+
+              val adjustedAvailable =
+                hasReturnLeg(
+                  options.adjustedStart,
+                  options.adjustedEnd,
+                )
+              val originalAvailable =
+                hasReturnLeg(
+                  options.originalStart,
+                  options.originalEnd,
+                )
+
+              PendingReturnTrip(
+                lastSegment.id,
+                options,
+                adjustedAvailable,
+                originalAvailable,
+                generalMessage = None,
+              )
 
             def attemptReturnTrip(
               start: Location,
@@ -256,12 +291,19 @@ object Components {
                   case None     => latestSegmentO.isDefined
 
               if !isMatchingSegment then
-                pendingReturnChoice.set(None)
-                returnTripError.set(
-                  Some(
-                    "Your trip changed before we could add the return. Please try again.",
-                  ),
-                )
+                val updated =
+                  pendingReturnChoice
+                    .now()
+                    .map(
+                      _.copy(
+                        adjustedAvailable = false,
+                        originalAvailable = false,
+                        generalMessage = Some(
+                          "Your trip changed before we could add the return. Please try again.",
+                        ),
+                      ),
+                    )
+                pendingReturnChoice.set(updated)
               else
                 latestSegmentO.foreach { lastSeg =>
                   val maybeReturnLeg =
@@ -279,16 +321,37 @@ object Components {
                       $plan.set(updatedPlan)
                       addingNewRoute.set(false)
                       pendingReturnChoice.set(None)
-                      returnTripError.set(None)
                       setTimeout(300)(tripExpanded.set(false))
                     case None =>
-                      // Clear choice when a matching return leg can't be found
-                      pendingReturnChoice.set(None)
-                      returnTripError.set(
-                        Some(
-                          "Couldn't find a matching return route from that stop.",
-                        ),
-                      )
+                      val defaultMessage =
+                        "Couldn't find a matching return route from that stop."
+                      val updated =
+                        pendingReturnChoice
+                          .now()
+                          .map { pending =>
+                            val isAdjustedChoice =
+                              pending.options.adjustedStart == start &&
+                                pending.options.adjustedEnd == end
+                            val isOriginalChoice =
+                              pending.options.originalStart == start &&
+                                pending.options.originalEnd == end
+                            val unavailableMessage =
+                              if isAdjustedChoice then
+                                s"No return trips leave ${pending.options.adjustedStart.name} right now."
+                              else if isOriginalChoice then
+                                s"No return trips leave ${pending.options.originalStart.name} right now."
+                              else defaultMessage
+                            pending.copy(
+                              adjustedAvailable =
+                                if isAdjustedChoice then false
+                                else pending.adjustedAvailable,
+                              originalAvailable =
+                                if isOriginalChoice then false
+                                else pending.originalAvailable,
+                              generalMessage = Some(unavailableMessage),
+                            )
+                          }
+                      pendingReturnChoice.set(updated)
                 }
 
             val documentClickHandler
@@ -355,7 +418,6 @@ object Components {
                     "New trip",
                     onClick --> Observer { _ =>
                       addingNewRoute.set(true)
-                      returnTripError.set(None)
                       setTimeout(300)(tripExpanded.set(false))
                     },
                   ),
@@ -367,14 +429,14 @@ object Components {
                     onClick --> Observer { _ =>
                       val plan = $plan.now()
                       val maybeLastSeg = plan.l.lastOption
-                      returnTripError.set(None)
                       maybeLastSeg.foreach { lastSeg =>
                         val options = returnTripEndpoints(lastSeg)
                         if (options.hasAdjustments) then
                           pendingReturnChoice.set(
                             Some(
-                              PendingReturnTrip(
-                                lastSeg.id,
+                              evaluatePendingReturn(
+                                lastSeg,
+                                plan,
                                 options,
                               ),
                             ),
@@ -397,21 +459,6 @@ object Components {
                   //   buttonWidth,
                   // ),
                 ),
-                child.maybe <-- returnTripError.signal.map(
-                  _.map { message =>
-                    div(
-                      cls := "notification is-warning return-trip-error",
-                      span(message),
-                      button(
-                        cls := "delete",
-                        title := "Dismiss",
-                        onClick --> Observer { _ =>
-                          returnTripError.set(None)
-                        },
-                      ),
-                    )
-                  },
-                ),
               ),
               child <-- pendingReturnChoice.signal.map {
                 case Some(pending) =>
@@ -419,14 +466,8 @@ object Components {
                     s"${pending.options.adjustedStart.name} → ${pending.options.adjustedEnd.name}"
                   val originalLabel =
                     s"${pending.options.originalStart.name} → ${pending.options.originalEnd.name}"
-                  div(
-                    cls := "return-trip-choice",
-                    h3("Choose your return stop"),
-                    p(
-                      "The alternate stop is usually faster, but you can keep your original stop if you prefer.",
-                    ),
-                    div(
-                      cls := "return-trip-choice_buttons",
+                  val alternateButton =
+                    Option.when(pending.adjustedAvailable)(
                       button(
                         cls := "button return-trip-choice_button",
                         alternateLabel,
@@ -438,6 +479,9 @@ object Components {
                           )
                         },
                       ),
+                    )
+                  val originalButton =
+                    Option.when(pending.originalAvailable)(
                       button(
                         cls :=
                           "button button-outlined return-trip-choice_button",
@@ -450,13 +494,45 @@ object Components {
                           )
                         },
                       ),
+                    )
+                  val warningMessages =
+                    pending.generalMessage match
+                      case Some(message) => List(message)
+                      case None =>
+                        List(
+                          Option.when(!pending.adjustedAvailable)(
+                            s"No return trips leave ${pending.options.adjustedStart.name} right now.",
+                          ),
+                          Option.when(!pending.originalAvailable)(
+                            s"No return trips leave ${pending.options.originalStart.name} right now.",
+                          ),
+                        ).flatten
+                  val warningsNode =
+                    if warningMessages.nonEmpty then
+                      div(
+                        cls := "notification is-warning return-trip-choice_warning",
+                        warningMessages.map(msg => p(msg))*,
+                      )
+                    else emptyNode
+                  val choiceButtons =
+                    (alternateButton.toList ++ originalButton.toList) :+
                       button(
                         cls := "button button-ghost return-trip-choice_button",
                         "Cancel",
                         onClick --> Observer { _ =>
                           pendingReturnChoice.set(None)
                         },
-                      ),
+                      )
+                  div(
+                    cls := "return-trip-choice",
+                    h3("Choose your return stop"),
+                    p(
+                      "The alternate stop is usually faster, but you can keep your original stop if you prefer.",
+                    ),
+                    warningsNode,
+                    div(
+                      cls := "return-trip-choice_buttons",
+                      choiceButtons*,
                     ),
                   )
                 case None => emptyNode
