@@ -511,18 +511,21 @@ object Components {
                     if warningMessages.nonEmpty then
                       div(
                         cls := "notification is-warning return-trip-choice_warning",
-                        warningMessages.map(msg => p(msg))*,
+                        p(warningMessages.mkString(" ")),
                       )
                     else emptyNode
-                  val choiceButtons =
-                    (alternateButton.toList ++ originalButton.toList) :+
-                      button(
-                        cls := "button button-ghost return-trip-choice_button",
-                        "Cancel",
-                        onClick --> Observer { _ =>
-                          pendingReturnChoice.set(None)
-                        },
-                      )
+                  val alternateButtonNode =
+                    alternateButton.getOrElse(emptyNode)
+                  val originalButtonNode =
+                    originalButton.getOrElse(emptyNode)
+                  val cancelButton =
+                    button(
+                      cls := "button button-ghost return-trip-choice_button",
+                      "Cancel",
+                      onClick --> Observer { _ =>
+                        pendingReturnChoice.set(None)
+                      },
+                    )
                   div(
                     cls := "return-trip-choice",
                     h3("Choose your return stop"),
@@ -532,7 +535,9 @@ object Components {
                     warningsNode,
                     div(
                       cls := "return-trip-choice_buttons",
-                      choiceButtons*,
+                      alternateButtonNode,
+                      originalButtonNode,
+                      cancelButton,
                     ),
                   )
                 case None => emptyNode
