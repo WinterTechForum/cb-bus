@@ -407,7 +407,8 @@ object Components {
       div(
         cls := "plan-segments_row",
         styleProp("transform") <-- offsetPx.signal.map(px =>
-          if (px >= 0) s"translateX(-${px}px)" else s"translateX(${-px}px)",
+          if (px >= 0) s"translateX(-${px}px)"
+          else s"translateX(${-px}px)",
         ),
         // Touch handlers for swipe-to-reveal (encapsulated)
         swipeModifier,
@@ -565,8 +566,8 @@ object Components {
     )
   }
 
-  /** Apply the rec-center/spencer special-casing requested for return trips
-    * while keeping the opposite stop unchanged.
+  /** Apply the rec-center/spencer special-casing requested for return
+    * trips while keeping the opposite stop unchanged.
     */
   private[laminar] def returnTripEndpoints(
     lastSegment: RouteSegment,
@@ -574,14 +575,24 @@ object Components {
     val swappedStart = lastSegment.end.l
     val swappedEnd = lastSegment.start.l
 
+    // TODO simplify these adjustments
+
     val adjustedStart =
       if (lastSegment.end.l == Location.RecCenter)
         Location.SpencerAndHighwayOneThirtyFive
+      else if (
+        lastSegment.end.l == Location.SpencerAndHighwayOneThirtyFive
+      )
+        Location.RecCenter
       else swappedStart
 
     val adjustedEnd =
-      if (lastSegment.start.l == Location.SpencerAndHighwayOneThirtyFive)
+      if (
+        lastSegment.start.l == Location.SpencerAndHighwayOneThirtyFive
+      )
         Location.RecCenter
+      else if (lastSegment.start.l == Location.RecCenter)
+        Location.SpencerAndHighwayOneThirtyFive
       else swappedEnd
 
     (adjustedStart, adjustedEnd)
@@ -597,18 +608,28 @@ object Components {
     val defaultOrder =
       Seq(RTA.Southbound.fullSchedule, RTA.Northbound.fullSchedule)
 
+    println(s"Finding route segments for start: $start, end: $end")
+
     val routesInPreferenceOrder =
       plan.l.lastOption match
-        case Some(lastSeg) if lastSeg.route == RTA.Southbound.componentName =>
-          Seq(RTA.Northbound.fullSchedule, RTA.Southbound.fullSchedule)
-        case Some(lastSeg) if lastSeg.route == RTA.Northbound.componentName =>
-          Seq(RTA.Southbound.fullSchedule, RTA.Northbound.fullSchedule)
+        case Some(lastSeg)
+            if lastSeg.route == RTA.Southbound.componentName =>
+          Seq(RTA.Northbound.fullSchedule,
+              RTA.Southbound.fullSchedule,
+          )
+        case Some(lastSeg)
+            if lastSeg.route == RTA.Northbound.componentName =>
+          Seq(RTA.Southbound.fullSchedule,
+              RTA.Northbound.fullSchedule,
+          )
         case _ => defaultOrder
 
     val routeSegmentsO =
-      routesInPreferenceOrder.foldLeft(Option.empty[Seq[RouteSegment]]) {
-        case (acc, route) =>
-          acc.orElse(route.segment(start, end))
+      routesInPreferenceOrder.foldLeft(
+        Option.empty[Seq[RouteSegment]],
+      ) { case (acc, route) =>
+        acc.foreach(segments => println(s"segments: $segments"))
+        acc.orElse(route.segment(start, end))
       }
 
     routeSegmentsO
