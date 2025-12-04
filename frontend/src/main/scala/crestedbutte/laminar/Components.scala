@@ -233,6 +233,47 @@ object Components {
           case false =>
             val tripExpanded: Var[Boolean] = Var(false)
 
+            case class PendingReturnTrip(
+              lastSegmentId: Long,
+              options: ReturnTripOptions,
+            )
+
+            val pendingReturnChoice
+              : Var[Option[PendingReturnTrip]] =
+              Var(None)
+
+            def attemptReturnTrip(
+              start: Location,
+              end: Location,
+              expectedSegmentId: Option[Long],
+            ): Unit =
+              val currentPlan = $plan.now()
+              val latestSegmentO = currentPlan.l.lastOption
+              val isMatchingSegment =
+                expectedSegmentId match
+                  case Some(id) => latestSegmentO.exists(_.id == id)
+                  case None     => latestSegmentO.isDefined
+
+              if !isMatchingSegment then
+                pendingReturnChoice.set(None)
+              else
+                latestSegmentO.foreach { lastSeg =>
+                  rightLegOnRightRoute(
+                    start,
+                    end,
+                    currentPlan,
+                    lastSeg.end.t,
+                  ).foreach { newSeg =>
+                    val updatedPlan =
+                      currentPlan.copy(l = currentPlan.l :+ newSeg)
+                    db.saveDailyPlanOnly(updatedPlan)
+                    $plan.set(updatedPlan)
+                    addingNewRoute.set(false)
+                    pendingReturnChoice.set(None)
+                    setTimeout(300)(tripExpanded.set(false))
+                  }
+                }
+
             val documentClickHandler
               : js.Function1[dom.MouseEvent, Unit] =
               (event: dom.MouseEvent) => {
@@ -309,23 +350,22 @@ object Components {
                       val plan = $plan.now()
                       val maybeLastSeg = plan.l.lastOption
                       maybeLastSeg.foreach { lastSeg =>
-                        val (returnStart, returnEnd) =
-                          returnTripEndpoints(lastSeg)
-                        val maybeReturn =
-                          rightLegOnRightRoute(
-                            returnStart,
-                            returnEnd,
-                            plan,
-                            lastSeg.end.t,
+                        val options = returnTripEndpoints(lastSeg)
+                        if (options.hasAdjustments) then
+                          pendingReturnChoice.set(
+                            Some(
+                              PendingReturnTrip(
+                                lastSeg.id,
+                                options,
+                              ),
+                            ),
                           )
-                        maybeReturn.foreach { newSeg =>
-                          val updatedPlan =
-                            plan.copy(l = plan.l :+ newSeg)
-                          db.saveDailyPlanOnly(updatedPlan)
-                          $plan.set(updatedPlan)
-                          addingNewRoute.set(false)
-                          setTimeout(300)(tripExpanded.set(false))
-                        }
+                        else
+                          attemptReturnTrip(
+                            options.adjustedStart,
+                            options.adjustedEnd,
+                            Some(lastSeg.id),
+                          )
                       }
                     },
                   ),
@@ -339,6 +379,83 @@ object Components {
                   // ),
                 ),
               ),
+              child <-- pendingReturnChoice.signal.map {
+                case Some(pending) =>
+                  val adjustments =
+                    List(
+                      Option.when(pending.options.startAdjusted)(
+                        li(
+                          span(
+                            cls := "return-trip-choice_label",
+                            "Depart",
+                          ),
+                          span(
+                            cls := "return-trip-choice_value",
+                            s"${pending.options.originalStart.name} → ${pending.options.adjustedStart.name}",
+                          ),
+                        ),
+                      ),
+                      Option.when(pending.options.endAdjusted)(
+                        li(
+                          span(
+                            cls := "return-trip-choice_label",
+                            "Arrive",
+                          ),
+                          span(
+                            cls := "return-trip-choice_value",
+                            s"${pending.options.originalEnd.name} → ${pending.options.adjustedEnd.name}",
+                          ),
+                        ),
+                      ),
+                    ).flatten
+                  div(
+                    cls := "return-trip-choice",
+                    h3("Choose your return stop"),
+                    p(
+                      "This route usually works best from a nearby alternate stop. Pick the option that fits your plans.",
+                    ),
+                    if adjustments.nonEmpty then
+                      ul(
+                        cls := "return-trip-choice_list",
+                        adjustments,
+                      )
+                    else emptyNode,
+                    div(
+                      cls := "return-trip-choice_buttons",
+                      button(
+                        cls := "button button-fixed-width",
+                        "Use alternate stop",
+                        onClick --> Observer { _ =>
+                          attemptReturnTrip(
+                            pending.options.adjustedStart,
+                            pending.options.adjustedEnd,
+                            Some(pending.lastSegmentId),
+                          )
+                        },
+                      ),
+                      button(
+                        cls :=
+                          "button button-fixed-width button-outlined",
+                        "Use same stop",
+                        onClick --> Observer { _ =>
+                          attemptReturnTrip(
+                            pending.options.originalStart,
+                            pending.options.originalEnd,
+                            Some(pending.lastSegmentId),
+                          )
+                        },
+                      ),
+                      button(
+                        cls := "button button-fixed-width button-ghost",
+                        "Cancel",
+                        onClick --> Observer { _ =>
+                          pendingReturnChoice.set(None)
+                        },
+                      ),
+                    ),
+                  )
+                case None => emptyNode
+              },
             )
           case true =>
             div(
@@ -566,12 +683,24 @@ object Components {
     )
   }
 
-  /** Apply the rec-center/spencer special-casing requested for return
-    * trips while keeping the opposite stop unchanged.
+  private[laminar] case class ReturnTripOptions(
+    originalStart: Location,
+    originalEnd: Location,
+    adjustedStart: Location,
+    adjustedEnd: Location,
+  ) {
+    val startAdjusted = originalStart != adjustedStart
+    val endAdjusted = originalEnd != adjustedEnd
+    val hasAdjustments = startAdjusted || endAdjusted
+  }
+
+  /** Apply the rec-center/spencer special-casing requested for return trips
+    * while keeping the opposite stop unchanged, but also keep the original
+    * endpoints so we can prompt the user when we make a change.
     */
   private[laminar] def returnTripEndpoints(
     lastSegment: RouteSegment,
-  ): (Location, Location) = {
+  ): ReturnTripOptions = {
     val swappedStart = lastSegment.end.l
     val swappedEnd = lastSegment.start.l
 
@@ -595,7 +724,12 @@ object Components {
         Location.SpencerAndHighwayOneThirtyFive
       else swappedEnd
 
-    (adjustedStart, adjustedEnd)
+    ReturnTripOptions(
+      originalStart = swappedStart,
+      originalEnd = swappedEnd,
+      adjustedStart = adjustedStart,
+      adjustedEnd = adjustedEnd,
+    )
   }
 
   def rightLegOnRightRoute(

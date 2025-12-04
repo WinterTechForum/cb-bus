@@ -199,6 +199,66 @@ body {
     transition: opacity 250ms ease;
 }
 
+.return-trip-choice {
+    max-width: 420px;
+    margin: 0.5rem auto 0;
+    padding: 12px 16px;
+    border: 2px solid var(--color-primary);
+    border-radius: 10px;
+    background-color: var(--color-highlight-bg);
+    color: var(--color-black);
+    text-align: left;
+}
+
+.return-trip-choice h3 {
+    margin: 0;
+    font-size: 1rem;
+}
+
+.return-trip-choice p {
+    margin: 0.5rem 0;
+}
+
+.return-trip-choice_list {
+    list-style: none;
+    padding-left: 0;
+    margin: 0.5rem 0;
+}
+
+.return-trip-choice_list li {
+    margin: 0.35rem 0;
+}
+
+.return-trip-choice_label {
+    font-weight: 600;
+    font-size: 0.85rem;
+    display: block;
+}
+
+.return-trip-choice_value {
+    font-size: 0.95rem;
+}
+
+.return-trip-choice_buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 0.75rem;
+}
+
+.button.button-outlined {
+    background-color: transparent;
+    color: var(--color-primary);
+    border: 2px solid var(--color-primary);
+}
+
+.button.button-ghost {
+    background-color: transparent;
+    color: var(--color-black);
+    border: 2px solid transparent;
+}
+
 .plan-segments {
     border: 3px solid var(--color-primary);
     border-radius: 5px;
