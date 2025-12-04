@@ -575,17 +575,13 @@ object Components {
     val swappedEnd = lastSegment.start.l
 
     val adjustedStart =
-      if (
-        lastSegment.route == RTA.Southbound.componentName &&
-        lastSegment.end.l == Location.RecCenter
-      ) Location.SpencerAndHighwayOneThirtyFive
+      if (lastSegment.end.l == Location.RecCenter)
+        Location.SpencerAndHighwayOneThirtyFive
       else swappedStart
 
     val adjustedEnd =
-      if (
-        lastSegment.route == RTA.Northbound.componentName &&
-        lastSegment.start.l == Location.SpencerAndHighwayOneThirtyFive
-      ) Location.RecCenter
+      if (lastSegment.start.l == Location.SpencerAndHighwayOneThirtyFive)
+        Location.RecCenter
       else swappedEnd
 
     (adjustedStart, adjustedEnd)
