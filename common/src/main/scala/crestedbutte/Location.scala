@@ -54,7 +54,7 @@ enum Location(
   case SpencerAndHighwayOneThirtyFive
       extends Location("Spencer & Highway 135", "(Walmart)")
 
-  case TallTexan extends Location("TallTexan", "(Flag Stop)")
+  case GunnisonRiver extends Location("Gunnison River", "(Flag Stop)")
 
   case OhioCreek extends Location("OhioCreek", "(Flag Stop)")
 

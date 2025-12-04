@@ -246,7 +246,7 @@ object RTA {
         .plus(Location.Western, 2.minutes)
         .plus(Location.DenverAndHighwayOneThirtyFive, 4.minutes)
         .plus(Location.SpencerAndHighwayOneThirtyFive, 2.minutes)
-        .plus(Location.TallTexan, 2.minutes)
+        .plus(Location.GunnisonRiver, 2.minutes)
         .plus(Location.OhioCreek, 1.minutes)
         .plus(Location.Almont, 7.minutes)
         .plus(Location.CBSouth, 16.minutes)
@@ -374,7 +374,7 @@ object RTA {
           .plus(Location.CBSouth, 8.minutes)
           .plus(Location.Almont, 14.minutes)
           .plus(Location.OhioCreek, 8.minutes)
-          .plus(Location.TallTexan, 1.minutes)
+          .plus(Location.GunnisonRiver, 1.minutes)
           // TODO What to do here for the weird off-set times?
           .plus(Location.RecCenter, 3.minutes)
           .plus(Location.GunnisonLibrary, 3.minutes)
@@ -397,7 +397,7 @@ object RTA {
       ) basicRoute
       else {
         // TODO There is still weirdness here in how the time is reported.
-        //  If you get on at tall texan, heading south, you might arrive a few minutes later than advertised.
+        //  If you get on at Gunnison River, heading south, you might arrive a few minutes later than advertised.
         //  This is incorrect, but it's a lesser evil than having someone show up at the rec center 5 minutes late to catch the bus that leaves from there.
         //  It's just part of the weirdness of the RTA schedule.
         val (stopsBeforeRecCenter, stopsAfterRecCenter) =
@@ -655,7 +655,7 @@ object CompleteStopList {
       Location.CBSouth,
       Location.Almont,
       Location.OhioCreek,
-      Location.TallTexan,
+      Location.GunnisonRiver,
       Location.RecCenter,
       Location.GunnisonLibrary,
       Location.GunnisonCommunitySchools,
