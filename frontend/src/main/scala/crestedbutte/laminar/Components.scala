@@ -381,50 +381,21 @@ object Components {
               ),
               child <-- pendingReturnChoice.signal.map {
                 case Some(pending) =>
-                  val adjustments =
-                    List(
-                      Option.when(pending.options.startAdjusted)(
-                        li(
-                          span(
-                            cls := "return-trip-choice_label",
-                            "Depart",
-                          ),
-                          span(
-                            cls := "return-trip-choice_value",
-                            s"${pending.options.originalStart.name} → ${pending.options.adjustedStart.name}",
-                          ),
-                        ),
-                      ),
-                      Option.when(pending.options.endAdjusted)(
-                        li(
-                          span(
-                            cls := "return-trip-choice_label",
-                            "Arrive",
-                          ),
-                          span(
-                            cls := "return-trip-choice_value",
-                            s"${pending.options.originalEnd.name} → ${pending.options.adjustedEnd.name}",
-                          ),
-                        ),
-                      ),
-                    ).flatten
+                  val alternateLabel =
+                    s"${pending.options.adjustedStart.name} → ${pending.options.adjustedEnd.name}"
+                  val originalLabel =
+                    s"${pending.options.originalStart.name} → ${pending.options.originalEnd.name}"
                   div(
                     cls := "return-trip-choice",
                     h3("Choose your return stop"),
                     p(
-                      "This route usually works best from a nearby alternate stop. Pick the option that fits your plans.",
+                      "The alternate stop is usually faster, but you can keep your original stop if you prefer.",
                     ),
-                    if adjustments.nonEmpty then
-                      ul(
-                        cls := "return-trip-choice_list",
-                        adjustments,
-                      )
-                    else emptyNode,
                     div(
                       cls := "return-trip-choice_buttons",
                       button(
-                        cls := "button button-fixed-width",
-                        "Use alternate stop",
+                        cls := "button return-trip-choice_button",
+                        alternateLabel,
                         onClick --> Observer { _ =>
                           attemptReturnTrip(
                             pending.options.adjustedStart,
@@ -435,8 +406,8 @@ object Components {
                       ),
                       button(
                         cls :=
-                          "button button-fixed-width button-outlined",
-                        "Use same stop",
+                          "button button-outlined return-trip-choice_button",
+                        originalLabel,
                         onClick --> Observer { _ =>
                           attemptReturnTrip(
                             pending.options.originalStart,
@@ -446,7 +417,7 @@ object Components {
                         },
                       ),
                       button(
-                        cls := "button button-fixed-width button-ghost",
+                        cls := "button button-ghost return-trip-choice_button",
                         "Cancel",
                         onClick --> Observer { _ =>
                           pendingReturnChoice.set(None)
