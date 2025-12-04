@@ -241,6 +241,7 @@ object Components {
             val pendingReturnChoice
               : Var[Option[PendingReturnTrip]] =
               Var(None)
+            val returnTripError: Var[Option[String]] = Var(None)
 
             def attemptReturnTrip(
               start: Location,
@@ -256,6 +257,11 @@ object Components {
 
               if !isMatchingSegment then
                 pendingReturnChoice.set(None)
+                returnTripError.set(
+                  Some(
+                    "Your trip changed before we could add the return. Please try again.",
+                  ),
+                )
               else
                 latestSegmentO.foreach { lastSeg =>
                   val maybeReturnLeg =
@@ -273,10 +279,16 @@ object Components {
                       $plan.set(updatedPlan)
                       addingNewRoute.set(false)
                       pendingReturnChoice.set(None)
+                      returnTripError.set(None)
                       setTimeout(300)(tripExpanded.set(false))
                     case None =>
                       // Clear choice when a matching return leg can't be found
                       pendingReturnChoice.set(None)
+                      returnTripError.set(
+                        Some(
+                          "Couldn't find a matching return route from that stop.",
+                        ),
+                      )
                 }
 
             val documentClickHandler
@@ -343,6 +355,7 @@ object Components {
                     "New trip",
                     onClick --> Observer { _ =>
                       addingNewRoute.set(true)
+                      returnTripError.set(None)
                       setTimeout(300)(tripExpanded.set(false))
                     },
                   ),
@@ -354,6 +367,7 @@ object Components {
                     onClick --> Observer { _ =>
                       val plan = $plan.now()
                       val maybeLastSeg = plan.l.lastOption
+                      returnTripError.set(None)
                       maybeLastSeg.foreach { lastSeg =>
                         val options = returnTripEndpoints(lastSeg)
                         if (options.hasAdjustments) then
@@ -382,6 +396,21 @@ object Components {
                   //   timeStamps,
                   //   buttonWidth,
                   // ),
+                ),
+                child.maybe <-- returnTripError.signal.map(
+                  _.map { message =>
+                    div(
+                      cls := "notification is-warning return-trip-error",
+                      span(message),
+                      button(
+                        cls := "delete",
+                        title := "Dismiss",
+                        onClick --> Observer { _ =>
+                          returnTripError.set(None)
+                        },
+                      ),
+                    )
+                  },
                 ),
               ),
               child <-- pendingReturnChoice.signal.map {
