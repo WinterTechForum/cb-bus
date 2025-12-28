@@ -893,7 +893,43 @@ object Components {
           ),
         )
       },
-      h2("Select your origin and destination"),
+      // Origin indicator - slides up when origin is selected
+      div(
+        cls := "origin-indicator-container",
+        cls <-- startingPoint.signal.map {
+          case Some(_) => "origin-indicator-visible"
+          case None    => ""
+        },
+        child <-- startingPoint.signal.map {
+          case Some(location) =>
+            div(
+              cls := "origin-indicator",
+              span(
+                cls := "origin-indicator-label",
+                "From:",
+              ),
+              span(
+                cls := "origin-indicator-name",
+                location.name,
+              ),
+              button(
+                cls := "origin-indicator-dismiss",
+                "✕",
+                onClick --> Observer { _ =>
+                  startingPoint.set(None)
+                },
+              ),
+            )
+          case None =>
+            emptyNode
+        },
+      ),
+      h2(
+        child.text <-- startingPoint.signal.map {
+          case Some(_) => "Select your destination"
+          case None    => "Select your origin"
+        },
+      ),
       div(
         children <-- $locations.splitTransition(identity) {
           case (_, (location, _), _, transition) =>
