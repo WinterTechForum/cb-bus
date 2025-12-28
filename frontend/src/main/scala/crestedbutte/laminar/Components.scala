@@ -1018,4 +1018,64 @@ object Components {
         stopTime.toDumbAmericanString,
       ),
     )
+
+  /** Voting state for a topic */
+  sealed trait VoteState
+  object VoteState {
+    case object None extends VoteState
+    case object Interested extends VoteState
+    case object NotInterested extends VoteState
+  }
+
+  /** Voting buttons component for topics.
+    * Displays a heart icon for "interested" and an X icon for "not interested".
+    * When a button is selected, it appears highlighted/pressed.
+    *
+    * @param topicId Unique identifier for the topic being voted on
+    * @param voteState A Var holding the current vote state
+    * @param onVoteChange Optional callback when vote changes
+    */
+  def VotingButtons(
+    topicId: String,
+    voteState: Var[VoteState],
+    onVoteChange: Option[Observer[VoteState]] = scala.None,
+  ): ReactiveHtmlElement[HTMLDivElement] = {
+    def handleVote(newState: VoteState): Unit = {
+      val currentState = voteState.now()
+      // Toggle off if clicking the same button, otherwise set new state
+      val nextState =
+        if (currentState == newState) VoteState.None else newState
+      voteState.set(nextState)
+      onVoteChange.foreach(_.onNext(nextState))
+    }
+
+    div(
+      cls := "voting-buttons",
+      dataAttr("topic-id") := topicId,
+      // Interested (heart) button
+      button(
+        cls := "voting-button voting-button-interested",
+        cls <-- voteState.signal.map {
+          case VoteState.Interested => "voting-button-selected"
+          case _                    => ""
+        },
+        onClick --> Observer { _ => handleVote(VoteState.Interested) },
+        SvgIcon.heart("voting-icon"),
+        span(cls := "voting-label", "Interested"),
+      ),
+      // Not Interested (times/X) button
+      button(
+        cls := "voting-button voting-button-not-interested",
+        cls <-- voteState.signal.map {
+          case VoteState.NotInterested => "voting-button-selected"
+          case _                       => ""
+        },
+        onClick --> Observer { _ =>
+          handleVote(VoteState.NotInterested)
+        },
+        SvgIcon.times("voting-icon"),
+        span(cls := "voting-label", "Not interested"),
+      ),
+    )
+  }
 }

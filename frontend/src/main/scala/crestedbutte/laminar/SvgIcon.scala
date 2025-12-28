@@ -34,4 +34,17 @@ object SvgIcon {
     clsName: String = "",
   ) = apply("glyphicons-basic-324-share.svg", clsName)
 
+  def times(
+    clsName: String = "",
+  ) = apply("glyphicons-basic-373-times.svg", clsName)
+
+  /** Heart icon using a span with heart character for "interested" voting */
+  def heart(
+    clsName: String = "",
+  ) =
+    span(
+      cls := s"icon-heart $clsName",
+      "♥",
+    )
+
 }
