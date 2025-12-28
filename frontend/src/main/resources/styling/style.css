@@ -290,3 +290,67 @@ body {
     display: flex;
     flex-direction: column;
 }
+
+/* Origin indicator - sticky banner at top when origin is selected */
+.origin-indicator-container {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(-20px);
+    transition: max-height 300ms ease-out, opacity 250ms ease-out, transform 300ms ease-out;
+}
+
+.origin-indicator-container.origin-indicator-visible {
+    max-height: 80px;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.origin-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    background-color: var(--color-primary);
+    color: var(--color-white);
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.origin-indicator-label {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.origin-indicator-name {
+    font-weight: bold;
+    font-size: 1rem;
+}
+
+.origin-indicator-dismiss {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    margin-left: 8px;
+    padding: 0;
+    background-color: rgba(255, 255, 255, 0.2);
+    color: var(--color-white);
+    border: none;
+    border-radius: 50%;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 150ms ease;
+    flex-shrink: 0;
+}
+
+.origin-indicator-dismiss:hover {
+    background-color: rgba(255, 255, 255, 0.35);
+}
