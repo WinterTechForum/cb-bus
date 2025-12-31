@@ -16,12 +16,12 @@ object ComponentsSpec extends ZIOSpecDefault {
             .flatMap(_.headOption)
             .getOrElse(???)
 
-        val (start, end) =
+        val options =
           Components.returnTripEndpoints(segment)
 
         assertTrue(
-          start == Location.SpencerAndHighwayOneThirtyFive,
-          end == Location.MountaineerSquare,
+          options.adjustedStart == Location.SpencerAndHighwayOneThirtyFive,
+          options.adjustedEnd == Location.MountaineerSquare,
         )
       },
       test(
@@ -35,12 +35,12 @@ object ComponentsSpec extends ZIOSpecDefault {
             .flatMap(_.headOption)
             .getOrElse(???)
 
-        val (start, end) =
+        val options =
           Components.returnTripEndpoints(segment)
 
         assertTrue(
-          start == Location.MountaineerSquare,
-          end == Location.RecCenter,
+          options.adjustedStart == Location.MountaineerSquare,
+          options.adjustedEnd == Location.RecCenter,
         )
       },
       test(

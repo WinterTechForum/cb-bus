@@ -22,6 +22,10 @@ case class LocationTimeDirection(
   locationWithTime: LocationWithTime,
   routeSegment: RouteSegment)
 
+case class SavedTrip(
+  name: String,
+  plan: Plan)
+
 case class SelectedStopInfo(
   busScheduleAtStop: BusScheduleAtStop,
   routeSegment: RouteSegment,
@@ -142,7 +146,7 @@ object Components {
     ],
   ) =
     div(
-      copyButtons($plan.signal),
+      copyButtons($plan.signal, db),
       children <-- $plan.signal
         .map(_.routePieces)
         .splitTransition(_.id) {
@@ -643,21 +647,29 @@ object Components {
 
   def copyButtons(
     $plan: Signal[Plan],
+    db: Persistence,
   ) = {
-    val isExpanded: Var[Boolean] = Var(false)
+    val shareExpanded: Var[Boolean] = Var(false)
+    val saveExpanded: Var[Boolean] = Var(false)
+    val tripName: Var[String] = Var("")
+    val saveConfirmation: Var[Option[String]] = Var(None)
 
     // Add click handler to collapse when clicking outside
     val documentClickHandler: js.Function1[dom.MouseEvent, Unit] =
       (event: dom.MouseEvent) => {
         val target = event.target.asInstanceOf[dom.Element]
-        val containerElement =
+        val shareContainer =
           dom.document.querySelector(".share-button-container")
+        val saveContainer =
+          dom.document.querySelector(".save-button-container")
         if (
-          containerElement != null && !containerElement.contains(
-            target,
-          )
+          shareContainer != null && !shareContainer.contains(target)
         ) {
-          isExpanded.set(false)
+          shareExpanded.set(false)
+        }
+        if (saveContainer != null && !saveContainer.contains(target)) {
+          saveExpanded.set(false)
+          saveConfirmation.set(None)
         }
       }
 
@@ -675,92 +687,165 @@ object Components {
           div()
         else {
           div(
-            cls := "share-button-container",
-
-            // Share button (visible when collapsed)
-            button(
-              cls := "button floating-center-button button-fixed-width",
-              styleProp("opacity") <-- isExpanded.signal.map(
-                expanded => if (expanded) "0" else "1",
-              ),
-              styleProp("pointer-events") <-- isExpanded.signal.map(
-                expanded => if (expanded) "none" else "auto",
-              ),
-              span("Share"),
-              onClick --> Observer { _ =>
-                isExpanded.set(true)
-              },
-            ),
-
-            // Expanded buttons container to guarantee separation
+            cls := "action-buttons-row",
+            // Share button container
             div(
-              cls := "expanded-buttons-row",
-              styleProp("opacity") <-- isExpanded.signal.map(
-                expanded => if (expanded) "1" else "0",
-              ),
-              styleProp("pointer-events") <-- isExpanded.signal.map(
-                expanded => if (expanded) "auto" else "none",
-              ),
-
-              // Text button
+              cls := "share-button-container",
               button(
-                cls := "button button-fixed-width",
-                "Text",
+                cls := "button floating-center-button button-fixed-width",
+                styleProp("opacity") <-- shareExpanded.signal.map(
+                  expanded => if (expanded) "0" else "1",
+                ),
+                styleProp("pointer-events") <-- shareExpanded.signal
+                  .map(expanded =>
+                    if (expanded) "none" else "auto",
+                  ),
+                span("Share"),
                 onClick --> Observer { _ =>
-                  val text = plan.plainTextRepresentation
-                  if (
-                    js.typeOf(
-                      dom.window.navigator
-                        .asInstanceOf[js.Dynamic]
-                        .share,
-                    ) != "undefined"
-                  ) {
-                    dom.window.navigator
-                      .asInstanceOf[js.Dynamic]
-                      .share(
-                        js.Dynamic.literal(title = "Bus Schedule",
-                                           text = text,
-                        ),
-                      )
-                  }
-                  else {
-                    dom.window.navigator.clipboard.writeText(text)
-                  }
-                  setTimeout(300)(isExpanded.set(false))
+                  shareExpanded.set(true)
+                  saveExpanded.set(false)
                 },
               ),
-
-              // Link button
-              button(
-                cls := "button button-fixed-width",
-                "Link",
-                onClick --> Observer { _ =>
-                  val url =
-                    if (dom.document.URL.contains("localhost"))
-                      s"http://localhost:8000/index.html?plan=${UrlEncoding.encode(plan)}"
-                    else
-                      s"https://rtabus.netlify.app/?plan=${UrlEncoding.encode(plan)}"
-                  if (
-                    js.typeOf(
+              div(
+                cls := "expanded-buttons-row",
+                styleProp("opacity") <-- shareExpanded.signal.map(
+                  expanded => if (expanded) "1" else "0",
+                ),
+                styleProp("pointer-events") <-- shareExpanded.signal
+                  .map(expanded =>
+                    if (expanded) "auto" else "none",
+                  ),
+                button(
+                  cls := "button button-fixed-width",
+                  "Text",
+                  onClick --> Observer { _ =>
+                    val text = plan.plainTextRepresentation
+                    if (
+                      js.typeOf(
+                        dom.window.navigator
+                          .asInstanceOf[js.Dynamic]
+                          .share,
+                      ) != "undefined"
+                    ) {
                       dom.window.navigator
                         .asInstanceOf[js.Dynamic]
-                        .share,
-                    ) != "undefined"
-                  ) {
-                    dom.window.navigator
-                      .asInstanceOf[js.Dynamic]
-                      .share(
-                        js.Dynamic.literal(title =
-                                             "Bus Schedule Link",
-                                           url = url,
+                        .share(
+                          js.Dynamic.literal(title = "Bus Schedule",
+                                             text = text,
+                          ),
+                        )
+                    }
+                    else {
+                      dom.window.navigator.clipboard.writeText(text)
+                    }
+                    setTimeout(300)(shareExpanded.set(false))
+                  },
+                ),
+                button(
+                  cls := "button button-fixed-width",
+                  "Link",
+                  onClick --> Observer { _ =>
+                    val url =
+                      if (dom.document.URL.contains("localhost"))
+                        s"http://localhost:8000/index.html?plan=${UrlEncoding.encode(plan)}"
+                      else
+                        s"https://rtabus.netlify.app/?plan=${UrlEncoding.encode(plan)}"
+                    if (
+                      js.typeOf(
+                        dom.window.navigator
+                          .asInstanceOf[js.Dynamic]
+                          .share,
+                      ) != "undefined"
+                    ) {
+                      dom.window.navigator
+                        .asInstanceOf[js.Dynamic]
+                        .share(
+                          js.Dynamic.literal(title =
+                                               "Bus Schedule Link",
+                                             url = url,
+                          ),
+                        )
+                    }
+                    else {
+                      dom.window.navigator.clipboard.writeText(url)
+                    }
+                    setTimeout(300)(shareExpanded.set(false))
+                  },
+                ),
+              ),
+            ),
+            // Save button container
+            div(
+              cls := "save-button-container",
+              button(
+                cls := "button floating-center-button button-fixed-width",
+                styleProp("opacity") <-- saveExpanded.signal.map(
+                  expanded => if (expanded) "0" else "1",
+                ),
+                styleProp("pointer-events") <-- saveExpanded.signal
+                  .map(expanded =>
+                    if (expanded) "none" else "auto",
+                  ),
+                span("Save"),
+                onClick --> Observer { _ =>
+                  saveExpanded.set(true)
+                  shareExpanded.set(false)
+                  saveConfirmation.set(None)
+                },
+              ),
+              div(
+                cls := "save-dialog",
+                styleProp("opacity") <-- saveExpanded.signal.map(
+                  expanded => if (expanded) "1" else "0",
+                ),
+                styleProp("pointer-events") <-- saveExpanded.signal
+                  .map(expanded =>
+                    if (expanded) "auto" else "none",
+                  ),
+                styleProp("max-height") <-- saveExpanded.signal.map(
+                  expanded => if (expanded) "200px" else "0",
+                ),
+                div(
+                  cls := "save-dialog-content",
+                  child <-- saveConfirmation.signal.map {
+                    case Some(name) =>
+                      div(
+                        cls := "save-confirmation",
+                        span(s"Saved as '$name'"),
+                      )
+                    case None =>
+                      div(
+                        input(
+                          cls := "save-input",
+                          typ := "text",
+                          placeholder := "Trip name",
+                          controlled(
+                            value <-- tripName.signal,
+                            onInput.mapToValue --> tripName.writer,
+                          ),
+                        ),
+                        button(
+                          cls := "button button-fixed-width",
+                          "Save Trip",
+                          disabled <-- tripName.signal.map(
+                            _.trim.isEmpty,
+                          ),
+                          onClick --> Observer { _ =>
+                            val name = tripName.now().trim
+                            if (name.nonEmpty) {
+                              db.savePlanByName(name, plan)
+                              saveConfirmation.set(Some(name))
+                              tripName.set("")
+                              setTimeout(1500) {
+                                saveExpanded.set(false)
+                                saveConfirmation.set(None)
+                              }
+                            }
+                          },
                         ),
                       )
-                  }
-                  else {
-                    dom.window.navigator.clipboard.writeText(url)
-                  }
-                  setTimeout(300)(isExpanded.set(false))
-                },
+                  },
+                ),
               ),
             ),
           )
@@ -870,6 +955,110 @@ object Components {
 
   }
 
+  sealed trait StopSelectorMode
+  object StopSelectorMode {
+    case object SelectStop extends StopSelectorMode
+    case object LoadSavedTrip extends StopSelectorMode
+  }
+
+  def SavedTripsSelector(
+    db: Persistence,
+    $plan: Var[Plan],
+    addingNewRoute: Var[Boolean],
+    onBack: () => Unit,
+  ) = {
+    val $savedTripsVar: Var[Seq[(String, Int)]] = Var(Seq.empty)
+
+    def loadSavedTrips(): Unit = {
+      $savedTripsVar.set(Seq.empty)
+      val names = db.listPlanNames()
+      names.zipWithIndex.foreach { case (name, idx) =>
+        setTimeout(idx * 30) {
+          $savedTripsVar.update(_ :+ (name, idx))
+        }
+      }
+    }
+
+    div(
+      cls := "saved-trips-selector",
+      onMountCallback { _ =>
+        loadSavedTrips()
+      },
+      button(
+        cls := "button button-outlined m-2",
+        "← Back to stops",
+        onClick --> Observer { _ =>
+          onBack()
+        },
+      ),
+      h2("Load a saved trip"),
+      child <-- $savedTripsVar.signal.map { trips =>
+        if (trips.isEmpty && db.listPlanNames().isEmpty)
+          div(
+            cls := "no-saved-trips",
+            p("No saved trips yet."),
+            p("Create a trip and save it to see it here."),
+          )
+        else
+          emptyNode
+      },
+      div(
+        children <-- $savedTripsVar.signal.splitTransition(identity) {
+          case (_, (name, _), _, transition) =>
+            val tripPlanO = db.getPlanByName(name)
+            div(
+              transition.height,
+              cls := "saved-trip-card",
+              div(
+                cls := "saved-trip-card-header",
+                span(cls := "saved-trip-name", name),
+                button(
+                  cls := "saved-trip-delete",
+                  "✕",
+                  onClick --> Observer { _ =>
+                    db.deletePlanByName(name)
+                    $savedTripsVar.update(_.filterNot(_._1 == name))
+                  },
+                ),
+              ),
+              tripPlanO match {
+                case Some(plan) =>
+                  div(
+                    cls := "saved-trip-segments",
+                    plan.routeSegments.map { segment =>
+                      div(
+                        cls := "saved-trip-segment",
+                        span(
+                          cls := "saved-trip-segment-route",
+                          s"${segment.start.l.name} → ${segment.end.l.name}",
+                        ),
+                        span(
+                          cls := "saved-trip-segment-times",
+                          s"${segment.start.t.toDumbAmericanString} - ${segment.end.t.toDumbAmericanString}",
+                        ),
+                      )
+                    },
+                  )
+                case None =>
+                  div(cls := "saved-trip-error", "Could not load trip")
+              },
+              button(
+                cls := "button saved-trip-load-button",
+                "Load this trip",
+                onClick --> Observer { _ =>
+                  tripPlanO.foreach { plan =>
+                    $plan.set(plan)
+                    db.saveDailyPlanOnly(plan)
+                    addingNewRoute.set(false)
+                  }
+                },
+              ),
+            )
+        },
+      ),
+    )
+  }
+
   def StopSelector(
     locations: Seq[Location],
     $plan: Var[Plan],
@@ -883,124 +1072,157 @@ object Components {
     val $locationsVar: Var[Seq[(Location, Int)]] = Var(Seq.empty)
     val $locations: Signal[Seq[(Location, Int)]] =
       $locationsVar.signal
+    val selectorMode: Var[StopSelectorMode] =
+      Var(StopSelectorMode.SelectStop)
+
+    def loadLocations(): Unit = {
+      $locationsVar.set(Seq.empty)
+      locations.zipWithIndex.foreach { l =>
+        setTimeout(l._2 * 30) {
+          $locationsVar.update(_ :+ l)
+        }
+      }
+    }
 
     div(
       onMountCallback { ctx =>
-        locations.zipWithIndex.foreach(l =>
-          import scala.scalajs.js.timers._
-          setTimeout(l._2 * 30)(
-            $locationsVar.update(_ :+ l),
-          ),
-        )
+        loadLocations()
       },
-      // Origin indicator - slides up when origin is selected
-      div(
-        cls := "origin-indicator-container",
-        cls <-- startingPoint.signal.map {
-          case Some(_) => "origin-indicator-visible"
-          case None    => ""
-        },
-        child <-- startingPoint.signal.map {
-          case Some(location) =>
+      child <-- selectorMode.signal.map {
+        case StopSelectorMode.LoadSavedTrip =>
+          SavedTripsSelector(
+            db,
+            $plan,
+            addingNewRoute,
+            onBack = () => {
+              selectorMode.set(StopSelectorMode.SelectStop)
+              loadLocations()
+            },
+          )
+        case StopSelectorMode.SelectStop =>
+          div(
+            // Saved trips button - only show if there are saved trips
+            Option
+              .when(db.listPlanNames().nonEmpty)(
+                button(
+                  cls := "button button-outlined saved-trips-toggle m-2",
+                  "Load saved trip",
+                  onClick --> Observer { _ =>
+                    selectorMode.set(StopSelectorMode.LoadSavedTrip)
+                  },
+                ),
+              )
+              .getOrElse(emptyNode),
+            // Origin indicator - slides up when origin is selected
             div(
-              cls := "origin-indicator",
-              span(
-                cls := "origin-indicator-label",
-                "From:",
-              ),
-              span(
-                cls := "origin-indicator-name",
-                location.name,
-              ),
-              button(
-                cls := "origin-indicator-dismiss",
-                "✕",
-                onClick --> Observer { _ =>
-                  startingPoint.set(None)
-                },
-              ),
-            )
-          case None =>
-            emptyNode
-        },
-      ),
-      h2(
-        child.text <-- startingPoint.signal.map {
-          case Some(_) => "Select your destination"
-          case None    => "Select your origin"
-        },
-      ),
-      div(
-        children <-- $locations.splitTransition(identity) {
-          case (_, (location, _), _, transition) =>
+              cls := "origin-indicator-container",
+              cls <-- startingPoint.signal.map {
+                case Some(_) => "origin-indicator-visible"
+                case None    => ""
+              },
+              child <-- startingPoint.signal.map {
+                case Some(location) =>
+                  div(
+                    cls := "origin-indicator",
+                    span(
+                      cls := "origin-indicator-label",
+                      "From:",
+                    ),
+                    span(
+                      cls := "origin-indicator-name",
+                      location.name,
+                    ),
+                    button(
+                      cls := "origin-indicator-dismiss",
+                      "✕",
+                      onClick --> Observer { _ =>
+                        startingPoint.set(None)
+                      },
+                    ),
+                  )
+                case None =>
+                  emptyNode
+              },
+            ),
+            h2(
+              child.text <-- startingPoint.signal.map {
+                case Some(_) => "Select your destination"
+                case None    => "Select your origin"
+              },
+            ),
             div(
-              transition.height,
-              child <-- $now.map {
-                now =>
-                  button(
-                    disabled <-- startingPoint.signal.map {
-                      case Some(startingPointNow)
-                          if startingPointNow == location =>
-                        false
-                      case Some(other) =>
-                        rightLegOnRightRoute(
-                          other,
-                          location,
-                          $plan.now(),
-                          now,
-                        ).isEmpty
-                      case None => false
-                    },
-                    cls := "button m-2",
-                    onClick --> Observer {
-                      _ =>
-                        startingPoint.update {
-                          case Some(startingPointNow)
-                              if startingPointNow == location =>
-                            None
-                          case Some(other) =>
-                            val matchingLegO =
+              children <-- $locations.splitTransition(identity) {
+                case (_, (location, _), _, transition) =>
+                  div(
+                    transition.height,
+                    child <-- $now.map {
+                      now =>
+                        button(
+                          disabled <-- startingPoint.signal.map {
+                            case Some(startingPointNow)
+                                if startingPointNow == location =>
+                              false
+                            case Some(other) =>
                               rightLegOnRightRoute(
                                 other,
                                 location,
                                 $plan.now(),
                                 now,
-                              )
-
-                            matchingLegO match
-                              case Some(matchingLeg) =>
-                                $plan.update { case oldPlan =>
-                                  val newPlan =
-                                    oldPlan.copy(l =
-                                      oldPlan.l :+ matchingLeg,
+                              ).isEmpty
+                            case None => false
+                          },
+                          cls := "button m-2",
+                          onClick --> Observer {
+                            _ =>
+                              startingPoint.update {
+                                case Some(startingPointNow)
+                                    if startingPointNow == location =>
+                                  None
+                                case Some(other) =>
+                                  val matchingLegO =
+                                    rightLegOnRightRoute(
+                                      other,
+                                      location,
+                                      $plan.now(),
+                                      now,
                                     )
-                                  db.saveDailyPlanOnly(newPlan)
-                                  addingNewRoute.set(false)
-                                  newPlan
-                                }
-                                Some(other)
-                              case None =>
-                                println(
-                                  "giving up and deselecting starting point",
-                                )
-                                None
 
-                          case None =>
-                            Some(location)
-                        }
+                                  matchingLegO match
+                                    case Some(matchingLeg) =>
+                                      $plan.update { case oldPlan =>
+                                        val newPlan =
+                                          oldPlan.copy(l =
+                                            oldPlan.l :+ matchingLeg,
+                                          )
+                                        db.saveDailyPlanOnly(newPlan)
+                                        addingNewRoute.set(false)
+                                        newPlan
+                                      }
+                                      Some(other)
+                                    case None =>
+                                      println(
+                                        "giving up and deselecting starting point",
+                                      )
+                                      None
+
+                                case None =>
+                                  Some(location)
+                              }
+                          },
+                          cls <-- startingPoint.signal.map {
+                            case Some(startingPointNow)
+                                if startingPointNow == location =>
+                              "selected-starting-point"
+                            case _ => ""
+                          },
+                          location.name,
+                        )
                     },
-                    cls <-- startingPoint.signal.map {
-                      case Some(startingPointNow)
-                          if startingPointNow == location =>
-                        "selected-starting-point"
-                      case _ => ""
-                    },
-                    location.name,
                   )
               },
-            )
-        },
-      ),
+            ),
+          )
+      },
     )
 
   def StopTimeInfoForLocation(

@@ -444,3 +444,185 @@ body {
     color: #555;
     transform: scale(1.1);
 }
+
+/* Action buttons row - contains Share and Save buttons */
+.action-buttons-row {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 20px;
+    width: 100%;
+    flex-wrap: wrap;
+}
+
+/* Save button container */
+.save-button-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    margin: 0.5rem;
+    min-width: 100px;
+    min-height: 56px;
+}
+
+/* Save dialog */
+.save-dialog {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    transition: opacity 250ms ease, max-height 300ms ease;
+}
+
+.save-dialog-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 0;
+}
+
+.save-dialog-content > div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+}
+
+.save-input {
+    padding: 10px 14px;
+    border: 2px solid var(--color-primary);
+    border-radius: 8px;
+    font-size: 1rem;
+    width: 200px;
+    max-width: 100%;
+    text-align: center;
+}
+
+.save-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(1, 156, 143, 0.2);
+}
+
+.save-confirmation {
+    padding: 12px 16px;
+    background-color: rgba(1, 156, 143, 0.15);
+    border-radius: 8px;
+    color: var(--color-primary);
+    font-weight: 600;
+}
+
+/* Saved trips toggle button */
+.saved-trips-toggle {
+    width: auto;
+    padding: 10px 20px;
+}
+
+/* Saved trips selector */
+.saved-trips-selector {
+    width: 100%;
+    padding: 10px;
+}
+
+.no-saved-trips {
+    padding: 20px;
+    color: #666;
+    text-align: center;
+}
+
+.no-saved-trips p {
+    margin: 0.5rem 0;
+}
+
+/* Saved trip card */
+.saved-trip-card {
+    border: 2px solid var(--color-primary);
+    border-radius: 10px;
+    margin: 10px 0;
+    padding: 12px 16px;
+    background-color: var(--color-white);
+    text-align: left;
+}
+
+.saved-trip-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.saved-trip-name {
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: var(--color-black);
+}
+
+.saved-trip-delete {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    background-color: #f0f0f0;
+    color: #666;
+    border: none;
+    border-radius: 50%;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 150ms ease, color 150ms ease;
+}
+
+.saved-trip-delete:hover {
+    background-color: #ff6b6b;
+    color: var(--color-white);
+}
+
+/* Saved trip segments (condensed view) */
+.saved-trip-segments {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 12px;
+    padding: 8px;
+    background-color: rgba(1, 156, 143, 0.05);
+    border-radius: 6px;
+}
+
+.saved-trip-segment {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.saved-trip-segment:last-child {
+    border-bottom: none;
+}
+
+.saved-trip-segment-route {
+    font-size: 0.9rem;
+    color: var(--color-black);
+    font-weight: 500;
+}
+
+.saved-trip-segment-times {
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.saved-trip-load-button {
+    width: 100%;
+    margin-top: 8px;
+}
+
+.saved-trip-error {
+    color: #ff6b6b;
+    font-size: 0.9rem;
+    padding: 8px;
+}
