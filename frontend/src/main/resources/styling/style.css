@@ -167,9 +167,8 @@ body {
     width: 100%;
 }
 
-/* Trip/share button containers and buttons */
-.trip-button-container,
-.share-button-container {
+/* Trip/action button containers and buttons */
+.trip-button-container {
     position: relative;
     display: flex;
     justify-content: center;
@@ -445,14 +444,15 @@ body {
     transform: scale(1.1);
 }
 
-/* Action buttons row - contains Share and Save buttons */
-.action-buttons-row {
+/* Action buttons container - for Share and Save buttons */
+.action-buttons-container {
+    position: relative;
     display: flex;
     justify-content: center;
-    align-items: flex-start;
-    gap: 20px;
+    align-items: center;
+    margin: 0.5rem;
     width: 100%;
-    flex-wrap: wrap;
+    min-height: 56px;
 }
 
 /* Save button container */
