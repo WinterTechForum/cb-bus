@@ -689,18 +689,17 @@ object Components {
           div(
             cls := "centered",
             div(
-              cls := "action-buttons-container trip-button-container",
+              cls := "action-buttons-container",
 
               // Collapsed state: Share and Save buttons side by side
               div(
-                cls := "controls-row",
+                cls := "expanded-buttons-row",
                 styleProp("opacity") <-- anyExpanded.map(
                   expanded => if (expanded) "0" else "1",
                 ),
                 styleProp("pointer-events") <-- anyExpanded.map(
                   expanded => if (expanded) "none" else "auto",
                 ),
-                styleProp("position") := "absolute",
                 button(
                   cls := "button button-fixed-width",
                   "Share",
@@ -730,6 +729,9 @@ object Components {
                   .map(expanded =>
                     if (expanded) "auto" else "none",
                   ),
+                styleProp("position") <-- shareExpanded.signal.map(
+                  expanded => if (expanded) "relative" else "absolute",
+                ),
                 button(
                   cls := "button button-fixed-width",
                   "Text",
@@ -799,6 +801,9 @@ object Components {
                   .map(expanded =>
                     if (expanded) "auto" else "none",
                   ),
+                styleProp("position") <-- saveExpanded.signal.map(
+                  expanded => if (expanded) "relative" else "absolute",
+                ),
                 child <-- saveConfirmation.signal.map {
                   case Some(name) =>
                     div(
