@@ -820,6 +820,61 @@ object Components {
                 styleProp("position") <-- saveExpanded.signal.map(
                   expanded => if (expanded) "relative" else "absolute",
                 ),
+                // Input - emerges from Save position (right), slides left to its final position
+                input(
+                  cls := "save-input expand-from-right",
+                  styleProp("transform") <-- saveExpanded.signal.map(
+                    expanded =>
+                      if (expanded) "translateX(0) scale(1)"
+                      else "translateX(120px) scale(0)",
+                  ),
+                  styleProp("opacity") <-- saveExpanded.signal.map(
+                    expanded => if (expanded) "1" else "0",
+                  ),
+                  styleProp("visibility") <-- saveConfirmation.signal
+                    .map(conf =>
+                      if (conf.isDefined) "hidden" else "visible",
+                    ),
+                  typ := "text",
+                  placeholder := "Trip name",
+                  controlled(
+                    value <-- tripName.signal,
+                    onInput.mapToValue --> tripName.writer,
+                  ),
+                ),
+                // Save Trip button - emerges from Save position (right side, near Save button)
+                button(
+                  cls := "button button-fixed-width expand-from-left",
+                  styleProp("transform") <-- saveExpanded.signal.map(
+                    expanded =>
+                      if (expanded) "translateX(0) scale(1)"
+                      else "translateX(60px) scale(0)",
+                  ),
+                  styleProp("opacity") <-- saveExpanded.signal.map(
+                    expanded => if (expanded) "1" else "0",
+                  ),
+                  styleProp("visibility") <-- saveConfirmation.signal
+                    .map(conf =>
+                      if (conf.isDefined) "hidden" else "visible",
+                    ),
+                  "Save Trip",
+                  disabled <-- tripName.signal.map(
+                    _.trim.isEmpty,
+                  ),
+                  onClick --> Observer { _ =>
+                    val name = tripName.now().trim
+                    if (name.nonEmpty) {
+                      db.savePlanByName(name, plan)
+                      saveConfirmation.set(Some(name))
+                      tripName.set("")
+                      setTimeout(1500) {
+                        saveExpanded.set(false)
+                        saveConfirmation.set(None)
+                      }
+                    }
+                  },
+                ),
+                // Confirmation message
                 child <-- saveConfirmation.signal.map {
                   case Some(name) =>
                     div(
@@ -827,57 +882,7 @@ object Components {
                       span(s"Saved as '$name'"),
                     )
                   case None =>
-                    div(
-                      cls := "expanded-buttons-row",
-                      // Input - emerges from Save position (needs to slide left to its final position)
-                      input(
-                        cls := "save-input expand-from-left",
-                        styleProp("transform") <-- saveExpanded.signal
-                          .map(expanded =>
-                            if (expanded) "translateX(0) scale(1)"
-                            else "translateX(120px) scale(0)",
-                          ),
-                        styleProp("opacity") <-- saveExpanded.signal
-                          .map(expanded =>
-                            if (expanded) "1" else "0",
-                          ),
-                        typ := "text",
-                        placeholder := "Trip name",
-                        controlled(
-                          value <-- tripName.signal,
-                          onInput.mapToValue --> tripName.writer,
-                        ),
-                      ),
-                      // Save Trip button - emerges from Save position (right side, no translation needed)
-                      button(
-                        cls := "button button-fixed-width expand-from-right",
-                        styleProp("transform") <-- saveExpanded.signal
-                          .map(expanded =>
-                            if (expanded) "translateX(0) scale(1)"
-                            else "translateX(-60px) scale(0)",
-                          ),
-                        styleProp("opacity") <-- saveExpanded.signal
-                          .map(expanded =>
-                            if (expanded) "1" else "0",
-                          ),
-                        "Save Trip",
-                        disabled <-- tripName.signal.map(
-                          _.trim.isEmpty,
-                        ),
-                        onClick --> Observer { _ =>
-                          val name = tripName.now().trim
-                          if (name.nonEmpty) {
-                            db.savePlanByName(name, plan)
-                            saveConfirmation.set(Some(name))
-                            tripName.set("")
-                            setTimeout(1500) {
-                              saveExpanded.set(false)
-                              saveConfirmation.set(None)
-                            }
-                          }
-                        },
-                      ),
-                    )
+                    div()
                 },
               ),
             ),
