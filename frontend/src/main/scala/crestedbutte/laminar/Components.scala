@@ -700,6 +700,9 @@ object Components {
                 styleProp("pointer-events") <-- anyExpanded.map(
                   expanded => if (expanded) "none" else "auto",
                 ),
+                styleProp("position") <-- anyExpanded.map(
+                  expanded => if (expanded) "absolute" else "relative",
+                ),
                 button(
                   cls := "button button-fixed-width",
                   "Share",
