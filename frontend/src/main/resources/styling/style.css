@@ -210,13 +210,15 @@ body {
     transition: transform 780ms cubic-bezier(0.34, 1.56, 0.64, 1) 40ms, opacity 200ms ease 40ms;
 }
 
-/* Collapsed buttons row - delayed fade in so it appears after expanded row collapses */
+/* Collapsed buttons row - instant hide, delayed fade in */
 .collapsed-buttons-row {
-    transition: opacity 800ms ease;
+    /* When NOT delayed-appear: fade in with delay after expanded buttons collapse */
+    transition: opacity 800ms ease-out 600ms;
 }
 
 .collapsed-buttons-row.delayed-appear {
-    transition: opacity 800ms ease 600ms;
+    /* When delayed-appear is present: instant hide (no transition) */
+    transition: none;
 }
 
 .return-trip-choice {
