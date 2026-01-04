@@ -393,7 +393,10 @@ object Components {
 
                 // Collapsed + Trip button
                 button(
-                  cls := "button floating-center-button button-fixed-width",
+                  cls := "button floating-center-button button-fixed-width collapsed-buttons-row",
+                  cls <-- tripExpanded.signal.map(expanded =>
+                    if (expanded) "delayed-appear" else "",
+                  ),
                   styleProp("opacity") <-- tripExpanded.signal.map(
                     expanded => if (expanded) "0" else "1",
                   ),
@@ -409,26 +412,43 @@ object Components {
                 // Expanded buttons container
                 div(
                   cls := "expanded-buttons-row",
-                  styleProp("opacity") <-- tripExpanded.signal.map(
-                    expanded => if (expanded) "1" else "0",
-                  ),
                   styleProp("pointer-events") <-- tripExpanded.signal
                     .map(expanded => if (expanded) "auto" else "none",
                     ),
+                  styleProp("position") <-- tripExpanded.signal.map(
+                    expanded =>
+                      if (expanded) "relative" else "absolute",
+                  ),
 
-                  // New route button
+                  // New route button - emerges from center (left side)
                   button(
-                    cls := "button button-fixed-width",
+                    cls := "button button-fixed-width expand-from-left",
+                    styleProp("transform") <-- tripExpanded.signal
+                      .map(expanded =>
+                        if (expanded) "translateX(0) scale(1)"
+                        else "translateX(60px) scale(0)",
+                      ),
+                    styleProp("opacity") <-- tripExpanded.signal.map(
+                      expanded => if (expanded) "1" else "0",
+                    ),
                     "New trip",
                     onClick --> Observer { _ =>
                       addingNewRoute.set(true)
-                      setTimeout(300)(tripExpanded.set(false))
+                      tripExpanded.set(false)
                     },
                   ),
 
-                  // Return trip button
+                  // Return trip button - emerges from center (right side)
                   button(
-                    cls := "button button-fixed-width",
+                    cls := "button button-fixed-width expand-from-right",
+                    styleProp("transform") <-- tripExpanded.signal
+                      .map(expanded =>
+                        if (expanded) "translateX(0) scale(1)"
+                        else "translateX(-60px) scale(0)",
+                      ),
+                    styleProp("opacity") <-- tripExpanded.signal.map(
+                      expanded => if (expanded) "1" else "0",
+                    ),
                     "Return trip",
                     onClick --> Observer { _ =>
                       val plan = $plan.now()
