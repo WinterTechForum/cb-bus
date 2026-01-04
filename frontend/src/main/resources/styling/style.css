@@ -201,6 +201,15 @@ body {
     transition: opacity 250ms ease;
 }
 
+/* Animated expanding button - emerges from center */
+.expand-from-left {
+    transition: transform 780ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 200ms ease;
+}
+
+.expand-from-right {
+    transition: transform 780ms cubic-bezier(0.34, 1.56, 0.64, 1) 40ms, opacity 200ms ease 40ms;
+}
+
 .return-trip-choice {
     max-width: 420px;
     margin: 0.5rem auto 0;
@@ -483,7 +492,7 @@ body {
     padding: 10px 0;
 }
 
-.save-dialog-content > div {
+.save-dialog-content>div {
     display: flex;
     flex-direction: column;
     align-items: center;

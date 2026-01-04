@@ -242,11 +242,9 @@ object Components {
               options: ReturnTripOptions,
               adjustedAvailable: Boolean,
               originalAvailable: Boolean,
-              generalMessage: Option[String] = None,
-            )
+              generalMessage: Option[String] = None)
 
-            val pendingReturnChoice
-              : Var[Option[PendingReturnTrip]] =
+            val pendingReturnChoice: Var[Option[PendingReturnTrip]] =
               Var(None)
 
             def evaluatePendingReturn(
@@ -255,7 +253,10 @@ object Components {
               options: ReturnTripOptions,
             ): PendingReturnTrip =
               val lastEndTime = lastSegment.end.t
-              def hasReturnLeg(start: Location, end: Location) =
+              def hasReturnLeg(
+                start: Location,
+                end: Location,
+              ) =
                 rightLegOnRightRoute(
                   start,
                   end,
@@ -352,7 +353,8 @@ object Components {
                               originalAvailable =
                                 if isOriginalChoice then false
                                 else pending.originalAvailable,
-                              generalMessage = Some(unavailableMessage),
+                              generalMessage =
+                                Some(unavailableMessage),
                             )
                           }
                       pendingReturnChoice.set(updated)
@@ -396,8 +398,7 @@ object Components {
                     expanded => if (expanded) "0" else "1",
                   ),
                   styleProp("pointer-events") <-- tripExpanded.signal
-                    .map(expanded =>
-                      if (expanded) "none" else "auto",
+                    .map(expanded => if (expanded) "none" else "auto",
                     ),
                   span("+"),
                   onClick --> Observer { _ =>
@@ -412,8 +413,7 @@ object Components {
                     expanded => if (expanded) "1" else "0",
                   ),
                   styleProp("pointer-events") <-- tripExpanded.signal
-                    .map(expanded =>
-                      if (expanded) "auto" else "none",
+                    .map(expanded => if (expanded) "auto" else "none",
                     ),
 
                   // New route button
@@ -435,7 +435,7 @@ object Components {
                       val maybeLastSeg = plan.l.lastOption
                       maybeLastSeg.foreach { lastSeg =>
                         val options = returnTripEndpoints(lastSeg)
-                        if (options.hasAdjustments) then
+                        if options.hasAdjustments then
                           pendingReturnChoice.set(
                             Some(
                               evaluatePendingReturn(
@@ -682,9 +682,11 @@ object Components {
         if (plan.routeSegments.isEmpty)
           div()
         else {
-          val anyExpanded = shareExpanded.signal.combineWith(saveExpanded.signal).map {
-            case (share, save) => share || save
-          }
+          val anyExpanded = shareExpanded.signal
+            .combineWith(saveExpanded.signal)
+            .map { case (share, save) =>
+              share || save
+            }
 
           div(
             cls := "centered",
@@ -694,14 +696,14 @@ object Components {
               // Collapsed state: Share and Save buttons side by side
               div(
                 cls := "expanded-buttons-row",
-                styleProp("opacity") <-- anyExpanded.map(
-                  expanded => if (expanded) "0" else "1",
+                styleProp("opacity") <-- anyExpanded.map(expanded =>
+                  if (expanded) "0" else "1",
                 ),
                 styleProp("pointer-events") <-- anyExpanded.map(
                   expanded => if (expanded) "none" else "auto",
                 ),
-                styleProp("position") <-- anyExpanded.map(
-                  expanded => if (expanded) "absolute" else "relative",
+                styleProp("position") <-- anyExpanded.map(expanded =>
+                  if (expanded) "absolute" else "relative",
                 ),
                 button(
                   cls := "button button-fixed-width",
@@ -725,18 +727,23 @@ object Components {
               // Share expanded: Text and Link buttons
               div(
                 cls := "expanded-buttons-row",
-                styleProp("opacity") <-- shareExpanded.signal.map(
-                  expanded => if (expanded) "1" else "0",
-                ),
                 styleProp("pointer-events") <-- shareExpanded.signal
-                  .map(expanded =>
-                    if (expanded) "auto" else "none",
+                  .map(expanded => if (expanded) "auto" else "none",
                   ),
                 styleProp("position") <-- shareExpanded.signal.map(
                   expanded => if (expanded) "relative" else "absolute",
                 ),
+                // Text button - emerges from Share position (left side, no translation needed)
                 button(
-                  cls := "button button-fixed-width",
+                  cls := "button button-fixed-width expand-from-left",
+                  styleProp("transform") <-- shareExpanded.signal.map(
+                    expanded =>
+                      if (expanded) "translateX(0) scale(1)"
+                      else "translateX(60px) scale(0)",
+                  ),
+                  styleProp("opacity") <-- shareExpanded.signal.map(
+                    expanded => if (expanded) "1" else "0",
+                  ),
                   "Text",
                   onClick --> Observer { _ =>
                     val text = plan.plainTextRepresentation
@@ -761,8 +768,17 @@ object Components {
                     setTimeout(300)(shareExpanded.set(false))
                   },
                 ),
+                // Link button - emerges from Share position (needs to slide right to its final position)
                 button(
-                  cls := "button button-fixed-width",
+                  cls := "button button-fixed-width expand-from-right",
+                  styleProp("transform") <-- shareExpanded.signal.map(
+                    expanded =>
+                      if (expanded) "translateX(0) scale(1)"
+                      else "translateX(-120px) scale(0)",
+                  ),
+                  styleProp("opacity") <-- shareExpanded.signal.map(
+                    expanded => if (expanded) "1" else "0",
+                  ),
                   "Link",
                   onClick --> Observer { _ =>
                     val url =
@@ -797,12 +813,8 @@ object Components {
               // Save expanded: input and Save Trip button
               div(
                 cls := "expanded-buttons-row",
-                styleProp("opacity") <-- saveExpanded.signal.map(
-                  expanded => if (expanded) "1" else "0",
-                ),
                 styleProp("pointer-events") <-- saveExpanded.signal
-                  .map(expanded =>
-                    if (expanded) "auto" else "none",
+                  .map(expanded => if (expanded) "auto" else "none",
                   ),
                 styleProp("position") <-- saveExpanded.signal.map(
                   expanded => if (expanded) "relative" else "absolute",
@@ -816,8 +828,18 @@ object Components {
                   case None =>
                     div(
                       cls := "expanded-buttons-row",
+                      // Input - emerges from Save position (needs to slide left to its final position)
                       input(
-                        cls := "save-input",
+                        cls := "save-input expand-from-left",
+                        styleProp("transform") <-- saveExpanded.signal
+                          .map(expanded =>
+                            if (expanded) "translateX(0) scale(1)"
+                            else "translateX(120px) scale(0)",
+                          ),
+                        styleProp("opacity") <-- saveExpanded.signal
+                          .map(expanded =>
+                            if (expanded) "1" else "0",
+                          ),
                         typ := "text",
                         placeholder := "Trip name",
                         controlled(
@@ -825,8 +847,18 @@ object Components {
                           onInput.mapToValue --> tripName.writer,
                         ),
                       ),
+                      // Save Trip button - emerges from Save position (right side, no translation needed)
                       button(
-                        cls := "button button-fixed-width",
+                        cls := "button button-fixed-width expand-from-right",
+                        styleProp("transform") <-- saveExpanded.signal
+                          .map(expanded =>
+                            if (expanded) "translateX(0) scale(1)"
+                            else "translateX(-60px) scale(0)",
+                          ),
+                        styleProp("opacity") <-- saveExpanded.signal
+                          .map(expanded =>
+                            if (expanded) "1" else "0",
+                          ),
                         "Save Trip",
                         disabled <-- tripName.signal.map(
                           _.trim.isEmpty,
@@ -858,16 +890,16 @@ object Components {
     originalStart: Location,
     originalEnd: Location,
     adjustedStart: Location,
-    adjustedEnd: Location,
-  ) {
+    adjustedEnd: Location) {
     val startAdjusted = originalStart != adjustedStart
     val endAdjusted = originalEnd != adjustedEnd
     val hasAdjustments = startAdjusted || endAdjusted
   }
 
-  /** Apply the rec-center/spencer special-casing requested for return trips
-    * while keeping the opposite stop unchanged, but also keep the original
-    * endpoints so we can prompt the user when we make a change.
+  /** Apply the rec-center/spencer special-casing requested for return
+    * trips while keeping the opposite stop unchanged, but also keep
+    * the original endpoints so we can prompt the user when we make a
+    * change.
     */
   private[laminar] def returnTripEndpoints(
     lastSegment: RouteSegment,
@@ -1040,7 +1072,9 @@ object Components {
                     },
                   )
                 case None =>
-                  div(cls := "saved-trip-error", "Could not load trip")
+                  div(cls := "saved-trip-error",
+                      "Could not load trip",
+                  )
               },
               button(
                 cls := "button saved-trip-load-button",
@@ -1249,20 +1283,25 @@ object Components {
     case object NotInterested extends VoteState
   }
 
-  /** Voting buttons component for topics.
-    * Displays a heart icon for "interested" and an X icon for "not interested".
-    * When a button is selected, it appears highlighted/pressed.
+  /** Voting buttons component for topics. Displays a heart icon for
+    * "interested" and an X icon for "not interested". When a button
+    * is selected, it appears highlighted/pressed.
     *
-    * @param topicId Unique identifier for the topic being voted on
-    * @param voteState A Var holding the current vote state
-    * @param onVoteChange Optional callback when vote changes
+    * @param topicId
+    *   Unique identifier for the topic being voted on
+    * @param voteState
+    *   A Var holding the current vote state
+    * @param onVoteChange
+    *   Optional callback when vote changes
     */
   def VotingButtons(
     topicId: String,
     voteState: Var[VoteState],
     onVoteChange: Option[Observer[VoteState]] = scala.None,
   ): ReactiveHtmlElement[HTMLDivElement] = {
-    def handleVote(newState: VoteState): Unit = {
+    def handleVote(
+      newState: VoteState,
+    ): Unit = {
       val currentState = voteState.now()
       // Toggle off if clicking the same button, otherwise set new state
       val nextState =
@@ -1281,7 +1320,9 @@ object Components {
           case VoteState.Interested => "voting-button-selected"
           case _                    => ""
         },
-        onClick --> Observer { _ => handleVote(VoteState.Interested) },
+        onClick --> Observer { _ =>
+          handleVote(VoteState.Interested)
+        },
         SvgIcon.heart("voting-icon"),
         span(cls := "voting-label", "Interested"),
       ),
