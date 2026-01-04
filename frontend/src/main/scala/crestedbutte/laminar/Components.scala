@@ -695,7 +695,10 @@ object Components {
 
               // Collapsed state: Share and Save buttons side by side
               div(
-                cls := "expanded-buttons-row",
+                cls := "expanded-buttons-row collapsed-buttons-row",
+                cls <-- anyExpanded.map(expanded =>
+                  if (expanded) "delayed-appear" else "",
+                ),
                 styleProp("opacity") <-- anyExpanded.map(expanded =>
                   if (expanded) "0" else "1",
                 ),
@@ -728,8 +731,7 @@ object Components {
               div(
                 cls := "expanded-buttons-row",
                 styleProp("pointer-events") <-- shareExpanded.signal
-                  .map(expanded => if (expanded) "auto" else "none",
-                  ),
+                  .map(expanded => if (expanded) "auto" else "none"),
                 styleProp("position") <-- shareExpanded.signal.map(
                   expanded => if (expanded) "relative" else "absolute",
                 ),
@@ -765,7 +767,7 @@ object Components {
                     else {
                       dom.window.navigator.clipboard.writeText(text)
                     }
-                    setTimeout(300)(shareExpanded.set(false))
+                    shareExpanded.set(false)
                   },
                 ),
                 // Link button - emerges from Share position (needs to slide right to its final position)
@@ -805,7 +807,7 @@ object Components {
                     else {
                       dom.window.navigator.clipboard.writeText(url)
                     }
-                    setTimeout(300)(shareExpanded.set(false))
+                    shareExpanded.set(false)
                   },
                 ),
               ),
@@ -814,8 +816,7 @@ object Components {
               div(
                 cls := "expanded-buttons-row",
                 styleProp("pointer-events") <-- saveExpanded.signal
-                  .map(expanded => if (expanded) "auto" else "none",
-                  ),
+                  .map(expanded => if (expanded) "auto" else "none"),
                 styleProp("position") <-- saveExpanded.signal.map(
                   expanded => if (expanded) "relative" else "absolute",
                 ),
