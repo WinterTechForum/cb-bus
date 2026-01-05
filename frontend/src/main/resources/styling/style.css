@@ -473,6 +473,8 @@ body {
     margin: 0.5rem;
     width: 100%;
     min-height: 56px;
+    overflow: hidden;
+    box-sizing: border-box;
 }
 
 /* Save button container */
@@ -533,6 +535,13 @@ body {
     border-radius: 8px;
     color: var(--color-primary);
     font-weight: 600;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    top: 0;
+    text-align: center;
+    box-sizing: border-box;
+    z-index: 10;
 }
 
 /* Saved trips toggle button */

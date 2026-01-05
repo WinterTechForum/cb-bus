@@ -401,8 +401,7 @@ object Components {
                     expanded => if (expanded) "0" else "1",
                   ),
                   styleProp("pointer-events") <-- tripExpanded.signal
-                    .map(expanded =>
-                      if (expanded) "none" else "auto",
+                    .map(expanded => if (expanded) "none" else "auto",
                     ),
                   span("+"),
                   onClick --> Observer { _ =>
@@ -414,8 +413,7 @@ object Components {
                 div(
                   cls := "expanded-buttons-row",
                   styleProp("pointer-events") <-- tripExpanded.signal
-                    .map(expanded =>
-                      if (expanded) "auto" else "none",
+                    .map(expanded => if (expanded) "auto" else "none",
                     ),
                   styleProp("position") <-- tripExpanded.signal.map(
                     expanded =>
@@ -859,6 +857,7 @@ object Components {
                     ),
                   typ := "text",
                   placeholder := "Trip name",
+                  maxLength := 20,
                   controlled(
                     value <-- tripName.signal,
                     onInput.mapToValue --> tripName.writer,
@@ -884,7 +883,7 @@ object Components {
                     _.trim.isEmpty,
                   ),
                   onClick --> Observer { _ =>
-                    val name = tripName.now().trim
+                    val name = tripName.now().trim.take(20)
                     if (name.nonEmpty) {
                       db.savePlanByName(name, plan)
                       saveConfirmation.set(Some(name))
