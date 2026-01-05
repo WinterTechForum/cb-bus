@@ -167,9 +167,8 @@ body {
     width: 100%;
 }
 
-/* Trip/share button containers and buttons */
-.trip-button-container,
-.share-button-container {
+/* Trip/action button containers and buttons */
+.trip-button-container {
     position: relative;
     display: flex;
     justify-content: center;
@@ -199,7 +198,27 @@ body {
     justify-content: center;
     align-items: center;
     gap: 20px;
-    transition: opacity 250ms ease;
+    transition: opacity 250ms ease-in;
+}
+
+/* Animated expanding button - emerges from center */
+.expand-from-left {
+    transition: transform 780ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 200ms ease;
+}
+
+.expand-from-right {
+    transition: transform 780ms cubic-bezier(0.34, 1.56, 0.64, 1) 40ms, opacity 200ms ease 40ms;
+}
+
+/* Collapsed buttons row - instant hide, delayed fade in */
+.collapsed-buttons-row {
+    /* When NOT delayed-appear: fade in with delay after expanded buttons collapse */
+    transition: opacity 800ms ease-out 600ms;
+}
+
+.collapsed-buttons-row.delayed-appear {
+    /* When delayed-appear is present: instant hide (no transition) */
+    transition: none;
 }
 
 .return-trip-choice {
@@ -445,14 +464,15 @@ body {
     transform: scale(1.1);
 }
 
-/* Action buttons row - contains Share and Save buttons */
-.action-buttons-row {
+/* Action buttons container - for Share and Save buttons */
+.action-buttons-container {
+    position: relative;
     display: flex;
     justify-content: center;
-    align-items: flex-start;
-    gap: 20px;
+    align-items: center;
+    margin: 0.5rem;
     width: 100%;
-    flex-wrap: wrap;
+    min-height: 56px;
 }
 
 /* Save button container */

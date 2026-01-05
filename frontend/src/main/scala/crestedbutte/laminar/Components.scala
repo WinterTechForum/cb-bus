@@ -242,11 +242,9 @@ object Components {
               options: ReturnTripOptions,
               adjustedAvailable: Boolean,
               originalAvailable: Boolean,
-              generalMessage: Option[String] = None,
-            )
+              generalMessage: Option[String] = None)
 
-            val pendingReturnChoice
-              : Var[Option[PendingReturnTrip]] =
+            val pendingReturnChoice: Var[Option[PendingReturnTrip]] =
               Var(None)
 
             def evaluatePendingReturn(
@@ -255,7 +253,10 @@ object Components {
               options: ReturnTripOptions,
             ): PendingReturnTrip =
               val lastEndTime = lastSegment.end.t
-              def hasReturnLeg(start: Location, end: Location) =
+              def hasReturnLeg(
+                start: Location,
+                end: Location,
+              ) =
                 rightLegOnRightRoute(
                   start,
                   end,
@@ -352,7 +353,8 @@ object Components {
                               originalAvailable =
                                 if isOriginalChoice then false
                                 else pending.originalAvailable,
-                              generalMessage = Some(unavailableMessage),
+                              generalMessage =
+                                Some(unavailableMessage),
                             )
                           }
                       pendingReturnChoice.set(updated)
@@ -391,7 +393,10 @@ object Components {
 
                 // Collapsed + Trip button
                 button(
-                  cls := "button floating-center-button button-fixed-width",
+                  cls := "button floating-center-button button-fixed-width collapsed-buttons-row",
+                  cls <-- tripExpanded.signal.map(expanded =>
+                    if (expanded) "delayed-appear" else "",
+                  ),
                   styleProp("opacity") <-- tripExpanded.signal.map(
                     expanded => if (expanded) "0" else "1",
                   ),
@@ -408,34 +413,51 @@ object Components {
                 // Expanded buttons container
                 div(
                   cls := "expanded-buttons-row",
-                  styleProp("opacity") <-- tripExpanded.signal.map(
-                    expanded => if (expanded) "1" else "0",
-                  ),
                   styleProp("pointer-events") <-- tripExpanded.signal
                     .map(expanded =>
                       if (expanded) "auto" else "none",
                     ),
+                  styleProp("position") <-- tripExpanded.signal.map(
+                    expanded =>
+                      if (expanded) "relative" else "absolute",
+                  ),
 
-                  // New route button
+                  // New route button - emerges from center (left side)
                   button(
-                    cls := "button button-fixed-width",
+                    cls := "button button-fixed-width expand-from-left",
+                    styleProp("transform") <-- tripExpanded.signal
+                      .map(expanded =>
+                        if (expanded) "translateX(0) scale(1)"
+                        else "translateX(60px) scale(0)",
+                      ),
+                    styleProp("opacity") <-- tripExpanded.signal.map(
+                      expanded => if (expanded) "1" else "0",
+                    ),
                     "New trip",
                     onClick --> Observer { _ =>
                       addingNewRoute.set(true)
-                      setTimeout(300)(tripExpanded.set(false))
+                      tripExpanded.set(false)
                     },
                   ),
 
-                  // Return trip button
+                  // Return trip button - emerges from center (right side)
                   button(
-                    cls := "button button-fixed-width",
+                    cls := "button button-fixed-width expand-from-right",
+                    styleProp("transform") <-- tripExpanded.signal
+                      .map(expanded =>
+                        if (expanded) "translateX(0) scale(1)"
+                        else "translateX(-60px) scale(0)",
+                      ),
+                    styleProp("opacity") <-- tripExpanded.signal.map(
+                      expanded => if (expanded) "1" else "0",
+                    ),
                     "Return trip",
                     onClick --> Observer { _ =>
                       val plan = $plan.now()
                       val maybeLastSeg = plan.l.lastOption
                       maybeLastSeg.foreach { lastSeg =>
                         val options = returnTripEndpoints(lastSeg)
-                        if (options.hasAdjustments) then
+                        if options.hasAdjustments then
                           pendingReturnChoice.set(
                             Some(
                               evaluatePendingReturn(
@@ -658,16 +680,12 @@ object Components {
     val documentClickHandler: js.Function1[dom.MouseEvent, Unit] =
       (event: dom.MouseEvent) => {
         val target = event.target.asInstanceOf[dom.Element]
-        val shareContainer =
-          dom.document.querySelector(".share-button-container")
-        val saveContainer =
-          dom.document.querySelector(".save-button-container")
+        val actionContainer =
+          dom.document.querySelector(".action-buttons-container")
         if (
-          shareContainer != null && !shareContainer.contains(target)
+          actionContainer != null && !actionContainer.contains(target)
         ) {
           shareExpanded.set(false)
-        }
-        if (saveContainer != null && !saveContainer.contains(target)) {
           saveExpanded.set(false)
           saveConfirmation.set(None)
         }
@@ -686,37 +704,70 @@ object Components {
         if (plan.routeSegments.isEmpty)
           div()
         else {
+          val anyExpanded = shareExpanded.signal
+            .combineWith(saveExpanded.signal)
+            .map { case (share, save) =>
+              share || save
+            }
+
           div(
-            cls := "action-buttons-row",
-            // Share button container
+            cls := "centered",
             div(
-              cls := "share-button-container",
-              button(
-                cls := "button floating-center-button button-fixed-width",
-                styleProp("opacity") <-- shareExpanded.signal.map(
-                  expanded => if (expanded) "0" else "1",
-                ),
-                styleProp("pointer-events") <-- shareExpanded.signal
-                  .map(expanded =>
-                    if (expanded) "none" else "auto",
-                  ),
-                span("Share"),
-                onClick --> Observer { _ =>
-                  shareExpanded.set(true)
-                  saveExpanded.set(false)
-                },
-              ),
+              cls := "action-buttons-container",
+
+              // Collapsed state: Share and Save buttons side by side
               div(
-                cls := "expanded-buttons-row",
-                styleProp("opacity") <-- shareExpanded.signal.map(
-                  expanded => if (expanded) "1" else "0",
+                cls := "expanded-buttons-row collapsed-buttons-row",
+                cls <-- anyExpanded.map(expanded =>
+                  if (expanded) "delayed-appear" else "",
                 ),
-                styleProp("pointer-events") <-- shareExpanded.signal
-                  .map(expanded =>
-                    if (expanded) "auto" else "none",
-                  ),
+                styleProp("opacity") <-- anyExpanded.map(expanded =>
+                  if (expanded) "0" else "1",
+                ),
+                styleProp("pointer-events") <-- anyExpanded.map(
+                  expanded => if (expanded) "none" else "auto",
+                ),
+                styleProp("position") <-- anyExpanded.map(expanded =>
+                  if (expanded) "absolute" else "relative",
+                ),
                 button(
                   cls := "button button-fixed-width",
+                  "Share",
+                  onClick --> Observer { _ =>
+                    shareExpanded.set(true)
+                    saveExpanded.set(false)
+                  },
+                ),
+                button(
+                  cls := "button button-fixed-width",
+                  "Save",
+                  onClick --> Observer { _ =>
+                    saveExpanded.set(true)
+                    shareExpanded.set(false)
+                    saveConfirmation.set(None)
+                  },
+                ),
+              ),
+
+              // Share expanded: Text and Link buttons
+              div(
+                cls := "expanded-buttons-row",
+                styleProp("pointer-events") <-- shareExpanded.signal
+                  .map(expanded => if (expanded) "auto" else "none"),
+                styleProp("position") <-- shareExpanded.signal.map(
+                  expanded => if (expanded) "relative" else "absolute",
+                ),
+                // Text button - emerges from Share position (left side, no translation needed)
+                button(
+                  cls := "button button-fixed-width expand-from-left",
+                  styleProp("transform") <-- shareExpanded.signal.map(
+                    expanded =>
+                      if (expanded) "translateX(0) scale(1)"
+                      else "translateX(60px) scale(0)",
+                  ),
+                  styleProp("opacity") <-- shareExpanded.signal.map(
+                    expanded => if (expanded) "1" else "0",
+                  ),
                   "Text",
                   onClick --> Observer { _ =>
                     val text = plan.plainTextRepresentation
@@ -738,11 +789,20 @@ object Components {
                     else {
                       dom.window.navigator.clipboard.writeText(text)
                     }
-                    setTimeout(300)(shareExpanded.set(false))
+                    shareExpanded.set(false)
                   },
                 ),
+                // Link button - emerges from Share position (needs to slide right to its final position)
                 button(
-                  cls := "button button-fixed-width",
+                  cls := "button button-fixed-width expand-from-right",
+                  styleProp("transform") <-- shareExpanded.signal.map(
+                    expanded =>
+                      if (expanded) "translateX(0) scale(1)"
+                      else "translateX(-120px) scale(0)",
+                  ),
+                  styleProp("opacity") <-- shareExpanded.signal.map(
+                    expanded => if (expanded) "1" else "0",
+                  ),
                   "Link",
                   onClick --> Observer { _ =>
                     val url =
@@ -769,83 +829,83 @@ object Components {
                     else {
                       dom.window.navigator.clipboard.writeText(url)
                     }
-                    setTimeout(300)(shareExpanded.set(false))
+                    shareExpanded.set(false)
                   },
                 ),
               ),
-            ),
-            // Save button container
-            div(
-              cls := "save-button-container",
-              button(
-                cls := "button floating-center-button button-fixed-width",
-                styleProp("opacity") <-- saveExpanded.signal.map(
-                  expanded => if (expanded) "0" else "1",
-                ),
-                styleProp("pointer-events") <-- saveExpanded.signal
-                  .map(expanded =>
-                    if (expanded) "none" else "auto",
-                  ),
-                span("Save"),
-                onClick --> Observer { _ =>
-                  saveExpanded.set(true)
-                  shareExpanded.set(false)
-                  saveConfirmation.set(None)
-                },
-              ),
+
+              // Save expanded: input and Save Trip button
               div(
-                cls := "save-dialog",
-                styleProp("opacity") <-- saveExpanded.signal.map(
-                  expanded => if (expanded) "1" else "0",
-                ),
+                cls := "expanded-buttons-row",
                 styleProp("pointer-events") <-- saveExpanded.signal
-                  .map(expanded =>
-                    if (expanded) "auto" else "none",
-                  ),
-                styleProp("max-height") <-- saveExpanded.signal.map(
-                  expanded => if (expanded) "200px" else "0",
+                  .map(expanded => if (expanded) "auto" else "none"),
+                styleProp("position") <-- saveExpanded.signal.map(
+                  expanded => if (expanded) "relative" else "absolute",
                 ),
-                div(
-                  cls := "save-dialog-content",
-                  child <-- saveConfirmation.signal.map {
-                    case Some(name) =>
-                      div(
-                        cls := "save-confirmation",
-                        span(s"Saved as '$name'"),
-                      )
-                    case None =>
-                      div(
-                        input(
-                          cls := "save-input",
-                          typ := "text",
-                          placeholder := "Trip name",
-                          controlled(
-                            value <-- tripName.signal,
-                            onInput.mapToValue --> tripName.writer,
-                          ),
-                        ),
-                        button(
-                          cls := "button button-fixed-width",
-                          "Save Trip",
-                          disabled <-- tripName.signal.map(
-                            _.trim.isEmpty,
-                          ),
-                          onClick --> Observer { _ =>
-                            val name = tripName.now().trim
-                            if (name.nonEmpty) {
-                              db.savePlanByName(name, plan)
-                              saveConfirmation.set(Some(name))
-                              tripName.set("")
-                              setTimeout(1500) {
-                                saveExpanded.set(false)
-                                saveConfirmation.set(None)
-                              }
-                            }
-                          },
-                        ),
-                      )
+                // Input - emerges from Save position (right), slides left to its final position
+                input(
+                  cls := "save-input expand-from-right",
+                  styleProp("transform") <-- saveExpanded.signal.map(
+                    expanded =>
+                      if (expanded) "translateX(0) scale(1)"
+                      else "translateX(120px) scale(0)",
+                  ),
+                  styleProp("opacity") <-- saveExpanded.signal.map(
+                    expanded => if (expanded) "1" else "0",
+                  ),
+                  styleProp("visibility") <-- saveConfirmation.signal
+                    .map(conf =>
+                      if (conf.isDefined) "hidden" else "visible",
+                    ),
+                  typ := "text",
+                  placeholder := "Trip name",
+                  controlled(
+                    value <-- tripName.signal,
+                    onInput.mapToValue --> tripName.writer,
+                  ),
+                ),
+                // Save Trip button - emerges from Save position (right side, near Save button)
+                button(
+                  cls := "button button-fixed-width expand-from-left",
+                  styleProp("transform") <-- saveExpanded.signal.map(
+                    expanded =>
+                      if (expanded) "translateX(0) scale(1)"
+                      else "translateX(60px) scale(0)",
+                  ),
+                  styleProp("opacity") <-- saveExpanded.signal.map(
+                    expanded => if (expanded) "1" else "0",
+                  ),
+                  styleProp("visibility") <-- saveConfirmation.signal
+                    .map(conf =>
+                      if (conf.isDefined) "hidden" else "visible",
+                    ),
+                  "Save Trip",
+                  disabled <-- tripName.signal.map(
+                    _.trim.isEmpty,
+                  ),
+                  onClick --> Observer { _ =>
+                    val name = tripName.now().trim
+                    if (name.nonEmpty) {
+                      db.savePlanByName(name, plan)
+                      saveConfirmation.set(Some(name))
+                      tripName.set("")
+                      setTimeout(1500) {
+                        saveExpanded.set(false)
+                        saveConfirmation.set(None)
+                      }
+                    }
                   },
                 ),
+                // Confirmation message
+                child <-- saveConfirmation.signal.map {
+                  case Some(name) =>
+                    div(
+                      cls := "save-confirmation",
+                      span(s"Saved as '$name'"),
+                    )
+                  case None =>
+                    div()
+                },
               ),
             ),
           )
@@ -858,16 +918,16 @@ object Components {
     originalStart: Location,
     originalEnd: Location,
     adjustedStart: Location,
-    adjustedEnd: Location,
-  ) {
+    adjustedEnd: Location) {
     val startAdjusted = originalStart != adjustedStart
     val endAdjusted = originalEnd != adjustedEnd
     val hasAdjustments = startAdjusted || endAdjusted
   }
 
-  /** Apply the rec-center/spencer special-casing requested for return trips
-    * while keeping the opposite stop unchanged, but also keep the original
-    * endpoints so we can prompt the user when we make a change.
+  /** Apply the rec-center/spencer special-casing requested for return
+    * trips while keeping the opposite stop unchanged, but also keep
+    * the original endpoints so we can prompt the user when we make a
+    * change.
     */
   private[laminar] def returnTripEndpoints(
     lastSegment: RouteSegment,
@@ -1040,7 +1100,9 @@ object Components {
                     },
                   )
                 case None =>
-                  div(cls := "saved-trip-error", "Could not load trip")
+                  div(cls := "saved-trip-error",
+                      "Could not load trip",
+                  )
               },
               button(
                 cls := "button saved-trip-load-button",
@@ -1240,4 +1302,5 @@ object Components {
         stopTime.toDumbAmericanString,
       ),
     )
+
 }
