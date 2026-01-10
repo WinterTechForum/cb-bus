@@ -49,6 +49,9 @@ case class Plan(
   l: Seq[RouteSegment])
     derives JsonCodec:
 
+  def withId(id: String): SavedPlan = SavedPlan(id, None, this)
+  def withIdAndName(id: String, name: String): SavedPlan = SavedPlan(id, Some(name), this)
+
   val routeSegments: Seq[RouteSegment] = l
 
   val routePieces: Seq[RoutePiece] =
@@ -92,6 +95,38 @@ object Plan {
     )
 
 }
+
+/** A saved plan with a stable UUID and an optional user-defined name.
+  * The UUID is used as the storage key, so renaming doesn't create duplicates.
+  */
+case class SavedPlan(
+  id: String,
+  name: Option[String],
+  plan: Plan)
+    derives JsonCodec:
+  
+  def displayName: String = name.getOrElse("Untitled Trip")
+  def withName(newName: String): SavedPlan = copy(name = Some(newName))
+  def withPlan(newPlan: Plan): SavedPlan = copy(plan = newPlan)
+
+object SavedPlan:
+  import scala.scalajs.js
+  import scala.scalajs.js.annotation.JSGlobal
+  
+  // Use browser's crypto.randomUUID() which is available in modern browsers
+  @js.native
+  @JSGlobal("crypto")
+  private object Crypto extends js.Object:
+    def randomUUID(): String = js.native
+  
+  private def generateId(): String = Crypto.randomUUID()
+  
+  def create(plan: Plan): SavedPlan = 
+    SavedPlan(generateId(), None, plan)
+  
+  def create(plan: Plan, name: String): SavedPlan = 
+    SavedPlan(generateId(), Some(name), plan)
+
 object models {
   val allRoutes = List(
     RTA.Southbound.componentName,

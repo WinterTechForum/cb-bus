@@ -677,6 +677,35 @@ body {
     color: var(--color-black);
 }
 
+.plan-name-text {
+    display: inline-block;
+}
+
+.plan-name-input {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--color-black);
+    background-color: transparent;
+    border: none;
+    border-bottom: 2px solid var(--color-primary);
+    padding: 4px 8px;
+    text-align: center;
+    outline: none;
+    min-width: 120px;
+    max-width: 200px;
+    transition: border-color 200ms ease, background-color 200ms ease;
+}
+
+.plan-name-input:focus {
+    background-color: rgba(1, 156, 143, 0.05);
+    border-bottom-color: var(--color-primary);
+}
+
+.plan-name-input::placeholder {
+    color: #999;
+    font-weight: 400;
+}
+
 /* Lock button styles */
 .lock-button {
     display: inline-flex;
@@ -716,6 +745,12 @@ body {
 }
 
 .lock-button.lock-button-locked .lock-icon {
+    filter: brightness(0) invert(1);
+}
+
+.share-icon {
+    width: 24px;
+    height: 24px;
     filter: brightness(0) invert(1);
 }
 

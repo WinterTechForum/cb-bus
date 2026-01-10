@@ -12,6 +12,8 @@ class Persistence():
 
   private val PlansIndexKey = "plans:index"
   private val PlanKeyPrefix = "plan:"
+  private val SavedPlansIndexKey = "savedplans:index"
+  private val SavedPlanKeyPrefix = "savedplan:"
   private val ScheduleLockedKey = "schedule:locked"
 
   // ===== Schedule locked state =====
@@ -199,3 +201,77 @@ class Persistence():
     val existing = getPlanByName(name).getOrElse(Plan(Seq.empty))
     val updated = existing.copy(existing.l :+ routeLeg)
     savePlanByName(name, updated)
+
+  // ===== New UUID-based SavedPlan APIs =====
+
+  private def savedPlanStorageKey(
+    id: String,
+  ): String = s"${SavedPlanKeyPrefix}${id}"
+
+  private def readSavedPlanIdsIndex(): List[String] =
+    val raw = localStorage.getItem(SavedPlansIndexKey)
+    if raw == null then List.empty
+    else
+      raw
+        .fromJson[List[String]]
+        .getOrElse:
+          println(
+            "Bad saved plans index in localStorage; defaulting to empty index",
+          )
+          List.empty
+
+  private def writeSavedPlanIdsIndex(
+    ids: List[String],
+  ): Unit = localStorage.setItem(SavedPlansIndexKey, ids.toJson)
+
+  /** List all saved plan IDs.
+    */
+  def listSavedPlanIds(): List[String] = readSavedPlanIdsIndex()
+
+  /** Retrieve a saved plan by ID. Returns None if not found or if the
+    * stored value is invalid.
+    */
+  def getSavedPlan(
+    id: String,
+  ): Option[SavedPlan] =
+    val key = savedPlanStorageKey(id)
+    val raw = localStorage.getItem(key)
+    if raw == null then None
+    else
+      raw
+        .fromJson[SavedPlan]
+        .fold(
+          err =>
+            println(s"Bad saved plan '$id' in localStorage: ${err}")
+            None
+          ,
+          sp => Some(sp),
+        )
+
+  /** List all saved plans (loads each one).
+    */
+  def listSavedPlans(): List[SavedPlan] =
+    readSavedPlanIdsIndex().flatMap(getSavedPlan)
+
+  /** Save a SavedPlan (create or update). The ID is used as the
+    * storage key.
+    */
+  def saveSavedPlan(
+    savedPlan: SavedPlan,
+  ): Unit =
+    val key = savedPlanStorageKey(savedPlan.id)
+    localStorage.setItem(key, savedPlan.toJson)
+    val current = readSavedPlanIdsIndex()
+    if !current.contains(savedPlan.id) then
+      writeSavedPlanIdsIndex(current :+ savedPlan.id)
+
+  /** Delete a saved plan by ID.
+    */
+  def deleteSavedPlan(
+    id: String,
+  ): Unit =
+    val key = savedPlanStorageKey(id)
+    localStorage.removeItem(key)
+    val current = readSavedPlanIdsIndex()
+    if current.contains(id) then
+      writeSavedPlanIdsIndex(current.filterNot(_ == id))
