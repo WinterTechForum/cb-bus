@@ -237,6 +237,9 @@ object Components {
           .map(_.routePieces)
           .splitTransition(_.id) {
             case (_, routePiece, routePieceSignal, transition) =>
+              // CRITICAL: Capture the currentSavedPlan when this element is created
+              // to prevent saving to wrong plan if currentSavedPlan changes
+              val capturedSavedPlan = currentSavedPlan.now()
               div(
                 child <--
                   routePieceSignal
@@ -278,7 +281,7 @@ object Components {
                                     savePlanWithSavedPlan(
                                       db,
                                       newPlan,
-                                      currentSavedPlan.now(),
+                                      capturedSavedPlan,
                                     )
                                     $plan.set(newPlan)
                                     if (newPlan.l.isEmpty) {
@@ -304,7 +307,7 @@ object Components {
                                       savePlanWithSavedPlan(
                                         db,
                                         updatedPlan,
-                                        currentSavedPlan.now(),
+                                        capturedSavedPlan,
                                       )
                                       updatedPlan
                                   },
@@ -320,7 +323,7 @@ object Components {
                                       savePlanWithSavedPlan(
                                         db,
                                         updatedPlan,
-                                        currentSavedPlan.now(),
+                                        capturedSavedPlan,
                                       )
                                       addingNewRoute.set(false)
                                       updatedPlan
@@ -338,6 +341,8 @@ object Components {
         cls := "add-new-route-section",
         child <-- addingNewRoute.signal.map {
           case false =>
+            // Capture currentSavedPlan to prevent saving to wrong plan
+            val capturedSavedPlan = currentSavedPlan.now()
             val tripExpanded: Var[Boolean] = Var(false)
 
             case class PendingReturnTrip(
@@ -427,7 +432,7 @@ object Components {
                         currentPlan.copy(l = currentPlan.l :+ newSeg)
                       savePlanWithSavedPlan(db,
                                             updatedPlan,
-                                            currentSavedPlan.now(),
+                                            capturedSavedPlan,
                       )
                       $plan.set(updatedPlan)
                       addingNewRoute.set(false)
@@ -1445,9 +1450,10 @@ object Components {
                   cls := "button saved-trip-load-button",
                   "Load this trip",
                   onClick --> Observer { _ =>
-                    $plan.set(savedPlan.plan)
-                    // Don't write to "today" - SavedPlan is the source of truth
+                    // CRITICAL: Set currentSavedPlan BEFORE $plan to ensure observers
+                    // use the correct plan ID if they fire during the transition
                     currentSavedPlan.set(Some(savedPlan))
+                    $plan.set(savedPlan.plan)
                     loadTripsMode.set(false)
                     addingNewRoute.set(false)
                     isLocked.set(true)
@@ -1563,6 +1569,8 @@ object Components {
             div(
               children <-- $locations.splitTransition(identity) {
                 case (_, (location, _), _, transition) =>
+                  // Capture currentSavedPlan to prevent saving to wrong plan
+                  val capturedSavedPlan = currentSavedPlan.now()
                   div(
                     transition.height,
                     child <-- $now.map {
@@ -1607,7 +1615,7 @@ object Components {
                                         savePlanWithSavedPlan(
                                           db,
                                           newPlan,
-                                          currentSavedPlan.now(),
+                                          capturedSavedPlan,
                                         )
                                         addingNewRoute.set(false)
                                         newPlan
