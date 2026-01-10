@@ -12,6 +12,17 @@ class Persistence():
 
   private val PlansIndexKey = "plans:index"
   private val PlanKeyPrefix = "plan:"
+  private val ScheduleLockedKey = "schedule:locked"
+
+  // ===== Schedule locked state =====
+  def getScheduleLocked: Boolean =
+    val raw = localStorage.getItem(ScheduleLockedKey)
+    if raw == null then false
+    else raw == "true"
+
+  def setScheduleLocked(
+    locked: Boolean,
+  ): Unit = localStorage.setItem(ScheduleLockedKey, locked.toString)
 
   private def planStorageKey(
     name: String,
