@@ -154,6 +154,8 @@ object Components {
       }
     // Track whether we should open the load trips view when entering stop selector
     val loadTripsMode: Var[Boolean] = Var(false)
+    // Signal to trigger focusing the plan name input when saving
+    val focusPlanNameInput: Var[Boolean] = Var(false)
 
     // Persist locked state changes to localStorage
     val persistLockedState =
@@ -164,7 +166,7 @@ object Components {
     // Derive whether we're in "load trips" mode (showing the saved trips list)
     val isLoadingTrips: Signal[Boolean] =
       loadTripsMode.signal.combineWith(addingNewRoute.signal).map {
-        case (loadMode, adding) => loadMode || adding
+        case (loadMode, adding) => loadMode // || adding
       }
 
     div(
@@ -189,7 +191,11 @@ object Components {
         display <-- isLoadingTrips.map(loading =>
           if (loading) "none" else "block",
         ),
-        planNameAndLockRow(currentSavedPlan, isLocked, db),
+        planNameAndLockRow(currentSavedPlan,
+                           isLocked,
+                           db,
+                           focusPlanNameInput,
+        ),
       ),
       // Action buttons - hidden when loading trips
       div(
@@ -202,6 +208,7 @@ object Components {
                     currentSavedPlan,
                     addingNewRoute,
                     loadTripsMode,
+                    focusPlanNameInput,
         ),
       ),
       // Plan segments container - hidden when loading trips
@@ -771,6 +778,7 @@ object Components {
     $currentSavedPlan: Var[Option[SavedPlan]],
     isLocked: Var[Boolean],
     db: Persistence,
+    focusPlanNameInput: Var[Boolean],
   ) =
     // Local state for editing the name
     val editingName: Var[String] = Var("")
@@ -801,6 +809,15 @@ object Components {
                 onMountCallback { ctx =>
                   editingName
                     .set(savedPlanO.map(_.displayName).getOrElse(""))
+                  // Check if we should focus this input
+                  if (focusPlanNameInput.now()) {
+                    focusPlanNameInput.set(false)
+                    val inputEl =
+                      ctx.thisNode.ref
+                        .asInstanceOf[dom.HTMLInputElement]
+                    inputEl.focus()
+                    inputEl.select()
+                  }
                 },
                 onInput.mapToValue --> editingName.writer,
                 onBlur --> Observer { _ =>
@@ -858,6 +875,7 @@ object Components {
     currentSavedPlan: Var[Option[SavedPlan]],
     addingNewRoute: Var[Boolean],
     loadTripsMode: Var[Boolean],
+    focusPlanNameInput: Var[Boolean],
   ) = {
     val shareExpanded: Var[Boolean] = Var(false)
     val saveExpanded: Var[Boolean] = Var(false)
@@ -943,9 +961,14 @@ object Components {
                         cls := "button button-fixed-width",
                         "Save",
                         onClick --> Observer { _ =>
-                          saveExpanded.set(true)
-                          shareExpanded.set(false)
-                          saveConfirmation.set(None)
+                          // Create a new SavedPlan with UUID but no name yet
+                          val newSavedPlan = SavedPlan.create(plan)
+                          db.saveSavedPlan(newSavedPlan)
+                          currentSavedPlan.set(Some(newSavedPlan))
+                          // Unlock so the input becomes editable
+                          isLocked.set(false)
+                          // Signal to focus the plan name input
+                          focusPlanNameInput.set(true)
                         },
                       ),
                     )
