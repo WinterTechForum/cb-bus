@@ -490,8 +490,7 @@ object Components {
                     expanded => if (expanded) "0" else "1",
                   ),
                   styleProp("pointer-events") <-- tripExpanded.signal
-                    .map(expanded =>
-                      if (expanded) "none" else "auto",
+                    .map(expanded => if (expanded) "none" else "auto",
                     ),
                   span("+"),
                   onClick --> Observer { _ =>
@@ -503,8 +502,7 @@ object Components {
                 div(
                   cls := "expanded-buttons-row",
                   styleProp("pointer-events") <-- tripExpanded.signal
-                    .map(expanded =>
-                      if (expanded) "auto" else "none",
+                    .map(expanded => if (expanded) "auto" else "none",
                     ),
                   styleProp("position") <-- tripExpanded.signal.map(
                     expanded =>
@@ -996,8 +994,7 @@ object Components {
                   styleProp(
                     "pointer-events",
                   ) <-- shareExpanded.signal
-                    .map(expanded =>
-                      if (expanded) "auto" else "none",
+                    .map(expanded => if (expanded) "auto" else "none",
                     ),
                   styleProp("position") <-- shareExpanded.signal
                     .map(expanded =>
@@ -1086,7 +1083,8 @@ object Components {
                   styleProp(
                     "pointer-events",
                   ) <-- saveExpanded.signal
-                    .map(expanded => if (expanded) "auto" else "none",
+                    .map(expanded =>
+                      if (expanded) "auto" else "none",
                     ),
                   styleProp("position") <-- saveExpanded.signal
                     .map(expanded =>
@@ -1390,6 +1388,7 @@ object Components {
                     $plan.set(savedPlan.plan)
                     db.saveDailyPlanOnly(savedPlan.plan)
                     currentSavedPlan.set(Some(savedPlan))
+                    loadTripsMode.set(false)
                     addingNewRoute.set(false)
                     isLocked.set(true)
                   },
@@ -1434,8 +1433,8 @@ object Components {
 
     div(
       onMountCallback { ctx =>
-        // Reset loadTripsMode after reading it
-        loadTripsMode.set(false)
+        // Only load locations if we're in SelectStop mode (not LoadSavedTrip mode)
+        // Don't reset loadTripsMode here - let it be controlled by user actions (Back button or loading a trip)
         if (initialMode == StopSelectorMode.SelectStop) {
           loadLocations()
         }
