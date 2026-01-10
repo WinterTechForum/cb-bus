@@ -145,8 +145,10 @@ object Components {
       Option[SelectedStopInfo],
     ],
   ) =
+    val isLocked: Var[Boolean] = Var(false)
+
     div(
-      copyButtons($plan.signal, db),
+      copyButtons($plan.signal, db, isLocked),
       children <-- $plan.signal
         .map(_.routePieces)
         .splitTransition(_.id) {
@@ -224,6 +226,7 @@ object Components {
                                     addingNewRoute.set(false)
                                     updatedPlan
                                 },
+                              $isLocked = isLocked.signal,
                             )
 
                         },
@@ -401,8 +404,7 @@ object Components {
                     expanded => if (expanded) "0" else "1",
                   ),
                   styleProp("pointer-events") <-- tripExpanded.signal
-                    .map(expanded =>
-                      if (expanded) "none" else "auto",
+                    .map(expanded => if (expanded) "none" else "auto",
                     ),
                   span("+"),
                   onClick --> Observer { _ =>
@@ -414,8 +416,7 @@ object Components {
                 div(
                   cls := "expanded-buttons-row",
                   styleProp("pointer-events") <-- tripExpanded.signal
-                    .map(expanded =>
-                      if (expanded) "auto" else "none",
+                    .map(expanded => if (expanded) "auto" else "none",
                     ),
                   styleProp("position") <-- tripExpanded.signal.map(
                     expanded =>
@@ -592,6 +593,7 @@ object Components {
     legDeleter: Observer[RouteSegment],
     segmentUpdater: Observer[RouteSegment],
     segmentAppender: Observer[RouteSegment],
+    $isLocked: Signal[Boolean] = Val(false),
   ) = {
     val allSegments =
       routeSegment.routeWithTimes
@@ -616,6 +618,7 @@ object Components {
         minTriggerPx = 100.0,
         offsetPx = offsetPx,
         onDelete = () => legDeleter.onNext(routeSegment),
+        $isLocked = $isLocked,
       )
 
     val (wheelElement, selectedValue) =
@@ -628,6 +631,7 @@ object Components {
         0,
         Some(routeSegment),
         allowVerticalDrag,
+        $isLocked,
       )
 
     div(
@@ -639,7 +643,7 @@ object Components {
           if (px >= 0) s"translateX(-${px}px)"
           else s"translateX(${-px}px)",
         ),
-        // Touch handlers for swipe-to-reveal (encapsulated)
+        // Touch handlers for swipe-to-reveal (lock-aware via $isLocked signal)
         swipeModifier,
         div(
           cls := "plan-segments_left",
@@ -670,6 +674,7 @@ object Components {
   def copyButtons(
     $plan: Signal[Plan],
     db: Persistence,
+    isLocked: Var[Boolean],
   ) = {
     val shareExpanded: Var[Boolean] = Var(false)
     val saveExpanded: Var[Boolean] = Var(false)
@@ -715,7 +720,7 @@ object Components {
             div(
               cls := "action-buttons-container",
 
-              // Collapsed state: Share and Save buttons side by side
+              // Collapsed state: Lock, Share and Save buttons side by side
               div(
                 cls := "expanded-buttons-row collapsed-buttons-row",
                 cls <-- anyExpanded.map(expanded =>
@@ -729,6 +734,30 @@ object Components {
                 ),
                 styleProp("position") <-- anyExpanded.map(expanded =>
                   if (expanded) "absolute" else "relative",
+                ),
+                // Lock toggle button
+                button(
+                  cls := "button lock-button",
+                  cls <-- isLocked.signal.map(locked =>
+                    if (locked) "lock-button-locked" else "",
+                  ),
+                  child <-- isLocked.signal.map { locked =>
+                    if (locked)
+                      img(
+                        cls := "lock-icon",
+                        src := "glyphicons/svg/individual-svg/glyphicons-basic-217-lock.svg",
+                        alt := "Locked",
+                      )
+                    else
+                      img(
+                        cls := "lock-icon",
+                        src := "glyphicons/svg/individual-svg/glyphicons-basic-218-lock-open.svg",
+                        alt := "Unlocked",
+                      )
+                  },
+                  onClick --> Observer { _ =>
+                    isLocked.update(!_)
+                  },
                 ),
                 button(
                   cls := "button button-fixed-width",

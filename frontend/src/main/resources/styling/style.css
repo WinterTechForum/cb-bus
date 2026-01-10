@@ -41,7 +41,7 @@ body {
     background-color: var(--color-primary);
     box-sizing: border-box;
     transition: box-shadow 0.2s ease;
-    min-width: 8em;
+    min-width: 6em;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -654,4 +654,57 @@ body {
     color: #ff6b6b;
     font-size: 0.9rem;
     padding: 8px;
+}
+
+/* Lock button styles */
+.lock-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 48px;
+    width: 48px;
+    height: 40px;
+    padding: 8px;
+    background-color: transparent;
+    border: 2px solid var(--color-primary);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 200ms ease;
+}
+
+.lock-button:hover {
+    background-color: rgba(1, 156, 143, 0.1);
+}
+
+.lock-button.lock-button-locked {
+    background-color: var(--color-primary);
+}
+
+.lock-button.lock-button-locked:hover {
+    background-color: #017d73;
+}
+
+.lock-icon {
+    width: 24px;
+    height: 24px;
+    transition: transform 150ms ease;
+}
+
+.lock-button:not(.lock-button-locked) .lock-icon {
+    filter: invert(43%) sepia(93%) saturate(401%) hue-rotate(131deg) brightness(93%) contrast(99%);
+}
+
+.lock-button.lock-button-locked .lock-icon {
+    filter: brightness(0) invert(1);
+}
+
+/* Wheel locked state - visual feedback */
+.wheel-locked {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.wheel-locked .wheel-center-highlight {
+    border-color: #999;
+    background: rgba(150, 150, 150, 0.1);
 }

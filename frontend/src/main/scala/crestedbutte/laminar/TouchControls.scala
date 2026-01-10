@@ -233,6 +233,8 @@ object TouchControls {
     * The trigger threshold is calculated as the maximum of
     * `minTriggerPx` and `deleteTriggerRatio * elementWidth` to scale
     * with larger items while remaining usable on small ones.
+    *
+    * When `$isLocked` is true, all swipe interactions are ignored.
     */
   def swipeToDelete(
     deleteTriggerRatio: Double = 0.35,
@@ -240,6 +242,7 @@ object TouchControls {
     offsetPx: Var[Double],
     onDelete: () => Unit,
     directionThresholdPx: Double = 8.0,
+    $isLocked: Signal[Boolean] = Val(false),
   ): (Modifier[ReactiveElement.Base], Var[Boolean]) = {
     val touchStartX: Var[Double] = Var(0.0)
     val touchStartY: Var[Double] = Var(0.0)
@@ -248,77 +251,88 @@ object TouchControls {
       None,
     ) // "horizontal" | "vertical"
     val allowVerticalDrag: Var[Boolean] = Var(true)
+    
+    // Track the current lock state reactively
+    val isCurrentlyLocked: Var[Boolean] = Var(false)
 
     val modifier = Modifier { el =>
       el.amend(
+        // Keep track of lock state changes
+        $isLocked --> isCurrentlyLocked.writer,
         onTouchStart --> Observer { (e: dom.TouchEvent) =>
-          gestureLock.set(None)
-          allowVerticalDrag.set(false)
-          val t = e.touches(0)
-          touchStartX.set(t.clientX)
-          touchStartY.set(t.clientY)
-          baseOffsetAtStart.set(0.0)
+          if (!isCurrentlyLocked.now()) {
+            gestureLock.set(None)
+            allowVerticalDrag.set(false)
+            val t = e.touches(0)
+            touchStartX.set(t.clientX)
+            touchStartY.set(t.clientY)
+            baseOffsetAtStart.set(0.0)
+          }
         },
         onTouchMove --> Observer { (e: dom.TouchEvent) =>
-          val t = e.touches(0)
-          val currentX = t.clientX
-          val currentY = t.clientY
-          val dx = Math.abs(touchStartX.now() - currentX)
-          val dy = Math.abs(touchStartY.now() - currentY)
+          if (!isCurrentlyLocked.now()) {
+            val t = e.touches(0)
+            val currentX = t.clientX
+            val currentY = t.clientY
+            val dx = Math.abs(touchStartX.now() - currentX)
+            val dy = Math.abs(touchStartY.now() - currentY)
 
-          if (gestureLock.now().isEmpty) {
-            if (dx > directionThresholdPx && dx > dy) {
-              gestureLock.set(Some("horizontal"))
-              allowVerticalDrag.set(false)
+            if (gestureLock.now().isEmpty) {
+              if (dx > directionThresholdPx && dx > dy) {
+                gestureLock.set(Some("horizontal"))
+                allowVerticalDrag.set(false)
+              }
+              else if (dy > directionThresholdPx && dy > dx) {
+                gestureLock.set(Some("vertical"))
+                allowVerticalDrag.set(true)
+              }
             }
-            else if (dy > directionThresholdPx && dy > dx) {
-              gestureLock.set(Some("vertical"))
-              allowVerticalDrag.set(true)
-            }
-          }
 
-          gestureLock.now() match {
-            case Some("horizontal") =>
-              e.preventDefault()
-              e.stopPropagation()
-              val delta =
-                touchStartX.now() - currentX // left is positive
-              val proposed = baseOffsetAtStart.now() + delta
-              // Allow sliding beyond element width to slide off screen
-              // Clamp to reasonable bounds to prevent extreme values
-              val width =
-                el.ref.asInstanceOf[dom.Element].clientWidth.toDouble
-              val maxOffset = if (width > 0) width * 2.0 else 1000.0
-              val clamped =
-                Math.max(-maxOffset, Math.min(proposed, maxOffset))
-              offsetPx.set(clamped)
-            case Some("vertical") =>
-              ()
-            case _ =>
-              ()
+            gestureLock.now() match {
+              case Some("horizontal") =>
+                e.preventDefault()
+                e.stopPropagation()
+                val delta =
+                  touchStartX.now() - currentX // left is positive
+                val proposed = baseOffsetAtStart.now() + delta
+                // Allow sliding beyond element width to slide off screen
+                // Clamp to reasonable bounds to prevent extreme values
+                val width =
+                  el.ref.asInstanceOf[dom.Element].clientWidth.toDouble
+                val maxOffset = if (width > 0) width * 2.0 else 1000.0
+                val clamped =
+                  Math.max(-maxOffset, Math.min(proposed, maxOffset))
+                offsetPx.set(clamped)
+              case Some("vertical") =>
+                ()
+              case _ =>
+                ()
+            }
           }
         },
         onTouchEnd --> Observer { (e: dom.TouchEvent) =>
-          gestureLock.now() match {
-            case Some("horizontal") =>
-              e.preventDefault()
-              e.stopPropagation()
-              val width =
-                el.ref.asInstanceOf[dom.Element].clientWidth.toDouble
-              val trigger =
-                Math.max(minTriggerPx, width * deleteTriggerRatio)
-              // Use absolute value to support both left and right swipes
-              if (Math.abs(offsetPx.now()) >= trigger) {
-                onDelete()
-              }
-              else {
-                offsetPx.set(0.0)
-              }
-            case _ =>
-              ()
+          if (!isCurrentlyLocked.now()) {
+            gestureLock.now() match {
+              case Some("horizontal") =>
+                e.preventDefault()
+                e.stopPropagation()
+                val width =
+                  el.ref.asInstanceOf[dom.Element].clientWidth.toDouble
+                val trigger =
+                  Math.max(minTriggerPx, width * deleteTriggerRatio)
+                // Use absolute value to support both left and right swipes
+                if (Math.abs(offsetPx.now()) >= trigger) {
+                  onDelete()
+                }
+                else {
+                  offsetPx.set(0.0)
+                }
+              case _ =>
+                ()
+            }
+            gestureLock.set(None)
+            allowVerticalDrag.set(true)
           }
-          gestureLock.set(None)
-          allowVerticalDrag.set(true)
         },
       )
     }

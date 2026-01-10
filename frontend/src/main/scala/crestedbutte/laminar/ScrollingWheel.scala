@@ -28,6 +28,7 @@ object ScrollingWheel {
     initialIndex: Int = 0,
     initialSelectedElement: Option[T] = None,
     allowVerticalDrag: Var[Boolean] = Var(true),
+    $isLocked: Signal[Boolean] = Val(false),
   ): (ReactiveHtmlElement[HTMLDivElement], Signal[T]) = {
     val itemHeight = 60 // Height of each visible item in pixels
     val visibleItems = 3
@@ -55,6 +56,7 @@ object ScrollingWheel {
     val velocity: Var[Double] = Var(0.0)
     val lastTouchY: Var[Double] = Var(0.0)
     val lastTouchTime: Var[Double] = Var(0.0)
+    val isCurrentlyLocked: Var[Boolean] = Var(false)
 
     // Animation loop for momentum scrolling
     var animationId: Option[Int] = None
@@ -108,6 +110,10 @@ object ScrollingWheel {
 
     val wheelElement = div(
       cls := "scrolling-wheel scrolling-wheel-container",
+      // Track lock state changes
+      $isLocked --> isCurrentlyLocked.writer,
+      // Visual indicator when locked
+      cls <-- $isLocked.map(locked => if (locked) "wheel-locked" else ""),
       div(
         cls := "wheel-mask",
 
@@ -136,14 +142,16 @@ object ScrollingWheel {
 
       // Touch/mouse event handlers
       onMouseDown --> Observer { (e: dom.MouseEvent) =>
-        isDragging.set(true)
-        lastTouchY.set(e.clientY)
-        lastTouchTime.set(dom.window.performance.now())
-        velocity.set(0.0)
-        animationId.foreach(dom.window.cancelAnimationFrame)
+        if (!isCurrentlyLocked.now()) {
+          isDragging.set(true)
+          lastTouchY.set(e.clientY)
+          lastTouchTime.set(dom.window.performance.now())
+          velocity.set(0.0)
+          animationId.foreach(dom.window.cancelAnimationFrame)
+        }
       },
       onMouseMove --> Observer { (e: dom.MouseEvent) =>
-        if (isDragging.now()) {
+        if (!isCurrentlyLocked.now() && isDragging.now()) {
           val currentY = e.clientY
           val deltaY = lastTouchY.now() - currentY
           val currentTime = dom.window.performance.now()
@@ -163,17 +171,21 @@ object ScrollingWheel {
         }
       },
       onMouseUp --> Observer { (_: dom.MouseEvent) =>
-        isDragging.set(false)
-        startMomentumAnimation()
+        if (!isCurrentlyLocked.now()) {
+          isDragging.set(false)
+          startMomentumAnimation()
+        }
       },
       onMouseLeave --> Observer { (_: dom.MouseEvent) =>
-        isDragging.set(false)
-        startMomentumAnimation()
+        if (!isCurrentlyLocked.now()) {
+          isDragging.set(false)
+          startMomentumAnimation()
+        }
       },
 
       // Touch events for mobile
       TouchControls.onTouchStart --> Observer { (e: dom.TouchEvent) =>
-        if (allowVerticalDrag.now()) {
+        if (!isCurrentlyLocked.now() && allowVerticalDrag.now()) {
           e.preventDefault()
           isDragging.set(true)
           val touch = e.touches(0)
@@ -184,7 +196,7 @@ object ScrollingWheel {
         }
       },
       TouchControls.onTouchMove --> Observer { (e: dom.TouchEvent) =>
-        if (allowVerticalDrag.now() && isDragging.now()) {
+        if (!isCurrentlyLocked.now() && allowVerticalDrag.now() && isDragging.now()) {
           e.preventDefault()
           val touch = e.touches(0)
           val currentY = touch.clientY
@@ -206,7 +218,7 @@ object ScrollingWheel {
         }
       },
       TouchControls.onTouchEnd --> Observer { (e: dom.TouchEvent) =>
-        if (allowVerticalDrag.now()) {
+        if (!isCurrentlyLocked.now() && allowVerticalDrag.now()) {
           e.preventDefault()
           isDragging.set(false)
           startMomentumAnimation()
