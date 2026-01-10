@@ -228,6 +228,22 @@ class Persistence():
     val updated = existing.copy(existing.l :+ routeLeg)
     savePlanByName(name, updated)
 
+  /** Purge all legacy name-based plans from localStorage. This should
+    * be called after migration to UUID-based plans is complete.
+    */
+  def purgeLegacyNamedPlans(): Unit =
+    val legacyNames = readPlanNamesIndex()
+    // Delete each plan entry
+    legacyNames.foreach { name =>
+      val key = planStorageKey(name)
+      localStorage.removeItem(key)
+    }
+    // Clear the index
+    localStorage.removeItem(PlansIndexKey)
+    println(
+      s"Purged ${legacyNames.size} legacy name-based plans from localStorage",
+    )
+
   // ===== New UUID-based SavedPlan APIs =====
 
   private def savedPlanStorageKey(

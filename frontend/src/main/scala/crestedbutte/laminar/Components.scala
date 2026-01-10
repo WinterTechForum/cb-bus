@@ -503,7 +503,8 @@ object Components {
                     expanded => if (expanded) "0" else "1",
                   ),
                   styleProp("pointer-events") <-- tripExpanded.signal
-                    .map(expanded => if (expanded) "none" else "auto",
+                    .map(expanded =>
+                      if (expanded) "none" else "auto",
                     ),
                   span("+"),
                   onClick --> Observer { _ =>
@@ -515,7 +516,8 @@ object Components {
                 div(
                   cls := "expanded-buttons-row",
                   styleProp("pointer-events") <-- tripExpanded.signal
-                    .map(expanded => if (expanded) "auto" else "none",
+                    .map(expanded =>
+                      if (expanded) "auto" else "none",
                     ),
                   styleProp("position") <-- tripExpanded.signal.map(
                     expanded =>
@@ -1007,7 +1009,8 @@ object Components {
                   styleProp(
                     "pointer-events",
                   ) <-- shareExpanded.signal
-                    .map(expanded => if (expanded) "auto" else "none",
+                    .map(expanded =>
+                      if (expanded) "auto" else "none",
                     ),
                   styleProp("position") <-- shareExpanded.signal
                     .map(expanded =>
@@ -1096,8 +1099,7 @@ object Components {
                   styleProp(
                     "pointer-events",
                   ) <-- saveExpanded.signal
-                    .map(expanded =>
-                      if (expanded) "auto" else "none",
+                    .map(expanded => if (expanded) "auto" else "none",
                     ),
                   styleProp("position") <-- saveExpanded.signal
                     .map(expanded =>
@@ -1324,6 +1326,10 @@ object Components {
           }
           .flatten
       }
+      // Purge all legacy plans now that migration is complete
+      if (legacyNames.nonEmpty) {
+        db.purgeLegacyNamedPlans()
+      }
       val allPlans = (savedPlans ++ legacyPlans).distinctBy(_.id)
       allPlans.zipWithIndex.foreach { case (sp, idx) =>
         setTimeout(idx * 30) {
@@ -1371,7 +1377,21 @@ object Components {
                     cls := "saved-trip-delete",
                     "✕",
                     onClick --> Observer { _ =>
+                      // Check if we're deleting the currently active plan
+                      val isDeletingCurrentPlan =
+                        currentSavedPlan.now().exists(_.id == savedPlan.id)
+
+                      // Delete the plan from storage
                       db.deleteSavedPlan(savedPlan.id)
+
+                      // If we deleted the current plan, clear the reference
+                      // This reverts to the default "Current Plan" state
+                      if (isDeletingCurrentPlan) {
+                        currentSavedPlan.set(None)
+                        db.clearCurrentSavedPlanId()
+                      }
+
+                      // Remove from UI list
                       $savedTripsVar.update(
                         _.filterNot(_._1.id == savedPlan.id),
                       )
