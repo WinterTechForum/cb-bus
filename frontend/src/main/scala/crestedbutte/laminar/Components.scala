@@ -81,7 +81,11 @@ object Components {
     val timeStamps = frontEndClock.timeStamps
 
     val $plan: Var[Plan] = Var(
-      db.getCurrentPlan.getOrElse(Plan(Seq.empty)),
+      // Load from current SavedPlan if one exists, otherwise from "today"
+      db.getCurrentSavedPlan
+        .map(_.plan)
+        .orElse(db.getCurrentPlan)
+        .getOrElse(Plan(Seq.empty)),
     )
 
     val addingNewRoute: Var[Boolean] = Var(
@@ -776,17 +780,21 @@ object Components {
     )
 
   /** Helper to save a plan - if we have a saved plan loaded (with
-    * UUID), save to both the daily plan and update the saved plan.
-    * Otherwise just save to daily.
+    * UUID), save only to the SavedPlan storage. Otherwise save to
+    * "today" for unsaved work-in-progress.
     */
   private def savePlanWithSavedPlan(
     db: Persistence,
     plan: Plan,
     savedPlanO: Option[SavedPlan],
   ): Unit =
-    db.saveDailyPlanOnly(plan)
-    savedPlanO.foreach { sp =>
-      db.saveSavedPlan(sp.withPlan(plan))
+    savedPlanO match {
+      case Some(sp) =>
+        // SavedPlan is loaded - only write to SavedPlan storage
+        db.saveSavedPlan(sp.withPlan(plan))
+      case None =>
+        // No SavedPlan - write to "today" for unsaved work
+        db.saveDailyPlanOnly(plan)
     }
 
   def planNameAndLockRow(
@@ -1438,7 +1446,7 @@ object Components {
                   "Load this trip",
                   onClick --> Observer { _ =>
                     $plan.set(savedPlan.plan)
-                    db.saveDailyPlanOnly(savedPlan.plan)
+                    // Don't write to "today" - SavedPlan is the source of truth
                     currentSavedPlan.set(Some(savedPlan))
                     loadTripsMode.set(false)
                     addingNewRoute.set(false)
