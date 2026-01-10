@@ -890,7 +890,7 @@ object Components {
       (event: dom.MouseEvent) => {
         val target = event.target.asInstanceOf[dom.Element]
         val actionContainer =
-          dom.document.querySelector(".action-buttons-container")
+          dom.document.querySelector(".share-save-buttons-container")
         if (
           actionContainer != null && !actionContainer.contains(target)
         ) {
@@ -919,7 +919,7 @@ object Components {
             div(
               cls := "centered",
               div(
-                cls := "action-buttons-container",
+                cls := "action-buttons-container share-save-buttons-container",
 
                 // Collapsed state: Share button (and Save button only if not already saved)
                 div(
