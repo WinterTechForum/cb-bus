@@ -362,6 +362,8 @@ object Components {
             val pendingReturnChoice: Var[Option[PendingReturnTrip]] =
               Var(None)
 
+            val initialStartingPoint: Var[Option[Location]] = Var(None)
+
             def evaluatePendingReturn(
               lastSegment: RouteSegment,
               plan: Plan,
@@ -553,8 +555,33 @@ object Components {
                     ),
                     "New trip",
                     onClick --> Observer { _ =>
+                      initialStartingPoint.set(None)
                       addingNewRoute.set(true)
                       tripExpanded.set(false)
+                    },
+                  ),
+
+                  // Continue button - emerges from center (middle)
+                  button(
+                    cls := "button button-fixed-width expand-from-center",
+                    styleProp("transform") <-- tripExpanded.signal
+                      .map(expanded =>
+                        if (expanded) "translateX(0) scale(1)"
+                        else "scale(0)",
+                      ),
+                    styleProp("opacity") <-- tripExpanded.signal.map(
+                      expanded => if (expanded) "1" else "0",
+                    ),
+                    // Disable if plan is empty
+                    disabled <-- $plan.signal.map(plan => plan.l.isEmpty),
+                    "Continue",
+                    onClick --> Observer { _ =>
+                      val plan = $plan.now()
+                      plan.l.lastOption.foreach { lastSeg =>
+                        initialStartingPoint.set(Some(lastSeg.end.location))
+                        addingNewRoute.set(true)
+                        tripExpanded.set(false)
+                      }
                     },
                   ),
 
@@ -699,6 +726,7 @@ object Components {
                 isLocked,
                 loadTripsMode,
                 hasSavedPlans,
+                initialStartingPoint,
               ),
             )
         },
@@ -1504,8 +1532,9 @@ object Components {
     isLocked: Var[Boolean],
     loadTripsMode: Var[Boolean],
     hasSavedPlans: Var[Boolean],
+    initialStartingPoint: Var[Option[Location]] = Var(None),
   ) =
-    val startingPoint: Var[Option[Location]] = Var(None)
+    val startingPoint: Var[Option[Location]] = Var(initialStartingPoint.now())
     val $locationsVar: Var[Seq[(Location, Int)]] = Var(Seq.empty)
     val $locations: Signal[Seq[(Location, Int)]] =
       $locationsVar.signal
