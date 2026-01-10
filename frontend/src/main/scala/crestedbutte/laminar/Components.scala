@@ -163,6 +163,10 @@ object Components {
     val loadTripsMode: Var[Boolean] = Var(false)
     // Signal to trigger focusing the plan name input when saving
     val focusPlanNameInput: Var[Boolean] = Var(false)
+    // Reactive state to track whether there are any saved plans
+    val hasSavedPlans: Var[Boolean] = Var(
+      db.listSavedPlans().nonEmpty || db.listPlanNames().nonEmpty,
+    )
 
     // Persist locked state changes to localStorage
     val persistLockedState =
@@ -213,6 +217,7 @@ object Components {
                            isLocked,
                            db,
                            focusPlanNameInput,
+                           hasSavedPlans,
         ),
       ),
       // Action buttons - hidden when loading trips
@@ -227,6 +232,7 @@ object Components {
                     addingNewRoute,
                     loadTripsMode,
                     focusPlanNameInput,
+                    hasSavedPlans,
         ),
       ),
       // Plan segments container - hidden when loading trips
@@ -692,6 +698,7 @@ object Components {
                 currentSavedPlan,
                 isLocked,
                 loadTripsMode,
+                hasSavedPlans,
               ),
             )
         },
@@ -809,6 +816,7 @@ object Components {
     isLocked: Var[Boolean],
     db: Persistence,
     focusPlanNameInput: Var[Boolean],
+    hasSavedPlans: Var[Boolean],
   ) =
     // Local state for editing the name
     val editingName: Var[String] = Var("")
@@ -909,6 +917,8 @@ object Components {
               val newSavedPlan = SavedPlan.create(plan)
               db.saveSavedPlan(newSavedPlan)
               $currentSavedPlan.set(Some(newSavedPlan))
+              // Update hasSavedPlans since we just saved one
+              hasSavedPlans.set(true)
               // Unlock so the input becomes editable
               isLocked.set(false)
               // Signal to focus the plan name input
@@ -929,14 +939,12 @@ object Components {
     addingNewRoute: Var[Boolean],
     loadTripsMode: Var[Boolean],
     focusPlanNameInput: Var[Boolean],
+    hasSavedPlans: Var[Boolean],
   ) = {
     val shareExpanded: Var[Boolean] = Var(false)
     val saveExpanded: Var[Boolean] = Var(false)
     val tripName: Var[String] = Var("")
     val saveConfirmation: Var[Option[String]] = Var(None)
-    // Check if there are any saved trips to load
-    val hasSavedTrips =
-      db.listSavedPlans().nonEmpty || db.listPlanNames().nonEmpty
 
     // Add click handler to collapse when clicking outside
     val documentClickHandler: js.Function1[dom.MouseEvent, Unit] =
@@ -1026,9 +1034,9 @@ object Components {
                       addingNewRoute.set(true)
                     },
                   ),
-                  // Load button - always show if there are saved trips
-                  Option
-                    .when(hasSavedTrips)(
+                  // Load button - dynamically show/hide based on saved plans
+                  child <-- hasSavedPlans.signal.map { hasPlans =>
+                    if (hasPlans) {
                       button(
                         cls := "button button-fixed-width",
                         "Load",
@@ -1036,9 +1044,11 @@ object Components {
                           loadTripsMode.set(true)
                           addingNewRoute.set(true)
                         },
-                      ),
-                    )
-                    .getOrElse(emptyNode),
+                      )
+                    } else {
+                      emptyNode
+                    }
+                  },
                 ),
 
                 // Share expanded: Text and Link buttons
@@ -1199,6 +1209,8 @@ object Components {
                           SavedPlan.create(plan, name)
                         db.saveSavedPlan(newSavedPlan)
                         currentSavedPlan.set(Some(newSavedPlan))
+                        // Update hasSavedPlans since we just saved one
+                        hasSavedPlans.set(true)
                         saveConfirmation.set(Some(name))
                         tripName.set("")
                         setTimeout(1500) {
@@ -1340,6 +1352,7 @@ object Components {
     currentSavedPlan: Var[Option[SavedPlan]],
     isLocked: Var[Boolean],
     loadTripsMode: Var[Boolean],
+    hasSavedPlans: Var[Boolean],
   ) = {
     // Load saved plans using the new UUID-based system, with fallback to legacy name-based system
     val $savedTripsVar: Var[Seq[(SavedPlan, Int)]] = Var(Seq.empty)
@@ -1433,6 +1446,13 @@ object Components {
                       $savedTripsVar.update(
                         _.filterNot(_._1.id == savedPlan.id),
                       )
+
+                      // Update hasSavedPlans if this was the last plan
+                      val remainingPlansExist =
+                        db.listSavedPlans().nonEmpty || db
+                          .listPlanNames()
+                          .nonEmpty
+                      hasSavedPlans.set(remainingPlansExist)
                     },
                   ),
                 ),
@@ -1483,6 +1503,7 @@ object Components {
     currentSavedPlan: Var[Option[SavedPlan]],
     isLocked: Var[Boolean],
     loadTripsMode: Var[Boolean],
+    hasSavedPlans: Var[Boolean],
   ) =
     val startingPoint: Var[Option[Location]] = Var(None)
     val $locationsVar: Var[Seq[(Location, Int)]] = Var(Seq.empty)
@@ -1520,6 +1541,7 @@ object Components {
             currentSavedPlan,
             isLocked,
             loadTripsMode,
+            hasSavedPlans,
           )
         case StopSelectorMode.SelectStop =>
           div(
