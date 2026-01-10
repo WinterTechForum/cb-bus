@@ -429,8 +429,7 @@ object Components {
                     expanded => if (expanded) "0" else "1",
                   ),
                   styleProp("pointer-events") <-- tripExpanded.signal
-                    .map(expanded =>
-                      if (expanded) "none" else "auto",
+                    .map(expanded => if (expanded) "none" else "auto",
                     ),
                   span("+"),
                   onClick --> Observer { _ =>
@@ -442,8 +441,7 @@ object Components {
                 div(
                   cls := "expanded-buttons-row",
                   styleProp("pointer-events") <-- tripExpanded.signal
-                    .map(expanded =>
-                      if (expanded) "auto" else "none",
+                    .map(expanded => if (expanded) "auto" else "none",
                     ),
                   styleProp("position") <-- tripExpanded.signal.map(
                     expanded =>
@@ -1155,56 +1153,61 @@ object Components {
         children <-- $savedTripsVar.signal.splitTransition(identity) {
           case (_, (name, _), _, transition) =>
             val tripPlanO = db.getPlanByName(name)
+            // Outer wrapper handles height animation with overflow:hidden
+            // so the card's padding/margin/border collapse smoothly
             div(
               transition.height,
-              cls := "saved-trip-card",
+              cls := "saved-trip-card-wrapper",
               div(
-                cls := "saved-trip-card-header",
-                span(cls := "saved-trip-name", name),
+                cls := "saved-trip-card",
+                div(
+                  cls := "saved-trip-card-header",
+                  span(cls := "saved-trip-name", name),
+                  button(
+                    cls := "saved-trip-delete",
+                    "✕",
+                    onClick --> Observer { _ =>
+                      db.deletePlanByName(name)
+                      $savedTripsVar.update(_.filterNot(_._1 == name))
+                    },
+                  ),
+                ),
+                tripPlanO match {
+                  case Some(plan) =>
+                    div(
+                      cls := "saved-trip-segments",
+                      plan.routeSegments.map { segment =>
+                        div(
+                          cls := "saved-trip-segment",
+                          span(
+                            cls := "saved-trip-segment-route",
+                            s"${segment.start.l.name} → ${segment.end.l.name}",
+                          ),
+                          span(
+                            cls := "saved-trip-segment-times",
+                            s"${segment.start.t.toDumbAmericanString} - ${segment.end.t.toDumbAmericanString}",
+                          ),
+                        )
+                      },
+                    )
+                  case None =>
+                    div(cls := "saved-trip-error",
+                        "Could not load trip",
+                    )
+                },
                 button(
-                  cls := "saved-trip-delete",
-                  "✕",
+                  cls := "button saved-trip-load-button",
+                  "Load this trip",
                   onClick --> Observer { _ =>
-                    db.deletePlanByName(name)
-                    $savedTripsVar.update(_.filterNot(_._1 == name))
+                    tripPlanO.foreach { plan =>
+                      $plan.set(plan)
+                      db.saveDailyPlanOnly(plan)
+                      currentPlanName.set(name)
+                      addingNewRoute.set(false)
+                      isLocked.set(true)
+                    }
                   },
                 ),
-              ),
-              tripPlanO match {
-                case Some(plan) =>
-                  div(
-                    cls := "saved-trip-segments",
-                    plan.routeSegments.map { segment =>
-                      div(
-                        cls := "saved-trip-segment",
-                        span(
-                          cls := "saved-trip-segment-route",
-                          s"${segment.start.l.name} → ${segment.end.l.name}",
-                        ),
-                        span(
-                          cls := "saved-trip-segment-times",
-                          s"${segment.start.t.toDumbAmericanString} - ${segment.end.t.toDumbAmericanString}",
-                        ),
-                      )
-                    },
-                  )
-                case None =>
-                  div(cls := "saved-trip-error",
-                      "Could not load trip",
-                  )
-              },
-              button(
-                cls := "button saved-trip-load-button",
-                "Load this trip",
-                onClick --> Observer { _ =>
-                  tripPlanO.foreach { plan =>
-                    $plan.set(plan)
-                    db.saveDailyPlanOnly(plan)
-                    currentPlanName.set(name)
-                    addingNewRoute.set(false)
-                    isLocked.set(true)
-                  }
-                },
               ),
             )
         },

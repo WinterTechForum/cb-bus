@@ -566,6 +566,11 @@ body {
     margin: 0.5rem 0;
 }
 
+/* Saved trip card wrapper - handles height animation */
+.saved-trip-card-wrapper {
+    overflow: hidden;
+}
+
 /* Saved trip card */
 .saved-trip-card {
     border: 2px solid var(--color-primary);
