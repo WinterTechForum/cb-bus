@@ -429,7 +429,8 @@ object Components {
                     expanded => if (expanded) "0" else "1",
                   ),
                   styleProp("pointer-events") <-- tripExpanded.signal
-                    .map(expanded => if (expanded) "none" else "auto",
+                    .map(expanded =>
+                      if (expanded) "none" else "auto",
                     ),
                   span("+"),
                   onClick --> Observer { _ =>
@@ -441,7 +442,8 @@ object Components {
                 div(
                   cls := "expanded-buttons-row",
                   styleProp("pointer-events") <-- tripExpanded.signal
-                    .map(expanded => if (expanded) "auto" else "none",
+                    .map(expanded =>
+                      if (expanded) "auto" else "none",
                     ),
                   styleProp("position") <-- tripExpanded.signal.map(
                     expanded =>
@@ -604,6 +606,7 @@ object Components {
                 timeStamps,
                 addingNewRoute,
                 currentPlanName,
+                isLocked,
               ),
             )
         },
@@ -1110,6 +1113,7 @@ object Components {
     $plan: Var[Plan],
     addingNewRoute: Var[Boolean],
     currentPlanName: Var[String],
+    isLocked: Var[Boolean],
     onBack: () => Unit,
   ) = {
     val $savedTripsVar: Var[Seq[(String, Int)]] = Var(Seq.empty)
@@ -1198,6 +1202,7 @@ object Components {
                     db.saveDailyPlanOnly(plan)
                     currentPlanName.set(name)
                     addingNewRoute.set(false)
+                    isLocked.set(true)
                   }
                 },
               ),
@@ -1216,6 +1221,7 @@ object Components {
       Boolean,
     ], // TODO Make this an Observer[Boolean]
     currentPlanName: Var[String],
+    isLocked: Var[Boolean],
   ) =
     val startingPoint: Var[Option[Location]] = Var(None)
     val $locationsVar: Var[Seq[(Location, Int)]] = Var(Seq.empty)
@@ -1244,6 +1250,7 @@ object Components {
             $plan,
             addingNewRoute,
             currentPlanName,
+            isLocked,
             onBack = () => {
               selectorMode.set(StopSelectorMode.SelectStop)
               loadLocations()

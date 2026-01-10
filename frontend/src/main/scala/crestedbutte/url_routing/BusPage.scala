@@ -62,9 +62,11 @@ object BusPage {
         plan = plan.flatMap { planUrl =>
           val res = UrlEncoding.decodePlan(planUrl).toOption
           try
-            Persistence().saveDailyPlanOnly(
+            val db = Persistence()
+            db.saveDailyPlanOnly(
               res.getOrElse(???),
             ) // TODO Should NOT be here.
+            db.setScheduleLocked(true) // Lock when loading from URL
           catch {
             case ex => println("Probably not running in a browser")
           }
