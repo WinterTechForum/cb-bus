@@ -12,30 +12,7 @@ object MyApp extends App {
     .registerServiceWorker() // TODO Restore before pushing
   val appHolder = dom.document.getElementById("landing-message")
   appHolder.innerHTML = ""
-  val plan =
-    Plan(
-      Seq(
-        RouteSegment
-          .attempt(
-            RTA.Southbound.componentName,
-            LocationWithTime(Location.BrushCreek, WallTime("11:01")),
-            LocationWithTime(Location.Almont, WallTime("11:24")),
-          )
-          .getOrElse(???),
-      ),
-    )
-  val plan2 =
-    Plan(
-      Seq(
-        RouteSegment
-          .attempt(
-            RTA.Southbound.componentName,
-            LocationWithTime(Location.BrushCreek, WallTime("11:31")),
-            LocationWithTime(Location.Almont, WallTime("11:54")),
-          )
-          .getOrElse(???),
-      ),
-    )
+
   val persistence = Persistence()
   val saveSymbols = Map(
     "floppy"   -> "💾",
@@ -43,8 +20,6 @@ object MyApp extends App {
     "bookmark" -> "🔖",
     "check"    -> "✅",
   )
-  persistence.savePlanByName("Test", plan)
-  persistence.savePlanByName("Test2", plan2)
   com.raquo.laminar.api.L.render(
     appHolder,
     RoutingStuff.app,
