@@ -208,7 +208,8 @@ object Components {
         display <-- isLoadingTrips.map(loading =>
           if (loading) "none" else "block",
         ),
-        planNameAndLockRow(currentSavedPlan,
+        planNameAndLockRow($plan,
+                           currentSavedPlan,
                            isLocked,
                            db,
                            focusPlanNameInput,
@@ -803,6 +804,7 @@ object Components {
     }
 
   def planNameAndLockRow(
+    $plan: Var[Plan],
     $currentSavedPlan: Var[Option[SavedPlan]],
     isLocked: Var[Boolean],
     db: Persistence,
@@ -894,6 +896,29 @@ object Components {
           isLocked.update(!_)
         },
       ),
+      // Save button - only show if not already saved to a named plan
+      child <-- $currentSavedPlan.signal.map { savedPlanO =>
+        val isSaved = savedPlanO.isDefined
+        if (!isSaved) {
+          button(
+            cls := "button button-fixed-width",
+            "Save",
+            onClick --> Observer { _ =>
+              // Create a new SavedPlan with UUID but no name yet
+              val plan = $plan.now()
+              val newSavedPlan = SavedPlan.create(plan)
+              db.saveSavedPlan(newSavedPlan)
+              $currentSavedPlan.set(Some(newSavedPlan))
+              // Unlock so the input becomes editable
+              isLocked.set(false)
+              // Signal to focus the plan name input
+              focusPlanNameInput.set(true)
+            },
+          )
+        } else {
+          emptyNode
+        }
+      },
     )
 
   def copyButtons(
@@ -949,7 +974,7 @@ object Components {
               div(
                 cls := "action-buttons-container share-save-buttons-container",
 
-                // Collapsed state: Share button (and Save button only if not already saved)
+                // Collapsed state: Share, New, and Load buttons
                 div(
                   cls := "expanded-buttons-row collapsed-buttons-row",
                   cls <-- shareExpanded.signal
@@ -982,25 +1007,6 @@ object Components {
                       saveExpanded.set(false)
                     },
                   ),
-                  // Only show Save button if not already saved to a named plan
-                  Option
-                    .when(!isSaved)(
-                      button(
-                        cls := "button button-fixed-width",
-                        "Save",
-                        onClick --> Observer { _ =>
-                          // Create a new SavedPlan with UUID but no name yet
-                          val newSavedPlan = SavedPlan.create(plan)
-                          db.saveSavedPlan(newSavedPlan)
-                          currentSavedPlan.set(Some(newSavedPlan))
-                          // Unlock so the input becomes editable
-                          isLocked.set(false)
-                          // Signal to focus the plan name input
-                          focusPlanNameInput.set(true)
-                        },
-                      ),
-                    )
-                    .getOrElse(emptyNode),
                   // New button - creates a fresh empty trip
                   button(
                     cls := "button button-fixed-width",
