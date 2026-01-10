@@ -146,9 +146,12 @@ object Components {
     ],
   ) =
     val isLocked: Var[Boolean] = Var(false)
+    // Track the name of the currently loaded plan ("Current Plan" for default, or the named plan)
+    val currentPlanName: Var[String] = Var("Current Plan")
 
     div(
-      copyButtons($plan.signal, db, isLocked),
+      planNameAndLockRow(currentPlanName.signal, isLocked),
+      copyButtons($plan.signal, db, isLocked, currentPlanName),
       children <-- $plan.signal
         .map(_.routePieces)
         .splitTransition(_.id) {
@@ -191,7 +194,11 @@ object Components {
                                       .copy(l =
                                         plan.l.filterNot(_ == rs),
                                       )
-                                  db.saveDailyPlanOnly(newPlan)
+                                  savePlanWithName(
+                                    db,
+                                    newPlan,
+                                    currentPlanName.now(),
+                                  )
                                   $plan.set(newPlan)
                                   if (newPlan.l.isEmpty) {
                                     addingNewRoute.set {
@@ -212,7 +219,11 @@ object Components {
                                           rs
                                       },
                                     )
-                                  db.saveDailyPlanOnly(updatedPlan)
+                                  savePlanWithName(
+                                    db,
+                                    updatedPlan,
+                                    currentPlanName.now(),
+                                  )
                                   updatedPlan
                                 },
                               // Append a new segment to the end of the plan
@@ -222,7 +233,11 @@ object Components {
                                     val plan = $plan.now()
                                     val updatedPlan = plan
                                       .copy(l = plan.l :+ newSegment)
-                                    db.saveDailyPlanOnly(updatedPlan)
+                                    savePlanWithName(
+                                      db,
+                                      updatedPlan,
+                                      currentPlanName.now(),
+                                    )
                                     addingNewRoute.set(false)
                                     updatedPlan
                                 },
@@ -325,7 +340,10 @@ object Components {
                     case Some(newSeg) =>
                       val updatedPlan =
                         currentPlan.copy(l = currentPlan.l :+ newSeg)
-                      db.saveDailyPlanOnly(updatedPlan)
+                      savePlanWithName(db,
+                                       updatedPlan,
+                                       currentPlanName.now(),
+                      )
                       $plan.set(updatedPlan)
                       addingNewRoute.set(false)
                       pendingReturnChoice.set(None)
@@ -580,6 +598,7 @@ object Components {
                 db,
                 timeStamps,
                 addingNewRoute,
+                currentPlanName,
               ),
             )
         },
@@ -673,10 +692,61 @@ object Components {
       },
     )
 
+  /** Helper to save a plan - if we have a named plan loaded, save to
+    * both the daily plan and the named plan. Otherwise just save to
+    * daily.
+    */
+  private def savePlanWithName(
+    db: Persistence,
+    plan: Plan,
+    planName: String,
+  ): Unit =
+    db.saveDailyPlanOnly(plan)
+    if (planName != "Current Plan") {
+      db.savePlanByName(planName, plan)
+    }
+
+  def planNameAndLockRow(
+    $planName: Signal[String],
+    isLocked: Var[Boolean],
+  ) =
+    div(
+      cls := "plan-name-row",
+      div(
+        cls := "plan-name-container",
+        child.text <-- $planName,
+      ),
+      // Lock toggle button
+      button(
+        cls := "button lock-button",
+        cls <-- isLocked.signal.map(locked =>
+          if (locked) "lock-button-locked" else "",
+        ),
+        child <-- isLocked.signal.map { locked =>
+          if (locked)
+            img(
+              cls := "lock-icon",
+              src := "glyphicons/svg/individual-svg/glyphicons-basic-217-lock.svg",
+              alt := "Locked",
+            )
+          else
+            img(
+              cls := "lock-icon",
+              src := "glyphicons/svg/individual-svg/glyphicons-basic-218-lock-open.svg",
+              alt := "Unlocked",
+            )
+        },
+        onClick --> Observer { _ =>
+          isLocked.update(!_)
+        },
+      ),
+    )
+
   def copyButtons(
     $plan: Signal[Plan],
     db: Persistence,
     isLocked: Var[Boolean],
+    currentPlanName: Var[String],
   ) = {
     val shareExpanded: Var[Boolean] = Var(false)
     val saveExpanded: Var[Boolean] = Var(false)
@@ -722,7 +792,7 @@ object Components {
             div(
               cls := "action-buttons-container",
 
-              // Collapsed state: Lock, Share and Save buttons side by side
+              // Collapsed state: Share and Save buttons side by side
               div(
                 cls := "expanded-buttons-row collapsed-buttons-row",
                 cls <-- anyExpanded.map(expanded =>
@@ -736,30 +806,6 @@ object Components {
                 ),
                 styleProp("position") <-- anyExpanded.map(expanded =>
                   if (expanded) "absolute" else "relative",
-                ),
-                // Lock toggle button
-                button(
-                  cls := "button lock-button",
-                  cls <-- isLocked.signal.map(locked =>
-                    if (locked) "lock-button-locked" else "",
-                  ),
-                  child <-- isLocked.signal.map { locked =>
-                    if (locked)
-                      img(
-                        cls := "lock-icon",
-                        src := "glyphicons/svg/individual-svg/glyphicons-basic-217-lock.svg",
-                        alt := "Locked",
-                      )
-                    else
-                      img(
-                        cls := "lock-icon",
-                        src := "glyphicons/svg/individual-svg/glyphicons-basic-218-lock-open.svg",
-                        alt := "Unlocked",
-                      )
-                  },
-                  onClick --> Observer { _ =>
-                    isLocked.update(!_)
-                  },
                 ),
                 button(
                   cls := "button button-fixed-width",
@@ -919,6 +965,7 @@ object Components {
                     val name = tripName.now().trim.take(20)
                     if (name.nonEmpty) {
                       db.savePlanByName(name, plan)
+                      currentPlanName.set(name)
                       saveConfirmation.set(Some(name))
                       tripName.set("")
                       setTimeout(1500) {
@@ -1057,6 +1104,7 @@ object Components {
     db: Persistence,
     $plan: Var[Plan],
     addingNewRoute: Var[Boolean],
+    currentPlanName: Var[String],
     onBack: () => Unit,
   ) = {
     val $savedTripsVar: Var[Seq[(String, Int)]] = Var(Seq.empty)
@@ -1143,6 +1191,7 @@ object Components {
                   tripPlanO.foreach { plan =>
                     $plan.set(plan)
                     db.saveDailyPlanOnly(plan)
+                    currentPlanName.set(name)
                     addingNewRoute.set(false)
                   }
                 },
@@ -1161,6 +1210,7 @@ object Components {
     addingNewRoute: Var[
       Boolean,
     ], // TODO Make this an Observer[Boolean]
+    currentPlanName: Var[String],
   ) =
     val startingPoint: Var[Option[Location]] = Var(None)
     val $locationsVar: Var[Seq[(Location, Int)]] = Var(Seq.empty)
@@ -1188,6 +1238,7 @@ object Components {
             db,
             $plan,
             addingNewRoute,
+            currentPlanName,
             onBack = () => {
               selectorMode.set(StopSelectorMode.SelectStop)
               loadLocations()
@@ -1288,7 +1339,11 @@ object Components {
                                           oldPlan.copy(l =
                                             oldPlan.l :+ matchingLeg,
                                           )
-                                        db.saveDailyPlanOnly(newPlan)
+                                        savePlanWithName(
+                                          db,
+                                          newPlan,
+                                          currentPlanName.now(),
+                                        )
                                         addingNewRoute.set(false)
                                         newPlan
                                       }

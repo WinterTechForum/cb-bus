@@ -656,6 +656,22 @@ body {
     padding: 8px;
 }
 
+/* Plan name and lock row */
+.plan-name-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 8px 16px;
+    margin-bottom: 8px;
+}
+
+.plan-name-container {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--color-black);
+}
+
 /* Lock button styles */
 .lock-button {
     display: inline-flex;
