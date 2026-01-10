@@ -215,7 +215,7 @@ object Components {
         display <-- isLoadingTrips.map(loading =>
           if (loading) "none" else "block",
         ),
-        copyButtons($plan.signal,
+        copyButtons($plan,
                     db,
                     isLocked,
                     currentSavedPlan,
@@ -884,7 +884,7 @@ object Components {
     )
 
   def copyButtons(
-    $plan: Signal[Plan],
+    $plan: Var[Plan],
     db: Persistence,
     isLocked: Var[Boolean],
     currentSavedPlan: Var[Option[SavedPlan]],
@@ -924,7 +924,7 @@ object Components {
                                          documentClickHandler,
         )
       },
-      child <-- $plan.combineWith(currentSavedPlan.signal)
+      child <-- $plan.signal.combineWith(currentSavedPlan.signal)
         .map { case (plan, savedPlanO) =>
           if (plan.routeSegments.isEmpty)
             div()
@@ -988,6 +988,25 @@ object Components {
                       ),
                     )
                     .getOrElse(emptyNode),
+                  // New button - creates a fresh empty trip
+                  button(
+                    cls := "button button-fixed-width",
+                    "New",
+                    onClick --> Observer { _ =>
+                      // Create a fresh empty plan
+                      val emptyPlan = Plan(Seq.empty)
+                      // Save the empty plan as the current daily plan
+                      db.saveDailyPlanOnly(emptyPlan)
+                      // Update the plan
+                      $plan.set(emptyPlan)
+                      // Clear the current saved plan reference (doesn't delete the saved plan)
+                      currentSavedPlan.set(None)
+                      // Unlock the schedule so user can start adding routes
+                      isLocked.set(false)
+                      // Start in adding new route mode
+                      addingNewRoute.set(true)
+                    },
+                  ),
                   // Load button - always show if there are saved trips
                   Option
                     .when(hasSavedTrips)(
