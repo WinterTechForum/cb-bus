@@ -145,7 +145,10 @@ object Components {
   ) =
     val isLocked: Var[Boolean] = Var(db.getScheduleLocked)
     // Track the current saved plan (None means it's a new unsaved plan or the daily plan)
-    val currentSavedPlan: Var[Option[SavedPlan]] = Var(None)
+    // Initialize from persistent storage to maintain state across page refreshes
+    val currentSavedPlan: Var[Option[SavedPlan]] = Var(
+      db.getCurrentSavedPlan,
+    )
     // For backwards compatibility, derive a display name from the saved plan
     val currentPlanName: Signal[String] =
       currentSavedPlan.signal.map {
@@ -163,6 +166,15 @@ object Components {
         db.setScheduleLocked(locked)
       }
 
+    // Persist current saved plan ID changes to localStorage
+    val persistCurrentSavedPlan =
+      currentSavedPlan.signal.changes --> Observer[
+        Option[SavedPlan],
+      ] {
+        case Some(sp) => db.setCurrentSavedPlanId(sp.id)
+        case None     => db.clearCurrentSavedPlanId()
+      }
+
     // Derive whether we're in "load trips" mode (showing the saved trips list)
     val isLoadingTrips: Signal[Boolean] =
       loadTripsMode.signal.combineWith(addingNewRoute.signal).map {
@@ -171,6 +183,7 @@ object Components {
 
     div(
       persistLockedState,
+      persistCurrentSavedPlan,
       // Back button - only visible when loading trips
       div(
         cls := "action-buttons-container centered",

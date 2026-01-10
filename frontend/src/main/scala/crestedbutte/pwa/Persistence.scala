@@ -15,6 +15,7 @@ class Persistence():
   private val SavedPlansIndexKey = "savedplans:index"
   private val SavedPlanKeyPrefix = "savedplan:"
   private val ScheduleLockedKey = "schedule:locked"
+  private val CurrentSavedPlanIdKey = "current:savedplanid"
 
   // ===== Schedule locked state =====
   def getScheduleLocked: Boolean =
@@ -25,6 +26,31 @@ class Persistence():
   def setScheduleLocked(
     locked: Boolean,
   ): Unit = localStorage.setItem(ScheduleLockedKey, locked.toString)
+
+  // ===== Current SavedPlan ID state =====
+  /** Get the ID of the currently loaded SavedPlan, if any.
+    */
+  def getCurrentSavedPlanId: Option[String] =
+    val raw = localStorage.getItem(CurrentSavedPlanIdKey)
+    if raw == null || raw.isEmpty then None
+    else Some(raw)
+
+  /** Set the ID of the currently loaded SavedPlan.
+    */
+  def setCurrentSavedPlanId(
+    id: String,
+  ): Unit = localStorage.setItem(CurrentSavedPlanIdKey, id)
+
+  /** Clear the current SavedPlan ID (when creating a new plan or
+    * clearing).
+    */
+  def clearCurrentSavedPlanId(): Unit =
+    localStorage.removeItem(CurrentSavedPlanIdKey)
+
+  /** Get the currently loaded SavedPlan, if any.
+    */
+  def getCurrentSavedPlan: Option[SavedPlan] =
+    getCurrentSavedPlanId.flatMap(getSavedPlan)
 
   private def planStorageKey(
     name: String,
