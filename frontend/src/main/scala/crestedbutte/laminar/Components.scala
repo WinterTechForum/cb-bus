@@ -209,6 +209,7 @@ object Components {
       ),
       // Plan name row - hidden when loading trips
       div(
+        cls := "plan-name-row-wrapper",
         display <-- isLoadingTrips.map(loading =>
           if (loading) "none" else "block",
         ),

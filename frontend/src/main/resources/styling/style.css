@@ -10,10 +10,12 @@ html {
     /* filter: grayscale(100%); */
     background-color: var(--color-white);
     text-align: center;
+    height: 100%;
 }
 
 body {
     margin: 5px;
+    min-height: 100%;
 }
 
 .scrollable-route-leg {
@@ -659,6 +661,15 @@ body {
     color: #ff6b6b;
     font-size: 0.9rem;
     padding: 8px;
+}
+
+/* Plan name row wrapper - makes sticky positioning work */
+.plan-name-row-wrapper {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background-color: var(--color-white);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* Plan name and lock row */
