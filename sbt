@@ -125,7 +125,7 @@ dlog () {
 }
 
 jar_file () {
-  echo "$(cygwinpath "${sbt_home}/bin/sbt-launch.jar")"
+  echo "$(cygwinpath "${sbt_bin_dir}/sbt-launch.jar")"
 }
 
 jar_url () {
