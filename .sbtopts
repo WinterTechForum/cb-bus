@@ -1,0 +1,10 @@
+# SBT JVM options
+# Increase heap size for Scala.js compilation
+-Xmx2048m
+-Xms512m
+
+# Use G1 garbage collector for better performance
+-XX:+UseG1GC
+
+# Avoid excessive GC overhead
+-XX:MaxGCPauseMillis=100
