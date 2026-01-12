@@ -1,0 +1,4 @@
+-Xmx2048m
+-Xms512m
+-XX:+UseG1GC
+-XX:MaxGCPauseMillis=100
