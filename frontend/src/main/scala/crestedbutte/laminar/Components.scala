@@ -520,8 +520,7 @@ object Components {
                     expanded => if (expanded) "0" else "1",
                   ),
                   styleProp("pointer-events") <-- tripExpanded.signal
-                    .map(expanded =>
-                      if (expanded) "none" else "auto",
+                    .map(expanded => if (expanded) "none" else "auto",
                     ),
                   span("+"),
                   onClick --> Observer { _ =>
@@ -533,8 +532,7 @@ object Components {
                 div(
                   cls := "expanded-buttons-row",
                   styleProp("pointer-events") <-- tripExpanded.signal
-                    .map(expanded =>
-                      if (expanded) "auto" else "none",
+                    .map(expanded => if (expanded) "auto" else "none",
                     ),
                   styleProp("position") <-- tripExpanded.signal.map(
                     expanded =>
@@ -821,41 +819,50 @@ object Components {
   ) =
     // Local state for editing the name
     val editingName: Var[String] = Var("")
+    val originalNameOnFocus: Var[Option[String]] = Var(None)
+    val hasTypedSinceFocus: Var[Boolean] = Var(false)
 
     div(
       cls := "plan-name-row",
       // Save button wrapper - animated appearance when not saved AND there are segments
-      child <-- $currentSavedPlan.signal.combineWith($plan.signal).map { case (savedPlanO, plan) =>
-        val isSaved = savedPlanO.isDefined
-        val hasSegments = plan.routeSegments.nonEmpty
-        val shouldShow = !isSaved && hasSegments
+      child <-- $currentSavedPlan.signal
+        .combineWith($plan.signal)
+        .map { case (savedPlanO, plan) =>
+          val isSaved = savedPlanO.isDefined
+          val hasSegments = plan.routeSegments.nonEmpty
+          val shouldShow = !isSaved && hasSegments
 
-        div(
-          cls := "plan-name-save-wrapper",
-          styleProp("width") := (if (shouldShow) "112px" else "0px"), // 100px button + 12px gap
-          styleProp("opacity") := (if (shouldShow) "1" else "0"),
-          button(
-            cls := "button button-fixed-width plan-name-save-button",
-            styleProp("transform") := (if (shouldShow) "scale(1)" else "scale(0.8)"),
-            styleProp("pointer-events") := (if (shouldShow) "auto" else "none"),
-            title := "Save trip",
-            SvgIcon("glyphicons-basic-30-clipboard.svg", "plan-name-save-icon"),
-            onClick --> Observer { _ =>
-              // Create a new SavedPlan with UUID but no name yet
-              val plan = $plan.now()
-              val newSavedPlan = SavedPlan.create(plan)
-              db.saveSavedPlan(newSavedPlan)
-              $currentSavedPlan.set(Some(newSavedPlan))
-              // Update hasSavedPlans since we just saved one
-              hasSavedPlans.set(true)
-              // Unlock so the input becomes editable
-              isLocked.set(false)
-              // Signal to focus the plan name input
-              focusPlanNameInput.set(true)
-            },
+          div(
+            cls := "plan-name-save-wrapper",
+            styleProp("width") := (if (shouldShow) "112px"
+                                   else "0px"), // 100px button + 12px gap
+            styleProp("opacity") := (if (shouldShow) "1" else "0"),
+            button(
+              cls := "button button-fixed-width plan-name-save-button",
+              styleProp("transform") := (if (shouldShow) "scale(1)"
+                                         else "scale(0.8)"),
+              styleProp("pointer-events") := (if (shouldShow) "auto"
+                                              else "none"),
+              title := "Save trip",
+              SvgIcon("glyphicons-basic-30-clipboard.svg",
+                      "plan-name-save-icon",
+              ),
+              onClick --> Observer { _ =>
+                // Create a new SavedPlan with UUID but no name yet
+                val plan = $plan.now()
+                val newSavedPlan = SavedPlan.create(plan)
+                db.saveSavedPlan(newSavedPlan)
+                $currentSavedPlan.set(Some(newSavedPlan))
+                // Update hasSavedPlans since we just saved one
+                hasSavedPlans.set(true)
+                // Unlock so the input becomes editable
+                isLocked.set(false)
+                // Signal to focus the plan name input
+                focusPlanNameInput.set(true)
+              },
+            ),
           )
-        )
-      },
+        },
       div(
         cls := "plan-name-container",
         child <-- isLocked.signal
@@ -879,10 +886,11 @@ object Components {
                 typ := "text",
                 maxLength := 30,
                 placeholder := "Trip name",
-                value := savedPlanO.map(_.displayName).getOrElse(""),
+                value <-- editingName.signal,
                 onMountCallback { ctx =>
-                  editingName
-                    .set(savedPlanO.map(_.displayName).getOrElse(""))
+                  val initialName =
+                    savedPlanO.flatMap(_.name).getOrElse("")
+                  editingName.set(initialName)
                   // Check if we should focus this input
                   if (focusPlanNameInput.now()) {
                     focusPlanNameInput.set(false)
@@ -893,14 +901,33 @@ object Components {
                     inputEl.select()
                   }
                 },
-                onInput.mapToValue --> editingName.writer,
-                onBlur --> Observer { _ =>
-                  val newName = editingName.now().trim
+                onFocus --> Observer[dom.FocusEvent] { _ =>
+                  originalNameOnFocus.set(
+                    Option(editingName.now()).filter(_.nonEmpty),
+                  )
+                  hasTypedSinceFocus.set(false)
+                  editingName.set("")
+                },
+                onInput.mapToValue --> Observer[String] { value =>
+                  editingName.set(value)
+                  hasTypedSinceFocus.set(true)
+                },
+                onBlur --> Observer[dom.FocusEvent] { _ =>
+                  val trimmedName = editingName.now().trim
+                  val finalName =
+                    if (
+                      !hasTypedSinceFocus.now() && trimmedName.isEmpty
+                    )
+                      val restored =
+                        originalNameOnFocus.now().getOrElse("")
+                      editingName.set(restored)
+                      restored
+                    else trimmedName
                   savedPlanO.foreach { sp =>
                     if (
-                      newName.nonEmpty && newName != sp.displayName
+                      finalName.nonEmpty && finalName != sp.displayName
                     ) {
-                      val updatedPlan = sp.withName(newName)
+                      val updatedPlan = sp.withName(finalName)
                       db.saveSavedPlan(updatedPlan)
                       $currentSavedPlan.set(Some(updatedPlan))
                     }
@@ -981,7 +1008,8 @@ object Components {
                                          documentClickHandler,
         )
       },
-      child <-- $plan.signal.combineWith(currentSavedPlan.signal)
+      child <-- $plan.signal
+        .combineWith(currentSavedPlan.signal)
         .map { case (plan, savedPlanO) =>
           if (plan.routeSegments.isEmpty)
             div()
@@ -1056,7 +1084,8 @@ object Components {
                           addingNewRoute.set(true)
                         },
                       )
-                    } else {
+                    }
+                    else {
                       emptyNode
                     }
                   },
@@ -1068,8 +1097,7 @@ object Components {
                   styleProp(
                     "pointer-events",
                   ) <-- shareExpanded.signal
-                    .map(expanded =>
-                      if (expanded) "auto" else "none",
+                    .map(expanded => if (expanded) "auto" else "none",
                     ),
                   styleProp("position") <-- shareExpanded.signal
                     .map(expanded =>
@@ -1158,7 +1186,8 @@ object Components {
                   styleProp(
                     "pointer-events",
                   ) <-- saveExpanded.signal
-                    .map(expanded => if (expanded) "auto" else "none",
+                    .map(expanded =>
+                      if (expanded) "auto" else "none",
                     ),
                   styleProp("position") <-- saveExpanded.signal
                     .map(expanded =>
@@ -1328,7 +1357,6 @@ object Components {
       routesInPreferenceOrder.foldLeft(
         Option.empty[Seq[RouteSegment]],
       ) { case (acc, route) =>
-        acc.foreach(segments => println(s"segments: $segments"))
         acc.orElse(route.segment(start, end))
       }
 
@@ -1441,7 +1469,9 @@ object Components {
                     onClick --> Observer { _ =>
                       // Check if we're deleting the currently active plan
                       val isDeletingCurrentPlan =
-                        currentSavedPlan.now().exists(_.id == savedPlan.id)
+                        currentSavedPlan
+                          .now()
+                          .exists(_.id == savedPlan.id)
 
                       // Delete the plan from storage
                       db.deleteSavedPlan(savedPlan.id)
