@@ -122,15 +122,13 @@ object ServiceWorker {
           case ServiceWorkerAction.UpdatePlan(plan) =>
             currentPlan = Some(plan)
             if (notificationsEnabled) {
-              showDepartureNotification(silent = true)
+              showDepartureNotification()
             }
 
           case ServiceWorkerAction.TestNotify =>
             // For local testing: show an immediate notification
             lastNotificationMessage = None
-            currentPlan.foreach(_ =>
-              showDepartureNotification(silent = false),
-            )
+            currentPlan.foreach(_ => showDepartureNotification())
             val ports = event.ports.asInstanceOf[js.Array[js.Dynamic]]
             if (ports.length > 0) {
               ports(0).postMessage(
@@ -279,28 +277,18 @@ object ServiceWorker {
         }
   }
 
-  // Track if this is the first notification (should make sound) or an update (silent)
-  private var isFirstNotification: Boolean = true
-
   private def startNotificationTimer(): Unit = {
     stopNotificationTimer()
-    isFirstNotification = true
-    // Show initial notification with sound
-    showDepartureNotification(silent = false)
-
-    // Update every 60 seconds - dismiss old and show new silently
-    notificationInterval = Some(setInterval(60.seconds) {
-      if (notificationsEnabled) {
-        updateNotificationSilently()
-      }
-    })
+    // Show a single notification with the departure time
+    // We don't try to update it because notification tag replacement
+    // doesn't work reliably on Firefox mobile or Safari iOS
+    showDepartureNotification()
   }
 
   private def stopNotificationTimer(): Unit = {
     notificationInterval.foreach(clearInterval)
     notificationInterval = None
     closeExistingNotifications()
-    isFirstNotification = true
   }
 
   private def closeExistingNotifications(): Unit =
@@ -311,22 +299,7 @@ object ServiceWorker {
         notifications.foreach(_.close())
       }
 
-  private def updateNotificationSilently(): Unit =
-    // Close existing notifications first, then show new one silently
-    self.registration
-      .getNotifications()
-      .toFuture
-      .foreach { notifications =>
-        notifications.foreach(_.close())
-        // Small delay to ensure close completes before showing new one
-        setTimeout(100.millis) {
-          showDepartureNotification(silent = true)
-        }
-      }
-
-  private def showDepartureNotification(
-    silent: Boolean,
-  ): Unit =
+  private def showDepartureNotification(): Unit =
     currentPlan.foreach { planData =>
       val segments = planData.routeSegments
 
@@ -348,40 +321,26 @@ object ServiceWorker {
         case Some(segment) =>
           val departureTime = segment.s.t
           val stopName = segment.start.l.name
-          val minutesUntil = now.between(departureTime).minutes.value
 
-          // Show notification with countdown since we can now update it
+          // Show notification with actual departure time only (no countdown)
+          // This avoids misleading users since notification updates don't work cross-browser
           val departureTimeStr = departureTime.toDumbAmericanString
-          val message = if (minutesUntil <= 0) {
-            s"Bus from $stopName leaving now!"
-          }
-          else if (minutesUntil == 1) {
-            s"Bus from $stopName in 1 minute ($departureTimeStr)"
-          }
-          else {
-            s"Bus from $stopName in $minutesUntil minutes ($departureTimeStr)"
-          }
+          val message =
+            s"Bus from $stopName departs at $departureTimeStr"
 
           val options = org.scalajs.dom.NotificationOptions(
             body = message,
             icon = "/images/BILLDING_LogoMark-256.png",
             tag = "bus-departure",
-            silent = silent,
-            renotify = !silent,
+            silent = false,
+            renotify = true,
           )
 
           self.registration.showNotification("Bus Reminder", options)
 
-          // Auto-stop after bus departs
-          if (minutesUntil <= 0) {
-            notificationsEnabled = false
-            stopNotificationTimer()
-          }
-
         case None =>
           // No upcoming segments
           notificationsEnabled = false
-          stopNotificationTimer()
       }
     }
 
