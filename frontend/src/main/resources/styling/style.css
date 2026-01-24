@@ -839,6 +839,13 @@ body {
     background: rgba(150, 150, 150, 0.1);
 }
 
+/* Notification bell row */
+.notification-bell-row {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 8px;
+}
+
 /* Notification bell button */
 .bell-button {
     display: inline-flex;

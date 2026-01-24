@@ -635,6 +635,11 @@ object Components {
                 )
               },
               cls := "centered",
+              // Notification bell button - in its own row above trip buttons
+              div(
+                cls := "notification-bell-row",
+                NotificationBellButton($plan),
+              ),
               div(
                 cls := "trip-button-container",
 
@@ -722,8 +727,6 @@ object Components {
                     },
                   ),
                 ),
-                // Notification bell button - outside expanded row so it's always clickable
-                NotificationBellButton($plan),
               ),
               child <-- pendingReturnChoice.signal.map {
                 case Some(pending) =>
