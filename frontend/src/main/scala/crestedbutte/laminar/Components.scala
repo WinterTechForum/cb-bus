@@ -153,12 +153,7 @@ object Components {
     val currentSavedPlan: Var[Option[SavedPlan]] = Var(
       db.getCurrentSavedPlan,
     )
-    // For backwards compatibility, derive a display name from the saved plan
-    val currentPlanName: Signal[String] =
-      currentSavedPlan.signal.map {
-        case Some(sp) => sp.displayName
-        case None     => "Current Plan"
-      }
+
     // Track whether we should open the load trips view when entering stop selector
     val loadTripsMode: Var[Boolean] = Var(false)
     // Signal to trigger focusing the plan name input when saving
@@ -868,17 +863,8 @@ object Components {
         child <-- isLocked.signal
           .combineWith($currentSavedPlan.signal)
           .map { case (locked, savedPlanO) =>
-            val displayNameO =
-              savedPlanO.flatMap(_.name)
             if (locked || savedPlanO.isEmpty)
-              displayNameO
-                .map(name =>
-                  span(
-                    cls := "plan-name-text",
-                    name,
-                  ),
-                )
-                .getOrElse(emptyNode)
+              emptyNode
             else
               // Unlocked with a saved plan: show editable input
               input(
