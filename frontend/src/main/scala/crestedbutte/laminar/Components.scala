@@ -824,19 +824,54 @@ object Components {
 
     div(
       cls := "plan-name-row",
+      // Save button wrapper - animated appearance when not saved AND there are segments
+      child <-- $currentSavedPlan.signal.combineWith($plan.signal).map { case (savedPlanO, plan) =>
+        val isSaved = savedPlanO.isDefined
+        val hasSegments = plan.routeSegments.nonEmpty
+        val shouldShow = !isSaved && hasSegments
+
+        div(
+          cls := "plan-name-save-wrapper",
+          styleProp("width") := (if (shouldShow) "112px" else "0px"), // 100px button + 12px gap
+          styleProp("opacity") := (if (shouldShow) "1" else "0"),
+          button(
+            cls := "button button-fixed-width plan-name-save-button",
+            styleProp("transform") := (if (shouldShow) "scale(1)" else "scale(0.8)"),
+            styleProp("pointer-events") := (if (shouldShow) "auto" else "none"),
+            title := "Save trip",
+            SvgIcon("glyphicons-basic-30-clipboard.svg", "plan-name-save-icon"),
+            onClick --> Observer { _ =>
+              // Create a new SavedPlan with UUID but no name yet
+              val plan = $plan.now()
+              val newSavedPlan = SavedPlan.create(plan)
+              db.saveSavedPlan(newSavedPlan)
+              $currentSavedPlan.set(Some(newSavedPlan))
+              // Update hasSavedPlans since we just saved one
+              hasSavedPlans.set(true)
+              // Unlock so the input becomes editable
+              isLocked.set(false)
+              // Signal to focus the plan name input
+              focusPlanNameInput.set(true)
+            },
+          )
+        )
+      },
       div(
         cls := "plan-name-container",
         child <-- isLocked.signal
           .combineWith($currentSavedPlan.signal)
           .map { case (locked, savedPlanO) =>
-            val displayName =
-              savedPlanO.map(_.displayName).getOrElse("Current Plan")
+            val displayNameO =
+              savedPlanO.flatMap(_.name)
             if (locked || savedPlanO.isEmpty)
-              // Locked or no saved plan: show static text
-              span(
-                cls := "plan-name-text",
-                displayName,
-              )
+              displayNameO
+                .map(name =>
+                  span(
+                    cls := "plan-name-text",
+                    name,
+                  ),
+                )
+                .getOrElse(emptyNode)
             else
               // Unlocked with a saved plan: show editable input
               input(
@@ -905,31 +940,6 @@ object Components {
           isLocked.update(!_)
         },
       ),
-      // Save button - only show if not already saved to a named plan
-      child <-- $currentSavedPlan.signal.map { savedPlanO =>
-        val isSaved = savedPlanO.isDefined
-        if (!isSaved) {
-          button(
-            cls := "button button-fixed-width",
-            "Save",
-            onClick --> Observer { _ =>
-              // Create a new SavedPlan with UUID but no name yet
-              val plan = $plan.now()
-              val newSavedPlan = SavedPlan.create(plan)
-              db.saveSavedPlan(newSavedPlan)
-              $currentSavedPlan.set(Some(newSavedPlan))
-              // Update hasSavedPlans since we just saved one
-              hasSavedPlans.set(true)
-              // Unlock so the input becomes editable
-              isLocked.set(false)
-              // Signal to focus the plan name input
-              focusPlanNameInput.set(true)
-            },
-          )
-        } else {
-          emptyNode
-        }
-      },
     )
 
   def copyButtons(
