@@ -30,9 +30,10 @@ object ServiceWorker {
 
   // Notification state
   private var notificationInterval: Option[SetIntervalHandle] = None
-  private var currentPlan: Option[Plan] =
-    None // TODO Convert to strongly typedPlan
+  private var currentPlan: Option[Plan] = None
   private var notificationsEnabled: Boolean = false
+  // Track the last notification message to avoid redundant updates
+  private var lastNotificationMessage: Option[String] = None
 
   val todoAssets: js.Array[RequestInfo] =
     if (false) {
@@ -81,12 +82,6 @@ object ServiceWorker {
     self.addEventListener(
       "message",
       (event: MessageEvent) => {
-        println("message: ServiceWorker received message: " + event)
-        println(
-          "JSON.stringify(event.data.toString): " + JSON.stringify(
-            event.data.asInstanceOf[js.Dynamic],
-          ),
-        )
         val action =
           event.data.toString
             .fromJson[ServiceWorkerAction]
@@ -98,13 +93,9 @@ object ServiceWorker {
 
         action match {
           case ServiceWorkerAction.StartNotifications(plan) =>
-            println("Service worker, starting notifications")
             notificationsEnabled = true
             currentPlan = Some(plan)
-            println(
-              "Service worker, current plan: " +
-                plan,
-            )
+            lastNotificationMessage = None
             startNotificationTimer()
             // Send acknowledgment back
             val ports = event.ports.asInstanceOf[js.Array[js.Dynamic]]
@@ -117,6 +108,9 @@ object ServiceWorker {
           case ServiceWorkerAction.StopNotifications =>
             notificationsEnabled = false
             stopNotificationTimer()
+            lastNotificationMessage = None
+            // Close any existing notifications
+            closeExistingNotifications()
             // Send acknowledgment back
             val ports = event.ports.asInstanceOf[js.Array[js.Dynamic]]
             if (ports.length > 0) {
@@ -133,6 +127,7 @@ object ServiceWorker {
 
           case ServiceWorkerAction.TestNotify =>
             // For local testing: show an immediate notification
+            lastNotificationMessage = None
             currentPlan.foreach(_ => updateNotification())
             val ports = event.ports.asInstanceOf[js.Array[js.Dynamic]]
             if (ports.length > 0) {
@@ -270,7 +265,6 @@ object ServiceWorker {
         .flatMap { clients =>
           val reloads = clients.toSeq.flatMap { c =>
             val dyn = c.asInstanceOf[js.Dynamic]
-            println("dyn.navigate: " + dyn.navigate)
             val hasNavigate =
               !js.isUndefined(dyn.selectDynamic("navigate"))
             if (hasNavigate) {
@@ -287,7 +281,9 @@ object ServiceWorker {
     stopNotificationTimer()
     updateNotification()
 
-    notificationInterval = Some(setInterval(5.seconds) {
+    // Update every 60 seconds (1 minute) - this aligns with the minute-based countdown
+    // and reduces the chance of notification update issues across browsers
+    notificationInterval = Some(setInterval(60.seconds) {
       updateNotification()
     })
   }
@@ -297,16 +293,18 @@ object ServiceWorker {
     notificationInterval = None
   }
 
-  private def updateNotification(): Unit =
-    import scala.scalajs.js.JSON
-    currentPlan.foreach { planData =>
-      println(
-        s"SW. updateNotification: updating notification for $planData",
-      )
-      val segments =
-        planData.routeSegments
+  private def closeExistingNotifications(): Unit =
+    self.registration
+      .getNotifications()
+      .toFuture
+      .foreach { notifications =>
+        notifications.foreach(_.close())
+      }
 
-      // Find next segment
+  private def updateNotification(): Unit =
+    currentPlan.foreach { planData =>
+      val segments = planData.routeSegments
+
       val now =
         WallTime(
           LocalTime
@@ -315,64 +313,77 @@ object ServiceWorker {
               DateTimeFormatter.ofPattern("HH:mm"),
             ),
         )
+
       val nextSegmentOpt = segments.find { segment =>
         val startTime = segment.s.t
         startTime.isAfter(now)
       }
 
-      nextSegmentOpt.foreach { segment =>
-        val startTime =
-          segment.s.t
-        val routeName =
-          segment.route.userFriendlyName.asInstanceOf[String]
-        val minutesUntil =
-          now.between(startTime).minutes.value
+      nextSegmentOpt match {
+        case Some(segment) =>
+          val startTime = segment.s.t
+          val stopName = segment.start.l.name
+          val minutesUntil = now.between(startTime).minutes.value
 
-        showNotification(minutesUntil, segment.start.l.name)
+          if (minutesUntil <= 0) {
+            // Bus is leaving now - show final notification and stop
+            showNotification(0, stopName)
+            // Auto-stop after the bus leaves
+            notificationsEnabled = false
+            stopNotificationTimer()
+            lastNotificationMessage = None
+          }
+          else {
+            // Show/update the countdown notification
+            // Only update if the message has changed (minute changed)
+            val newMessage = buildMessage(minutesUntil, stopName)
+            if (!lastNotificationMessage.contains(newMessage)) {
+              showNotification(minutesUntil, stopName)
+              lastNotificationMessage = Some(newMessage)
+            }
+          }
+
+        case None =>
+          // No more segments - stop notifications
+          notificationsEnabled = false
+          stopNotificationTimer()
+          closeExistingNotifications()
+          lastNotificationMessage = None
       }
     }
 
+  private def buildMessage(
+    minutesUntil: Long,
+    stopName: String,
+  ): String =
+    if (minutesUntil <= 0)
+      s"$stopName bus leaves now!"
+    else if (minutesUntil == 1)
+      s"$stopName bus leaves in 1 minute"
+    else
+      s"$stopName bus leaves in $minutesUntil minutes"
+
   private def showNotification(
     minutesUntil: Long,
-    routeName: String,
+    stopName: String,
   ): Unit = {
-    val message = if (minutesUntil <= 0) {
-      s"$routeName bus leaves now!"
-    }
-    else if (minutesUntil == 1) {
-      s"$routeName bus leaves in 1 minute"
-    }
-    else {
-      s"$routeName bus leaves in $minutesUntil minutes"
-    }
-
-    // Use the service worker registration to show notification
-    /*
-    val options = new org.scalajs.dom.NotificationOptions {
-      override var body: js.UndefOr[String] = message
-      override var icon: js.UndefOr[String] =
-        "/images/BILLDING_LogoMark-256.png"
-      // badge = "/images/BILLDING_LogoMark-256.png"
-      override var tag: js.UndefOr[String] = "route-countdown"
-      // val requireInteraction = false
-      // val silent = true
-      override var renotify: js.UndefOr[Boolean] = false
-    }
-     */
+    val message = buildMessage(minutesUntil, stopName)
 
     val options = org.scalajs.dom.NotificationOptions(
       body = message,
       icon = "/images/BILLDING_LogoMark-256.png",
-      // badge = "/images/BILLDING_LogoMark-256.png"
-      tag = "route-countdown",
-      // val requireInteraction = false
-      silent = true,
+      // Using tag allows Chrome/Firefox/Edge to replace existing notification
+      // Note: Safari iOS ignores the tag and creates new notifications
+      // We hide the feature on Safari iOS via BrowserCapabilities check
+      tag = "bus-countdown",
+      // silent=false so the user gets an audio alert on updates
+      silent = false,
+      // renotify=true tells supported browsers to alert on updates
+      // even when the tag matches (Chrome supports this, Firefox partially)
       renotify = true,
     )
 
-    // Call showNotification dynamically
-    self.registration
-      .showNotification("Route Countdown", options)
+    self.registration.showNotification("Bus Alert", options)
   }
 
 }

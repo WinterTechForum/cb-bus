@@ -30,41 +30,174 @@ case class SelectedStopInfo(
   context: StopContext)
 
 object Components {
+
+  /** Bell button for enabling bus countdown notifications. Only shown
+    * on browsers that support reliable notification updates (not
+    * Safari iOS).
+    *
+    * When clicked:
+    *   - Requests notification permission if needed
+    *   - Starts a countdown notification that updates every minute
+    *   - Auto-stops when the bus arrives
+    */
+  def NotificationBellButton(
+    $plan: Var[Plan],
+  ) = {
+    import scala.concurrent.ExecutionContext.Implicits.global
+
+    println(
+      s"NotificationBellButton: isSupported=${NotificationCountdown.isSupported}",
+    )
+    println(
+      s"NotificationBellButton: hasNotificationAPI=${BrowserCapabilities.hasNotificationAPI}",
+    )
+    println(
+      s"NotificationBellButton: hasServiceWorker=${BrowserCapabilities.hasServiceWorker}",
+    )
+    println(
+      s"NotificationBellButton: isSafariIOS=${BrowserCapabilities.isSafariIOS}",
+    )
+
+    val notificationsEnabled: Var[Boolean] = Var(false)
+    val permissionState: Var[String] = Var(
+      if (BrowserCapabilities.hasNotificationAPI)
+        dom.Notification.permission
+      else "denied",
+    )
+
+    // Only render if the browser supports notification tag replacement
+    if (!NotificationCountdown.isSupported) {
+      println(
+        "NotificationBellButton: NOT rendering - unsupported browser",
+      )
+      emptyNode
+    }
+    else {
+      println("NotificationBellButton: rendering button")
+      button(
+        cls := "button bell-button",
+        cls <-- notificationsEnabled.signal.map { enabled =>
+          if (enabled) "bell-button-active" else ""
+        },
+        title <-- notificationsEnabled.signal.map { enabled =>
+          if (enabled) "Click to stop bus alerts"
+          else "Click to get bus arrival alerts"
+        },
+        child <-- notificationsEnabled.signal.map { enabled =>
+          if (enabled)
+            img(
+              cls := "bell-icon bell-icon-active",
+              src := "glyphicons/svg/individual-svg/glyphicons-basic-443-bell-ringing.svg",
+              alt := "Notifications on",
+              pointerEvents := "none", // Let clicks pass through to button
+            )
+          else
+            img(
+              cls := "bell-icon",
+              src := "glyphicons/svg/individual-svg/glyphicons-basic-54-alarm.svg",
+              alt := "Notifications off",
+              pointerEvents := "none", // Let clicks pass through to button
+            )
+        },
+        onPointerUp --> Observer { e =>
+          println("NotificationBellButton: clicked!")
+          val currentEnabled = notificationsEnabled.now()
+          println(
+            s"NotificationBellButton: currentEnabled=$currentEnabled",
+          )
+
+          if (!currentEnabled) {
+            // Check permission state
+            val permission = dom.Notification.permission
+            println(s"NotificationBellButton: permission=$permission")
+            permissionState.set(permission)
+
+            if (permission == "denied") {
+              // User previously denied - can't do anything
+              dom.window.alert(
+                "Notification permission was denied. Please enable notifications in your browser settings.",
+              )
+            }
+            else if (permission == "default") {
+              // Need to request permission
+              println(
+                "NotificationBellButton: requesting permission...",
+              )
+              dom.Notification.requestPermission { result =>
+                println(
+                  s"NotificationBellButton: permission result=$result",
+                )
+                permissionState.set(result)
+                if (result == "granted") {
+                  notificationsEnabled.set(true)
+                  NotificationCountdown
+                    .startCountdownNotifications($plan.now())
+                }
+              }
+            }
+            else {
+              // Already granted
+              println(
+                "NotificationBellButton: already granted, starting notifications",
+              )
+              notificationsEnabled.set(true)
+              NotificationCountdown
+                .startCountdownNotifications($plan.now())
+            }
+          }
+          else {
+            // Turn off notifications
+            println("NotificationBellButton: stopping notifications")
+            notificationsEnabled.set(false)
+            NotificationCountdown.stopCountdownNotifications()
+          }
+        },
+      )
+    }
+  }
+
+  // Legacy button kept for reference - uses emoji instead of icons
   def NotificationToggleButton(
     $plan: Var[Plan],
     timeStamps: Signal[WallTime],
     buttonWidth: Int,
   ) = {
+    import scala.concurrent.ExecutionContext.Implicits.global
+
     val notificationsEnabled: Var[Boolean] = Var(false)
 
-    button(
-      cls := "button button-fixed-width",
-      child <-- notificationsEnabled.signal.map { enabled =>
-        if (enabled) "🔔 On" else "🔕 Off"
-      },
-      onClick --> Observer { _ =>
-        val currentEnabled = notificationsEnabled.now()
+    if (!NotificationCountdown.isSupported) {
+      emptyNode
+    }
+    else {
+      button(
+        cls := "button button-fixed-width",
+        child <-- notificationsEnabled.signal.map { enabled =>
+          if (enabled) "🔔 On" else "🔕 Off"
+        },
+        onClick --> Observer { _ =>
+          val currentEnabled = notificationsEnabled.now()
 
-        if (!currentEnabled) {
-          // Request permission if needed
-          NotificationCountdown.requestPermissionIfNeeded()
+          if (!currentEnabled) {
+            // Request permission if needed
+            NotificationCountdown.requestPermissionIfNeeded()
 
-          // Check if we have permission
-          if (NotificationCountdown.hasPermission) {
-            notificationsEnabled.set(true)
-            NotificationCountdown.startCountdownNotifications(
-              $plan,
-              timeStamps,
-            )
+            // Check if we have permission
+            if (NotificationCountdown.hasPermission) {
+              notificationsEnabled.set(true)
+              NotificationCountdown.startCountdownNotifications(
+                $plan.now(),
+              )
+            }
           }
-        }
-        else {
-          // Turn off notifications
-          notificationsEnabled.set(false)
-          NotificationCountdown.stopCountdownNotifications()
-        }
-      },
-    )
+          else {
+            // Turn off notifications
+            notificationsEnabled.set(false)
+            NotificationCountdown.stopCountdownNotifications()
+          }
+        },
+      )
+    }
   }
 
   def FullApp(
@@ -588,15 +721,9 @@ object Components {
                       }
                     },
                   ),
-
-                  // Notification toggle button
-                  // TODO Re-enable if I can ever get it working reliably
-                  // NotificationToggleButton(
-                  //   $plan,
-                  //   timeStamps,
-                  //   buttonWidth,
-                  // ),
                 ),
+                // Notification bell button - outside expanded row so it's always clickable
+                NotificationBellButton($plan),
               ),
               child <-- pendingReturnChoice.signal.map {
                 case Some(pending) =>

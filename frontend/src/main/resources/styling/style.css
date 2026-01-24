@@ -838,3 +838,83 @@ body {
     border-color: #999;
     background: rgba(150, 150, 150, 0.1);
 }
+
+/* Notification bell button */
+.bell-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 48px;
+    width: 48px;
+    height: 40px;
+    padding: 8px;
+    background-color: transparent;
+    border: 2px solid var(--color-primary);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 200ms ease;
+}
+
+.bell-button:hover {
+    background-color: rgba(1, 156, 143, 0.1);
+}
+
+.bell-button.bell-button-active {
+    background-color: var(--color-primary);
+}
+
+.bell-button.bell-button-active:hover {
+    background-color: #017d73;
+}
+
+.bell-icon {
+    width: 24px;
+    height: 24px;
+    transition: transform 150ms ease;
+    filter: invert(43%) sepia(93%) saturate(401%) hue-rotate(131deg)
+        brightness(93%) contrast(99%);
+}
+
+.bell-button.bell-button-active .bell-icon,
+.bell-icon.bell-icon-active {
+    filter: brightness(0) invert(1);
+}
+
+/* Subtle animation for active bell */
+@keyframes bell-ring {
+    0%,
+    100% {
+        transform: rotate(0deg);
+    }
+    10% {
+        transform: rotate(8deg);
+    }
+    20% {
+        transform: rotate(-8deg);
+    }
+    30% {
+        transform: rotate(6deg);
+    }
+    40% {
+        transform: rotate(-6deg);
+    }
+    50% {
+        transform: rotate(4deg);
+    }
+    60% {
+        transform: rotate(-4deg);
+    }
+    70% {
+        transform: rotate(2deg);
+    }
+    80% {
+        transform: rotate(-2deg);
+    }
+    90% {
+        transform: rotate(0deg);
+    }
+}
+
+.bell-button.bell-button-active .bell-icon {
+    animation: bell-ring 1s ease-in-out;
+}

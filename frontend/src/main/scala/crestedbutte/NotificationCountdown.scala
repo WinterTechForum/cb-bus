@@ -13,50 +13,45 @@ import zio.json.*
 
 object NotificationCountdown {
 
+  /** Request notification permission if not already granted or
+    * denied.
+    */
   def requestPermissionIfNeeded(): Unit =
     if (dom.Notification.permission == "default") {
       dom.Notification.requestPermission(_ => ())
     }
 
+  /** Check if we have permission to show notifications. */
   def hasPermission: Boolean =
     dom.Notification.permission == "granted"
 
+  /** Check if notifications are supported on this browser. This
+    * returns false on Safari iOS where notification updates don't
+    * work reliably.
+    */
+  def isSupported: Boolean =
+    BrowserCapabilities.supportsNotificationTagReplacement
+
+  /** Start countdown notifications for the current plan. The service
+    * worker will handle showing and updating the notification every
+    * minute. The notification will auto-stop when the bus arrives.
+    */
   def startCountdownNotifications(
-    $plan: Var[Plan],
-    timeStampsSignal: Signal[WallTime],
-  ): Unit = {
-    // Send message to service worker to start notifications
+    plan: Plan,
+  ): Future[js.Dynamic] =
+    sendToServiceWorker(ServiceWorkerAction.StartNotifications(plan))
 
-    import scala.concurrent.duration.FiniteDuration
-    import scala.concurrent.duration.DurationInt
-    import scala.scalajs.js
-
-    js.timers.setInterval(5.seconds) {
-      sendToServiceWorker(
-        ServiceWorkerAction.StartNotifications($plan.now()),
-      )
-    }
-    sendToServiceWorker(
-      ServiceWorkerAction.StartNotifications($plan.now()),
-    )
-      .foreach { response =>
-        println(
-          s"Service worker notification started: ${response}",
-        )
-      }
-
-    // Subscribe to plan changes to update service worker
-    $plan.signal.foreach { plan =>
-      sendToServiceWorker(ServiceWorkerAction.UpdatePlan(plan))
-    }(unsafeWindowOwner)
-  }
-
-  def stopCountdownNotifications(): Unit =
-    // Send message to service worker to stop notifications
+  /** Stop countdown notifications. */
+  def stopCountdownNotifications(): Future[js.Dynamic] =
     sendToServiceWorker(ServiceWorkerAction.StopNotifications)
-      .foreach { response =>
-        println(s"Service worker notification stopped: $response")
-      }
+
+  /** Update the plan in the service worker (e.g., when the user
+    * changes their route).
+    */
+  def updatePlan(
+    plan: Plan,
+  ): Future[js.Dynamic] =
+    sendToServiceWorker(ServiceWorkerAction.UpdatePlan(plan))
 
   private def sendToServiceWorker(
     action: ServiceWorkerAction,
@@ -68,7 +63,6 @@ object NotificationCountdown {
         navigator.serviceWorker,
       ) && navigator.serviceWorker != null
     ) {
-      println("NotificationCountdown: service worker available")
       val serviceWorker = navigator.serviceWorker
 
       serviceWorker.ready
@@ -76,14 +70,6 @@ object NotificationCountdown {
         .toFuture
         .flatMap { registration =>
           val messageChannel = new dom.MessageChannel()
-          println("periodic-sync: " + registration.periodicSync)
-
-          // navigator.permissions.query({name: "periodic-background-sync"});
-          // if (status.state === 'granted') {
-          //   // Periodic background sync can be used.
-          // } else {
-          //   // Periodic background sync cannot be used.
-          // }
 
           val responsePromise = scala.concurrent.Promise[js.Dynamic]()
 
@@ -93,9 +79,6 @@ object NotificationCountdown {
                 event.data.asInstanceOf[js.Dynamic],
               )
 
-          println(
-            "NotificationCountdown: sending message to service worker",
-          )
           registration.active.postMessage(
             action.toJson,
             js.Array(messageChannel.port2),
