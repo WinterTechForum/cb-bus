@@ -20,7 +20,6 @@ object UrlEncoding {
     val res =
       rawJson
         .fromJson[Plan]
-    println("saved plan")
     res
   }
 

@@ -515,8 +515,7 @@ object Components {
                     expanded => if (expanded) "0" else "1",
                   ),
                   styleProp("pointer-events") <-- tripExpanded.signal
-                    .map(expanded =>
-                      if (expanded) "none" else "auto",
+                    .map(expanded => if (expanded) "none" else "auto",
                     ),
                   span("+"),
                   onClick --> Observer { _ =>
@@ -528,8 +527,7 @@ object Components {
                 div(
                   cls := "expanded-buttons-row",
                   styleProp("pointer-events") <-- tripExpanded.signal
-                    .map(expanded =>
-                      if (expanded) "auto" else "none",
+                    .map(expanded => if (expanded) "auto" else "none",
                     ),
                   styleProp("position") <-- tripExpanded.signal.map(
                     expanded =>
@@ -1093,8 +1091,7 @@ object Components {
                   styleProp(
                     "pointer-events",
                   ) <-- shareExpanded.signal
-                    .map(expanded =>
-                      if (expanded) "auto" else "none",
+                    .map(expanded => if (expanded) "auto" else "none",
                     ),
                   styleProp("position") <-- shareExpanded.signal
                     .map(expanded =>
@@ -1183,7 +1180,8 @@ object Components {
                   styleProp(
                     "pointer-events",
                   ) <-- saveExpanded.signal
-                    .map(expanded => if (expanded) "auto" else "none",
+                    .map(expanded =>
+                      if (expanded) "auto" else "none",
                     ),
                   styleProp("position") <-- saveExpanded.signal
                     .map(expanded =>
@@ -1332,8 +1330,6 @@ object Components {
 
     val defaultOrder =
       Seq(RTA.Southbound.fullSchedule, RTA.Northbound.fullSchedule)
-
-    println(s"Finding route segments for start: $start, end: $end")
 
     val routesInPreferenceOrder =
       plan.l.lastOption match
