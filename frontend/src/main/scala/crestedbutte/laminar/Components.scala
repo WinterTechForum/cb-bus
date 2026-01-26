@@ -349,21 +349,7 @@ object Components {
                            hasSavedPlans,
         ),
       ),
-      // Action buttons - hidden when loading trips
-      div(
-        display <-- isLoadingTrips.map(loading =>
-          if (loading) "none" else "block",
-        ),
-        copyButtons($plan,
-                    db,
-                    isLocked,
-                    currentSavedPlan,
-                    addingNewRoute,
-                    loadTripsMode,
-                    focusPlanNameInput,
-                    hasSavedPlans,
-        ),
-      ),
+      // Action buttons are now consolidated in add-new-route-section
       // Plan segments container - hidden when loading trips
       div(
         display <-- isLoadingTrips.map(loading =>
@@ -479,7 +465,8 @@ object Components {
           case false =>
             // Capture currentSavedPlan to prevent saving to wrong plan
             val capturedSavedPlan = currentSavedPlan.now()
-            val tripExpanded: Var[Boolean] = Var(false)
+            val actionsExpanded: Var[Boolean] = Var(false)
+            val shareSubExpanded: Var[Boolean] = Var(false)
 
             case class PendingReturnTrip(
               lastSegmentId: Long,
@@ -573,7 +560,7 @@ object Components {
                       $plan.set(updatedPlan)
                       addingNewRoute.set(false)
                       pendingReturnChoice.set(None)
-                      setTimeout(300)(tripExpanded.set(false))
+                      setTimeout(300)(actionsExpanded.set(false))
                     case None =>
                       val defaultMessage =
                         "Couldn't find a matching return route from that stop."
@@ -612,16 +599,20 @@ object Components {
               (event: dom.MouseEvent) => {
                 val target = event.target.asInstanceOf[dom.Element]
                 val containerElement =
-                  dom.document.querySelector(".trip-button-container")
+                  dom.document.querySelector(".unified-actions-container")
                 if (
                   containerElement != null && !containerElement
                     .contains(
                       target,
                     )
                 ) {
-                  tripExpanded.set(false)
+                  actionsExpanded.set(false)
+                  shareSubExpanded.set(false)
                 }
               }
+
+            val plan = $plan.now()
+            val hasSegments = plan.routeSegments.nonEmpty
 
             div(
               onMountCallback { _ =>
@@ -635,99 +626,313 @@ object Components {
                 )
               },
               cls := "centered",
-              // Notification bell button - in its own row above trip buttons
+              // Unified action menu container
               div(
-                cls := "notification-bell-row",
-                NotificationBellButton($plan),
-              ),
-              div(
-                cls := "trip-button-container",
+                cls := "unified-actions-container",
 
-                // Collapsed + Trip button
+                // Collapsed state: single "+" button
                 button(
-                  cls := "button floating-center-button button-fixed-width collapsed-buttons-row",
-                  cls <-- tripExpanded.signal.map(expanded =>
+                  cls := "button floating-center-button button-fixed-width collapsed-buttons-row action-trigger-button",
+                  cls <-- actionsExpanded.signal.map(expanded =>
                     if (expanded) "delayed-appear" else "",
                   ),
-                  styleProp("opacity") <-- tripExpanded.signal.map(
+                  styleProp("opacity") <-- actionsExpanded.signal.map(
                     expanded => if (expanded) "0" else "1",
                   ),
-                  styleProp("pointer-events") <-- tripExpanded.signal
+                  styleProp("pointer-events") <-- actionsExpanded.signal
                     .map(expanded => if (expanded) "none" else "auto",
                     ),
                   span("+"),
                   onClick --> Observer { _ =>
-                    tripExpanded.set(true)
+                    actionsExpanded.set(true)
                   },
                 ),
 
-                // Expanded buttons container
+                // Expanded actions - first tier (main actions)
                 div(
-                  cls := "expanded-buttons-row",
-                  styleProp("pointer-events") <-- tripExpanded.signal
-                    .map(expanded => if (expanded) "auto" else "none",
-                    ),
-                  styleProp("position") <-- tripExpanded.signal.map(
-                    expanded =>
-                      if (expanded) "relative" else "absolute",
-                  ),
-
-                  // New route button - emerges from center (left side)
-                  button(
-                    cls := "button button-fixed-width expand-from-left",
-                    styleProp("transform") <-- tripExpanded.signal
-                      .map(expanded =>
-                        if (expanded) "translateX(0) scale(1)"
-                        else "translateX(60px) scale(0)",
-                      ),
-                    styleProp("opacity") <-- tripExpanded.signal.map(
-                      expanded => if (expanded) "1" else "0",
-                    ),
-                    "New trip",
-                    onClick --> Observer { _ =>
-                      addingNewRoute.set(true)
-                      tripExpanded.set(false)
+                  cls := "expanded-actions-grid",
+                  styleProp("pointer-events") <-- actionsExpanded.signal
+                    .combineWith(shareSubExpanded.signal)
+                    .map { case (expanded, subExpanded) =>
+                      if (expanded && !subExpanded) "auto" else "none"
                     },
+                  styleProp("opacity") <-- actionsExpanded.signal
+                    .combineWith(shareSubExpanded.signal)
+                    .map { case (expanded, subExpanded) =>
+                      if (expanded && !subExpanded) "1" else "0"
+                    },
+                  styleProp("position") <-- actionsExpanded.signal
+                    .combineWith(shareSubExpanded.signal)
+                    .map { case (expanded, subExpanded) =>
+                      if (expanded && !subExpanded) "relative" else "absolute"
+                    },
+
+                  // Row 1: Add leg / Return trip
+                  div(
+                    cls := "action-row",
+                    button(
+                      cls := "button button-fixed-width expand-from-left",
+                      styleProp("transform") <-- actionsExpanded.signal
+                        .map(expanded =>
+                          if (expanded) "translateX(0) scale(1)"
+                          else "translateX(60px) scale(0)",
+                        ),
+                      styleProp("opacity") <-- actionsExpanded.signal.map(
+                        expanded => if (expanded) "1" else "0",
+                      ),
+                      "Add leg",
+                      onClick --> Observer { _ =>
+                        addingNewRoute.set(true)
+                        actionsExpanded.set(false)
+                      },
+                    ),
+                    // Return trip button - only when there are segments
+                    if (hasSegments)
+                      button(
+                        cls := "button button-fixed-width expand-from-right",
+                        styleProp("transform") <-- actionsExpanded.signal
+                          .map(expanded =>
+                            if (expanded) "translateX(0) scale(1)"
+                            else "translateX(-60px) scale(0)",
+                          ),
+                        styleProp("opacity") <-- actionsExpanded.signal.map(
+                          expanded => if (expanded) "1" else "0",
+                        ),
+                        "Return",
+                        onClick --> Observer { _ =>
+                          val currentPlan = $plan.now()
+                          val maybeLastSeg = currentPlan.l.lastOption
+                          maybeLastSeg.foreach { lastSeg =>
+                            val options = returnTripEndpoints(lastSeg)
+                            if options.hasAdjustments then
+                              pendingReturnChoice.set(
+                                Some(
+                                  evaluatePendingReturn(
+                                    lastSeg,
+                                    currentPlan,
+                                    options,
+                                  ),
+                                ),
+                              )
+                              actionsExpanded.set(false)
+                            else
+                              attemptReturnTrip(
+                                options.adjustedStart,
+                                options.adjustedEnd,
+                                Some(lastSeg.id),
+                              )
+                          }
+                        },
+                      )
+                    else emptyNode,
                   ),
 
-                  // Return trip button - emerges from center (right side)
-                  button(
-                    cls := "button button-fixed-width expand-from-right",
-                    styleProp("transform") <-- tripExpanded.signal
-                      .map(expanded =>
-                        if (expanded) "translateX(0) scale(1)"
-                        else "translateX(-60px) scale(0)",
+                  // Row 2: Share / New / Load (when has segments)
+                  if (hasSegments)
+                    div(
+                      cls := "action-row",
+                      button(
+                        cls := "button button-fixed-width expand-from-left action-delay-1",
+                        styleProp("transform") <-- actionsExpanded.signal
+                          .map(expanded =>
+                            if (expanded) "translateX(0) scale(1)"
+                            else "translateX(60px) scale(0)",
+                          ),
+                        styleProp("opacity") <-- actionsExpanded.signal.map(
+                          expanded => if (expanded) "1" else "0",
+                        ),
+                        SvgIcon.share("share-icon"),
+                        onClick --> Observer { _ =>
+                          shareSubExpanded.set(true)
+                        },
                       ),
-                    styleProp("opacity") <-- tripExpanded.signal.map(
-                      expanded => if (expanded) "1" else "0",
-                    ),
-                    "Return trip",
-                    onClick --> Observer { _ =>
-                      val plan = $plan.now()
-                      val maybeLastSeg = plan.l.lastOption
-                      maybeLastSeg.foreach { lastSeg =>
-                        val options = returnTripEndpoints(lastSeg)
-                        if options.hasAdjustments then
-                          pendingReturnChoice.set(
-                            Some(
-                              evaluatePendingReturn(
-                                lastSeg,
-                                plan,
-                                options,
+                      button(
+                        cls := "button button-fixed-width expand-from-center action-delay-1",
+                        styleProp("transform") <-- actionsExpanded.signal
+                          .map(expanded =>
+                            if (expanded) "scale(1)"
+                            else "scale(0)",
+                          ),
+                        styleProp("opacity") <-- actionsExpanded.signal.map(
+                          expanded => if (expanded) "1" else "0",
+                        ),
+                        "New",
+                        onClick --> Observer { _ =>
+                          // Create a fresh empty plan
+                          val emptyPlan = Plan(Seq.empty)
+                          db.saveDailyPlanOnly(emptyPlan)
+                          $plan.set(emptyPlan)
+                          currentSavedPlan.set(None)
+                          isLocked.set(false)
+                          addingNewRoute.set(true)
+                          actionsExpanded.set(false)
+                        },
+                      ),
+                      // Load button - only when there are saved plans
+                      child <-- hasSavedPlans.signal.map { hasPlans =>
+                        if (hasPlans)
+                          button(
+                            cls := "button button-fixed-width expand-from-right action-delay-1",
+                            styleProp("transform") <-- actionsExpanded.signal
+                              .map(expanded =>
+                                if (expanded) "translateX(0) scale(1)"
+                                else "translateX(-60px) scale(0)",
                               ),
+                            styleProp("opacity") <-- actionsExpanded.signal.map(
+                              expanded => if (expanded) "1" else "0",
                             ),
+                            "Load",
+                            onClick --> Observer { _ =>
+                              loadTripsMode.set(true)
+                              addingNewRoute.set(true)
+                              actionsExpanded.set(false)
+                            },
                           )
-                        else
-                          attemptReturnTrip(
-                            options.adjustedStart,
-                            options.adjustedEnd,
-                            Some(lastSeg.id),
-                          )
-                      }
+                        else emptyNode
+                      },
+                    )
+                  else
+                    // When no segments, show Load if available
+                    child <-- hasSavedPlans.signal.map { hasPlans =>
+                      if (hasPlans)
+                        div(
+                          cls := "action-row",
+                          button(
+                            cls := "button button-fixed-width expand-from-center action-delay-1",
+                            styleProp("transform") <-- actionsExpanded.signal
+                              .map(expanded =>
+                                if (expanded) "scale(1)"
+                                else "scale(0)",
+                              ),
+                            styleProp("opacity") <-- actionsExpanded.signal.map(
+                              expanded => if (expanded) "1" else "0",
+                            ),
+                            "Load",
+                            onClick --> Observer { _ =>
+                              loadTripsMode.set(true)
+                              addingNewRoute.set(true)
+                              actionsExpanded.set(false)
+                            },
+                          ),
+                        )
+                      else emptyNode
                     },
+                ),
+
+                // Share sub-menu (Text / Link)
+                div(
+                  cls := "expanded-actions-grid share-submenu",
+                  styleProp("pointer-events") <-- shareSubExpanded.signal
+                    .map(expanded => if (expanded) "auto" else "none"),
+                  styleProp("opacity") <-- shareSubExpanded.signal
+                    .map(expanded => if (expanded) "1" else "0"),
+                  styleProp("position") <-- shareSubExpanded.signal
+                    .map(expanded => if (expanded) "relative" else "absolute"),
+
+                  div(
+                    cls := "action-row",
+                    button(
+                      cls := "button button-fixed-width expand-from-left",
+                      styleProp("transform") <-- shareSubExpanded.signal
+                        .map(expanded =>
+                          if (expanded) "translateX(0) scale(1)"
+                          else "translateX(60px) scale(0)",
+                        ),
+                      styleProp("opacity") <-- shareSubExpanded.signal.map(
+                        expanded => if (expanded) "1" else "0",
+                      ),
+                      "Text",
+                      onClick --> Observer { _ =>
+                        val currentPlan = $plan.now()
+                        val text = currentPlan.plainTextRepresentation
+                        if (
+                          js.typeOf(
+                            dom.window.navigator
+                              .asInstanceOf[js.Dynamic]
+                              .share,
+                          ) != "undefined"
+                        ) {
+                          dom.window.navigator
+                            .asInstanceOf[js.Dynamic]
+                            .share(
+                              js.Dynamic.literal(title = "Bus Schedule",
+                                                 text = text,
+                              ),
+                            )
+                        }
+                        else {
+                          dom.window.navigator.clipboard
+                            .writeText(text)
+                        }
+                        shareSubExpanded.set(false)
+                        actionsExpanded.set(false)
+                      },
+                    ),
+                    button(
+                      cls := "button button-fixed-width expand-from-right",
+                      styleProp("transform") <-- shareSubExpanded.signal
+                        .map(expanded =>
+                          if (expanded) "translateX(0) scale(1)"
+                          else "translateX(-60px) scale(0)",
+                        ),
+                      styleProp("opacity") <-- shareSubExpanded.signal.map(
+                        expanded => if (expanded) "1" else "0",
+                      ),
+                      "Link",
+                      onClick --> Observer { _ =>
+                        val currentPlan = $plan.now()
+                        val url =
+                          if (dom.document.URL.contains("localhost"))
+                            s"http://localhost:8000/index.html?plan=${UrlEncoding.encode(currentPlan)}"
+                          else
+                            s"https://rtabus.netlify.app/?plan=${UrlEncoding.encode(currentPlan)}"
+                        if (
+                          js.typeOf(
+                            dom.window.navigator
+                              .asInstanceOf[js.Dynamic]
+                              .share,
+                          ) != "undefined"
+                        ) {
+                          dom.window.navigator
+                            .asInstanceOf[js.Dynamic]
+                            .share(
+                              js.Dynamic.literal(
+                                title = "Bus Schedule Link",
+                                url = url,
+                              ),
+                            )
+                        }
+                        else {
+                          dom.window.navigator.clipboard
+                            .writeText(url)
+                        }
+                        shareSubExpanded.set(false)
+                        actionsExpanded.set(false)
+                      },
+                    ),
+                  ),
+                  // Back button for share submenu
+                  div(
+                    cls := "action-row",
+                    button(
+                      cls := "button button-outlined button-fixed-width expand-from-center action-delay-1",
+                      styleProp("transform") <-- shareSubExpanded.signal
+                        .map(expanded =>
+                          if (expanded) "scale(1)"
+                          else "scale(0)",
+                        ),
+                      styleProp("opacity") <-- shareSubExpanded.signal.map(
+                        expanded => if (expanded) "1" else "0",
+                      ),
+                      "← Back",
+                      onClick --> Observer { _ =>
+                        shareSubExpanded.set(false)
+                      },
+                    ),
                   ),
                 ),
               ),
+              // Return trip choice dialog
               child <-- pendingReturnChoice.signal.map {
                 case Some(pending) =>
                   val alternateLabel =
@@ -949,6 +1154,8 @@ object Components {
 
     div(
       cls := "plan-name-row",
+      // Notification bell button - first in the row for quick access
+      NotificationBellButton($plan),
       // Save button wrapper - animated appearance when not saved AND there are segments
       child <-- $currentSavedPlan.signal
         .combineWith($plan.signal)
@@ -959,8 +1166,8 @@ object Components {
 
           div(
             cls := "plan-name-save-wrapper",
-            styleProp("width") := (if (shouldShow) "112px"
-                                   else "0px"), // 100px button + 12px gap
+            styleProp("width") := (if (shouldShow) "60px"
+                                   else "0px"), // 48px button + 12px gap
             styleProp("opacity") := (if (shouldShow) "1" else "0"),
             button(
               cls := "button button-fixed-width plan-name-save-button",
@@ -1092,315 +1299,6 @@ object Components {
         },
       ),
     )
-
-  def copyButtons(
-    $plan: Var[Plan],
-    db: Persistence,
-    isLocked: Var[Boolean],
-    currentSavedPlan: Var[Option[SavedPlan]],
-    addingNewRoute: Var[Boolean],
-    loadTripsMode: Var[Boolean],
-    focusPlanNameInput: Var[Boolean],
-    hasSavedPlans: Var[Boolean],
-  ) = {
-    val shareExpanded: Var[Boolean] = Var(false)
-    val saveExpanded: Var[Boolean] = Var(false)
-    val tripName: Var[String] = Var("")
-    val saveConfirmation: Var[Option[String]] = Var(None)
-
-    // Add click handler to collapse when clicking outside
-    val documentClickHandler: js.Function1[dom.MouseEvent, Unit] =
-      (event: dom.MouseEvent) => {
-        val target = event.target.asInstanceOf[dom.Element]
-        val actionContainer =
-          dom.document.querySelector(".share-save-buttons-container")
-        if (
-          actionContainer != null && !actionContainer.contains(target)
-        ) {
-          shareExpanded.set(false)
-          saveExpanded.set(false)
-          saveConfirmation.set(None)
-        }
-      }
-
-    div(
-      onMountCallback { ctx =>
-        dom.document.addEventListener("click", documentClickHandler)
-      },
-      onUnmountCallback { _ =>
-        dom.document.removeEventListener("click",
-                                         documentClickHandler,
-        )
-      },
-      child <-- $plan.signal
-        .combineWith(currentSavedPlan.signal)
-        .map { case (plan, savedPlanO) =>
-          if (plan.routeSegments.isEmpty)
-            div()
-          else {
-            val isSaved = savedPlanO.isDefined
-
-            div(
-              cls := "centered",
-              div(
-                cls := "action-buttons-container share-save-buttons-container",
-
-                // Collapsed state: Share, New, and Load buttons
-                div(
-                  cls := "expanded-buttons-row collapsed-buttons-row",
-                  cls <-- shareExpanded.signal
-                    .combineWith(saveExpanded.signal)
-                    .map { case (share, save) =>
-                      if (share || save) "delayed-appear" else ""
-                    },
-                  styleProp("opacity") <-- shareExpanded.signal
-                    .combineWith(saveExpanded.signal)
-                    .map { case (share, save) =>
-                      if (share || save) "0" else "1"
-                    },
-                  styleProp(
-                    "pointer-events",
-                  ) <-- shareExpanded.signal
-                    .combineWith(saveExpanded.signal)
-                    .map { case (share, save) =>
-                      if (share || save) "none" else "auto"
-                    },
-                  styleProp("position") <-- shareExpanded.signal
-                    .combineWith(saveExpanded.signal)
-                    .map { case (share, save) =>
-                      if (share || save) "absolute" else "relative"
-                    },
-                  button(
-                    cls := "button button-fixed-width",
-                    SvgIcon.share("share-icon"),
-                    onClick --> Observer { _ =>
-                      shareExpanded.set(true)
-                      saveExpanded.set(false)
-                    },
-                  ),
-                  // New button - creates a fresh empty trip
-                  button(
-                    cls := "button button-fixed-width",
-                    "New",
-                    onClick --> Observer { _ =>
-                      // Create a fresh empty plan
-                      val emptyPlan = Plan(Seq.empty)
-                      // Save the empty plan as the current daily plan
-                      db.saveDailyPlanOnly(emptyPlan)
-                      // Update the plan
-                      $plan.set(emptyPlan)
-                      // Clear the current saved plan reference (doesn't delete the saved plan)
-                      currentSavedPlan.set(None)
-                      // Unlock the schedule so user can start adding routes
-                      isLocked.set(false)
-                      // Start in adding new route mode
-                      addingNewRoute.set(true)
-                    },
-                  ),
-                  // Load button - dynamically show/hide based on saved plans
-                  child <-- hasSavedPlans.signal.map { hasPlans =>
-                    if (hasPlans) {
-                      button(
-                        cls := "button button-fixed-width",
-                        "Load",
-                        onClick --> Observer { _ =>
-                          loadTripsMode.set(true)
-                          addingNewRoute.set(true)
-                        },
-                      )
-                    }
-                    else {
-                      emptyNode
-                    }
-                  },
-                ),
-
-                // Share expanded: Text and Link buttons
-                div(
-                  cls := "expanded-buttons-row",
-                  styleProp(
-                    "pointer-events",
-                  ) <-- shareExpanded.signal
-                    .map(expanded => if (expanded) "auto" else "none",
-                    ),
-                  styleProp("position") <-- shareExpanded.signal
-                    .map(expanded =>
-                      if (expanded) "relative" else "absolute",
-                    ),
-                  // Text button - emerges from Share position (left side, no translation needed)
-                  button(
-                    cls := "button button-fixed-width expand-from-left",
-                    styleProp("transform") <-- shareExpanded.signal
-                      .map(expanded =>
-                        if (expanded) "translateX(0) scale(1)"
-                        else "translateX(60px) scale(0)",
-                      ),
-                    styleProp("opacity") <-- shareExpanded.signal
-                      .map(expanded => if (expanded) "1" else "0"),
-                    "Text",
-                    onClick --> Observer { _ =>
-                      val text = plan.plainTextRepresentation
-                      if (
-                        js.typeOf(
-                          dom.window.navigator
-                            .asInstanceOf[js.Dynamic]
-                            .share,
-                        ) != "undefined"
-                      ) {
-                        dom.window.navigator
-                          .asInstanceOf[js.Dynamic]
-                          .share(
-                            js.Dynamic.literal(title = "Bus Schedule",
-                                               text = text,
-                            ),
-                          )
-                      }
-                      else {
-                        dom.window.navigator.clipboard
-                          .writeText(text)
-                      }
-                      shareExpanded.set(false)
-                    },
-                  ),
-                  // Link button - emerges from Share position (needs to slide right to its final position)
-                  button(
-                    cls := "button button-fixed-width expand-from-right",
-                    styleProp("transform") <-- shareExpanded.signal
-                      .map(expanded =>
-                        if (expanded) "translateX(0) scale(1)"
-                        else "translateX(-120px) scale(0)",
-                      ),
-                    styleProp("opacity") <-- shareExpanded.signal
-                      .map(expanded => if (expanded) "1" else "0"),
-                    "Link",
-                    onClick --> Observer { _ =>
-                      val url =
-                        if (dom.document.URL.contains("localhost"))
-                          s"http://localhost:8000/index.html?plan=${UrlEncoding.encode(plan)}"
-                        else
-                          s"https://rtabus.netlify.app/?plan=${UrlEncoding.encode(plan)}"
-                      if (
-                        js.typeOf(
-                          dom.window.navigator
-                            .asInstanceOf[js.Dynamic]
-                            .share,
-                        ) != "undefined"
-                      ) {
-                        dom.window.navigator
-                          .asInstanceOf[js.Dynamic]
-                          .share(
-                            js.Dynamic.literal(
-                              title = "Bus Schedule Link",
-                              url = url,
-                            ),
-                          )
-                      }
-                      else {
-                        dom.window.navigator.clipboard
-                          .writeText(url)
-                      }
-                      shareExpanded.set(false)
-                    },
-                  ),
-                ),
-
-                // Save expanded: input and Save Trip button (only shown if not already saved)
-                div(
-                  cls := "expanded-buttons-row",
-                  styleProp(
-                    "pointer-events",
-                  ) <-- saveExpanded.signal
-                    .map(expanded =>
-                      if (expanded) "auto" else "none",
-                    ),
-                  styleProp("position") <-- saveExpanded.signal
-                    .map(expanded =>
-                      if (expanded) "relative" else "absolute",
-                    ),
-                  // Input - emerges from Save position (right), slides left to its final position
-                  input(
-                    cls := "save-input expand-from-right",
-                    styleProp(
-                      "transform",
-                    ) <-- saveExpanded.signal.map(expanded =>
-                      if (expanded) "translateX(0) scale(1)"
-                      else "translateX(120px) scale(0)",
-                    ),
-                    styleProp("opacity") <-- saveExpanded.signal
-                      .map(expanded => if (expanded) "1" else "0"),
-                    styleProp(
-                      "visibility",
-                    ) <-- saveConfirmation.signal
-                      .map(conf =>
-                        if (conf.isDefined) "hidden"
-                        else "visible",
-                      ),
-                    typ := "text",
-                    placeholder := "Trip name",
-                    maxLength := 20,
-                    controlled(
-                      value <-- tripName.signal,
-                      onInput.mapToValue --> tripName.writer,
-                    ),
-                  ),
-                  // Save Trip button - emerges from Save position (right side, near Save button)
-                  button(
-                    cls := "button button-fixed-width expand-from-left",
-                    styleProp(
-                      "transform",
-                    ) <-- saveExpanded.signal.map(expanded =>
-                      if (expanded) "translateX(0) scale(1)"
-                      else "translateX(60px) scale(0)",
-                    ),
-                    styleProp("opacity") <-- saveExpanded.signal
-                      .map(expanded => if (expanded) "1" else "0"),
-                    styleProp(
-                      "visibility",
-                    ) <-- saveConfirmation.signal
-                      .map(conf =>
-                        if (conf.isDefined) "hidden"
-                        else "visible",
-                      ),
-                    "Save Trip",
-                    disabled <-- tripName.signal.map(
-                      _.trim.isEmpty,
-                    ),
-                    onClick --> Observer { _ =>
-                      val name = tripName.now().trim.take(20)
-                      if (name.nonEmpty) {
-                        // Create a new SavedPlan with UUID and save it
-                        val newSavedPlan =
-                          SavedPlan.create(plan, name)
-                        db.saveSavedPlan(newSavedPlan)
-                        currentSavedPlan.set(Some(newSavedPlan))
-                        // Update hasSavedPlans since we just saved one
-                        hasSavedPlans.set(true)
-                        saveConfirmation.set(Some(name))
-                        tripName.set("")
-                        setTimeout(1500) {
-                          saveExpanded.set(false)
-                          saveConfirmation.set(None)
-                        }
-                      }
-                    },
-                  ),
-                  // Confirmation message
-                  child <-- saveConfirmation.signal.map {
-                    case Some(name) =>
-                      div(
-                        cls := "save-confirmation",
-                        span(s"Saved as '$name'"),
-                      )
-                    case None =>
-                      div()
-                  },
-                ),
-              ),
-            )
-          }
-        },
-    )
-  }
 
   private[laminar] case class ReturnTripOptions(
     originalStart: Location,
