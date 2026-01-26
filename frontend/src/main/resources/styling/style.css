@@ -925,3 +925,125 @@ body {
 .bell-button.bell-button-active .bell-icon {
     animation: bell-ring 1s ease-in-out;
 }
+
+/* ========================================
+   Progressive Disclosure Menu Styles
+   ======================================== */
+
+/* Menu toggle button (collapsed state) */
+.menu-collapsed-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    opacity: 1;
+    transform: scale(1);
+    transition:
+        opacity 300ms ease,
+        transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.menu-collapsed-row.menu-collapsed-hidden {
+    opacity: 0;
+    transform: scale(0.8);
+    pointer-events: none;
+    position: absolute;
+}
+
+.menu-toggle-button {
+    min-width: 48px;
+    width: 48px;
+    height: 40px;
+    padding: 8px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.menu-dots {
+    font-size: 1.4rem;
+    font-weight: bold;
+    letter-spacing: 2px;
+    line-height: 1;
+}
+
+/* Menu expanded row (Share, New, Load) */
+.menu-expanded-row {
+    opacity: 1;
+    transform: scale(1);
+    transition:
+        opacity 300ms ease,
+        transform 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.menu-expanded-row.menu-row-hidden {
+    opacity: 0;
+    transform: scale(0.9);
+    pointer-events: none;
+    position: absolute;
+}
+
+/* Share expanded row (Back, Text, Link) */
+.share-expanded-row {
+    opacity: 1;
+    transform: translateX(0);
+    transition:
+        opacity 300ms ease,
+        transform 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.share-expanded-row.share-row-hidden {
+    opacity: 0;
+    transform: translateX(30px);
+    pointer-events: none;
+    position: absolute;
+}
+
+/* Action button animation class */
+.action-button-animate {
+    transition:
+        transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1),
+        opacity 250ms ease,
+        background-color 200ms ease,
+        box-shadow 200ms ease;
+}
+
+.action-button-animate:active {
+    transform: scale(0.95);
+}
+
+/* Icon-only button (for back arrow) */
+.button-icon-only {
+    min-width: 40px;
+    width: 40px;
+    height: 40px;
+    padding: 8px;
+    border-radius: 8px;
+    font-size: 1.2rem;
+}
+
+/* Staggered animation for menu items appearing */
+.menu-expanded-row .button:nth-child(1) {
+    transition-delay: 0ms;
+}
+
+.menu-expanded-row .button:nth-child(2) {
+    transition-delay: 50ms;
+}
+
+.menu-expanded-row .button:nth-child(3) {
+    transition-delay: 100ms;
+}
+
+.share-expanded-row .button:nth-child(1) {
+    transition-delay: 0ms;
+}
+
+.share-expanded-row .button:nth-child(2) {
+    transition-delay: 50ms;
+}
+
+.share-expanded-row .button:nth-child(3) {
+    transition-delay: 100ms;
+}
