@@ -188,64 +188,6 @@ body {
     width: 100%;
 }
 
-/* Trip/action button containers and buttons */
-.trip-button-container {
-    position: relative;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin: 0.5rem;
-    width: 100%;
-    height: 56px;
-    transition: width 300ms ease;
-}
-
-.floating-center-button {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    top: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    transition: opacity 200ms ease;
-}
-
-.expanded-buttons-row {
-    position: relative;
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 20px;
-    transition: opacity 250ms ease-in;
-}
-
-/* Animated expanding button - emerges from center */
-.expand-from-left {
-    transition:
-        transform 780ms cubic-bezier(0.34, 1.56, 0.64, 1),
-        opacity 200ms ease;
-}
-
-.expand-from-right {
-    transition:
-        transform 780ms cubic-bezier(0.34, 1.56, 0.64, 1) 40ms,
-        opacity 200ms ease 40ms;
-}
-
-/* Collapsed buttons row - instant hide, delayed fade in */
-.collapsed-buttons-row {
-    /* When NOT delayed-appear: fade in with delay after expanded buttons collapse */
-    transition: opacity 800ms ease-out 600ms;
-}
-
-.collapsed-buttons-row.delayed-appear {
-    /* When delayed-appear is present: instant hide (no transition) */
-    transition: none;
-}
-
 .return-trip-choice {
     max-width: 420px;
     margin: 0.5rem auto 0;
@@ -496,8 +438,10 @@ body {
 .action-buttons-container {
     position: relative;
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
+    gap: 8px;
     margin: 0.5rem;
     width: 100%;
     min-height: 56px;
@@ -505,73 +449,26 @@ body {
     box-sizing: border-box;
 }
 
-/* Save button container */
-.save-button-container {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    align-items: center;
-    margin: 0.5rem;
-    min-width: 100px;
-    min-height: 56px;
-}
-
-/* Save dialog */
-.save-dialog {
-    position: relative;
-    width: 100%;
-    overflow: hidden;
-    transition:
-        opacity 250ms ease,
-        max-height 300ms ease;
-}
-
-.save-dialog-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 0;
-}
-
-.save-dialog-content > div {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
+/* Action dock layout */
+.action-dock {
     width: 100%;
 }
 
-.save-input {
-    padding: 10px 14px;
-    border: 2px solid var(--color-primary);
-    border-radius: 8px;
-    font-size: 1rem;
-    width: 200px;
-    max-width: 100%;
-    text-align: center;
+.action-dock-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    width: 100%;
 }
 
-.save-input:focus {
-    outline: none;
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px rgba(1, 156, 143, 0.2);
+.action-dock-secondary {
+    gap: 16px;
 }
 
-.save-confirmation {
-    padding: 12px 16px;
-    background-color: rgba(1, 156, 143, 0.15);
-    border-radius: 8px;
-    color: var(--color-primary);
-    font-weight: 600;
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    top: 0;
-    text-align: center;
-    box-sizing: border-box;
-    z-index: 10;
+.action-toggle.action-toggle-active {
+    box-shadow: 0 0 0 3px rgba(1, 156, 143, 0.25);
 }
 
 /* Saved trips toggle button */
@@ -837,13 +734,6 @@ body {
 .wheel-locked .wheel-center-highlight {
     border-color: #999;
     background: rgba(150, 150, 150, 0.1);
-}
-
-/* Notification bell row */
-.notification-bell-row {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 8px;
 }
 
 /* Notification bell button */

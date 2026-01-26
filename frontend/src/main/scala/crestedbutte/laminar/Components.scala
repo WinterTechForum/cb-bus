@@ -477,340 +477,7 @@ object Components {
         cls := "add-new-route-section",
         child <-- addingNewRoute.signal.map {
           case false =>
-            // Capture currentSavedPlan to prevent saving to wrong plan
-            val capturedSavedPlan = currentSavedPlan.now()
-            val tripExpanded: Var[Boolean] = Var(false)
-
-            case class PendingReturnTrip(
-              lastSegmentId: Long,
-              options: ReturnTripOptions,
-              adjustedAvailable: Boolean,
-              originalAvailable: Boolean,
-              generalMessage: Option[String] = None)
-
-            val pendingReturnChoice: Var[Option[PendingReturnTrip]] =
-              Var(None)
-
-            def evaluatePendingReturn(
-              lastSegment: RouteSegment,
-              plan: Plan,
-              options: ReturnTripOptions,
-            ): PendingReturnTrip =
-              val lastEndTime = lastSegment.end.t
-              def hasReturnLeg(
-                start: Location,
-                end: Location,
-              ) =
-                rightLegOnRightRoute(
-                  start,
-                  end,
-                  plan,
-                  lastEndTime,
-                ).nonEmpty
-
-              val adjustedAvailable =
-                hasReturnLeg(
-                  options.adjustedStart,
-                  options.adjustedEnd,
-                )
-              val originalAvailable =
-                hasReturnLeg(
-                  options.originalStart,
-                  options.originalEnd,
-                )
-
-              PendingReturnTrip(
-                lastSegment.id,
-                options,
-                adjustedAvailable,
-                originalAvailable,
-                generalMessage = None,
-              )
-
-            def attemptReturnTrip(
-              start: Location,
-              end: Location,
-              expectedSegmentId: Option[Long],
-            ): Unit =
-              val currentPlan = $plan.now()
-              val latestSegmentO = currentPlan.l.lastOption
-              val isMatchingSegment =
-                expectedSegmentId match
-                  case Some(id) => latestSegmentO.exists(_.id == id)
-                  case None     => latestSegmentO.isDefined
-
-              if !isMatchingSegment then
-                val updated =
-                  pendingReturnChoice
-                    .now()
-                    .map(
-                      _.copy(
-                        adjustedAvailable = false,
-                        originalAvailable = false,
-                        generalMessage = Some(
-                          "Your trip changed before we could add the return. Please try again.",
-                        ),
-                      ),
-                    )
-                pendingReturnChoice.set(updated)
-              else
-                latestSegmentO.foreach { lastSeg =>
-                  val maybeReturnLeg =
-                    rightLegOnRightRoute(
-                      start,
-                      end,
-                      currentPlan,
-                      lastSeg.end.t,
-                    )
-                  maybeReturnLeg match
-                    case Some(newSeg) =>
-                      val updatedPlan =
-                        currentPlan.copy(l = currentPlan.l :+ newSeg)
-                      savePlanWithSavedPlan(db,
-                                            updatedPlan,
-                                            capturedSavedPlan,
-                      )
-                      $plan.set(updatedPlan)
-                      addingNewRoute.set(false)
-                      pendingReturnChoice.set(None)
-                      setTimeout(300)(tripExpanded.set(false))
-                    case None =>
-                      val defaultMessage =
-                        "Couldn't find a matching return route from that stop."
-                      val updated =
-                        pendingReturnChoice
-                          .now()
-                          .map { pending =>
-                            val isAdjustedChoice =
-                              pending.options.adjustedStart == start &&
-                                pending.options.adjustedEnd == end
-                            val isOriginalChoice =
-                              pending.options.originalStart == start &&
-                                pending.options.originalEnd == end
-                            val unavailableMessage =
-                              if isAdjustedChoice then
-                                s"No return trips leave ${pending.options.adjustedStart.name} right now."
-                              else if isOriginalChoice then
-                                s"No return trips leave ${pending.options.originalStart.name} right now."
-                              else defaultMessage
-                            pending.copy(
-                              adjustedAvailable =
-                                if isAdjustedChoice then false
-                                else pending.adjustedAvailable,
-                              originalAvailable =
-                                if isOriginalChoice then false
-                                else pending.originalAvailable,
-                              generalMessage =
-                                Some(unavailableMessage),
-                            )
-                          }
-                      pendingReturnChoice.set(updated)
-                }
-
-            val documentClickHandler
-              : js.Function1[dom.MouseEvent, Unit] =
-              (event: dom.MouseEvent) => {
-                val target = event.target.asInstanceOf[dom.Element]
-                val containerElement =
-                  dom.document.querySelector(".trip-button-container")
-                if (
-                  containerElement != null && !containerElement
-                    .contains(
-                      target,
-                    )
-                ) {
-                  tripExpanded.set(false)
-                }
-              }
-
-            div(
-              onMountCallback { _ =>
-                dom.document.addEventListener("click",
-                                              documentClickHandler,
-                )
-              },
-              onUnmountCallback { _ =>
-                dom.document.removeEventListener("click",
-                                                 documentClickHandler,
-                )
-              },
-              cls := "centered",
-              // Notification bell button - in its own row above trip buttons
-              div(
-                cls := "notification-bell-row",
-                NotificationBellButton($plan),
-              ),
-              div(
-                cls := "trip-button-container",
-
-                // Collapsed + Trip button
-                button(
-                  cls := "button floating-center-button button-fixed-width collapsed-buttons-row",
-                  cls <-- tripExpanded.signal.map(expanded =>
-                    if (expanded) "delayed-appear" else "",
-                  ),
-                  styleProp("opacity") <-- tripExpanded.signal.map(
-                    expanded => if (expanded) "0" else "1",
-                  ),
-                  styleProp("pointer-events") <-- tripExpanded.signal
-                    .map(expanded => if (expanded) "none" else "auto",
-                    ),
-                  span("+"),
-                  onClick --> Observer { _ =>
-                    tripExpanded.set(true)
-                  },
-                ),
-
-                // Expanded buttons container
-                div(
-                  cls := "expanded-buttons-row",
-                  styleProp("pointer-events") <-- tripExpanded.signal
-                    .map(expanded => if (expanded) "auto" else "none",
-                    ),
-                  styleProp("position") <-- tripExpanded.signal.map(
-                    expanded =>
-                      if (expanded) "relative" else "absolute",
-                  ),
-
-                  // New route button - emerges from center (left side)
-                  button(
-                    cls := "button button-fixed-width expand-from-left",
-                    styleProp("transform") <-- tripExpanded.signal
-                      .map(expanded =>
-                        if (expanded) "translateX(0) scale(1)"
-                        else "translateX(60px) scale(0)",
-                      ),
-                    styleProp("opacity") <-- tripExpanded.signal.map(
-                      expanded => if (expanded) "1" else "0",
-                    ),
-                    "New trip",
-                    onClick --> Observer { _ =>
-                      addingNewRoute.set(true)
-                      tripExpanded.set(false)
-                    },
-                  ),
-
-                  // Return trip button - emerges from center (right side)
-                  button(
-                    cls := "button button-fixed-width expand-from-right",
-                    styleProp("transform") <-- tripExpanded.signal
-                      .map(expanded =>
-                        if (expanded) "translateX(0) scale(1)"
-                        else "translateX(-60px) scale(0)",
-                      ),
-                    styleProp("opacity") <-- tripExpanded.signal.map(
-                      expanded => if (expanded) "1" else "0",
-                    ),
-                    "Return trip",
-                    onClick --> Observer { _ =>
-                      val plan = $plan.now()
-                      val maybeLastSeg = plan.l.lastOption
-                      maybeLastSeg.foreach { lastSeg =>
-                        val options = returnTripEndpoints(lastSeg)
-                        if options.hasAdjustments then
-                          pendingReturnChoice.set(
-                            Some(
-                              evaluatePendingReturn(
-                                lastSeg,
-                                plan,
-                                options,
-                              ),
-                            ),
-                          )
-                        else
-                          attemptReturnTrip(
-                            options.adjustedStart,
-                            options.adjustedEnd,
-                            Some(lastSeg.id),
-                          )
-                      }
-                    },
-                  ),
-                ),
-              ),
-              child <-- pendingReturnChoice.signal.map {
-                case Some(pending) =>
-                  val alternateLabel =
-                    s"${pending.options.adjustedStart.name} → ${pending.options.adjustedEnd.name}"
-                  val originalLabel =
-                    s"${pending.options.originalStart.name} → ${pending.options.originalEnd.name}"
-                  val alternateButton =
-                    Option.when(pending.adjustedAvailable)(
-                      button(
-                        cls := "button return-trip-choice_button",
-                        alternateLabel,
-                        onClick --> Observer { _ =>
-                          attemptReturnTrip(
-                            pending.options.adjustedStart,
-                            pending.options.adjustedEnd,
-                            Some(pending.lastSegmentId),
-                          )
-                        },
-                      ),
-                    )
-                  val originalButton =
-                    Option.when(pending.originalAvailable)(
-                      button(
-                        cls :=
-                          "button button-outlined return-trip-choice_button",
-                        originalLabel,
-                        onClick --> Observer { _ =>
-                          attemptReturnTrip(
-                            pending.options.originalStart,
-                            pending.options.originalEnd,
-                            Some(pending.lastSegmentId),
-                          )
-                        },
-                      ),
-                    )
-                  val warningMessages =
-                    pending.generalMessage match
-                      case Some(message) => List(message)
-                      case None =>
-                        List(
-                          Option.when(!pending.adjustedAvailable)(
-                            s"No return trips leave ${pending.options.adjustedStart.name} right now.",
-                          ),
-                          Option.when(!pending.originalAvailable)(
-                            s"No return trips leave ${pending.options.originalStart.name} right now.",
-                          ),
-                        ).flatten
-                  val warningsNode =
-                    if warningMessages.nonEmpty then
-                      div(
-                        cls := "notification is-warning return-trip-choice_warning",
-                        p(warningMessages.mkString(" ")),
-                      )
-                    else emptyNode
-                  val alternateButtonNode =
-                    alternateButton.getOrElse(emptyNode)
-                  val originalButtonNode =
-                    originalButton.getOrElse(emptyNode)
-                  val cancelButton =
-                    button(
-                      cls := "button button-ghost return-trip-choice_button",
-                      "Cancel",
-                      onClick --> Observer { _ =>
-                        pendingReturnChoice.set(None)
-                      },
-                    )
-                  div(
-                    cls := "return-trip-choice",
-                    h3("Choose your return stop"),
-                    p(
-                      "The alternate stop is usually faster, but you can keep your original stop if you prefer.",
-                    ),
-                    warningsNode,
-                    div(
-                      cls := "return-trip-choice_buttons",
-                      alternateButtonNode,
-                      originalButtonNode,
-                      cancelButton,
-                    ),
-                  )
-                case None => emptyNode
-              },
-            )
+            emptyNode
           case true =>
             div(
               StopSelector(
@@ -1103,33 +770,50 @@ object Components {
     focusPlanNameInput: Var[Boolean],
     hasSavedPlans: Var[Boolean],
   ) = {
-    val shareExpanded: Var[Boolean] = Var(false)
-    val saveExpanded: Var[Boolean] = Var(false)
-    val tripName: Var[String] = Var("")
-    val saveConfirmation: Var[Option[String]] = Var(None)
+    val planExpanded: Var[Boolean] = Var(false)
+    val tripExpanded: Var[Boolean] = Var(false)
+
+    case class PendingReturnTrip(
+      lastSegmentId: Long,
+      options: ReturnTripOptions,
+      adjustedAvailable: Boolean,
+      originalAvailable: Boolean,
+      generalMessage: Option[String] = None)
+
+    val pendingReturnChoice: Var[Option[PendingReturnTrip]] =
+      Var(None)
+
+    def collapseMenus(): Unit = {
+      planExpanded.set(false)
+      tripExpanded.set(false)
+    }
 
     // Add click handler to collapse when clicking outside
     val documentClickHandler: js.Function1[dom.MouseEvent, Unit] =
       (event: dom.MouseEvent) => {
         val target = event.target.asInstanceOf[dom.Element]
         val actionContainer =
-          dom.document.querySelector(".share-save-buttons-container")
+          dom.document.querySelector(".action-dock")
         if (
           actionContainer != null && !actionContainer.contains(target)
         ) {
-          shareExpanded.set(false)
-          saveExpanded.set(false)
-          saveConfirmation.set(None)
+          collapseMenus()
         }
       }
 
+    val collapseOnAddMode =
+      addingNewRoute.signal.changes --> Observer[Boolean] { _ =>
+        collapseMenus()
+      }
+
     div(
-      onMountCallback { ctx =>
+      onMountCallback { _ =>
         dom.document.addEventListener("click", documentClickHandler)
       },
       onUnmountCallback { _ =>
-        dom.document.removeEventListener("click",
-                                         documentClickHandler,
+        dom.document.removeEventListener(
+          "click",
+          documentClickHandler,
         )
       },
       child <-- $plan.signal
@@ -1138,106 +822,217 @@ object Components {
           if (plan.routeSegments.isEmpty)
             div()
           else {
-            val isSaved = savedPlanO.isDefined
+            val capturedSavedPlan = savedPlanO
+
+            def evaluatePendingReturn(
+              lastSegment: RouteSegment,
+              plan: Plan,
+              options: ReturnTripOptions,
+            ): PendingReturnTrip =
+              val lastEndTime = lastSegment.end.t
+              def hasReturnLeg(
+                start: Location,
+                end: Location,
+              ) =
+                rightLegOnRightRoute(
+                  start,
+                  end,
+                  plan,
+                  lastEndTime,
+                ).nonEmpty
+
+              val adjustedAvailable =
+                hasReturnLeg(
+                  options.adjustedStart,
+                  options.adjustedEnd,
+                )
+              val originalAvailable =
+                hasReturnLeg(
+                  options.originalStart,
+                  options.originalEnd,
+                )
+
+              PendingReturnTrip(
+                lastSegment.id,
+                options,
+                adjustedAvailable,
+                originalAvailable,
+                generalMessage = None,
+              )
+
+            def attemptReturnTrip(
+              start: Location,
+              end: Location,
+              expectedSegmentId: Option[Long],
+            ): Unit =
+              val currentPlan = $plan.now()
+              val latestSegmentO = currentPlan.l.lastOption
+              val isMatchingSegment =
+                expectedSegmentId match
+                  case Some(id) => latestSegmentO.exists(_.id == id)
+                  case None     => latestSegmentO.isDefined
+
+              if !isMatchingSegment then
+                val updated =
+                  pendingReturnChoice
+                    .now()
+                    .map(
+                      _.copy(
+                        adjustedAvailable = false,
+                        originalAvailable = false,
+                        generalMessage = Some(
+                          "Your trip changed before we could add the return. Please try again.",
+                        ),
+                      ),
+                    )
+                pendingReturnChoice.set(updated)
+              else
+                latestSegmentO.foreach { lastSeg =>
+                  val maybeReturnLeg =
+                    rightLegOnRightRoute(
+                      start,
+                      end,
+                      currentPlan,
+                      lastSeg.end.t,
+                    )
+                  maybeReturnLeg match
+                    case Some(newSeg) =>
+                      val updatedPlan =
+                        currentPlan.copy(l = currentPlan.l :+ newSeg)
+                      savePlanWithSavedPlan(
+                        db,
+                        updatedPlan,
+                        capturedSavedPlan,
+                      )
+                      $plan.set(updatedPlan)
+                      addingNewRoute.set(false)
+                      pendingReturnChoice.set(None)
+                    case None =>
+                      val defaultMessage =
+                        "Couldn't find a matching return route from that stop."
+                      val updated =
+                        pendingReturnChoice
+                          .now()
+                          .map { pending =>
+                            val isAdjustedChoice =
+                              pending.options.adjustedStart == start &&
+                                pending.options.adjustedEnd == end
+                            val isOriginalChoice =
+                              pending.options.originalStart == start &&
+                                pending.options.originalEnd == end
+                            val unavailableMessage =
+                              if isAdjustedChoice then
+                                s"No return trips leave ${pending.options.adjustedStart.name} right now."
+                              else if isOriginalChoice then
+                                s"No return trips leave ${pending.options.originalStart.name} right now."
+                              else defaultMessage
+                            pending.copy(
+                              adjustedAvailable =
+                                if isAdjustedChoice then false
+                                else pending.adjustedAvailable,
+                              originalAvailable =
+                                if isOriginalChoice then false
+                                else pending.originalAvailable,
+                              generalMessage =
+                                Some(unavailableMessage),
+                            )
+                          }
+                      pendingReturnChoice.set(updated)
+                }
 
             div(
               cls := "centered",
               div(
-                cls := "action-buttons-container share-save-buttons-container",
-
-                // Collapsed state: Share, New, and Load buttons
+                cls := "action-buttons-container action-dock",
+                collapseOnAddMode,
                 div(
-                  cls := "expanded-buttons-row collapsed-buttons-row",
-                  cls <-- shareExpanded.signal
-                    .combineWith(saveExpanded.signal)
-                    .map { case (share, save) =>
-                      if (share || save) "delayed-appear" else ""
-                    },
-                  styleProp("opacity") <-- shareExpanded.signal
-                    .combineWith(saveExpanded.signal)
-                    .map { case (share, save) =>
-                      if (share || save) "0" else "1"
-                    },
-                  styleProp(
-                    "pointer-events",
-                  ) <-- shareExpanded.signal
-                    .combineWith(saveExpanded.signal)
-                    .map { case (share, save) =>
-                      if (share || save) "none" else "auto"
-                    },
-                  styleProp("position") <-- shareExpanded.signal
-                    .combineWith(saveExpanded.signal)
-                    .map { case (share, save) =>
-                      if (share || save) "absolute" else "relative"
-                    },
-                  button(
-                    cls := "button button-fixed-width",
-                    SvgIcon.share("share-icon"),
-                    onClick --> Observer { _ =>
-                      shareExpanded.set(true)
-                      saveExpanded.set(false)
-                    },
-                  ),
-                  // New button - creates a fresh empty trip
-                  button(
-                    cls := "button button-fixed-width",
-                    "New",
-                    onClick --> Observer { _ =>
-                      // Create a fresh empty plan
-                      val emptyPlan = Plan(Seq.empty)
-                      // Save the empty plan as the current daily plan
-                      db.saveDailyPlanOnly(emptyPlan)
-                      // Update the plan
-                      $plan.set(emptyPlan)
-                      // Clear the current saved plan reference (doesn't delete the saved plan)
-                      currentSavedPlan.set(None)
-                      // Unlock the schedule so user can start adding routes
-                      isLocked.set(false)
-                      // Start in adding new route mode
-                      addingNewRoute.set(true)
-                    },
-                  ),
-                  // Load button - dynamically show/hide based on saved plans
-                  child <-- hasSavedPlans.signal.map { hasPlans =>
-                    if (hasPlans) {
+                  cls := "action-dock-row action-dock-primary",
+                  NotificationBellButton($plan),
+                  child <-- addingNewRoute.signal.map { adding =>
+                    if (adding) emptyNode
+                    else
                       button(
-                        cls := "button button-fixed-width",
-                        "Load",
+                        cls := "button button-fixed-width action-toggle",
+                        cls <-- tripExpanded.signal.map(expanded =>
+                          if (expanded) "action-toggle-active" else "",
+                        ),
+                        title := "Add or adjust trip segments",
+                        "Trip",
                         onClick --> Observer { _ =>
-                          loadTripsMode.set(true)
-                          addingNewRoute.set(true)
+                          tripExpanded.update(!_)
+                          planExpanded.set(false)
                         },
                       )
-                    }
-                    else {
-                      emptyNode
-                    }
                   },
-                ),
-
-                // Share expanded: Text and Link buttons
-                div(
-                  cls := "expanded-buttons-row",
-                  styleProp(
-                    "pointer-events",
-                  ) <-- shareExpanded.signal
-                    .map(expanded => if (expanded) "auto" else "none",
-                    ),
-                  styleProp("position") <-- shareExpanded.signal
-                    .map(expanded =>
-                      if (expanded) "relative" else "absolute",
-                    ),
-                  // Text button - emerges from Share position (left side, no translation needed)
                   button(
-                    cls := "button button-fixed-width expand-from-left",
-                    styleProp("transform") <-- shareExpanded.signal
-                      .map(expanded =>
-                        if (expanded) "translateX(0) scale(1)"
-                        else "translateX(60px) scale(0)",
-                      ),
-                    styleProp("opacity") <-- shareExpanded.signal
-                      .map(expanded => if (expanded) "1" else "0"),
-                    "Text",
+                    cls := "button button-fixed-width action-toggle",
+                    cls <-- planExpanded.signal.map(expanded =>
+                      if (expanded) "action-toggle-active" else "",
+                    ),
+                    title := "Share, load, or restart this plan",
+                    "Actions",
+                    onClick --> Observer { _ =>
+                      planExpanded.update(!_)
+                      tripExpanded.set(false)
+                    },
+                  ),
+                ),
+                div(
+                  cls := "action-dock-row action-dock-secondary",
+                  display <-- tripExpanded.signal
+                    .combineWith(addingNewRoute.signal)
+                    .map { case (expanded, adding) =>
+                      if (expanded && !adding) "flex" else "none"
+                    },
+                  button(
+                    cls := "button",
+                    "Add trip",
+                    title := "Add another segment to this plan",
+                    onClick --> Observer { _ =>
+                      addingNewRoute.set(true)
+                      pendingReturnChoice.set(None)
+                      tripExpanded.set(false)
+                    },
+                  ),
+                  button(
+                    cls := "button",
+                    "Return trip",
+                    title := "Add a return segment",
+                    onClick --> Observer { _ =>
+                      val planNow = $plan.now()
+                      val maybeLastSeg = planNow.l.lastOption
+                      maybeLastSeg.foreach { lastSeg =>
+                        val options = returnTripEndpoints(lastSeg)
+                        if options.hasAdjustments then
+                          pendingReturnChoice.set(
+                            Some(
+                              evaluatePendingReturn(
+                                lastSeg,
+                                planNow,
+                                options,
+                              ),
+                            ),
+                          )
+                        else
+                          attemptReturnTrip(
+                            options.adjustedStart,
+                            options.adjustedEnd,
+                            Some(lastSeg.id),
+                          )
+                      }
+                      tripExpanded.set(false)
+                    },
+                  ),
+                ),
+                div(
+                  cls := "action-dock-row action-dock-secondary",
+                  display <-- planExpanded.signal.map(expanded =>
+                    if (expanded) "flex" else "none",
+                  ),
+                  button(
+                    cls := "button",
+                    "Share text",
+                    title := "Share this plan as text",
                     onClick --> Observer { _ =>
                       val text = plan.plainTextRepresentation
                       if (
@@ -1250,8 +1045,9 @@ object Components {
                         dom.window.navigator
                           .asInstanceOf[js.Dynamic]
                           .share(
-                            js.Dynamic.literal(title = "Bus Schedule",
-                                               text = text,
+                            js.Dynamic.literal(
+                              title = "Bus Schedule",
+                              text = text,
                             ),
                           )
                       }
@@ -1259,20 +1055,13 @@ object Components {
                         dom.window.navigator.clipboard
                           .writeText(text)
                       }
-                      shareExpanded.set(false)
+                      planExpanded.set(false)
                     },
                   ),
-                  // Link button - emerges from Share position (needs to slide right to its final position)
                   button(
-                    cls := "button button-fixed-width expand-from-right",
-                    styleProp("transform") <-- shareExpanded.signal
-                      .map(expanded =>
-                        if (expanded) "translateX(0) scale(1)"
-                        else "translateX(-120px) scale(0)",
-                      ),
-                    styleProp("opacity") <-- shareExpanded.signal
-                      .map(expanded => if (expanded) "1" else "0"),
-                    "Link",
+                    cls := "button",
+                    "Share link",
+                    title := "Copy or share a link to this plan",
                     onClick --> Observer { _ =>
                       val url =
                         if (dom.document.URL.contains("localhost"))
@@ -1299,102 +1088,125 @@ object Components {
                         dom.window.navigator.clipboard
                           .writeText(url)
                       }
-                      shareExpanded.set(false)
+                      planExpanded.set(false)
                     },
                   ),
-                ),
-
-                // Save expanded: input and Save Trip button (only shown if not already saved)
-                div(
-                  cls := "expanded-buttons-row",
-                  styleProp(
-                    "pointer-events",
-                  ) <-- saveExpanded.signal
-                    .map(expanded =>
-                      if (expanded) "auto" else "none",
-                    ),
-                  styleProp("position") <-- saveExpanded.signal
-                    .map(expanded =>
-                      if (expanded) "relative" else "absolute",
-                    ),
-                  // Input - emerges from Save position (right), slides left to its final position
-                  input(
-                    cls := "save-input expand-from-right",
-                    styleProp(
-                      "transform",
-                    ) <-- saveExpanded.signal.map(expanded =>
-                      if (expanded) "translateX(0) scale(1)"
-                      else "translateX(120px) scale(0)",
-                    ),
-                    styleProp("opacity") <-- saveExpanded.signal
-                      .map(expanded => if (expanded) "1" else "0"),
-                    styleProp(
-                      "visibility",
-                    ) <-- saveConfirmation.signal
-                      .map(conf =>
-                        if (conf.isDefined) "hidden"
-                        else "visible",
-                      ),
-                    typ := "text",
-                    placeholder := "Trip name",
-                    maxLength := 20,
-                    controlled(
-                      value <-- tripName.signal,
-                      onInput.mapToValue --> tripName.writer,
-                    ),
-                  ),
-                  // Save Trip button - emerges from Save position (right side, near Save button)
-                  button(
-                    cls := "button button-fixed-width expand-from-left",
-                    styleProp(
-                      "transform",
-                    ) <-- saveExpanded.signal.map(expanded =>
-                      if (expanded) "translateX(0) scale(1)"
-                      else "translateX(60px) scale(0)",
-                    ),
-                    styleProp("opacity") <-- saveExpanded.signal
-                      .map(expanded => if (expanded) "1" else "0"),
-                    styleProp(
-                      "visibility",
-                    ) <-- saveConfirmation.signal
-                      .map(conf =>
-                        if (conf.isDefined) "hidden"
-                        else "visible",
-                      ),
-                    "Save Trip",
-                    disabled <-- tripName.signal.map(
-                      _.trim.isEmpty,
-                    ),
-                    onClick --> Observer { _ =>
-                      val name = tripName.now().trim.take(20)
-                      if (name.nonEmpty) {
-                        // Create a new SavedPlan with UUID and save it
-                        val newSavedPlan =
-                          SavedPlan.create(plan, name)
-                        db.saveSavedPlan(newSavedPlan)
-                        currentSavedPlan.set(Some(newSavedPlan))
-                        // Update hasSavedPlans since we just saved one
-                        hasSavedPlans.set(true)
-                        saveConfirmation.set(Some(name))
-                        tripName.set("")
-                        setTimeout(1500) {
-                          saveExpanded.set(false)
-                          saveConfirmation.set(None)
-                        }
-                      }
-                    },
-                  ),
-                  // Confirmation message
-                  child <-- saveConfirmation.signal.map {
-                    case Some(name) =>
-                      div(
-                        cls := "save-confirmation",
-                        span(s"Saved as '$name'"),
+                  child <-- hasSavedPlans.signal.map { hasPlans =>
+                    if (hasPlans) {
+                      button(
+                        cls := "button",
+                        "Load saved",
+                        title := "Load a saved trip",
+                        onClick --> Observer { _ =>
+                          loadTripsMode.set(true)
+                          addingNewRoute.set(true)
+                          pendingReturnChoice.set(None)
+                          planExpanded.set(false)
+                        },
                       )
-                    case None =>
-                      div()
+                    }
+                    else {
+                      emptyNode
+                    }
                   },
+                  button(
+                    cls := "button",
+                    "Start over",
+                    title := "Clear this plan and start a new one",
+                    onClick --> Observer { _ =>
+                      val emptyPlan = Plan(Seq.empty)
+                      db.saveDailyPlanOnly(emptyPlan)
+                      $plan.set(emptyPlan)
+                      currentSavedPlan.set(None)
+                      isLocked.set(false)
+                      addingNewRoute.set(true)
+                      pendingReturnChoice.set(None)
+                      planExpanded.set(false)
+                    },
+                  ),
                 ),
+                child <-- pendingReturnChoice.signal.map {
+                  case Some(pending) =>
+                    val alternateLabel =
+                      s"${pending.options.adjustedStart.name} → ${pending.options.adjustedEnd.name}"
+                    val originalLabel =
+                      s"${pending.options.originalStart.name} → ${pending.options.originalEnd.name}"
+                    val alternateButton =
+                      Option.when(pending.adjustedAvailable)(
+                        button(
+                          cls := "button return-trip-choice_button",
+                          alternateLabel,
+                          onClick --> Observer { _ =>
+                            attemptReturnTrip(
+                              pending.options.adjustedStart,
+                              pending.options.adjustedEnd,
+                              Some(pending.lastSegmentId),
+                            )
+                          },
+                        ),
+                      )
+                    val originalButton =
+                      Option.when(pending.originalAvailable)(
+                        button(
+                          cls :=
+                            "button button-outlined return-trip-choice_button",
+                          originalLabel,
+                          onClick --> Observer { _ =>
+                            attemptReturnTrip(
+                              pending.options.originalStart,
+                              pending.options.originalEnd,
+                              Some(pending.lastSegmentId),
+                            )
+                          },
+                        ),
+                      )
+                    val warningMessages =
+                      pending.generalMessage match
+                        case Some(message) => List(message)
+                        case None =>
+                          List(
+                            Option.when(!pending.adjustedAvailable)(
+                              s"No return trips leave ${pending.options.adjustedStart.name} right now.",
+                            ),
+                            Option.when(!pending.originalAvailable)(
+                              s"No return trips leave ${pending.options.originalStart.name} right now.",
+                            ),
+                          ).flatten
+                    val warningsNode =
+                      if warningMessages.nonEmpty then
+                        div(
+                          cls := "notification is-warning return-trip-choice_warning",
+                          p(warningMessages.mkString(" ")),
+                        )
+                      else emptyNode
+                    val alternateButtonNode =
+                      alternateButton.getOrElse(emptyNode)
+                    val originalButtonNode =
+                      originalButton.getOrElse(emptyNode)
+                    val cancelButton =
+                      button(
+                        cls := "button button-ghost return-trip-choice_button",
+                        "Cancel",
+                        onClick --> Observer { _ =>
+                          pendingReturnChoice.set(None)
+                        },
+                      )
+                    div(
+                      cls := "return-trip-choice",
+                      h3("Choose your return stop"),
+                      p(
+                        "The alternate stop is usually faster, but you can keep your original stop if you prefer.",
+                      ),
+                      warningsNode,
+                      div(
+                        cls := "return-trip-choice_buttons",
+                        alternateButtonNode,
+                        originalButtonNode,
+                        cancelButton,
+                      ),
+                    )
+                  case None => emptyNode
+                },
               ),
             )
           }
