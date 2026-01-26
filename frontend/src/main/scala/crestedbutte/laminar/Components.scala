@@ -635,11 +635,6 @@ object Components {
                 )
               },
               cls := "centered",
-              // Notification bell button - in its own row above trip buttons
-              div(
-                cls := "notification-bell-row",
-                NotificationBellButton($plan),
-              ),
               div(
                 cls := "trip-button-container",
 
@@ -1091,6 +1086,8 @@ object Components {
           isLocked.update(!_)
         },
       ),
+      // Bell notification button - moved to top row
+      NotificationBellButton($plan),
     )
 
   def copyButtons(
@@ -1103,6 +1100,8 @@ object Components {
     focusPlanNameInput: Var[Boolean],
     hasSavedPlans: Var[Boolean],
   ) = {
+    // Progressive disclosure state: menu collapsed -> menu expanded -> share expanded
+    val menuExpanded: Var[Boolean] = Var(false)
     val shareExpanded: Var[Boolean] = Var(false)
     val saveExpanded: Var[Boolean] = Var(false)
     val tripName: Var[String] = Var("")
@@ -1117,6 +1116,7 @@ object Components {
         if (
           actionContainer != null && !actionContainer.contains(target)
         ) {
+          menuExpanded.set(false)
           shareExpanded.set(false)
           saveExpanded.set(false)
           saveConfirmation.set(None)
@@ -1145,42 +1145,41 @@ object Components {
               div(
                 cls := "action-buttons-container share-save-buttons-container",
 
-                // Collapsed state: Share, New, and Load buttons
+                // Level 0: Collapsed state - just the menu button (⋯)
                 div(
-                  cls := "expanded-buttons-row collapsed-buttons-row",
-                  cls <-- shareExpanded.signal
-                    .combineWith(saveExpanded.signal)
-                    .map { case (share, save) =>
-                      if (share || save) "delayed-appear" else ""
+                  cls := "menu-collapsed-row",
+                  cls <-- menuExpanded.signal.map(expanded =>
+                    if (expanded) "menu-collapsed-hidden" else "",
+                  ),
+                  button(
+                    cls := "button menu-toggle-button",
+                    title := "More actions",
+                    span(cls := "menu-dots", "⋯"),
+                    onClick --> Observer { _ =>
+                      menuExpanded.set(true)
                     },
-                  styleProp("opacity") <-- shareExpanded.signal
+                  ),
+                ),
+
+                // Level 1: Menu expanded - Share, New, Load buttons
+                div(
+                  cls := "expanded-buttons-row menu-expanded-row",
+                  cls <-- menuExpanded.signal
+                    .combineWith(shareExpanded.signal)
                     .combineWith(saveExpanded.signal)
-                    .map { case (share, save) =>
-                      if (share || save) "0" else "1"
-                    },
-                  styleProp(
-                    "pointer-events",
-                  ) <-- shareExpanded.signal
-                    .combineWith(saveExpanded.signal)
-                    .map { case (share, save) =>
-                      if (share || save) "none" else "auto"
-                    },
-                  styleProp("position") <-- shareExpanded.signal
-                    .combineWith(saveExpanded.signal)
-                    .map { case (share, save) =>
-                      if (share || save) "absolute" else "relative"
+                    .map { case (menuOpen, shareOpen, saveOpen) =>
+                      if (!menuOpen || shareOpen || saveOpen) "menu-row-hidden" else ""
                     },
                   button(
-                    cls := "button button-fixed-width",
+                    cls := "button button-fixed-width action-button-animate",
                     SvgIcon.share("share-icon"),
                     onClick --> Observer { _ =>
                       shareExpanded.set(true)
-                      saveExpanded.set(false)
                     },
                   ),
                   // New button - creates a fresh empty trip
                   button(
-                    cls := "button button-fixed-width",
+                    cls := "button button-fixed-width action-button-animate",
                     "New",
                     onClick --> Observer { _ =>
                       // Create a fresh empty plan
@@ -1195,17 +1194,19 @@ object Components {
                       isLocked.set(false)
                       // Start in adding new route mode
                       addingNewRoute.set(true)
+                      menuExpanded.set(false)
                     },
                   ),
                   // Load button - dynamically show/hide based on saved plans
                   child <-- hasSavedPlans.signal.map { hasPlans =>
                     if (hasPlans) {
                       button(
-                        cls := "button button-fixed-width",
+                        cls := "button button-fixed-width action-button-animate",
                         "Load",
                         onClick --> Observer { _ =>
                           loadTripsMode.set(true)
                           addingNewRoute.set(true)
+                          menuExpanded.set(false)
                         },
                       )
                     }
@@ -1215,28 +1216,24 @@ object Components {
                   },
                 ),
 
-                // Share expanded: Text and Link buttons
+                // Level 2: Share expanded - Text and Link buttons
                 div(
-                  cls := "expanded-buttons-row",
-                  styleProp(
-                    "pointer-events",
-                  ) <-- shareExpanded.signal
-                    .map(expanded => if (expanded) "auto" else "none",
-                    ),
-                  styleProp("position") <-- shareExpanded.signal
-                    .map(expanded =>
-                      if (expanded) "relative" else "absolute",
-                    ),
-                  // Text button - emerges from Share position (left side, no translation needed)
+                  cls := "expanded-buttons-row share-expanded-row",
+                  cls <-- shareExpanded.signal.map(expanded =>
+                    if (expanded) "" else "share-row-hidden",
+                  ),
+                  // Back button to return to menu level
                   button(
-                    cls := "button button-fixed-width expand-from-left",
-                    styleProp("transform") <-- shareExpanded.signal
-                      .map(expanded =>
-                        if (expanded) "translateX(0) scale(1)"
-                        else "translateX(60px) scale(0)",
-                      ),
-                    styleProp("opacity") <-- shareExpanded.signal
-                      .map(expanded => if (expanded) "1" else "0"),
+                    cls := "button button-icon-only action-button-animate",
+                    title := "Back",
+                    span("←"),
+                    onClick --> Observer { _ =>
+                      shareExpanded.set(false)
+                    },
+                  ),
+                  // Text button
+                  button(
+                    cls := "button button-fixed-width action-button-animate",
                     "Text",
                     onClick --> Observer { _ =>
                       val text = plan.plainTextRepresentation
@@ -1260,18 +1257,12 @@ object Components {
                           .writeText(text)
                       }
                       shareExpanded.set(false)
+                      menuExpanded.set(false)
                     },
                   ),
-                  // Link button - emerges from Share position (needs to slide right to its final position)
+                  // Link button
                   button(
-                    cls := "button button-fixed-width expand-from-right",
-                    styleProp("transform") <-- shareExpanded.signal
-                      .map(expanded =>
-                        if (expanded) "translateX(0) scale(1)"
-                        else "translateX(-120px) scale(0)",
-                      ),
-                    styleProp("opacity") <-- shareExpanded.signal
-                      .map(expanded => if (expanded) "1" else "0"),
+                    cls := "button button-fixed-width action-button-animate",
                     "Link",
                     onClick --> Observer { _ =>
                       val url =
@@ -1300,6 +1291,7 @@ object Components {
                           .writeText(url)
                       }
                       shareExpanded.set(false)
+                      menuExpanded.set(false)
                     },
                   ),
                 ),
