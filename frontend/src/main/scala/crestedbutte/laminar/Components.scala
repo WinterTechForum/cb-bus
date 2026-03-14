@@ -286,6 +286,12 @@ object Components {
     val currentSavedPlan: Var[Option[SavedPlan]] = Var(
       db.getCurrentSavedPlan,
     )
+    
+    // Track the original plan state when a saved plan is loaded
+    // Used to detect unsaved changes (dirty state)
+    val originalPlanOnLoad: Var[Option[Plan]] = Var(
+      db.getCurrentSavedPlan.map(_.plan),
+    )
 
     // Track whether we should open the load trips view when entering stop selector
     val loadTripsMode: Var[Boolean] = Var(false)
@@ -295,6 +301,13 @@ object Components {
     val hasSavedPlans: Var[Boolean] = Var(
       db.listSavedPlans().nonEmpty || db.listPlanNames().nonEmpty,
     )
+    
+    // Derive dirty state: plan differs from original loaded state
+    val isDirty: Signal[Boolean] = 
+      $plan.signal.combineWith(originalPlanOnLoad.signal).map {
+        case (current, Some(original)) => current != original
+        case _ => false
+      }
 
     // Persist locked state changes to localStorage
     val persistLockedState =
@@ -347,6 +360,8 @@ object Components {
                            db,
                            focusPlanNameInput,
                            hasSavedPlans,
+                           isDirty,
+                           originalPlanOnLoad,
         ),
       ),
       // Action buttons - hidden when loading trips
@@ -362,6 +377,8 @@ object Components {
                     loadTripsMode,
                     focusPlanNameInput,
                     hasSavedPlans,
+                    isDirty,
+                    originalPlanOnLoad,
         ),
       ),
       // Plan segments container - hidden when loading trips
@@ -823,6 +840,7 @@ object Components {
                 isLocked,
                 loadTripsMode,
                 hasSavedPlans,
+                originalPlanOnLoad,
               ),
             )
         },
@@ -941,6 +959,8 @@ object Components {
     db: Persistence,
     focusPlanNameInput: Var[Boolean],
     hasSavedPlans: Var[Boolean],
+    $isDirty: Signal[Boolean],
+    originalPlanOnLoad: Var[Option[Plan]],
   ) =
     // Local state for editing the name
     val editingName: Var[String] = Var("")
@@ -949,62 +969,34 @@ object Components {
 
     div(
       cls := "plan-name-row",
-      // Save button wrapper - animated appearance when not saved AND there are segments
-      child <-- $currentSavedPlan.signal
-        .combineWith($plan.signal)
-        .map { case (savedPlanO, plan) =>
-          val isSaved = savedPlanO.isDefined
-          val hasSegments = plan.routeSegments.nonEmpty
-          val shouldShow = !isSaved && hasSegments
-
-          div(
-            cls := "plan-name-save-wrapper",
-            styleProp("width") := (if (shouldShow) "112px"
-                                   else "0px"), // 100px button + 12px gap
-            styleProp("opacity") := (if (shouldShow) "1" else "0"),
-            button(
-              cls := "button button-fixed-width plan-name-save-button",
-              styleProp("transform") := (if (shouldShow) "scale(1)"
-                                         else "scale(0.8)"),
-              styleProp("pointer-events") := (if (shouldShow) "auto"
-                                              else "none"),
-              title := "Save trip",
-              SvgIcon("glyphicons-basic-30-clipboard.svg",
-                      "plan-name-save-icon",
-              ),
-              onClick --> Observer { _ =>
-                // Create a new SavedPlan with UUID but no name yet
-                val plan = $plan.now()
-                val newSavedPlan = SavedPlan.create(plan)
-                db.saveSavedPlan(newSavedPlan)
-                $currentSavedPlan.set(Some(newSavedPlan))
-                // Update hasSavedPlans since we just saved one
-                hasSavedPlans.set(true)
-                // Unlock so the input becomes editable
-                isLocked.set(false)
-                // Signal to focus the plan name input
-                focusPlanNameInput.set(true)
-              },
-            ),
-          )
-        },
+      // Plan name container with dirty indicator
       div(
         cls := "plan-name-container",
+        // Locked saved plan: show name text
         child <-- isLocked.signal
           .combineWith($currentSavedPlan.signal)
           .map { case (locked, savedPlanO) =>
-            if (locked || savedPlanO.isEmpty)
-              savedPlanO
-                .flatMap(_.name)
-                .map(name =>
-                  span(
-                    cls := "plan-name-text",
-                    name,
-                  ),
-                )
-                .getOrElse(emptyNode)
-            else
-              // Unlocked with a saved plan: show editable input
+            if (locked && savedPlanO.isDefined)
+              div(
+                cls := "plan-name-display",
+                span(
+                  cls := "plan-name-text",
+                  savedPlanO.get.displayName,
+                ),
+                // Dirty indicator as separate child
+                child <-- $isDirty.map { dirty =>
+                  if (dirty)
+                    span(
+                      cls := "dirty-indicator",
+                      title := "Unsaved changes",
+                      "•",
+                    )
+                  else emptyNode
+                },
+              )
+            else if (savedPlanO.isDefined)
+              // Unlocked saved plan: show editable input
+              val sp = savedPlanO.get
               input(
                 cls := "plan-name-input",
                 typ := "text",
@@ -1012,10 +1004,8 @@ object Components {
                 placeholder := "Trip name",
                 value <-- editingName.signal,
                 onMountCallback { ctx =>
-                  val initialName =
-                    savedPlanO.flatMap(_.name).getOrElse("")
+                  val initialName = sp.name.getOrElse("")
                   editingName.set(initialName)
-                  // Check if we should focus this input
                   if (focusPlanNameInput.now()) {
                     focusPlanNameInput.set(false)
                     val inputEl =
@@ -1047,11 +1037,10 @@ object Components {
                       editingName.set(restored)
                       restored
                     else trimmedName
-                  savedPlanO.foreach { sp =>
-                    if (
-                      finalName.nonEmpty && finalName != sp.displayName
-                    ) {
-                      val updatedPlan = sp.withName(finalName)
+                  // Get the current saved plan from the Var to ensure fresh state
+                  $currentSavedPlan.now().foreach { freshSp =>
+                    if (finalName.nonEmpty && finalName != freshSp.displayName) {
+                      val updatedPlan = freshSp.withName(finalName)
                       db.saveSavedPlan(updatedPlan)
                       $currentSavedPlan.set(Some(updatedPlan))
                     }
@@ -1065,32 +1054,55 @@ object Components {
                   }
                 },
               )
+            else
+              // No saved plan: show "Unsaved Trip" label
+              span(
+                cls := "plan-name-text plan-name-unsaved",
+                "Unsaved Trip",
+              )
           },
       ),
-      // Lock toggle button
-      button(
-        cls := "button lock-button",
-        cls <-- isLocked.signal.map(locked =>
-          if (locked) "lock-button-locked" else "",
-        ),
-        child <-- isLocked.signal.map { locked =>
-          if (locked)
-            img(
-              cls := "lock-icon",
-              src := "glyphicons/svg/individual-svg/glyphicons-basic-217-lock.svg",
-              alt := "Locked",
+      // Edit button - only shown when viewing a locked saved plan
+      child <-- isLocked.signal
+        .combineWith($currentSavedPlan.signal)
+        .map { case (locked, savedPlanO) =>
+          if (locked && savedPlanO.isDefined)
+            button(
+              cls := "button edit-button",
+              "Edit",
+              onClick --> Observer { _ =>
+                isLocked.set(false)
+              },
             )
           else
-            img(
-              cls := "lock-icon",
-              src := "glyphicons/svg/individual-svg/glyphicons-basic-218-lock-open.svg",
-              alt := "Unlocked",
-            )
+            emptyNode
         },
-        onClick --> Observer { _ =>
-          isLocked.update(!_)
+      // Discard changes button - only shown when dirty and viewing a saved plan
+      child <-- $isDirty
+        .combineWith($currentSavedPlan.signal)
+        .map { case (isDirty, savedPlanO) =>
+          if (isDirty)
+            savedPlanO match {
+              case Some(sp) =>
+                button(
+                  cls := "button button-outlined discard-button",
+                  "Discard",
+                  title := "Discard unsaved changes",
+                  onClick --> Observer { _ =>
+                    // Reload the original plan from storage
+                    db.getSavedPlan(sp.id).foreach { freshPlan =>
+                      $plan.set(freshPlan.plan)
+                      originalPlanOnLoad.set(Some(freshPlan.plan))
+                      $currentSavedPlan.set(Some(freshPlan))
+                      isLocked.set(true)
+                    }
+                  },
+                )
+              case None => emptyNode
+            }
+          else
+            emptyNode
         },
-      ),
     )
 
   def copyButtons(
@@ -1102,6 +1114,8 @@ object Components {
     loadTripsMode: Var[Boolean],
     focusPlanNameInput: Var[Boolean],
     hasSavedPlans: Var[Boolean],
+    $isDirty: Signal[Boolean],
+    originalPlanOnLoad: Var[Option[Plan]],
   ) = {
     val shareExpanded: Var[Boolean] = Var(false)
     val saveExpanded: Var[Boolean] = Var(false)
@@ -1191,6 +1205,8 @@ object Components {
                       $plan.set(emptyPlan)
                       // Clear the current saved plan reference (doesn't delete the saved plan)
                       currentSavedPlan.set(None)
+                      // Clear original plan tracking (no dirty state for new plans)
+                      originalPlanOnLoad.set(None)
                       // Unlock the schedule so user can start adding routes
                       isLocked.set(false)
                       // Start in adding new route mode
@@ -1318,72 +1334,92 @@ object Components {
                       if (expanded) "relative" else "absolute",
                     ),
                   // Input - emerges from Save position (right), slides left to its final position
-                  input(
-                    cls := "save-input expand-from-right",
-                    styleProp(
-                      "transform",
-                    ) <-- saveExpanded.signal.map(expanded =>
-                      if (expanded) "translateX(0) scale(1)"
-                      else "translateX(120px) scale(0)",
-                    ),
-                    styleProp("opacity") <-- saveExpanded.signal
-                      .map(expanded => if (expanded) "1" else "0"),
-                    styleProp(
-                      "visibility",
-                    ) <-- saveConfirmation.signal
-                      .map(conf =>
-                        if (conf.isDefined) "hidden"
-                        else "visible",
+                  {
+                    // Auto-suggest name based on first stop
+                    val suggestedName = plan.routeSegments.headOption
+                      .map(seg => s"Trip from ${seg.start.l.name}")
+                      .getOrElse("Trip name")
+                    input(
+                      cls := "save-input expand-from-right",
+                      styleProp(
+                        "transform",
+                      ) <-- saveExpanded.signal.map(expanded =>
+                        if (expanded) "translateX(0) scale(1)"
+                        else "translateX(120px) scale(0)",
                       ),
-                    typ := "text",
-                    placeholder := "Trip name",
-                    maxLength := 20,
-                    controlled(
-                      value <-- tripName.signal,
-                      onInput.mapToValue --> tripName.writer,
-                    ),
-                  ),
+                      styleProp("opacity") <-- saveExpanded.signal
+                        .map(expanded => if (expanded) "1" else "0"),
+                      styleProp(
+                        "visibility",
+                      ) <-- saveConfirmation.signal
+                        .map(conf =>
+                          if (conf.isDefined) "hidden"
+                          else "visible",
+                        ),
+                      typ := "text",
+                      placeholder := suggestedName,
+                      maxLength := 20,
+                      controlled(
+                        value <-- tripName.signal,
+                        onInput.mapToValue --> tripName.writer,
+                      ),
+                      // Auto-focus when save expands
+                      onMountCallback { ctx =>
+                        if (saveExpanded.now()) {
+                          ctx.thisNode.ref.asInstanceOf[dom.HTMLInputElement].focus()
+                        }
+                      },
+                    )
+                  },
                   // Save Trip button - emerges from Save position (right side, near Save button)
-                  button(
-                    cls := "button button-fixed-width expand-from-left",
-                    styleProp(
-                      "transform",
-                    ) <-- saveExpanded.signal.map(expanded =>
-                      if (expanded) "translateX(0) scale(1)"
-                      else "translateX(60px) scale(0)",
-                    ),
-                    styleProp("opacity") <-- saveExpanded.signal
-                      .map(expanded => if (expanded) "1" else "0"),
-                    styleProp(
-                      "visibility",
-                    ) <-- saveConfirmation.signal
-                      .map(conf =>
-                        if (conf.isDefined) "hidden"
-                        else "visible",
+                  {
+                    // Auto-suggest name based on first stop (same as input placeholder)
+                    val suggestedName = plan.routeSegments.headOption
+                      .map(seg => s"Trip from ${seg.start.l.name}")
+                      .getOrElse("New Trip")
+                    button(
+                      cls := "button button-fixed-width expand-from-left",
+                      styleProp(
+                        "transform",
+                      ) <-- saveExpanded.signal.map(expanded =>
+                        if (expanded) "translateX(0) scale(1)"
+                        else "translateX(60px) scale(0)",
                       ),
-                    "Save Trip",
-                    disabled <-- tripName.signal.map(
-                      _.trim.isEmpty,
-                    ),
-                    onClick --> Observer { _ =>
-                      val name = tripName.now().trim.take(20)
-                      if (name.nonEmpty) {
+                      styleProp("opacity") <-- saveExpanded.signal
+                        .map(expanded => if (expanded) "1" else "0"),
+                      styleProp(
+                        "visibility",
+                      ) <-- saveConfirmation.signal
+                        .map(conf =>
+                          if (conf.isDefined) "hidden"
+                          else "visible",
+                        ),
+                      "Save Trip",
+                      // Always enabled - use suggested name if empty
+                      onClick --> Observer { _ =>
+                        val enteredName = tripName.now().trim.take(20)
+                        // Use entered name, or fall back to suggested name
+                        val name = if (enteredName.nonEmpty) enteredName else suggestedName.take(20)
                         // Create a new SavedPlan with UUID and save it
                         val newSavedPlan =
                           SavedPlan.create(plan, name)
                         db.saveSavedPlan(newSavedPlan)
                         currentSavedPlan.set(Some(newSavedPlan))
+                        // Track as original state (no longer dirty)
+                        originalPlanOnLoad.set(Some(plan))
                         // Update hasSavedPlans since we just saved one
                         hasSavedPlans.set(true)
+                        // Lock the plan after saving
+                        isLocked.set(true)
                         saveConfirmation.set(Some(name))
                         tripName.set("")
                         setTimeout(1500) {
                           saveExpanded.set(false)
                           saveConfirmation.set(None)
                         }
-                      }
-                    },
-                  ),
+                      },
+                    )
+                  },
                   // Confirmation message
                   child <-- saveConfirmation.signal.map {
                     case Some(name) =>
@@ -1514,6 +1550,7 @@ object Components {
     isLocked: Var[Boolean],
     loadTripsMode: Var[Boolean],
     hasSavedPlans: Var[Boolean],
+    originalPlanOnLoad: Var[Option[Plan]],
   ) = {
     // Load saved plans using the new UUID-based system, with fallback to legacy name-based system
     val $savedTripsVar: Var[Seq[(SavedPlan, Int)]] = Var(Seq.empty)
@@ -1643,6 +1680,8 @@ object Components {
                     // use the correct plan ID if they fire during the transition
                     currentSavedPlan.set(Some(savedPlan))
                     $plan.set(savedPlan.plan)
+                    // Track original state for dirty detection
+                    originalPlanOnLoad.set(Some(savedPlan.plan))
                     loadTripsMode.set(false)
                     addingNewRoute.set(false)
                     isLocked.set(true)
@@ -1667,6 +1706,7 @@ object Components {
     isLocked: Var[Boolean],
     loadTripsMode: Var[Boolean],
     hasSavedPlans: Var[Boolean],
+    originalPlanOnLoad: Var[Option[Plan]],
   ) =
     val startingPoint: Var[Option[Location]] = Var(None)
     val $locationsVar: Var[Seq[(Location, Int)]] = Var(Seq.empty)
@@ -1705,6 +1745,7 @@ object Components {
             isLocked,
             loadTripsMode,
             hasSavedPlans,
+            originalPlanOnLoad,
           )
         case StopSelectorMode.SelectStop =>
           div(
