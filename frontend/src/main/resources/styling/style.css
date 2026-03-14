@@ -804,6 +804,28 @@ body {
     color: var(--color-primary);
 }
 
+/* Inline save row - replaces "Unsaved Trip" label */
+.inline-save-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.inline-save-button {
+    min-width: auto;
+    padding: 6px 14px;
+    font-size: 0.9rem;
+}
+
+.inline-cancel-button {
+    min-width: auto;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    font-size: 1rem;
+    border-radius: 50%;
+}
+
 /* Edit button - for entering edit mode on saved plans */
 .edit-button {
     min-width: auto;

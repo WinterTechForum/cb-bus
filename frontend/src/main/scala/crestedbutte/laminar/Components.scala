@@ -1061,13 +1061,82 @@ object Components {
                 },
               )
             else
-              // No saved plan: show clickable "Unsaved Trip" label
-              span(
-                cls := "plan-name-text plan-name-unsaved plan-name-clickable",
-                "Unsaved Trip",
-                title := "Click to save this trip",
-                onClick.stopPropagation --> Observer { _ =>
-                  saveExpanded.set(true)
+              // No saved plan: show save UI or clickable label
+              div(
+                child <-- saveExpanded.signal.map { expanded =>
+                  if (expanded) {
+                    // Inline save UI replaces the "Unsaved Trip" label
+                    val suggestedName = $plan.now().routeSegments.headOption
+                      .map(seg => s"Trip from ${seg.start.l.name}")
+                      .getOrElse("New Trip")
+                    div(
+                      cls := "inline-save-row",
+                      input(
+                        cls := "plan-name-input",
+                        typ := "text",
+                        placeholder := suggestedName,
+                        maxLength := 20,
+                        onInput.mapToValue --> editingName.writer,
+                        onMountCallback { ctx =>
+                          ctx.thisNode.ref.asInstanceOf[dom.HTMLInputElement].focus()
+                        },
+                        onKeyDown --> Observer[dom.KeyboardEvent] { evt =>
+                          if (evt.key == "Enter") {
+                            val enteredName = editingName.now().trim.take(20)
+                            val name = if (enteredName.nonEmpty) enteredName else suggestedName.take(20)
+                            val plan = $plan.now()
+                            val newSavedPlan = SavedPlan.create(plan, name)
+                            db.saveSavedPlan(newSavedPlan)
+                            $currentSavedPlan.set(Some(newSavedPlan))
+                            originalPlanOnLoad.set(Some(plan))
+                            hasSavedPlans.set(true)
+                            isLocked.set(true)
+                            editingName.set("")
+                            saveExpanded.set(false)
+                          } else if (evt.key == "Escape") {
+                            editingName.set("")
+                            saveExpanded.set(false)
+                          }
+                        },
+                      ),
+                      button(
+                        cls := "button inline-save-button",
+                        "Save",
+                        onClick.stopPropagation --> Observer { _ =>
+                          val enteredName = editingName.now().trim.take(20)
+                          val name = if (enteredName.nonEmpty) enteredName else suggestedName.take(20)
+                          val plan = $plan.now()
+                          val newSavedPlan = SavedPlan.create(plan, name)
+                          db.saveSavedPlan(newSavedPlan)
+                          $currentSavedPlan.set(Some(newSavedPlan))
+                          originalPlanOnLoad.set(Some(plan))
+                          hasSavedPlans.set(true)
+                          isLocked.set(true)
+                          editingName.set("")
+                          saveExpanded.set(false)
+                        },
+                      ),
+                      button(
+                        cls := "button button-outlined inline-cancel-button",
+                        "✕",
+                        title := "Cancel",
+                        onClick.stopPropagation --> Observer { _ =>
+                          editingName.set("")
+                          saveExpanded.set(false)
+                        },
+                      ),
+                    )
+                  } else {
+                    // Clickable "Unsaved Trip" label
+                    span(
+                      cls := "plan-name-text plan-name-unsaved plan-name-clickable",
+                      "Unsaved Trip",
+                      title := "Click to save this trip",
+                      onClick.stopPropagation --> Observer { _ =>
+                        saveExpanded.set(true)
+                      },
+                    )
+                  }
                 },
               )
           },
@@ -1330,52 +1399,7 @@ object Components {
                   ),
                 ),
 
-                // Save expanded: input and Save Trip button (only shown if not already saved)
-                child <-- saveExpanded.signal.map { expanded =>
-                  if (!expanded) emptyNode
-                  else {
-                    val suggestedName = plan.routeSegments.headOption
-                      .map(seg => s"Trip from ${seg.start.l.name}")
-                      .getOrElse("New Trip")
-                    div(
-                      cls := "save-row",
-                      input(
-                        cls := "save-input",
-                        typ := "text",
-                        placeholder := suggestedName,
-                        maxLength := 20,
-                        onInput.mapToValue --> tripName.writer,
-                        onMountCallback { ctx =>
-                          ctx.thisNode.ref.asInstanceOf[dom.HTMLInputElement].focus()
-                        },
-                      ),
-                      button(
-                        cls := "button",
-                        "Save Trip",
-                        onClick --> Observer { _ =>
-                          val enteredName = tripName.now().trim.take(20)
-                          val name = if (enteredName.nonEmpty) enteredName else suggestedName.take(20)
-                          val newSavedPlan = SavedPlan.create(plan, name)
-                          db.saveSavedPlan(newSavedPlan)
-                          currentSavedPlan.set(Some(newSavedPlan))
-                          originalPlanOnLoad.set(Some(plan))
-                          hasSavedPlans.set(true)
-                          isLocked.set(true)
-                          tripName.set("")
-                          saveExpanded.set(false)
-                        },
-                      ),
-                      button(
-                        cls := "button button-outlined",
-                        "Cancel",
-                        onClick --> Observer { _ =>
-                          tripName.set("")
-                          saveExpanded.set(false)
-                        },
-                      ),
-                    )
-                  }
-                },
+                // Save UI is now inline in planNameAndLockRow
               ),
             )
           }
