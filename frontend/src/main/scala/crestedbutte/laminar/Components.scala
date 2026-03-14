@@ -436,11 +436,7 @@ object Components {
                                         .copy(l =
                                           plan.l.filterNot(_ == rs),
                                         )
-                                    savePlanWithSavedPlan(
-                                      db,
-                                      newPlan,
-                                      capturedSavedPlan,
-                                    )
+                                    // Don't auto-save - wait for explicit Save
                                     $plan.set(newPlan)
                                     if (newPlan.l.isEmpty) {
                                       addingNewRoute.set {
@@ -452,39 +448,25 @@ object Components {
                                   .contramap[RouteSegment] {
                                     segment =>
                                       val plan = $plan.now()
-                                      val updatedPlan =
-                                        Plan(
-                                          plan.l.map {
-                                            case rs
-                                                if rs.id == segment.id =>
-                                              segment
-                                            case rs =>
-                                              rs
-                                          },
-                                        )
-                                      savePlanWithSavedPlan(
-                                        db,
-                                        updatedPlan,
-                                        capturedSavedPlan,
+                                      // Don't auto-save - wait for explicit Save
+                                      Plan(
+                                        plan.l.map {
+                                          case rs
+                                              if rs.id == segment.id =>
+                                            segment
+                                          case rs =>
+                                            rs
+                                        },
                                       )
-                                      updatedPlan
                                   },
                                 // Append a new segment to the end of the plan
                                 segmentAppender = $plan.writer
                                   .contramap[RouteSegment] {
                                     newSegment =>
                                       val plan = $plan.now()
-                                      val updatedPlan = plan
-                                        .copy(l =
-                                          plan.l :+ newSegment,
-                                        )
-                                      savePlanWithSavedPlan(
-                                        db,
-                                        updatedPlan,
-                                        capturedSavedPlan,
-                                      )
+                                      // Don't auto-save - wait for explicit Save
                                       addingNewRoute.set(false)
-                                      updatedPlan
+                                      plan.copy(l = plan.l :+ newSegment)
                                   },
                                 $isLocked = isLocked.signal,
                               )
@@ -588,10 +570,7 @@ object Components {
                     case Some(newSeg) =>
                       val updatedPlan =
                         currentPlan.copy(l = currentPlan.l :+ newSeg)
-                      savePlanWithSavedPlan(db,
-                                            updatedPlan,
-                                            capturedSavedPlan,
-                      )
+                      // Don't auto-save - wait for explicit Save
                       $plan.set(updatedPlan)
                       addingNewRoute.set(false)
                       pendingReturnChoice.set(None)
@@ -1806,17 +1785,11 @@ object Components {
                                   matchingLegO match
                                     case Some(matchingLeg) =>
                                       $plan.update { case oldPlan =>
-                                        val newPlan =
-                                          oldPlan.copy(l =
-                                            oldPlan.l :+ matchingLeg,
-                                          )
-                                        savePlanWithSavedPlan(
-                                          db,
-                                          newPlan,
-                                          capturedSavedPlan,
-                                        )
+                                        // Don't auto-save - wait for explicit Save
                                         addingNewRoute.set(false)
-                                        newPlan
+                                        oldPlan.copy(l =
+                                          oldPlan.l :+ matchingLeg,
+                                        )
                                       }
                                       Some(other)
                                     case None =>
