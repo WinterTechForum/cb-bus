@@ -543,6 +543,20 @@ body {
     width: 100%;
 }
 
+/* Save row - shown when saving a new trip */
+.save-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    margin: 8px 0;
+    background-color: rgba(1, 156, 143, 0.05);
+    border: 2px solid var(--color-primary);
+    border-radius: 10px;
+}
+
 .save-input {
     padding: 10px 14px;
     border: 2px solid var(--color-primary);

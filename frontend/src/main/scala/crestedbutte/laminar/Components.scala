@@ -1331,121 +1331,51 @@ object Components {
                 ),
 
                 // Save expanded: input and Save Trip button (only shown if not already saved)
-                div(
-                  cls := "expanded-buttons-row",
-                  styleProp(
-                    "pointer-events",
-                  ) <-- saveExpanded.signal
-                    .map(expanded =>
-                      if (expanded) "auto" else "none",
-                    ),
-                  styleProp("position") <-- saveExpanded.signal
-                    .map(expanded =>
-                      if (expanded) "relative" else "absolute",
-                    ),
-                  // Input - emerges from Save position (right), slides left to its final position
-                  {
-                    // Auto-suggest name based on first stop
-                    val suggestedName = plan.routeSegments.headOption
-                      .map(seg => s"Trip from ${seg.start.l.name}")
-                      .getOrElse("Trip name")
-                    input(
-                      cls := "save-input expand-from-right",
-                      styleProp(
-                        "transform",
-                      ) <-- saveExpanded.signal.map(expanded =>
-                        if (expanded) "translateX(0) scale(1)"
-                        else "translateX(120px) scale(0)",
-                      ),
-                      styleProp("opacity") <-- saveExpanded.signal
-                        .map(expanded => if (expanded) "1" else "0"),
-                      styleProp(
-                        "visibility",
-                      ) <-- saveConfirmation.signal
-                        .map(conf =>
-                          if (conf.isDefined) "hidden"
-                          else "visible",
-                        ),
-                      typ := "text",
-                      placeholder := suggestedName,
-                      maxLength := 20,
-                      controlled(
-                        value <-- tripName.signal,
-                        onInput.mapToValue --> tripName.writer,
-                      ),
-                      // Auto-focus when save expands - use signal changes
-                      inContext { thisNode =>
-                        saveExpanded.signal.changes --> Observer[Boolean] { expanded =>
-                          if (expanded) {
-                            // Small delay to ensure element is visible before focusing
-                            setTimeout(100) {
-                              thisNode.ref.asInstanceOf[dom.HTMLInputElement].focus()
-                            }
-                          }
-                        }
-                      },
-                    )
-                  },
-                  // Save Trip button - emerges from Save position (right side, near Save button)
-                  {
-                    // Auto-suggest name based on first stop (same as input placeholder)
+                child <-- saveExpanded.signal.map { expanded =>
+                  if (!expanded) emptyNode
+                  else {
                     val suggestedName = plan.routeSegments.headOption
                       .map(seg => s"Trip from ${seg.start.l.name}")
                       .getOrElse("New Trip")
-                    button(
-                      cls := "button button-fixed-width expand-from-left",
-                      styleProp(
-                        "transform",
-                      ) <-- saveExpanded.signal.map(expanded =>
-                        if (expanded) "translateX(0) scale(1)"
-                        else "translateX(60px) scale(0)",
+                    div(
+                      cls := "save-row",
+                      input(
+                        cls := "save-input",
+                        typ := "text",
+                        placeholder := suggestedName,
+                        maxLength := 20,
+                        onInput.mapToValue --> tripName.writer,
+                        onMountCallback { ctx =>
+                          ctx.thisNode.ref.asInstanceOf[dom.HTMLInputElement].focus()
+                        },
                       ),
-                      styleProp("opacity") <-- saveExpanded.signal
-                        .map(expanded => if (expanded) "1" else "0"),
-                      styleProp(
-                        "visibility",
-                      ) <-- saveConfirmation.signal
-                        .map(conf =>
-                          if (conf.isDefined) "hidden"
-                          else "visible",
-                        ),
-                      "Save Trip",
-                      // Always enabled - use suggested name if empty
-                      onClick --> Observer { _ =>
-                        val enteredName = tripName.now().trim.take(20)
-                        // Use entered name, or fall back to suggested name
-                        val name = if (enteredName.nonEmpty) enteredName else suggestedName.take(20)
-                        // Create a new SavedPlan with UUID and save it
-                        val newSavedPlan =
-                          SavedPlan.create(plan, name)
-                        db.saveSavedPlan(newSavedPlan)
-                        currentSavedPlan.set(Some(newSavedPlan))
-                        // Track as original state (no longer dirty)
-                        originalPlanOnLoad.set(Some(plan))
-                        // Update hasSavedPlans since we just saved one
-                        hasSavedPlans.set(true)
-                        // Lock the plan after saving
-                        isLocked.set(true)
-                        saveConfirmation.set(Some(name))
-                        tripName.set("")
-                        setTimeout(1500) {
+                      button(
+                        cls := "button",
+                        "Save Trip",
+                        onClick --> Observer { _ =>
+                          val enteredName = tripName.now().trim.take(20)
+                          val name = if (enteredName.nonEmpty) enteredName else suggestedName.take(20)
+                          val newSavedPlan = SavedPlan.create(plan, name)
+                          db.saveSavedPlan(newSavedPlan)
+                          currentSavedPlan.set(Some(newSavedPlan))
+                          originalPlanOnLoad.set(Some(plan))
+                          hasSavedPlans.set(true)
+                          isLocked.set(true)
+                          tripName.set("")
                           saveExpanded.set(false)
-                          saveConfirmation.set(None)
-                        }
-                      },
+                        },
+                      ),
+                      button(
+                        cls := "button button-outlined",
+                        "Cancel",
+                        onClick --> Observer { _ =>
+                          tripName.set("")
+                          saveExpanded.set(false)
+                        },
+                      ),
                     )
-                  },
-                  // Confirmation message
-                  child <-- saveConfirmation.signal.map {
-                    case Some(name) =>
-                      div(
-                        cls := "save-confirmation",
-                        span(s"Saved as '$name'"),
-                      )
-                    case None =>
-                      div()
-                  },
-                ),
+                  }
+                },
               ),
             )
           }
