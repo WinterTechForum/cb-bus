@@ -777,6 +777,19 @@ body {
     font-weight: 400;
 }
 
+/* Clickable plan name (for triggering save) */
+.plan-name-clickable {
+    cursor: pointer;
+    padding: 4px 12px;
+    border-radius: 6px;
+    transition: background-color 150ms ease, color 150ms ease;
+}
+
+.plan-name-clickable:hover {
+    background-color: rgba(1, 156, 143, 0.1);
+    color: var(--color-primary);
+}
+
 /* Edit button - for entering edit mode on saved plans */
 .edit-button {
     min-width: auto;

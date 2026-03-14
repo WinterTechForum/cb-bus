@@ -308,6 +308,9 @@ object Components {
         case (current, Some(original)) => current != original
         case _ => false
       }
+    
+    // Shared state for save mode - triggered from name area, handled in copyButtons
+    val saveExpanded: Var[Boolean] = Var(false)
 
     // Persist locked state changes to localStorage
     val persistLockedState =
@@ -362,6 +365,7 @@ object Components {
                            hasSavedPlans,
                            isDirty,
                            originalPlanOnLoad,
+                           saveExpanded,
         ),
       ),
       // Action buttons - hidden when loading trips
@@ -379,6 +383,7 @@ object Components {
                     hasSavedPlans,
                     isDirty,
                     originalPlanOnLoad,
+                    saveExpanded,
         ),
       ),
       // Plan segments container - hidden when loading trips
@@ -961,6 +966,7 @@ object Components {
     hasSavedPlans: Var[Boolean],
     $isDirty: Signal[Boolean],
     originalPlanOnLoad: Var[Option[Plan]],
+    saveExpanded: Var[Boolean],
   ) =
     // Local state for editing the name
     val editingName: Var[String] = Var("")
@@ -1055,10 +1061,14 @@ object Components {
                 },
               )
             else
-              // No saved plan: show "Unsaved Trip" label
+              // No saved plan: show clickable "Unsaved Trip" label
               span(
-                cls := "plan-name-text plan-name-unsaved",
+                cls := "plan-name-text plan-name-unsaved plan-name-clickable",
                 "Unsaved Trip",
+                title := "Click to save this trip",
+                onClick --> Observer { _ =>
+                  saveExpanded.set(true)
+                },
               )
           },
       ),
@@ -1116,9 +1126,9 @@ object Components {
     hasSavedPlans: Var[Boolean],
     $isDirty: Signal[Boolean],
     originalPlanOnLoad: Var[Option[Plan]],
+    saveExpanded: Var[Boolean],
   ) = {
     val shareExpanded: Var[Boolean] = Var(false)
-    val saveExpanded: Var[Boolean] = Var(false)
     val tripName: Var[String] = Var("")
     val saveConfirmation: Var[Option[String]] = Var(None)
 
