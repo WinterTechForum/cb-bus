@@ -1066,7 +1066,7 @@ object Components {
                 cls := "plan-name-text plan-name-unsaved plan-name-clickable",
                 "Unsaved Trip",
                 title := "Click to save this trip",
-                onClick --> Observer { _ =>
+                onClick.stopPropagation --> Observer { _ =>
                   saveExpanded.set(true)
                 },
               )
