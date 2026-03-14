@@ -957,6 +957,14 @@ object Components {
         db.saveDailyPlanOnly(plan)
     }
 
+  /** Plan name header with unified state machine:
+    * 
+    * States:
+    * 1. UNSAVED - No saved plan, shows "Unsaved Trip" (clickable)
+    * 2. SAVING - Shows inline save UI (input + Save + Cancel)
+    * 3. SAVED_VIEWING - Locked saved plan, shows name + Edit button
+    * 4. SAVED_EDITING - Unlocked saved plan, shows editable name input
+    */
   def planNameAndLockRow(
     $plan: Var[Plan],
     $currentSavedPlan: Var[Option[SavedPlan]],
@@ -968,220 +976,193 @@ object Components {
     originalPlanOnLoad: Var[Option[Plan]],
     saveExpanded: Var[Boolean],
   ) =
-    // Local state for editing the name
+    // Local state for editing
     val editingName: Var[String] = Var("")
-    val originalNameOnFocus: Var[Option[String]] = Var(None)
-    val hasTypedSinceFocus: Var[Boolean] = Var(false)
+
+    // Derive the UI state from the signals
+    sealed trait PlanNameState
+    case object Unsaved extends PlanNameState
+    case object Saving extends PlanNameState
+    case class SavedViewing(plan: SavedPlan, isDirty: Boolean) extends PlanNameState
+    case class SavedEditing(plan: SavedPlan) extends PlanNameState
+
+    // Build state by reading current values in the map - simpler than combineWith
+    val uiState: Signal[PlanNameState] = 
+      $currentSavedPlan.signal
+        .combineWith(isLocked.signal)
+        .combineWith(saveExpanded.signal)
+        .combineWith($isDirty)
+        .map { _ =>
+          // Read current values directly
+          val savedPlanO = $currentSavedPlan.now()
+          val locked = isLocked.now()
+          val saving = saveExpanded.now()
+          val dirty = savedPlanO.exists { sp =>
+            originalPlanOnLoad.now().exists(_ != $plan.now())
+          }
+          
+          (savedPlanO, locked, saving) match {
+            case (None, _, true) => Saving
+            case (None, _, _) => Unsaved
+            case (Some(sp), true, _) => SavedViewing(sp, dirty)
+            case (Some(sp), false, _) => SavedEditing(sp)
+          }
+        }
+
+    // Helper to save a new plan
+    def doSave(): Unit = {
+      val suggestedName = $plan.now().routeSegments.headOption
+        .map(seg => s"Trip from ${seg.start.l.name}")
+        .getOrElse("New Trip")
+      val enteredName = editingName.now().trim.take(20)
+      val name = if (enteredName.nonEmpty) enteredName else suggestedName.take(20)
+      val plan = $plan.now()
+      val newSavedPlan = SavedPlan.create(plan, name)
+      db.saveSavedPlan(newSavedPlan)
+      $currentSavedPlan.set(Some(newSavedPlan))
+      originalPlanOnLoad.set(Some(plan))
+      hasSavedPlans.set(true)
+      isLocked.set(true)
+      editingName.set("")
+      saveExpanded.set(false)
+    }
+
+    def cancelSave(): Unit = {
+      editingName.set("")
+      saveExpanded.set(false)
+    }
+
+    def discardChanges(sp: SavedPlan): Unit = {
+      db.getSavedPlan(sp.id).foreach { freshPlan =>
+        $plan.set(freshPlan.plan)
+        originalPlanOnLoad.set(Some(freshPlan.plan))
+        $currentSavedPlan.set(Some(freshPlan))
+        isLocked.set(true)
+      }
+    }
 
     div(
       cls := "plan-name-row",
-      // Plan name container with dirty indicator
-      div(
-        cls := "plan-name-container",
-        // Locked saved plan: show name text
-        child <-- isLocked.signal
-          .combineWith($currentSavedPlan.signal)
-          .map { case (locked, savedPlanO) =>
-            if (locked && savedPlanO.isDefined)
-              div(
-                cls := "plan-name-display",
-                span(
-                  cls := "plan-name-text",
-                  savedPlanO.get.displayName,
-                ),
-                // Dirty indicator as separate child
-                child <-- $isDirty.map { dirty =>
-                  if (dirty)
-                    span(
-                      cls := "dirty-indicator",
-                      title := "Unsaved changes",
-                      "•",
-                    )
-                  else emptyNode
-                },
-              )
-            else if (savedPlanO.isDefined)
-              // Unlocked saved plan: show editable input
-              val sp = savedPlanO.get
-              input(
-                cls := "plan-name-input",
-                typ := "text",
-                maxLength := 30,
-                placeholder := "Trip name",
-                value <-- editingName.signal,
-                onMountCallback { ctx =>
-                  val initialName = sp.name.getOrElse("")
-                  editingName.set(initialName)
-                  if (focusPlanNameInput.now()) {
-                    focusPlanNameInput.set(false)
-                    val inputEl =
-                      ctx.thisNode.ref
-                        .asInstanceOf[dom.HTMLInputElement]
-                    inputEl.focus()
-                    inputEl.select()
-                  }
-                },
-                onFocus --> Observer[dom.FocusEvent] { _ =>
-                  originalNameOnFocus.set(
-                    Option(editingName.now()).filter(_.nonEmpty),
-                  )
-                  hasTypedSinceFocus.set(false)
-                  editingName.set("")
-                },
-                onInput.mapToValue --> Observer[String] { value =>
-                  editingName.set(value)
-                  hasTypedSinceFocus.set(true)
-                },
-                onBlur --> Observer[dom.FocusEvent] { _ =>
-                  val trimmedName = editingName.now().trim
-                  val finalName =
-                    if (
-                      !hasTypedSinceFocus.now() && trimmedName.isEmpty
-                    )
-                      val restored =
-                        originalNameOnFocus.now().getOrElse("")
-                      editingName.set(restored)
-                      restored
-                    else trimmedName
-                  // Get the current saved plan from the Var to ensure fresh state
-                  $currentSavedPlan.now().foreach { freshSp =>
-                    if (finalName.nonEmpty && finalName != freshSp.displayName) {
-                      val updatedPlan = freshSp.withName(finalName)
-                      db.saveSavedPlan(updatedPlan)
-                      $currentSavedPlan.set(Some(updatedPlan))
-                    }
-                  }
-                },
-                onKeyDown --> Observer[dom.KeyboardEvent] { evt =>
-                  if (evt.key == "Enter") {
-                    evt.target
-                      .asInstanceOf[dom.HTMLInputElement]
-                      .blur()
-                  }
-                },
-              )
-            else
-              // No saved plan: show save UI or clickable label
-              div(
-                child <-- saveExpanded.signal.map { expanded =>
-                  if (expanded) {
-                    // Inline save UI replaces the "Unsaved Trip" label
-                    val suggestedName = $plan.now().routeSegments.headOption
-                      .map(seg => s"Trip from ${seg.start.l.name}")
-                      .getOrElse("New Trip")
-                    div(
-                      cls := "inline-save-row",
-                      input(
-                        cls := "plan-name-input",
-                        typ := "text",
-                        placeholder := suggestedName,
-                        maxLength := 20,
-                        onInput.mapToValue --> editingName.writer,
-                        onMountCallback { ctx =>
-                          ctx.thisNode.ref.asInstanceOf[dom.HTMLInputElement].focus()
-                        },
-                        onKeyDown --> Observer[dom.KeyboardEvent] { evt =>
-                          if (evt.key == "Enter") {
-                            val enteredName = editingName.now().trim.take(20)
-                            val name = if (enteredName.nonEmpty) enteredName else suggestedName.take(20)
-                            val plan = $plan.now()
-                            val newSavedPlan = SavedPlan.create(plan, name)
-                            db.saveSavedPlan(newSavedPlan)
-                            $currentSavedPlan.set(Some(newSavedPlan))
-                            originalPlanOnLoad.set(Some(plan))
-                            hasSavedPlans.set(true)
-                            isLocked.set(true)
-                            editingName.set("")
-                            saveExpanded.set(false)
-                          } else if (evt.key == "Escape") {
-                            editingName.set("")
-                            saveExpanded.set(false)
-                          }
-                        },
-                      ),
-                      button(
-                        cls := "button inline-save-button",
-                        "Save",
-                        onClick.stopPropagation --> Observer { _ =>
-                          val enteredName = editingName.now().trim.take(20)
-                          val name = if (enteredName.nonEmpty) enteredName else suggestedName.take(20)
-                          val plan = $plan.now()
-                          val newSavedPlan = SavedPlan.create(plan, name)
-                          db.saveSavedPlan(newSavedPlan)
-                          $currentSavedPlan.set(Some(newSavedPlan))
-                          originalPlanOnLoad.set(Some(plan))
-                          hasSavedPlans.set(true)
-                          isLocked.set(true)
-                          editingName.set("")
-                          saveExpanded.set(false)
-                        },
-                      ),
-                      button(
-                        cls := "button button-outlined inline-cancel-button",
-                        "✕",
-                        title := "Cancel",
-                        onClick.stopPropagation --> Observer { _ =>
-                          editingName.set("")
-                          saveExpanded.set(false)
-                        },
-                      ),
-                    )
-                  } else {
-                    // Clickable "Unsaved Trip" label
-                    span(
-                      cls := "plan-name-text plan-name-unsaved plan-name-clickable",
-                      "Unsaved Trip",
-                      title := "Click to save this trip",
-                      onClick.stopPropagation --> Observer { _ =>
-                        saveExpanded.set(true)
-                      },
-                    )
-                  }
-                },
-              )
-          },
-      ),
-      // Edit button - only shown when viewing a locked saved plan
-      child <-- isLocked.signal
-        .combineWith($currentSavedPlan.signal)
-        .map { case (locked, savedPlanO) =>
-          if (locked && savedPlanO.isDefined)
+      child <-- uiState.map {
+        case Unsaved =>
+          // Clickable "Unsaved Trip" label
+          span(
+            cls := "plan-name-text plan-name-unsaved plan-name-clickable",
+            "Unsaved Trip",
+            title := "Click to save this trip",
+            onClick.stopPropagation --> Observer { _ =>
+              saveExpanded.set(true)
+            },
+          )
+
+        case Saving =>
+          // Inline save UI
+          val suggestedName = $plan.now().routeSegments.headOption
+            .map(seg => s"Trip from ${seg.start.l.name}")
+            .getOrElse("New Trip")
+          div(
+            cls := "inline-save-row",
+            input(
+              cls := "plan-name-input",
+              typ := "text",
+              placeholder := suggestedName,
+              maxLength := 20,
+              onInput.mapToValue --> editingName.writer,
+              onMountCallback { ctx =>
+                ctx.thisNode.ref.asInstanceOf[dom.HTMLInputElement].focus()
+              },
+              onKeyDown --> Observer[dom.KeyboardEvent] { evt =>
+                if (evt.key == "Enter") doSave()
+                else if (evt.key == "Escape") cancelSave()
+              },
+            ),
+            button(
+              cls := "button inline-save-button",
+              "Save",
+              onClick.stopPropagation --> Observer { _ => doSave() },
+            ),
+            button(
+              cls := "button button-outlined inline-cancel-button",
+              "✕",
+              title := "Cancel",
+              onClick.stopPropagation --> Observer { _ => cancelSave() },
+            ),
+          )
+
+        case SavedViewing(sp, isDirty) =>
+          // Locked view: name + Edit + optional Discard
+          div(
+            cls := "plan-name-display",
+            span(cls := "plan-name-text", sp.displayName),
+            Option.when(isDirty)(
+              span(cls := "dirty-indicator", title := "Unsaved changes", "•")
+            ).getOrElse(emptyNode),
             button(
               cls := "button edit-button",
               "Edit",
-              onClick --> Observer { _ =>
-                isLocked.set(false)
+              onClick --> Observer { _ => isLocked.set(false) },
+            ),
+            Option.when(isDirty)(
+              button(
+                cls := "button button-outlined discard-button",
+                "Discard",
+                title := "Discard unsaved changes",
+                onClick --> Observer { _ => discardChanges(sp) },
+              )
+            ).getOrElse(emptyNode),
+          )
+
+        case SavedEditing(sp) =>
+          // Unlocked: editable name input + Done button
+          div(
+            cls := "plan-name-display",
+            input(
+              cls := "plan-name-input",
+              typ := "text",
+              maxLength := 30,
+              placeholder := "Trip name",
+              defaultValue := sp.name.getOrElse(""),
+              onMountCallback { ctx =>
+                editingName.set(sp.name.getOrElse(""))
+                ctx.thisNode.ref.asInstanceOf[dom.HTMLInputElement].focus()
               },
-            )
-          else
-            emptyNode
-        },
-      // Discard changes button - only shown when dirty and viewing a saved plan
-      child <-- $isDirty
-        .combineWith($currentSavedPlan.signal)
-        .map { case (isDirty, savedPlanO) =>
-          if (isDirty)
-            savedPlanO match {
-              case Some(sp) =>
-                button(
-                  cls := "button button-outlined discard-button",
-                  "Discard",
-                  title := "Discard unsaved changes",
-                  onClick --> Observer { _ =>
-                    // Reload the original plan from storage
-                    db.getSavedPlan(sp.id).foreach { freshPlan =>
-                      $plan.set(freshPlan.plan)
-                      originalPlanOnLoad.set(Some(freshPlan.plan))
-                      $currentSavedPlan.set(Some(freshPlan))
-                      isLocked.set(true)
-                    }
-                  },
-                )
-              case None => emptyNode
-            }
-          else
-            emptyNode
-        },
+              onInput.mapToValue --> editingName.writer,
+              onKeyDown --> Observer[dom.KeyboardEvent] { evt =>
+                if (evt.key == "Enter" || evt.key == "Escape") {
+                  val finalName = editingName.now().trim
+                  if (finalName.nonEmpty && finalName != sp.displayName) {
+                    val updatedPlan = sp.withName(finalName)
+                    db.saveSavedPlan(updatedPlan)
+                    $currentSavedPlan.set(Some(updatedPlan))
+                  }
+                  isLocked.set(true)
+                }
+              },
+              onBlur --> Observer[dom.FocusEvent] { _ =>
+                val finalName = editingName.now().trim
+                if (finalName.nonEmpty && finalName != sp.displayName) {
+                  val updatedPlan = sp.withName(finalName)
+                  db.saveSavedPlan(updatedPlan)
+                  $currentSavedPlan.set(Some(updatedPlan))
+                }
+                isLocked.set(true)
+              },
+            ),
+            button(
+              cls := "button edit-button",
+              "Done",
+              onClick --> Observer { _ =>
+                val finalName = editingName.now().trim
+                if (finalName.nonEmpty && finalName != sp.displayName) {
+                  val updatedPlan = sp.withName(finalName)
+                  db.saveSavedPlan(updatedPlan)
+                  $currentSavedPlan.set(Some(updatedPlan))
+                }
+                isLocked.set(true)
+              },
+            ),
+          )
+      },
     )
 
   def copyButtons(
