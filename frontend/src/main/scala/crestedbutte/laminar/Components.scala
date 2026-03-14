@@ -1090,26 +1090,42 @@ object Components {
           )
 
         case SavedViewing(sp, isDirty) =>
-          // Locked view: name + Edit + optional Discard
+          // Locked view: name + either Edit (clean) or Save/Discard (dirty)
           div(
             cls := "plan-name-display",
             span(cls := "plan-name-text", sp.displayName),
-            Option.when(isDirty)(
-              span(cls := "dirty-indicator", title := "Unsaved changes", "•")
-            ).getOrElse(emptyNode),
-            button(
-              cls := "button edit-button",
-              "Edit",
-              onClick --> Observer { _ => isLocked.set(false) },
-            ),
-            Option.when(isDirty)(
-              button(
-                cls := "button button-outlined discard-button",
-                "Discard",
-                title := "Discard unsaved changes",
-                onClick --> Observer { _ => discardChanges(sp) },
+            if (isDirty) {
+              // Dirty: show Save and Discard for route changes
+              Seq(
+                span(cls := "dirty-indicator", title := "Unsaved changes", "•"),
+                button(
+                  cls := "button edit-button",
+                  "Save",
+                  onClick --> Observer { _ =>
+                    // Save current plan state to this SavedPlan
+                    val updatedPlan = sp.withPlan($plan.now())
+                    db.saveSavedPlan(updatedPlan)
+                    $currentSavedPlan.set(Some(updatedPlan))
+                    originalPlanOnLoad.set(Some($plan.now()))
+                  },
+                ),
+                button(
+                  cls := "button button-outlined discard-button",
+                  "Discard",
+                  title := "Discard unsaved changes",
+                  onClick --> Observer { _ => discardChanges(sp) },
+                ),
               )
-            ).getOrElse(emptyNode),
+            } else {
+              // Clean: just show Edit for name changes
+              Seq(
+                button(
+                  cls := "button edit-button",
+                  "Edit",
+                  onClick --> Observer { _ => isLocked.set(false) },
+                ),
+              )
+            },
           )
 
         case SavedEditing(sp) =>
