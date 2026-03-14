@@ -1373,10 +1373,15 @@ object Components {
                         value <-- tripName.signal,
                         onInput.mapToValue --> tripName.writer,
                       ),
-                      // Auto-focus when save expands
-                      onMountCallback { ctx =>
-                        if (saveExpanded.now()) {
-                          ctx.thisNode.ref.asInstanceOf[dom.HTMLInputElement].focus()
+                      // Auto-focus when save expands - use signal changes
+                      inContext { thisNode =>
+                        saveExpanded.signal.changes --> Observer[Boolean] { expanded =>
+                          if (expanded) {
+                            // Small delay to ensure element is visible before focusing
+                            setTimeout(100) {
+                              thisNode.ref.asInstanceOf[dom.HTMLInputElement].focus()
+                            }
+                          }
                         }
                       },
                     )
