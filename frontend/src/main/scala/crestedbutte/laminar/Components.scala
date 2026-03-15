@@ -1048,9 +1048,6 @@ object Components {
               placeholder := suggestedName,
               maxLength := 20,
               onInput.mapToValue --> editingName.writer,
-              onMountCallback { ctx =>
-                ctx.thisNode.ref.asInstanceOf[dom.HTMLInputElement].focus()
-              },
               onKeyDown --> Observer[dom.KeyboardEvent] { evt =>
                 if (evt.key == "Enter") doSave()
                 else if (evt.key == "Escape") cancelSave()
@@ -1124,7 +1121,6 @@ object Components {
               defaultValue := sp.name.getOrElse(""),
               onMountCallback { ctx =>
                 editingName.set(sp.name.getOrElse(""))
-                ctx.thisNode.ref.asInstanceOf[dom.HTMLInputElement].focus()
               },
               onInput.mapToValue --> editingName.writer,
               // Prevent parent touch handlers from interfering with cursor positioning
