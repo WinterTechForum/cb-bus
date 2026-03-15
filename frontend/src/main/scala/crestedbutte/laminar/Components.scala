@@ -1108,7 +1108,7 @@ object Components {
           )
 
         case SavedEditing(sp) =>
-          // Unlocked: editable name input + Done button
+          // Unlocked: editable name input + Save/Discard
           div(
             cls := "plan-name-display",
             input(
@@ -1122,39 +1122,25 @@ object Components {
                 ctx.thisNode.ref.asInstanceOf[dom.HTMLInputElement].focus()
               },
               onInput.mapToValue --> editingName.writer,
-              onKeyDown --> Observer[dom.KeyboardEvent] { evt =>
-                if (evt.key == "Enter" || evt.key == "Escape") {
-                  val finalName = editingName.now().trim
-                  if (finalName.nonEmpty && finalName != sp.displayName) {
-                    val updatedPlan = sp.withName(finalName)
-                    db.saveSavedPlan(updatedPlan)
-                    $currentSavedPlan.set(Some(updatedPlan))
-                  }
-                  isLocked.set(true)
-                }
-              },
-              onBlur --> Observer[dom.FocusEvent] { _ =>
+            ),
+            button(
+              cls := "button edit-button",
+              "Save",
+              onClick --> Observer { _ =>
+                // Save both name and plan changes
                 val finalName = editingName.now().trim
-                if (finalName.nonEmpty && finalName != sp.displayName) {
-                  val updatedPlan = sp.withName(finalName)
-                  db.saveSavedPlan(updatedPlan)
-                  $currentSavedPlan.set(Some(updatedPlan))
-                }
+                val nameToUse = if (finalName.nonEmpty) finalName else sp.displayName
+                val updatedPlan = sp.withName(nameToUse).withPlan($plan.now())
+                db.saveSavedPlan(updatedPlan)
+                $currentSavedPlan.set(Some(updatedPlan))
+                originalPlanOnLoad.set(Some($plan.now()))
                 isLocked.set(true)
               },
             ),
             button(
-              cls := "button edit-button",
-              "Done",
-              onClick --> Observer { _ =>
-                val finalName = editingName.now().trim
-                if (finalName.nonEmpty && finalName != sp.displayName) {
-                  val updatedPlan = sp.withName(finalName)
-                  db.saveSavedPlan(updatedPlan)
-                  $currentSavedPlan.set(Some(updatedPlan))
-                }
-                isLocked.set(true)
-              },
+              cls := "button button-outlined discard-button",
+              "Discard",
+              onClick --> Observer { _ => discardChanges(sp) },
             ),
           )
       },
