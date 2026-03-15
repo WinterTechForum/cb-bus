@@ -334,6 +334,7 @@ object Components {
       }
 
     div(
+      cls := "plan-layout",
       persistLockedState,
       persistCurrentSavedPlan,
       // Back button - only visible when loading trips
@@ -351,42 +352,7 @@ object Components {
           },
         ),
       ),
-      // Plan name row - hidden when loading trips
-      div(
-        cls := "plan-name-row-wrapper",
-        display <-- isLoadingTrips.map(loading =>
-          if (loading) "none" else "block",
-        ),
-        planNameAndLockRow($plan,
-                           currentSavedPlan,
-                           isLocked,
-                           db,
-                           focusPlanNameInput,
-                           hasSavedPlans,
-                           isDirty,
-                           originalPlanOnLoad,
-                           saveExpanded,
-        ),
-      ),
-      // Action buttons - hidden when loading trips
-      div(
-        display <-- isLoadingTrips.map(loading =>
-          if (loading) "none" else "block",
-        ),
-        copyButtons($plan,
-                    db,
-                    isLocked,
-                    currentSavedPlan,
-                    addingNewRoute,
-                    loadTripsMode,
-                    focusPlanNameInput,
-                    hasSavedPlans,
-                    isDirty,
-                    originalPlanOnLoad,
-                    saveExpanded,
-        ),
-      ),
-      // Plan segments container - hidden when loading trips
+      // Plan segments container - hidden when loading trips (MOVED TO TOP)
       div(
         display <-- isLoadingTrips.map(loading =>
           if (loading) "none" else "block",
@@ -828,6 +794,40 @@ object Components {
               ),
             )
         },
+      ),
+      // Bottom controls - fixed at bottom for thumb-friendly access
+      div(
+        cls := "bottom-controls-wrapper",
+        display <-- isLoadingTrips.map(loading =>
+          if (loading) "none" else "block",
+        ),
+        // Plan name row
+        div(
+          cls := "plan-name-row-wrapper",
+          planNameAndLockRow($plan,
+                             currentSavedPlan,
+                             isLocked,
+                             db,
+                             focusPlanNameInput,
+                             hasSavedPlans,
+                             isDirty,
+                             originalPlanOnLoad,
+                             saveExpanded,
+          ),
+        ),
+        // Action buttons
+        copyButtons($plan,
+                    db,
+                    isLocked,
+                    currentSavedPlan,
+                    addingNewRoute,
+                    loadTripsMode,
+                    focusPlanNameInput,
+                    hasSavedPlans,
+                    isDirty,
+                    originalPlanOnLoad,
+                    saveExpanded,
+        ),
       ),
     )
 

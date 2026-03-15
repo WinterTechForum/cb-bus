@@ -708,12 +708,25 @@ body {
 }
 
 /* Plan name row wrapper - makes sticky positioning work */
-.plan-name-row-wrapper {
-    position: sticky;
-    top: 0;
-    z-index: 50;
+/* Plan layout container - needs padding for fixed bottom controls */
+.plan-layout {
+    padding-bottom: 140px; /* Space for fixed bottom controls */
+}
+
+/* Bottom controls - fixed at bottom for thumb-friendly mobile access */
+.bottom-controls-wrapper {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
     background-color: var(--color-white);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+    padding-bottom: env(safe-area-inset-bottom, 0); /* iPhone notch support */
+}
+
+.plan-name-row-wrapper {
+    background-color: var(--color-white);
 }
 
 /* Plan name and lock row */
@@ -723,7 +736,7 @@ body {
     justify-content: center;
     gap: 12px;
     padding: 8px 16px;
-    margin-bottom: 8px;
+    margin-bottom: 0;
 }
 
 .plan-name-container {
