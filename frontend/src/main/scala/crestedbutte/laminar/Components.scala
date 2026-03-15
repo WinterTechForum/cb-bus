@@ -602,11 +602,6 @@ object Components {
                 )
               },
               cls := "centered",
-              // Notification bell button - in its own row above trip buttons
-              div(
-                cls := "notification-bell-row",
-                NotificationBellButton($plan),
-              ),
               div(
                 cls := "trip-button-container",
 
@@ -1230,8 +1225,10 @@ object Components {
                     .map { case (share, save) =>
                       if (share || save) "absolute" else "relative"
                     },
+                  // Notification bell button
+                  NotificationBellButton($plan),
                   button(
-                    cls := "button button-fixed-width",
+                    cls := "button button-compact",
                     SvgIcon.share("share-icon"),
                     onClick --> Observer { _ =>
                       shareExpanded.set(true)
@@ -1240,7 +1237,7 @@ object Components {
                   ),
                   // New button - creates a fresh empty trip
                   button(
-                    cls := "button button-fixed-width",
+                    cls := "button button-compact",
                     "New",
                     onClick --> Observer { _ =>
                       // Create a fresh empty plan
@@ -1263,7 +1260,7 @@ object Components {
                   child <-- hasSavedPlans.signal.map { hasPlans =>
                     if (hasPlans) {
                       button(
-                        cls := "button button-fixed-width",
+                        cls := "button button-compact",
                         "Load",
                         onClick --> Observer { _ =>
                           loadTripsMode.set(true)

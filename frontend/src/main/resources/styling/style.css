@@ -74,6 +74,12 @@ body {
     width: 100px;
 }
 
+.button-compact {
+    min-width: auto;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+}
+
 .add-new-route-section {
     padding: 10px 0;
 }
