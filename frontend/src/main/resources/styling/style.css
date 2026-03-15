@@ -764,11 +764,19 @@ body {
     transition:
         border-color 200ms ease,
         background-color 200ms ease;
+    /* Ensure normal touch behavior for cursor positioning */
+    touch-action: auto;
+    user-select: text;
+    -webkit-user-select: text;
 }
 
 .plan-name-input:focus {
     background-color: rgba(1, 156, 143, 0.05);
     border-bottom-color: var(--color-primary);
+    /* Maintain touch behavior when focused */
+    touch-action: auto;
+    user-select: text;
+    -webkit-user-select: text;
 }
 
 .plan-name-input::placeholder {
