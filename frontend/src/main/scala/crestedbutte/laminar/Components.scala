@@ -1055,6 +1055,10 @@ object Components {
                 if (evt.key == "Enter") doSave()
                 else if (evt.key == "Escape") cancelSave()
               },
+              // Prevent parent touch handlers from interfering with cursor positioning
+              TouchControls.onTouchStart.stopPropagation --> Observer.empty,
+              TouchControls.onTouchMove.stopPropagation --> Observer.empty,
+              onClick.stopPropagation --> Observer.empty,
             ),
             button(
               cls := "button inline-save-button",
@@ -1123,6 +1127,10 @@ object Components {
                 ctx.thisNode.ref.asInstanceOf[dom.HTMLInputElement].focus()
               },
               onInput.mapToValue --> editingName.writer,
+              // Prevent parent touch handlers from interfering with cursor positioning
+              TouchControls.onTouchStart.stopPropagation --> Observer.empty,
+              TouchControls.onTouchMove.stopPropagation --> Observer.empty,
+              onClick.stopPropagation --> Observer.empty,
             ),
             button(
               cls := "button edit-button",
