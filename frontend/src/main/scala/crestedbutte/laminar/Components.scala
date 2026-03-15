@@ -625,6 +625,7 @@ object Components {
                   span("+"),
                   onClick --> Observer { _ =>
                     tripExpanded.set(true)
+                    isLocked.set(false) // Enter edit mode when adding trips
                   },
                 ),
 
