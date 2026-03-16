@@ -1256,3 +1256,65 @@ body {
     transform: scale(0.95);
     background-color: #017d73;
 }
+
+/* ============================================
+   Trip Action Buttons (vertical stack)
+   ============================================ */
+
+.expanded-buttons-column {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 8px;
+    transition: opacity 200ms ease, transform 200ms ease;
+}
+
+.trip-action-button {
+    display: flex;
+    width: 100%;
+    padding: 12px 16px;
+    border-radius: 12px;
+    text-align: left;
+    min-width: 280px;
+}
+
+.trip-action-button.button-outlined {
+    background-color: transparent;
+    border: 2px solid var(--color-primary);
+    color: var(--color-primary);
+}
+
+.trip-action-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+}
+
+.trip-action-icon {
+    font-size: 1.3rem;
+    width: 28px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.trip-action-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.trip-action-title {
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.trip-action-subtitle {
+    font-weight: 400;
+    font-size: 0.85rem;
+    opacity: 0.8;
+}
+
+.trip-action-button.button-outlined .trip-action-subtitle {
+    opacity: 0.7;
+}

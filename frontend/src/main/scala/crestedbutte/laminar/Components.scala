@@ -311,6 +311,9 @@ object Components {
     
     // Shared state for save mode - triggered from name area, handled in copyButtons
     val saveExpanded: Var[Boolean] = Var(false)
+    
+    // Pre-selected starting point for "Continue from last stop" action
+    val preselectedStart: Var[Option[Location]] = Var(None)
 
     // Persist locked state changes to localStorage
     val persistLockedState =
@@ -624,69 +627,95 @@ object Components {
                   },
                 ),
 
-                // Expanded buttons container
+                // Expanded buttons container - vertical stack
                 div(
-                  cls := "expanded-buttons-row",
+                  cls := "expanded-buttons-column",
                   styleProp("pointer-events") <-- tripExpanded.signal
                     .map(expanded => if (expanded) "auto" else "none",
                     ),
-                  styleProp("position") <-- tripExpanded.signal.map(
-                    expanded =>
-                      if (expanded) "relative" else "absolute",
+                  styleProp("opacity") <-- tripExpanded.signal.map(
+                    expanded => if (expanded) "1" else "0",
+                  ),
+                  styleProp("transform") <-- tripExpanded.signal.map(
+                    expanded => if (expanded) "translateY(0)" else "translateY(20px)",
                   ),
 
-                  // New route button - emerges from center (left side)
+                  // 1. Continue from last stop - pre-selects origin
                   button(
-                    cls := "button button-fixed-width expand-from-left",
-                    styleProp("transform") <-- tripExpanded.signal
-                      .map(expanded =>
-                        if (expanded) "translateX(0) scale(1)"
-                        else "translateX(60px) scale(0)",
+                    cls := "button trip-action-button",
+                    div(
+                      cls := "trip-action-content",
+                      span(cls := "trip-action-icon", "→"),
+                      div(
+                        cls := "trip-action-text",
+                        span(cls := "trip-action-title", "Continue from last stop"),
+                        child <-- $plan.signal.map { plan =>
+                          plan.l.lastOption match {
+                            case Some(lastSeg) => 
+                              span(cls := "trip-action-subtitle", s"From ${lastSeg.end.l.name}")
+                            case None => emptyNode
+                          }
+                        },
                       ),
-                    styleProp("opacity") <-- tripExpanded.signal.map(
-                      expanded => if (expanded) "1" else "0",
                     ),
-                    "New trip",
                     onClick --> Observer { _ =>
+                      val plan = $plan.now()
+                      plan.l.lastOption.foreach { lastSeg =>
+                        preselectedStart.set(Some(lastSeg.end.l))
+                      }
                       addingNewRoute.set(true)
                       tripExpanded.set(false)
                     },
                   ),
 
-                  // Return trip button - emerges from center (right side)
+                  // 2. Return to start - auto-creates full return segment
                   button(
-                    cls := "button button-fixed-width expand-from-right",
-                    styleProp("transform") <-- tripExpanded.signal
-                      .map(expanded =>
-                        if (expanded) "translateX(0) scale(1)"
-                        else "translateX(-60px) scale(0)",
+                    cls := "button trip-action-button",
+                    div(
+                      cls := "trip-action-content",
+                      span(cls := "trip-action-icon", "↩"),
+                      div(
+                        cls := "trip-action-text",
+                        span(cls := "trip-action-title", "Return to start"),
+                        child <-- $plan.signal.map { plan =>
+                          (plan.l.lastOption, plan.l.headOption) match {
+                            case (Some(lastSeg), Some(firstSeg)) => 
+                              span(cls := "trip-action-subtitle", s"${lastSeg.end.l.name} → ${firstSeg.start.l.name}")
+                            case _ => emptyNode
+                          }
+                        },
                       ),
-                    styleProp("opacity") <-- tripExpanded.signal.map(
-                      expanded => if (expanded) "1" else "0",
                     ),
-                    "Return trip",
                     onClick --> Observer { _ =>
                       val plan = $plan.now()
-                      val maybeLastSeg = plan.l.lastOption
-                      maybeLastSeg.foreach { lastSeg =>
-                        val options = returnTripEndpoints(lastSeg)
-                        if options.hasAdjustments then
-                          pendingReturnChoice.set(
-                            Some(
-                              evaluatePendingReturn(
-                                lastSeg,
-                                plan,
-                                options,
-                              ),
-                            ),
-                          )
-                        else
-                          attemptReturnTrip(
-                            options.adjustedStart,
-                            options.adjustedEnd,
-                            Some(lastSeg.id),
-                          )
+                      (plan.l.lastOption, plan.l.headOption) match {
+                        case (Some(lastSeg), Some(firstSeg)) =>
+                          // Try to find a route from last stop back to first origin
+                          val start = lastSeg.end.l
+                          val end = firstSeg.start.l
+                          attemptReturnTrip(start, end, Some(lastSeg.id))
+                          tripExpanded.set(false)
+                        case _ => ()
                       }
+                    },
+                  ),
+
+                  // 3. New route - fresh start
+                  button(
+                    cls := "button trip-action-button button-outlined",
+                    div(
+                      cls := "trip-action-content",
+                      span(cls := "trip-action-icon", "+"),
+                      div(
+                        cls := "trip-action-text",
+                        span(cls := "trip-action-title", "New route"),
+                        span(cls := "trip-action-subtitle", "Pick a new starting point"),
+                      ),
+                    ),
+                    onClick --> Observer { _ =>
+                      preselectedStart.set(None)
+                      addingNewRoute.set(true)
+                      tripExpanded.set(false)
                     },
                   ),
                 ),
@@ -775,6 +804,9 @@ object Components {
               },
             )
           case true =>
+            // Capture preselected start and clear it for next time
+            val initialStart = preselectedStart.now()
+            preselectedStart.set(None)
             div(
               StopSelector(
                 CompleteStopList.values,
@@ -787,6 +819,7 @@ object Components {
                 loadTripsMode,
                 hasSavedPlans,
                 originalPlanOnLoad,
+                initialStart,
               ),
             )
         },
@@ -1965,8 +1998,9 @@ object Components {
     loadTripsMode: Var[Boolean],
     hasSavedPlans: Var[Boolean],
     originalPlanOnLoad: Var[Option[Plan]],
+    initialStartingPoint: Option[Location] = None, // Pre-select origin when continuing from last stop
   ) =
-    val startingPoint: Var[Option[Location]] = Var(None)
+    val startingPoint: Var[Option[Location]] = Var(initialStartingPoint)
     val $locationsVar: Var[Seq[(Location, Int)]] = Var(Seq.empty)
     val $locations: Signal[Seq[(Location, Int)]] =
       $locationsVar.signal
