@@ -942,11 +942,13 @@ object Components {
         .combineWith(isLocked.signal)
         .combineWith(isDirtyNow)
         .combineWith(hasSavedPlans.signal)
+        .combineWith($plan.signal)
         .map { _ =>
           // Read current values - Vars have .now(), Signals need observe pattern
           val savedPlanO = $currentSavedPlan.now()
           val locked = isLocked.now()
           val hasPlans = hasSavedPlans.now()
+          val hasSegments = $plan.now().routeSegments.nonEmpty
           // For dirty, we check it directly since we have the signals
           val dirty = savedPlanO.exists { _ =>
             originalPlanOnLoad.now().exists(_ != $plan.now())
@@ -954,14 +956,14 @@ object Components {
           val isSaved = savedPlanO.isDefined
           
           Seq(
-            // Edit times - only when locked
+            // Edit times - only when locked and has segments
             BottomSheet.MenuItem(
               icon = "✏️",
               label = "Edit times",
               onClick = () => isLocked.set(false),
-              hidden = !locked,
+              hidden = !locked || !hasSegments,
             ),
-            // Save changes - only when dirty and saved
+            // Save changes - only when dirty and saved and has segments
             BottomSheet.MenuItem(
               icon = "💾",
               label = "Save changes",
@@ -973,16 +975,16 @@ object Components {
                   originalPlanOnLoad.set(Some($plan.now()))
                 }
               },
-              hidden = !dirty || !isSaved,
+              hidden = !dirty || !isSaved || !hasSegments,
             ),
-            // Save as new trip - for unsaved trips
+            // Save as new trip - for unsaved trips with segments
             BottomSheet.MenuItem(
               icon = "💾",
               label = "Save trip",
               onClick = () => saveMode.set(true),
-              hidden = isSaved,
+              hidden = isSaved || !hasSegments,
             ),
-            // Share as text
+            // Share as text - only with segments
             BottomSheet.MenuItem(
               icon = "📝",
               label = "Share as text",
@@ -996,8 +998,9 @@ object Components {
                   dom.window.navigator.clipboard.writeText(text)
                 }
               },
+              hidden = !hasSegments,
             ),
-            // Share as link
+            // Share as link - only with segments
             BottomSheet.MenuItem(
               icon = "🔗",
               label = "Share link",
@@ -1015,8 +1018,9 @@ object Components {
                   dom.window.navigator.clipboard.writeText(url)
                 }
               },
+              hidden = !hasSegments,
             ),
-            // Notifications
+            // Notifications - only with segments
             BottomSheet.MenuItem(
               icon = "🔔",
               label = "Set departure alert",
@@ -1034,15 +1038,16 @@ object Components {
                   }
                 }
               },
-              hidden = !NotificationCountdown.isSupported,
+              hidden = !NotificationCountdown.isSupported || !hasSegments,
             ),
-            // New trip
+            // New trip - only with segments (otherwise use stop selector directly)
             BottomSheet.MenuItem(
               icon = "➕",
               label = "New trip",
               onClick = () => startNewTrip(),
+              hidden = !hasSegments,
             ),
-            // Load trip
+            // Load trip - always visible when there are saved plans
             BottomSheet.MenuItem(
               icon = "📂",
               label = "Load saved trip",
@@ -1052,7 +1057,7 @@ object Components {
               },
               hidden = !hasPlans,
             ),
-            // Delete - only for saved trips
+            // Delete - only for saved trips with segments
             BottomSheet.MenuItem(
               icon = "🗑️",
               label = "Delete trip",
@@ -1064,14 +1069,18 @@ object Components {
                   hasSavedPlans.set(db.listSavedPlans().nonEmpty)
                 }
               },
-              hidden = !isSaved,
+              hidden = !isSaved || !hasSegments,
             ),
           )
       }
 
     div(
-      // Only show when plan has segments
-      display <-- $plan.signal.map(p => if (p.routeSegments.isEmpty) "none" else "block"),
+      // Show when plan has segments OR user has saved plans to load
+      display <-- $plan.signal.combineWith(hasSavedPlans.signal).map { _ =>
+        val hasSegments = $plan.now().routeSegments.nonEmpty
+        val hasPlans = hasSavedPlans.now()
+        if (hasSegments || hasPlans) "block" else "none"
+      },
       
       // Bottom sheet menu
       BottomSheet(menuOpen, "Trip Options", menuItems),
