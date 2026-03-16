@@ -2019,6 +2019,23 @@ object Components {
       locations.zipWithIndex.foreach { l =>
         setTimeout(l._2 * 30) {
           $locationsVar.update(_ :+ l)
+          // If this is the preselected starting point, scroll to it after it appears
+          initialStartingPoint.foreach { preselected =>
+            if (l._1 == preselected) {
+              // Small delay to let the DOM update
+              setTimeout(50) {
+                val elementId = s"stop-btn-${preselected.name.replace(" ", "-")}"
+                dom.document.getElementById(elementId) match {
+                  case el: dom.Element => 
+                    el.asInstanceOf[js.Dynamic].scrollIntoView(js.Dynamic.literal(
+                      behavior = "smooth",
+                      block = "center"
+                    ))
+                  case _ => ()
+                }
+              }
+            }
+          }
         }
       }
     }
@@ -2104,6 +2121,7 @@ object Components {
                     child <-- $now.map {
                       now =>
                         button(
+                          idAttr := s"stop-btn-${location.name.replace(" ", "-")}",
                           disabled <-- startingPoint.signal.map {
                             case Some(startingPointNow)
                                 if startingPointNow == location =>
