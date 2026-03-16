@@ -24,6 +24,19 @@ case class LocationTimeDirection(
 
 // Note: SavedTrip is now replaced by SavedPlan in models.scala
 
+/** Generate a default trip name based on current date.
+  * Format: "Friday Mar 15"
+  */
+def defaultTripName(): String = {
+  val now = new js.Date()
+  val days = Seq("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday")
+  val months = Seq("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+  val dayName = days(now.getDay().toInt)
+  val monthName = months(now.getMonth().toInt)
+  val dayOfMonth = now.getDate().toInt
+  s"$dayName $monthName $dayOfMonth"
+}
+
 case class SelectedStopInfo(
   busScheduleAtStop: BusScheduleAtStop,
   routeSegment: RouteSegment,
@@ -873,11 +886,9 @@ object Components {
       }
 
     def doSaveNew(): Unit = {
-      val suggestedName = $plan.now().routeSegments.headOption
-        .map(seg => s"Trip from ${seg.start.l.name}")
-        .getOrElse("New Trip")
+      val suggestedName = defaultTripName()
       val enteredName = editingName.now().trim.take(20)
-      val name = if (enteredName.nonEmpty) enteredName else suggestedName.take(20)
+      val name = if (enteredName.nonEmpty) enteredName else suggestedName
       val plan = $plan.now()
       val newSavedPlan = SavedPlan.create(plan, name)
       db.saveSavedPlan(newSavedPlan)
@@ -1081,9 +1092,7 @@ object Components {
             
             if (saving) {
               // Save dialog for new trip
-              val suggestedName = $plan.now().routeSegments.headOption
-                .map(seg => s"Trip from ${seg.start.l.name}")
-                .getOrElse("New Trip")
+              val suggestedName = defaultTripName()
               div(
                 cls := "bottom-bar-edit-row",
                 input(
@@ -1334,11 +1343,9 @@ object Components {
 
     // Helper to save a new plan
     def doSave(): Unit = {
-      val suggestedName = $plan.now().routeSegments.headOption
-        .map(seg => s"Trip from ${seg.start.l.name}")
-        .getOrElse("New Trip")
+      val suggestedName = defaultTripName()
       val enteredName = editingName.now().trim.take(20)
-      val name = if (enteredName.nonEmpty) enteredName else suggestedName.take(20)
+      val name = if (enteredName.nonEmpty) enteredName else suggestedName
       val plan = $plan.now()
       val newSavedPlan = SavedPlan.create(plan, name)
       db.saveSavedPlan(newSavedPlan)
@@ -1380,9 +1387,7 @@ object Components {
 
         case Saving =>
           // Inline save UI
-          val suggestedName = $plan.now().routeSegments.headOption
-            .map(seg => s"Trip from ${seg.start.l.name}")
-            .getOrElse("New Trip")
+          val suggestedName = defaultTripName()
           div(
             cls := "inline-save-row",
             input(
