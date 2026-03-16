@@ -797,35 +797,339 @@ object Components {
         display <-- isLoadingTrips.map(loading =>
           if (loading) "none" else "block",
         ),
-        // Plan name row
-        div(
-          cls := "plan-name-row-wrapper",
-          planNameAndLockRow($plan,
-                             currentSavedPlan,
-                             isLocked,
-                             db,
-                             focusPlanNameInput,
-                             hasSavedPlans,
-                             isDirty,
-                             originalPlanOnLoad,
-                             saveExpanded,
-          ),
-        ),
-        // Action buttons
-        copyButtons($plan,
-                    db,
-                    isLocked,
-                    currentSavedPlan,
-                    addingNewRoute,
-                    loadTripsMode,
-                    focusPlanNameInput,
-                    hasSavedPlans,
-                    isDirty,
-                    originalPlanOnLoad,
-                    saveExpanded,
+        unifiedBottomBar(
+          $plan,
+          currentSavedPlan,
+          isLocked,
+          db,
+          hasSavedPlans,
+          isDirty,
+          originalPlanOnLoad,
+          addingNewRoute,
+          loadTripsMode,
         ),
       ),
     )
+
+  /** Unified bottom bar with trip name menu and contextual actions.
+    * 
+    * Layout:
+    * - When viewing (locked): [Name ▼] opens menu with Edit, Share, New, Load, etc.
+    * - When editing (unlocked): [Name input] [Save] [Discard]
+    * - Dirty indicator shown when there are unsaved changes
+    */
+  def unifiedBottomBar(
+    $plan: Var[Plan],
+    $currentSavedPlan: Var[Option[SavedPlan]],
+    isLocked: Var[Boolean],
+    db: Persistence,
+    hasSavedPlans: Var[Boolean],
+    $isDirty: Signal[Boolean],
+    originalPlanOnLoad: Var[Option[Plan]],
+    addingNewRoute: Var[Boolean],
+    loadTripsMode: Var[Boolean],
+  ) = {
+    val menuOpen: Var[Boolean] = Var(false)
+    val editingName: Var[String] = Var("")
+    val saveMode: Var[Boolean] = Var(false) // For "Unsaved Trip" -> save dialog
+
+    // Derive display name
+    val displayName: Signal[String] = 
+      $currentSavedPlan.signal.map {
+        case Some(sp) => sp.displayName
+        case None => "Unsaved Trip"
+      }
+
+    // Derive dirty state
+    val isDirtyNow: Signal[Boolean] = 
+      $currentSavedPlan.signal.combineWith($plan.signal).combineWith(originalPlanOnLoad.signal).map { _ =>
+        val savedPlanO = $currentSavedPlan.now()
+        val current = $plan.now()
+        val originalO = originalPlanOnLoad.now()
+        savedPlanO.isDefined && originalO.exists(_ != current)
+      }
+
+    def doSaveNew(): Unit = {
+      val suggestedName = $plan.now().routeSegments.headOption
+        .map(seg => s"Trip from ${seg.start.l.name}")
+        .getOrElse("New Trip")
+      val enteredName = editingName.now().trim.take(20)
+      val name = if (enteredName.nonEmpty) enteredName else suggestedName.take(20)
+      val plan = $plan.now()
+      val newSavedPlan = SavedPlan.create(plan, name)
+      db.saveSavedPlan(newSavedPlan)
+      $currentSavedPlan.set(Some(newSavedPlan))
+      originalPlanOnLoad.set(Some(plan))
+      hasSavedPlans.set(true)
+      isLocked.set(true)
+      editingName.set("")
+      saveMode.set(false)
+    }
+
+    def doSaveExisting(): Unit = {
+      $currentSavedPlan.now().foreach { sp =>
+        val finalName = editingName.now().trim
+        val nameToUse = if (finalName.nonEmpty) finalName else sp.displayName
+        val updatedPlan = sp.withName(nameToUse).withPlan($plan.now())
+        db.saveSavedPlan(updatedPlan)
+        $currentSavedPlan.set(Some(updatedPlan))
+        originalPlanOnLoad.set(Some($plan.now()))
+        isLocked.set(true)
+        editingName.set("")
+      }
+    }
+
+    def discardChanges(): Unit = {
+      $currentSavedPlan.now().foreach { sp =>
+        db.getSavedPlan(sp.id).foreach { freshPlan =>
+          $plan.set(freshPlan.plan)
+          originalPlanOnLoad.set(Some(freshPlan.plan))
+          $currentSavedPlan.set(Some(freshPlan))
+          isLocked.set(true)
+          editingName.set("")
+        }
+      }
+    }
+
+    def startNewTrip(): Unit = {
+      val emptyPlan = Plan(Seq.empty)
+      db.saveDailyPlanOnly(emptyPlan)
+      $plan.set(emptyPlan)
+      $currentSavedPlan.set(None)
+      originalPlanOnLoad.set(None)
+      isLocked.set(false)
+      addingNewRoute.set(true)
+    }
+
+    // Build menu items dynamically
+    // Combine signals to trigger updates, read values inside
+    val menuItems: Signal[Seq[BottomSheet.MenuItem]] =
+      $currentSavedPlan.signal
+        .combineWith(isLocked.signal)
+        .combineWith(isDirtyNow)
+        .combineWith(hasSavedPlans.signal)
+        .map { _ =>
+          // Read current values - Vars have .now(), Signals need observe pattern
+          val savedPlanO = $currentSavedPlan.now()
+          val locked = isLocked.now()
+          val hasPlans = hasSavedPlans.now()
+          // For dirty, we check it directly since we have the signals
+          val dirty = savedPlanO.exists { _ =>
+            originalPlanOnLoad.now().exists(_ != $plan.now())
+          }
+          val isSaved = savedPlanO.isDefined
+          
+          Seq(
+            // Edit times - only when locked
+            BottomSheet.MenuItem(
+              icon = "✏️",
+              label = "Edit times",
+              onClick = () => isLocked.set(false),
+              hidden = !locked,
+            ),
+            // Save changes - only when dirty and saved
+            BottomSheet.MenuItem(
+              icon = "💾",
+              label = "Save changes",
+              onClick = () => {
+                savedPlanO.foreach { sp =>
+                  val updatedPlan = sp.withPlan($plan.now())
+                  db.saveSavedPlan(updatedPlan)
+                  $currentSavedPlan.set(Some(updatedPlan))
+                  originalPlanOnLoad.set(Some($plan.now()))
+                }
+              },
+              hidden = !dirty || !isSaved,
+            ),
+            // Save as new trip - for unsaved trips
+            BottomSheet.MenuItem(
+              icon = "💾",
+              label = "Save trip",
+              onClick = () => saveMode.set(true),
+              hidden = isSaved,
+            ),
+            // Share
+            BottomSheet.MenuItem(
+              icon = "📤",
+              label = "Share",
+              onClick = () => {
+                val text = $plan.now().plainTextRepresentation
+                if (js.typeOf(dom.window.navigator.asInstanceOf[js.Dynamic].share) != "undefined") {
+                  dom.window.navigator.asInstanceOf[js.Dynamic].share(
+                    js.Dynamic.literal(title = "Bus Schedule", text = text)
+                  )
+                } else {
+                  dom.window.navigator.clipboard.writeText(text)
+                }
+              },
+            ),
+            // Notifications
+            BottomSheet.MenuItem(
+              icon = "🔔",
+              label = "Set departure alert",
+              onClick = () => {
+                // Trigger notification setup
+                if (NotificationCountdown.isSupported) {
+                  if (dom.Notification.permission == "granted") {
+                    NotificationCountdown.startCountdownNotifications($plan.now())
+                  } else if (dom.Notification.permission != "denied") {
+                    dom.Notification.requestPermission { result =>
+                      if (result == "granted") {
+                        NotificationCountdown.startCountdownNotifications($plan.now())
+                      }
+                    }
+                  }
+                }
+              },
+              hidden = !NotificationCountdown.isSupported,
+            ),
+            // New trip
+            BottomSheet.MenuItem(
+              icon = "➕",
+              label = "New trip",
+              onClick = () => startNewTrip(),
+            ),
+            // Load trip
+            BottomSheet.MenuItem(
+              icon = "📂",
+              label = "Load saved trip",
+              onClick = () => {
+                loadTripsMode.set(true)
+                addingNewRoute.set(true)
+              },
+              hidden = !hasPlans,
+            ),
+            // Delete - only for saved trips
+            BottomSheet.MenuItem(
+              icon = "🗑️",
+              label = "Delete trip",
+              onClick = () => {
+                savedPlanO.foreach { sp =>
+                  db.deleteSavedPlan(sp.id)
+                  $currentSavedPlan.set(None)
+                  db.clearCurrentSavedPlanId()
+                  hasSavedPlans.set(db.listSavedPlans().nonEmpty)
+                }
+              },
+              hidden = !isSaved,
+            ),
+          )
+      }
+
+    div(
+      // Only show when plan has segments
+      display <-- $plan.signal.map(p => if (p.routeSegments.isEmpty) "none" else "block"),
+      
+      // Bottom sheet menu
+      BottomSheet(menuOpen, "Trip Options", menuItems),
+      
+      // Main bar
+      div(
+        cls := "unified-bottom-bar",
+        
+        // Left side: Name trigger or edit input
+        // Trigger on any state change, read values inside
+        child <-- isLocked.signal
+          .combineWith(saveMode.signal)
+          .combineWith($currentSavedPlan.signal)
+          .map { _ =>
+            // Read current values directly to avoid type inference issues
+            val locked = isLocked.now()
+            val saving = saveMode.now()
+            val savedPlanO = $currentSavedPlan.now()
+            val isSaved = savedPlanO.isDefined
+            
+            if (saving) {
+              // Save dialog for new trip
+              val suggestedName = $plan.now().routeSegments.headOption
+                .map(seg => s"Trip from ${seg.start.l.name}")
+                .getOrElse("New Trip")
+              div(
+                cls := "bottom-bar-save-row",
+                input(
+                  cls := "bottom-bar-name-input",
+                  typ := "text",
+                  placeholder := suggestedName,
+                  maxLength := 20,
+                  onInput.mapToValue --> editingName.writer,
+                  onKeyDown --> Observer[dom.KeyboardEvent] { evt =>
+                    if (evt.key == "Enter") doSaveNew()
+                    else if (evt.key == "Escape") saveMode.set(false)
+                  },
+                  TouchControls.onTouchStart.stopPropagation --> Observer.empty,
+                  TouchControls.onTouchMove.stopPropagation --> Observer.empty,
+                ),
+                button(
+                  cls := "button bottom-bar-save-btn",
+                  "Save",
+                  onClick --> Observer { _ => doSaveNew() },
+                ),
+                button(
+                  cls := "button button-outlined bottom-bar-cancel-btn",
+                  "✕",
+                  onClick --> Observer { _ => saveMode.set(false) },
+                ),
+              )
+            } else if (!locked && isSaved) {
+              // Edit mode for saved trip - show input + Save/Discard
+              val sp = savedPlanO.get
+              div(
+                cls := "bottom-bar-edit-row",
+                input(
+                  cls := "bottom-bar-name-input",
+                  typ := "text",
+                  placeholder := "Trip name",
+                  defaultValue := sp.name.getOrElse(""),
+                  maxLength := 30,
+                  onMountCallback { ctx =>
+                    editingName.set(sp.name.getOrElse(""))
+                  },
+                  onInput.mapToValue --> editingName.writer,
+                  TouchControls.onTouchStart.stopPropagation --> Observer.empty,
+                  TouchControls.onTouchMove.stopPropagation --> Observer.empty,
+                ),
+                button(
+                  cls := "button bottom-bar-save-btn",
+                  "Save",
+                  onClick --> Observer { _ => doSaveExisting() },
+                ),
+                button(
+                  cls := "button button-outlined bottom-bar-discard-btn",
+                  "Discard",
+                  onClick --> Observer { _ => discardChanges() },
+                ),
+              )
+            } else {
+              // View mode - show name with dropdown trigger
+              div(
+                cls := "bottom-bar-name-trigger",
+                onClick --> Observer { _ => 
+                  if (!isSaved) {
+                    // Unsaved trip - go to save mode
+                    saveMode.set(true)
+                  } else {
+                    menuOpen.set(true)
+                  }
+                },
+                child <-- displayName.map { name =>
+                  span(cls := "bottom-bar-name", name)
+                },
+                // Dirty indicator
+                child <-- isDirtyNow.map { dirty =>
+                  if (dirty) span(cls := "bottom-bar-dirty", "•")
+                  else emptyNode
+                },
+                // Dropdown arrow (only for saved trips)
+                if (isSaved)
+                  span(cls := "bottom-bar-arrow", "▼")
+                else
+                  span(cls := "bottom-bar-hint", "tap to save"),
+              )
+            }
+          },
+      ),
+    )
+  }
 
   def RouteLegElement(
     routeSegment: RouteSegment,
