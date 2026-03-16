@@ -610,16 +610,11 @@ object Components {
 
                 // Collapsed + Trip button
                 button(
-                  cls := "button floating-center-button button-fixed-width collapsed-buttons-row",
-                  cls <-- tripExpanded.signal.map(expanded =>
-                    if (expanded) "delayed-appear" else "",
+                  cls := "button floating-center-button button-fixed-width",
+                  // Hide when expanded to avoid overlap
+                  display <-- tripExpanded.signal.map(expanded =>
+                    if (expanded) "none" else "flex"
                   ),
-                  styleProp("opacity") <-- tripExpanded.signal.map(
-                    expanded => if (expanded) "0" else "1",
-                  ),
-                  styleProp("pointer-events") <-- tripExpanded.signal
-                    .map(expanded => if (expanded) "none" else "auto",
-                    ),
                   span("+"),
                   onClick --> Observer { _ =>
                     tripExpanded.set(true)
@@ -630,14 +625,9 @@ object Components {
                 // Expanded buttons container - vertical stack
                 div(
                   cls := "expanded-buttons-column",
-                  styleProp("pointer-events") <-- tripExpanded.signal
-                    .map(expanded => if (expanded) "auto" else "none",
-                    ),
-                  styleProp("opacity") <-- tripExpanded.signal.map(
-                    expanded => if (expanded) "1" else "0",
-                  ),
-                  styleProp("transform") <-- tripExpanded.signal.map(
-                    expanded => if (expanded) "translateY(0)" else "translateY(20px)",
+                  // Only render buttons when expanded to avoid overlap
+                  display <-- tripExpanded.signal.map(expanded => 
+                    if (expanded) "flex" else "none"
                   ),
 
                   // 1. Continue from last stop - pre-selects origin
