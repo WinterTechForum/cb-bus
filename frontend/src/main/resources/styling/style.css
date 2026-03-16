@@ -1258,18 +1258,18 @@ body {
 .expanded-buttons-column {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    padding: 8px;
-    transition: opacity 200ms ease, transform 200ms ease;
+    gap: 12px;
+    padding: 16px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .trip-action-button {
     display: flex;
     width: 100%;
-    padding: 12px 16px;
-    border-radius: 12px;
+    padding: 18px 20px;
+    border-radius: 14px;
     text-align: left;
-    min-width: 280px;
 }
 
 .trip-action-button.button-outlined {
@@ -1281,13 +1281,13 @@ body {
 .trip-action-content {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 16px;
     width: 100%;
 }
 
 .trip-action-icon {
-    font-size: 1.3rem;
-    width: 28px;
+    font-size: 1.6rem;
+    width: 36px;
     text-align: center;
     flex-shrink: 0;
 }
@@ -1295,18 +1295,18 @@ body {
 .trip-action-text {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 4px;
 }
 
 .trip-action-title {
     font-weight: 600;
-    font-size: 1rem;
+    font-size: 1.15rem;
 }
 
 .trip-action-subtitle {
     font-weight: 400;
-    font-size: 0.85rem;
-    opacity: 0.8;
+    font-size: 0.95rem;
+    opacity: 0.85;
 }
 
 .trip-action-button.button-outlined .trip-action-subtitle {
