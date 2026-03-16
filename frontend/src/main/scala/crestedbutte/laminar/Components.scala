@@ -948,10 +948,10 @@ object Components {
               onClick = () => saveMode.set(true),
               hidden = isSaved,
             ),
-            // Share
+            // Share as text
             BottomSheet.MenuItem(
-              icon = "📤",
-              label = "Share",
+              icon = "📝",
+              label = "Share as text",
               onClick = () => {
                 val text = $plan.now().plainTextRepresentation
                 if (js.typeOf(dom.window.navigator.asInstanceOf[js.Dynamic].share) != "undefined") {
@@ -960,6 +960,25 @@ object Components {
                   )
                 } else {
                   dom.window.navigator.clipboard.writeText(text)
+                }
+              },
+            ),
+            // Share as link
+            BottomSheet.MenuItem(
+              icon = "🔗",
+              label = "Share link",
+              onClick = () => {
+                val plan = $plan.now()
+                val url = if (dom.document.URL.contains("localhost"))
+                  s"http://localhost:8000/index.html?plan=${UrlEncoding.encode(plan)}"
+                else
+                  s"https://cbbus.netlify.app/index.html?plan=${UrlEncoding.encode(plan)}"
+                if (js.typeOf(dom.window.navigator.asInstanceOf[js.Dynamic].share) != "undefined") {
+                  dom.window.navigator.asInstanceOf[js.Dynamic].share(
+                    js.Dynamic.literal(title = "Bus Schedule", url = url)
+                  )
+                } else {
+                  dom.window.navigator.clipboard.writeText(url)
                 }
               },
             ),
@@ -1023,17 +1042,15 @@ object Components {
       // Bottom sheet menu
       BottomSheet(menuOpen, "Trip Options", menuItems),
       
-      // Main bar
+      // Main bar - two rows: optional edit row on top, name+arrow row always at bottom
       div(
         cls := "unified-bottom-bar",
         
-        // Left side: Name trigger or edit input
-        // Trigger on any state change, read values inside
+        // Top row: Edit controls (only visible in save/edit mode)
         child <-- isLocked.signal
           .combineWith(saveMode.signal)
           .combineWith($currentSavedPlan.signal)
           .map { _ =>
-            // Read current values directly to avoid type inference issues
             val locked = isLocked.now()
             val saving = saveMode.now()
             val savedPlanO = $currentSavedPlan.now()
@@ -1045,7 +1062,7 @@ object Components {
                 .map(seg => s"Trip from ${seg.start.l.name}")
                 .getOrElse("New Trip")
               div(
-                cls := "bottom-bar-save-row",
+                cls := "bottom-bar-edit-row",
                 input(
                   cls := "bottom-bar-name-input",
                   typ := "text",
@@ -1100,33 +1117,37 @@ object Components {
                 ),
               )
             } else {
-              // View mode - show name with dropdown trigger
-              div(
-                cls := "bottom-bar-name-trigger",
-                onClick --> Observer { _ => 
-                  if (!isSaved) {
-                    // Unsaved trip - go to save mode
-                    saveMode.set(true)
-                  } else {
-                    menuOpen.set(true)
-                  }
-                },
-                child <-- displayName.map { name =>
-                  span(cls := "bottom-bar-name", name)
-                },
-                // Dirty indicator
-                child <-- isDirtyNow.map { dirty =>
-                  if (dirty) span(cls := "bottom-bar-dirty", "•")
-                  else emptyNode
-                },
-                // Dropdown arrow (only for saved trips)
-                if (isSaved)
-                  span(cls := "bottom-bar-arrow", "▼")
-                else
-                  span(cls := "bottom-bar-hint", "tap to save"),
-              )
+              // View mode - no edit row needed
+              emptyNode
             }
           },
+        
+        // Bottom row: Name + arrow (ALWAYS visible, arrow always in same spot)
+        div(
+          cls := "bottom-bar-main-row",
+          // Hide when menu is open
+          display <-- menuOpen.signal.map(open => if (open) "none" else "flex"),
+          
+          // Left side: name display with dirty indicator
+          div(
+            cls := "bottom-bar-name-area",
+            child <-- displayName.map { name =>
+              span(cls := "bottom-bar-name", name)
+            },
+            // Dirty indicator
+            child <-- isDirtyNow.map { dirty =>
+              if (dirty) span(cls := "bottom-bar-dirty", "•")
+              else emptyNode
+            },
+          ),
+          
+          // Right side: Arrow button (ALWAYS here, rock solid position)
+          button(
+            cls := "bottom-bar-menu-btn",
+            "▼",
+            onClick --> Observer { _ => menuOpen.set(true) },
+          ),
+        ),
       ),
     )
   }
