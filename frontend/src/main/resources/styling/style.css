@@ -1265,11 +1265,15 @@ body {
 }
 
 .trip-action-button {
-    display: flex;
+    display: flex !important;
     width: 100%;
-    padding: 18px 20px;
+    padding: 16px 20px;
     border-radius: 14px;
     text-align: left;
+    min-height: auto !important;
+    height: auto !important;
+    line-height: 1.4;
+    align-items: center;
 }
 
 .trip-action-button.button-outlined {
@@ -1286,8 +1290,8 @@ body {
 }
 
 .trip-action-icon {
-    font-size: 1.6rem;
-    width: 36px;
+    font-size: 1.5rem;
+    width: 32px;
     text-align: center;
     flex-shrink: 0;
 }
@@ -1295,18 +1299,20 @@ body {
 .trip-action-text {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 2px;
 }
 
 .trip-action-title {
     font-weight: 600;
-    font-size: 1.15rem;
+    font-size: 1.1rem;
+    line-height: 1.3;
 }
 
 .trip-action-subtitle {
     font-weight: 400;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     opacity: 0.85;
+    line-height: 1.3;
 }
 
 .trip-action-button.button-outlined .trip-action-subtitle {
