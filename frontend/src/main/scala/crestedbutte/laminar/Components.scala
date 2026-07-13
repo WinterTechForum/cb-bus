@@ -1166,9 +1166,25 @@ object Components {
           // Left side: name display with dirty indicator
           div(
             cls := "bottom-bar-name-area",
-            child <-- displayName.map { name =>
-              span(cls := "bottom-bar-name", name)
-            },
+            // While the plan is unsaved and has segments, the name doubles as a
+            // one-tap "save this trip" target (the menu still offers "Save
+            // trip"). stopPropagation so the tap can't start a parent gesture.
+            child <-- $currentSavedPlan.signal
+              .combineWith($plan.signal)
+              .map { case (savedO, plan) =>
+                val name = savedO.map(_.displayName).getOrElse("Unsaved Trip")
+                if (savedO.isEmpty && plan.routeSegments.nonEmpty)
+                  span(
+                    cls := "bottom-bar-name bottom-bar-name--tappable",
+                    title := "Tap to save this trip",
+                    name,
+                    onClick.stopPropagation --> Observer { _ =>
+                      saveMode.set(true)
+                    },
+                  )
+                else
+                  span(cls := "bottom-bar-name", name)
+              },
             // Dirty indicator
             child <-- isDirtyNow.map { dirty =>
               if (dirty) span(cls := "bottom-bar-dirty", "•")

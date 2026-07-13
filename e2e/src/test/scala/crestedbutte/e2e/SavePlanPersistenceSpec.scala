@@ -16,6 +16,37 @@ object SavePlanPersistenceSpec extends ZIOSpecDefault:
   private val TripName = "E2E Regression Trip"
 
   def spec = suite("save + persistence")(
+    test("tapping the unsaved trip name saves it (one-tap save)") {
+      withApp { (page, baseUrl) =>
+        loadSelector(page, baseUrl)
+        planSingleSegment(page)
+
+        // The unsaved name is a direct save target — no menu needed.
+        page.waitForSelector(
+          ".bottom-bar-name--tappable",
+          new Page.WaitForSelectorOptions().setTimeout(8000),
+        )
+        page.locator(".bottom-bar-name--tappable").click()
+        page.waitForSelector(
+          ".bottom-bar-name-input",
+          new Page.WaitForSelectorOptions().setTimeout(8000),
+        )
+        page.locator(".bottom-bar-name-input").fill("Tapped Trip")
+        page.locator(".bottom-bar-save-btn").click()
+
+        val saved =
+          pollUntil(page)(
+            Option(page.querySelector(".bottom-bar-name"))
+              .map(_.textContent().trim)
+              .contains("Tapped Trip"),
+          )
+        // Once saved, the name is no longer a save target.
+        val noLongerTappable =
+          pollUntil(page)(page.querySelector(".bottom-bar-name--tappable") == null)
+
+        assertTrue(saved, noLongerTappable)
+      }
+    },
     test("a saved trip is restored after a full page reload") {
       withApp { (page, baseUrl) =>
         loadSelector(page, baseUrl)

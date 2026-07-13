@@ -1306,6 +1306,14 @@ body {
     color: var(--color-black);
 }
 
+/* Unsaved name that can be tapped to save: signal it's interactive. */
+.bottom-bar-name--tappable {
+    color: var(--color-primary);
+    cursor: pointer;
+    text-decoration: underline dotted;
+    text-underline-offset: 3px;
+}
+
 .bottom-bar-dirty {
     color: #ff9500;
     font-size: 1.5rem;
