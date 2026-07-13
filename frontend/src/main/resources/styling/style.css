@@ -70,6 +70,40 @@ body {
     cursor: not-allowed;
 }
 
+/* Stops that are behind the origin on the loop: intentionally set apart with a
+   loop glyph so the dimming reads as "the long way around", not "broken". */
+.stop-unreachable {
+    opacity: 0.55;
+    border-style: dashed !important;
+}
+
+.stop-unreachable::before {
+    content: "↻ ";
+    font-weight: 700;
+}
+
+/* Explanatory banner shown under "Select your destination". */
+.reachability-hint {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    max-width: 22rem;
+    margin: 0 auto 10px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    background: var(--color-highlight-bg);
+    color: var(--color-black);
+    font-size: 0.82rem;
+    line-height: 1.35;
+    text-align: left;
+}
+
+.reachability-hint_icon {
+    font-size: 1.1rem;
+    line-height: 1.2;
+    color: var(--color-primary);
+}
+
 .button-fixed-width {
     width: 100px;
 }
@@ -315,7 +349,9 @@ body {
     border-radius: 5px;
     color: var(--color-black);
     margin: 4px 0;
-    padding: 8px;
+    /* Padding lives on the row (not here) so the opaque row covers the red
+       delete zone edge-to-edge at rest, with no red "frame" bleeding through. */
+    padding: 0;
     position: relative;
     overflow: hidden;
 }
@@ -326,7 +362,55 @@ body {
     width: 100%;
     position: relative;
     z-index: 1;
+    padding: 8px;
+    /* Opaque so the red delete zone only shows where the row slides away. */
+    background: var(--color-white);
     transition: transform 180ms ease;
+}
+
+/* Swipe-to-delete affordance: red zone revealed behind the sliding row. */
+.plan-segments_delete-reveal {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 0 16px;
+    background: rgba(231, 76, 60, 0.25);
+    color: #c0392b;
+    opacity: 0;
+    transition: background-color 120ms ease, color 120ms ease;
+    pointer-events: none;
+}
+
+.plan-segments_delete-reveal--armed {
+    background: #e74c3c;
+    color: var(--color-white);
+}
+
+.delete-reveal_icon {
+    font-size: 1.25rem;
+    line-height: 1;
+}
+
+.delete-reveal_label {
+    font-weight: 600;
+    font-size: 0.85rem;
+    white-space: nowrap;
+}
+
+/* One-time onboarding nudge: peek the delete zone, then settle back. */
+@keyframes swipe-peek {
+    0%   { transform: translateX(0); }
+    30%  { transform: translateX(-46px); }
+    68%  { transform: translateX(-46px); }
+    100% { transform: translateX(0); }
+}
+
+.plan-segments_row--peek {
+    animation: swipe-peek 1150ms ease-in-out 450ms 1;
 }
 
 .plan-segments_left {

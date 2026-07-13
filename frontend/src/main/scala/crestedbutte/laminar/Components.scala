@@ -22,7 +22,6 @@ case class LocationTimeDirection(
   locationWithTime: LocationWithTime,
   routeSegment: RouteSegment)
 
-// Note: SavedTrip is now replaced by SavedPlan in models.scala
 
 /** Generate a default trip name based on current date.
   * Format: "Friday Mar 15"
@@ -308,8 +307,6 @@ object Components {
 
     // Track whether we should open the load trips view when entering stop selector
     val loadTripsMode: Var[Boolean] = Var(false)
-    // Signal to trigger focusing the plan name input when saving
-    val focusPlanNameInput: Var[Boolean] = Var(false)
     // Reactive state to track whether there are any saved plans
     val hasSavedPlans: Var[Boolean] = Var(
       db.listSavedPlans().nonEmpty || db.listPlanNames().nonEmpty,
@@ -321,9 +318,6 @@ object Components {
         case (current, Some(original)) => current != original
         case _ => false
       }
-    
-    // Shared state for save mode - triggered from name area, handled in copyButtons
-    val saveExpanded: Var[Boolean] = Var(false)
     
     // Pre-selected starting point for "Continue from last stop" action
     val preselectedStart: Var[Option[Location]] = Var(None)
@@ -1193,6 +1187,13 @@ object Components {
     )
   }
 
+  // Show the swipe-to-delete nudge only once per session, on the first segment
+  // that renders, so we teach the gesture without nagging on every render.
+  private var swipeHintShown = false
+  private def takeSwipeHint(): Boolean =
+    if (swipeHintShown) false
+    else { swipeHintShown = true; true }
+
   def RouteLegElement(
     routeSegment: RouteSegment,
     addingNewRoute: Var[Boolean],
@@ -1245,9 +1246,28 @@ object Components {
 
     div(
       cls := "plan-segments",
+      // Red delete affordance, revealed behind the row as it slides away under a
+      // swipe; brightens and switches its label once past the delete threshold.
+      div(
+        cls := "plan-segments_delete-reveal",
+        cls.toggle("plan-segments_delete-reveal--armed") <--
+          offsetPx.signal.map(px => Math.abs(px) >= 120),
+        styleProp("opacity") <--
+          offsetPx.signal.map(px => Math.min(1.0, Math.abs(px) / 120.0).toString),
+        span(cls := "delete-reveal_icon", "🗑"),
+        span(
+          cls := "delete-reveal_label",
+          child.text <-- offsetPx.signal.map(px =>
+            if (Math.abs(px) >= 120) "Release to delete" else "Swipe to delete",
+          ),
+        ),
+      ),
       // Slidable content
       div(
         cls := "plan-segments_row",
+        // One-time nudge (per session) that peeks the delete zone to teach the
+        // swipe gesture without permanent clutter.
+        cls.toggle("plan-segments_row--peek") := takeSwipeHint(),
         styleProp("transform") <-- offsetPx.signal.map(px =>
           if (px >= 0) s"translateX(-${px}px)"
           else s"translateX(${-px}px)",
@@ -1297,441 +1317,6 @@ object Components {
         // No SavedPlan - write to "today" for unsaved work
         db.saveDailyPlanOnly(plan)
     }
-
-  /** Plan name header with unified state machine:
-    * 
-    * States:
-    * 1. UNSAVED - No saved plan, shows "Unsaved Trip" (clickable)
-    * 2. SAVING - Shows inline save UI (input + Save + Cancel)
-    * 3. SAVED_VIEWING - Locked saved plan, shows name + Edit button
-    * 4. SAVED_EDITING - Unlocked saved plan, shows editable name input
-    */
-  def planNameAndLockRow(
-    $plan: Var[Plan],
-    $currentSavedPlan: Var[Option[SavedPlan]],
-    isLocked: Var[Boolean],
-    db: Persistence,
-    focusPlanNameInput: Var[Boolean],
-    hasSavedPlans: Var[Boolean],
-    $isDirty: Signal[Boolean],
-    originalPlanOnLoad: Var[Option[Plan]],
-    saveExpanded: Var[Boolean],
-  ) =
-    // Local state for editing
-    val editingName: Var[String] = Var("")
-
-    // Derive the UI state from the signals
-    sealed trait PlanNameState
-    case object Unsaved extends PlanNameState
-    case object Saving extends PlanNameState
-    case class SavedViewing(plan: SavedPlan, isDirty: Boolean) extends PlanNameState
-    case class SavedEditing(plan: SavedPlan) extends PlanNameState
-
-    // Build state by reading current values in the map - simpler than combineWith
-    val uiState: Signal[PlanNameState] = 
-      $currentSavedPlan.signal
-        .combineWith(isLocked.signal)
-        .combineWith(saveExpanded.signal)
-        .combineWith($isDirty)
-        .map { _ =>
-          // Read current values directly
-          val savedPlanO = $currentSavedPlan.now()
-          val locked = isLocked.now()
-          val saving = saveExpanded.now()
-          val dirty = savedPlanO.exists { sp =>
-            originalPlanOnLoad.now().exists(_ != $plan.now())
-          }
-          
-          (savedPlanO, locked, saving) match {
-            case (None, _, true) => Saving
-            case (None, _, _) => Unsaved
-            case (Some(sp), true, _) => SavedViewing(sp, dirty)
-            case (Some(sp), false, _) => SavedEditing(sp)
-          }
-        }
-
-    // Helper to save a new plan
-    def doSave(): Unit = {
-      val suggestedName = defaultTripName()
-      val enteredName = editingName.now().trim.take(20)
-      val name = if (enteredName.nonEmpty) enteredName else suggestedName
-      val plan = $plan.now()
-      val newSavedPlan = SavedPlan.create(plan, name)
-      db.saveSavedPlan(newSavedPlan)
-      $currentSavedPlan.set(Some(newSavedPlan))
-      originalPlanOnLoad.set(Some(plan))
-      hasSavedPlans.set(true)
-      isLocked.set(true)
-      editingName.set("")
-      saveExpanded.set(false)
-    }
-
-    def cancelSave(): Unit = {
-      editingName.set("")
-      saveExpanded.set(false)
-    }
-
-    def discardChanges(sp: SavedPlan): Unit = {
-      db.getSavedPlan(sp.id).foreach { freshPlan =>
-        $plan.set(freshPlan.plan)
-        originalPlanOnLoad.set(Some(freshPlan.plan))
-        $currentSavedPlan.set(Some(freshPlan))
-        isLocked.set(true)
-      }
-    }
-
-    div(
-      cls := "plan-name-row",
-      child <-- uiState.map {
-        case Unsaved =>
-          // Clickable "Unsaved Trip" label
-          span(
-            cls := "plan-name-text plan-name-unsaved plan-name-clickable",
-            "Unsaved Trip",
-            title := "Click to save this trip",
-            onClick.stopPropagation --> Observer { _ =>
-              saveExpanded.set(true)
-            },
-          )
-
-        case Saving =>
-          // Inline save UI
-          val suggestedName = defaultTripName()
-          div(
-            cls := "inline-save-row",
-            input(
-              cls := "plan-name-input",
-              typ := "text",
-              placeholder := suggestedName,
-              maxLength := 20,
-              onInput.mapToValue --> editingName.writer,
-              onKeyDown --> Observer[dom.KeyboardEvent] { evt =>
-                if (evt.key == "Enter") doSave()
-                else if (evt.key == "Escape") cancelSave()
-              },
-              // Prevent parent touch handlers from interfering with cursor positioning
-              TouchControls.onTouchStart.stopPropagation --> Observer.empty,
-              TouchControls.onTouchMove.stopPropagation --> Observer.empty,
-              onClick.stopPropagation --> Observer.empty,
-            ),
-            button(
-              cls := "button inline-save-button",
-              "Save",
-              onClick.stopPropagation --> Observer { _ => doSave() },
-            ),
-            button(
-              cls := "button button-outlined inline-cancel-button",
-              "✕",
-              title := "Cancel",
-              onClick.stopPropagation --> Observer { _ => cancelSave() },
-            ),
-          )
-
-        case SavedViewing(sp, isDirty) =>
-          // Locked view: name + either Edit (clean) or Save/Discard (dirty)
-          div(
-            cls := "plan-name-display",
-            span(cls := "plan-name-text", sp.displayName),
-            if (isDirty) {
-              // Dirty: show Save and Discard for route changes
-              Seq(
-                span(cls := "dirty-indicator", title := "Unsaved changes", "•"),
-                button(
-                  cls := "button edit-button",
-                  "Save",
-                  onClick --> Observer { _ =>
-                    // Save current plan state to this SavedPlan
-                    val updatedPlan = sp.withPlan($plan.now())
-                    db.saveSavedPlan(updatedPlan)
-                    $currentSavedPlan.set(Some(updatedPlan))
-                    originalPlanOnLoad.set(Some($plan.now()))
-                  },
-                ),
-                button(
-                  cls := "button button-outlined discard-button",
-                  "Discard",
-                  title := "Discard unsaved changes",
-                  onClick --> Observer { _ => discardChanges(sp) },
-                ),
-              )
-            } else {
-              // Clean: just show Edit for name changes
-              Seq(
-                button(
-                  cls := "button edit-button",
-                  "Edit",
-                  onClick --> Observer { _ => isLocked.set(false) },
-                ),
-              )
-            },
-          )
-
-        case SavedEditing(sp) =>
-          // Unlocked: editable name input + Save/Discard
-          div(
-            cls := "plan-name-display",
-            input(
-              cls := "plan-name-input",
-              typ := "text",
-              maxLength := 30,
-              placeholder := "Trip name",
-              defaultValue := sp.name.getOrElse(""),
-              onMountCallback { ctx =>
-                editingName.set(sp.name.getOrElse(""))
-              },
-              onInput.mapToValue --> editingName.writer,
-              // Prevent parent touch handlers from interfering with cursor positioning
-              TouchControls.onTouchStart.stopPropagation --> Observer.empty,
-              TouchControls.onTouchMove.stopPropagation --> Observer.empty,
-              onClick.stopPropagation --> Observer.empty,
-            ),
-            button(
-              cls := "button edit-button",
-              "Save",
-              onClick --> Observer { _ =>
-                // Save both name and plan changes
-                val finalName = editingName.now().trim
-                val nameToUse = if (finalName.nonEmpty) finalName else sp.displayName
-                val updatedPlan = sp.withName(nameToUse).withPlan($plan.now())
-                db.saveSavedPlan(updatedPlan)
-                $currentSavedPlan.set(Some(updatedPlan))
-                originalPlanOnLoad.set(Some($plan.now()))
-                isLocked.set(true)
-              },
-            ),
-            button(
-              cls := "button button-outlined discard-button",
-              "Discard",
-              onClick --> Observer { _ => discardChanges(sp) },
-            ),
-          )
-      },
-    )
-
-  def copyButtons(
-    $plan: Var[Plan],
-    db: Persistence,
-    isLocked: Var[Boolean],
-    currentSavedPlan: Var[Option[SavedPlan]],
-    addingNewRoute: Var[Boolean],
-    loadTripsMode: Var[Boolean],
-    focusPlanNameInput: Var[Boolean],
-    hasSavedPlans: Var[Boolean],
-    $isDirty: Signal[Boolean],
-    originalPlanOnLoad: Var[Option[Plan]],
-    saveExpanded: Var[Boolean],
-  ) = {
-    val shareExpanded: Var[Boolean] = Var(false)
-    val tripName: Var[String] = Var("")
-    val saveConfirmation: Var[Option[String]] = Var(None)
-
-    // Add click handler to collapse when clicking outside
-    val documentClickHandler: js.Function1[dom.MouseEvent, Unit] =
-      (event: dom.MouseEvent) => {
-        val target = event.target.asInstanceOf[dom.Element]
-        val actionContainer =
-          dom.document.querySelector(".share-save-buttons-container")
-        if (
-          actionContainer != null && !actionContainer.contains(target)
-        ) {
-          shareExpanded.set(false)
-          saveExpanded.set(false)
-          saveConfirmation.set(None)
-        }
-      }
-
-    div(
-      onMountCallback { ctx =>
-        dom.document.addEventListener("click", documentClickHandler)
-      },
-      onUnmountCallback { _ =>
-        dom.document.removeEventListener("click",
-                                         documentClickHandler,
-        )
-      },
-      child <-- $plan.signal
-        .combineWith(currentSavedPlan.signal)
-        .map { case (plan, savedPlanO) =>
-          if (plan.routeSegments.isEmpty)
-            div()
-          else {
-            val isSaved = savedPlanO.isDefined
-
-            div(
-              cls := "centered",
-              div(
-                cls := "action-buttons-container share-save-buttons-container",
-
-                // Collapsed state: Share, New, and Load buttons
-                div(
-                  cls := "expanded-buttons-row collapsed-buttons-row",
-                  cls <-- shareExpanded.signal
-                    .combineWith(saveExpanded.signal)
-                    .map { case (share, save) =>
-                      if (share || save) "delayed-appear" else ""
-                    },
-                  styleProp("opacity") <-- shareExpanded.signal
-                    .combineWith(saveExpanded.signal)
-                    .map { case (share, save) =>
-                      if (share || save) "0" else "1"
-                    },
-                  styleProp(
-                    "pointer-events",
-                  ) <-- shareExpanded.signal
-                    .combineWith(saveExpanded.signal)
-                    .map { case (share, save) =>
-                      if (share || save) "none" else "auto"
-                    },
-                  styleProp("position") <-- shareExpanded.signal
-                    .combineWith(saveExpanded.signal)
-                    .map { case (share, save) =>
-                      if (share || save) "absolute" else "relative"
-                    },
-                  // Notification bell button
-                  NotificationBellButton($plan),
-                  button(
-                    cls := "button button-compact",
-                    SvgIcon.share("share-icon"),
-                    onClick --> Observer { _ =>
-                      shareExpanded.set(true)
-                      saveExpanded.set(false)
-                    },
-                  ),
-                  // New button - creates a fresh empty trip
-                  button(
-                    cls := "button button-compact",
-                    "New",
-                    onClick --> Observer { _ =>
-                      // Create a fresh empty plan
-                      val emptyPlan = Plan(Seq.empty)
-                      // Save the empty plan as the current daily plan
-                      db.saveDailyPlanOnly(emptyPlan)
-                      // Update the plan
-                      $plan.set(emptyPlan)
-                      // Clear the current saved plan reference (doesn't delete the saved plan)
-                      currentSavedPlan.set(None)
-                      // Clear original plan tracking (no dirty state for new plans)
-                      originalPlanOnLoad.set(None)
-                      // Unlock the schedule so user can start adding routes
-                      isLocked.set(false)
-                      // Start in adding new route mode
-                      addingNewRoute.set(true)
-                    },
-                  ),
-                  // Load button - dynamically show/hide based on saved plans
-                  child <-- hasSavedPlans.signal.map { hasPlans =>
-                    if (hasPlans) {
-                      button(
-                        cls := "button button-compact",
-                        "Load",
-                        onClick --> Observer { _ =>
-                          loadTripsMode.set(true)
-                          addingNewRoute.set(true)
-                        },
-                      )
-                    }
-                    else {
-                      emptyNode
-                    }
-                  },
-                ),
-
-                // Share expanded: Text and Link buttons
-                div(
-                  cls := "expanded-buttons-row",
-                  styleProp(
-                    "pointer-events",
-                  ) <-- shareExpanded.signal
-                    .map(expanded => if (expanded) "auto" else "none",
-                    ),
-                  styleProp("position") <-- shareExpanded.signal
-                    .map(expanded =>
-                      if (expanded) "relative" else "absolute",
-                    ),
-                  // Text button - emerges from Share position (left side, no translation needed)
-                  button(
-                    cls := "button button-fixed-width expand-from-left",
-                    styleProp("transform") <-- shareExpanded.signal
-                      .map(expanded =>
-                        if (expanded) "translateX(0) scale(1)"
-                        else "translateX(60px) scale(0)",
-                      ),
-                    styleProp("opacity") <-- shareExpanded.signal
-                      .map(expanded => if (expanded) "1" else "0"),
-                    "Text",
-                    onClick --> Observer { _ =>
-                      val text = plan.plainTextRepresentation
-                      if (
-                        js.typeOf(
-                          dom.window.navigator
-                            .asInstanceOf[js.Dynamic]
-                            .share,
-                        ) != "undefined"
-                      ) {
-                        dom.window.navigator
-                          .asInstanceOf[js.Dynamic]
-                          .share(
-                            js.Dynamic.literal(title = "Bus Schedule",
-                                               text = text,
-                            ),
-                          )
-                      }
-                      else {
-                        dom.window.navigator.clipboard
-                          .writeText(text)
-                      }
-                      shareExpanded.set(false)
-                    },
-                  ),
-                  // Link button - emerges from Share position (needs to slide right to its final position)
-                  button(
-                    cls := "button button-fixed-width expand-from-right",
-                    styleProp("transform") <-- shareExpanded.signal
-                      .map(expanded =>
-                        if (expanded) "translateX(0) scale(1)"
-                        else "translateX(-120px) scale(0)",
-                      ),
-                    styleProp("opacity") <-- shareExpanded.signal
-                      .map(expanded => if (expanded) "1" else "0"),
-                    "Link",
-                    onClick --> Observer { _ =>
-                      val url =
-                        if (dom.document.URL.contains("localhost"))
-                          s"http://localhost:8000/index.html?plan=${UrlEncoding.encode(plan)}"
-                        else
-                          s"https://rtabus.netlify.app/?plan=${UrlEncoding.encode(plan)}"
-                      if (
-                        js.typeOf(
-                          dom.window.navigator
-                            .asInstanceOf[js.Dynamic]
-                            .share,
-                        ) != "undefined"
-                      ) {
-                        dom.window.navigator
-                          .asInstanceOf[js.Dynamic]
-                          .share(
-                            js.Dynamic.literal(
-                              title = "Bus Schedule Link",
-                              url = url,
-                            ),
-                          )
-                      }
-                      else {
-                        dom.window.navigator.clipboard
-                          .writeText(url)
-                      }
-                      shareExpanded.set(false)
-                    },
-                  ),
-                ),
-
-                // Save UI is now inline in planNameAndLockRow
-              ),
-            )
-          }
-        },
-    )
-  }
 
   private[laminar] case class ReturnTripOptions(
     originalStart: Location,
@@ -2111,6 +1696,22 @@ object Components {
                 case None    => "Select your origin"
               },
             ),
+            // Explain why some stops are dimmed once an origin is chosen: the
+            // route is a ~1½-hour loop, so stops "behind" the origin are only
+            // reachable by riding the whole loop around — not worth offering.
+            child <-- startingPoint.signal.map {
+              case Some(origin) =>
+                div(
+                  cls := "reachability-hint",
+                  span(cls := "reachability-hint_icon", "↻"),
+                  span(
+                    s"Dimmed stops sit behind ${origin.name} on the loop — " +
+                      "reaching them means riding the full loop (about 1½ hours), " +
+                      "so they aren't offered from here.",
+                  ),
+                )
+              case None => emptyNode
+            },
             div(
               children <-- $locations.splitTransition(identity) {
                 case (_, (location, _), _, transition) =>
@@ -2120,21 +1721,29 @@ object Components {
                     transition.height,
                     child <-- $now.map {
                       now =>
-                        button(
-                          idAttr := s"stop-btn-${location.name.replace(" ", "-")}",
-                          disabled <-- startingPoint.signal.map {
-                            case Some(startingPointNow)
-                                if startingPointNow == location =>
-                              false
-                            case Some(other) =>
+                        // A stop is "unreachable" when an origin is chosen and no
+                        // forward leg exists to it in either loop direction (see
+                        // rightLegOnRightRoute) — i.e. it's behind you on the loop.
+                        val unreachable: Signal[Boolean] =
+                          startingPoint.signal.map {
+                            case Some(other) if other != location =>
                               rightLegOnRightRoute(
                                 other,
                                 location,
                                 $plan.now(),
                                 now,
                               ).isEmpty
-                            case None => false
-                          },
+                            case _ => false
+                          }
+                        button(
+                          idAttr := s"stop-btn-${location.name.replace(" ", "-")}",
+                          disabled <-- unreachable,
+                          cls.toggle("stop-unreachable") <-- unreachable,
+                          title <-- unreachable.map(u =>
+                            if (u)
+                              s"${location.name} is on the far side of the loop from your start — the bus would ride the whole loop to reach it."
+                            else "",
+                          ),
                           cls := "button m-2",
                           onClick --> Observer {
                             _ =>
