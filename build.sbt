@@ -64,6 +64,26 @@ lazy val sw = (project in file("sw"))
     )
   )
 
+// JVM-only module: end-to-end browser tests that drive the built app via
+// Playwright for Java. All test logic is Scala. Kept out of the root aggregate
+// so `sbt test` stays fast; run these with `sbt e2e/test`.
+lazy val e2e = (project in file("e2e"))
+  .settings(
+    scalaVersion := "3.3.6",
+    libraryDependencies ++= Seq(
+      "com.microsoft.playwright" % "playwright" % "1.49.0",
+      "dev.zio" %% "zio-test"     % zioVersion % Test,
+      "dev.zio" %% "zio-test-sbt" % zioVersion % Test,
+    ),
+    Test / testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
+    Test / fork := true,
+    // Absolute path to the app's static resources, resolved regardless of the
+    // forked test's working directory.
+    Test / javaOptions +=
+      "-Dapp.resources=" +
+        ((frontend / baseDirectory).value / "src" / "main" / "resources").getAbsolutePath,
+  )
+
 val zioVersion = "2.0.21"
 
 Global / onChangedBuildSource := ReloadOnSourceChanges
