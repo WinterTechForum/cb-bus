@@ -419,6 +419,36 @@ body {
     flex-direction: column;
 }
 
+/* Up/down reorder controls on each leg. */
+.plan-segments_reorder {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+    margin-left: 8px;
+    flex: 0 0 auto;
+}
+
+.reorder-btn {
+    border: none;
+    background: transparent;
+    color: var(--color-primary);
+    font-size: 0.9rem;
+    line-height: 1;
+    padding: 4px 8px;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.reorder-btn:hover:not(:disabled) {
+    background: var(--color-highlight-bg);
+}
+
+.reorder-btn:disabled {
+    color: #ccc;
+    cursor: default;
+}
+
 /* Origin indicator - sticky banner at top when origin is selected */
 .origin-indicator-container {
     position: sticky;

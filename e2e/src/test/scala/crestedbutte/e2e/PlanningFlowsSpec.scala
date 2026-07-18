@@ -3,6 +3,7 @@ package crestedbutte.e2e
 import com.microsoft.playwright.Page
 import com.microsoft.playwright.options.WaitForSelectorState
 import zio.test.*
+import scala.jdk.CollectionConverters.*
 
 import E2ESupport.*
 
@@ -49,6 +50,51 @@ object PlanningFlowsSpec extends ZIOSpecDefault:
           segments == 2,
           gaps == 1,
         )
+      }
+    },
+    test("moving a segment down reorders the trip") {
+      withApp { (page, baseUrl) =>
+        loadSelector(page, baseUrl)
+        val leg1 = planSingleSegment(page)
+
+        // Build a second leg so there's something to reorder.
+        continueFromLastStop(page)
+        pollUntil(page)(headerText(page) == "Select your destination")
+        awaitStopButtons(page)
+        val onwardId =
+          stopButtonState(page)
+            .collectFirst {
+              case (id, disabled) if !disabled && id != leg1.destId => id
+            }
+            .getOrElse(throw new AssertionError("no onward stop"))
+        page.locator(cssForId(onwardId)).click()
+        pollUntil(page)(plannedSegmentCount(page) == 2)
+
+        def legLabels: List[String] =
+          page
+            .querySelectorAll(".plan-segments_left")
+            .asScala
+            .toList
+            .map(el =>
+              Option(el.querySelector("div"))
+                .map(_.textContent().trim)
+                .getOrElse(""),
+            )
+
+        val before = legLabels
+
+        // Tap the down arrow (2nd reorder-btn) on the first segment.
+        page
+          .locator(".plan-segments")
+          .first()
+          .locator("button.reorder-btn")
+          .nth(1)
+          .click()
+
+        // For two legs, moving the first down swaps their order.
+        val reordered = pollUntil(page)(legLabels == before.reverse)
+
+        assertTrue(before.size == 2, reordered)
       }
     },
     test("'Continue from last stop' pre-selects the previous destination as origin") {

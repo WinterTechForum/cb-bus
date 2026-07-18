@@ -293,6 +293,9 @@ object Components {
     ],
   ) =
     val isLocked: Var[Boolean] = Var(db.getScheduleLocked)
+    // Latest wall time, mirrored from the clock so reorder handlers can
+    // resequence leg times against "now" without sampling a live signal.
+    val latestTime: Var[WallTime] = Var(WallTime("00:00"))
     // Track the current saved plan (None means it's a new unsaved plan or the daily plan)
     // Initialize from persistent storage to maintain state across page refreshes
     val currentSavedPlan: Var[Option[SavedPlan]] = Var(
@@ -347,6 +350,7 @@ object Components {
       cls := "plan-layout",
       persistLockedState,
       persistCurrentSavedPlan,
+      timeStamps --> latestTime.writer,
       // Back button - only visible when loading trips
       div(
         cls := "action-buttons-container centered",
@@ -445,6 +449,23 @@ object Components {
                                       plan.copy(l = plan.l :+ newSegment)
                                   },
                                 $isLocked = isLocked.signal,
+                                segmentMover = Observer[Int] { dir =>
+                                  $plan.update(p =>
+                                    moveSegment(p,
+                                                rs.id,
+                                                dir,
+                                                latestTime.now(),
+                                    ),
+                                  )
+                                },
+                                $movePosition = $plan.signal.map { p =>
+                                  val segs = p.routeSegments
+                                  val idx =
+                                    segs.indexWhere(_.id == rs.id)
+                                  (idx <= 0,
+                                   idx < 0 || idx >= segs.size - 1,
+                                  )
+                                },
                               )
 
                           },
@@ -1220,6 +1241,9 @@ object Components {
     segmentUpdater: Observer[RouteSegment],
     segmentAppender: Observer[RouteSegment],
     $isLocked: Signal[Boolean] = Val(false),
+    segmentMover: Observer[Int] = Observer.empty,
+    // (isFirst, isLast) — disables the up / down control at the ends.
+    $movePosition: Signal[(Boolean, Boolean)] = Val((true, true)),
   ) = {
     val allSegments =
       routeSegment.routeWithTimes
@@ -1297,6 +1321,27 @@ object Components {
           ),
           selectedValue --> segmentUpdater, // TODO Eventually this should be restored
           wheelElement,
+        ),
+        // Reorder controls: shift this leg up/down; re-times the whole chain.
+        div(
+          cls := "plan-segments_reorder",
+          display <-- $isLocked.map(locked => if (locked) "none" else "flex"),
+          button(
+            cls := "reorder-btn",
+            "▲",
+            disabled <-- $movePosition.map(_._1),
+            onClick.stopPropagation --> Observer { _ =>
+              segmentMover.onNext(-1)
+            },
+          ),
+          button(
+            cls := "reorder-btn",
+            "▼",
+            disabled <-- $movePosition.map(_._2),
+            onClick.stopPropagation --> Observer { _ =>
+              segmentMover.onNext(1)
+            },
+          ),
         ),
       ),
     )
@@ -1382,6 +1427,38 @@ object Components {
       adjustedEnd = adjustedEnd,
     )
   }
+
+  /** Rebuild a plan's leg times in list order: each leg snaps to its earliest
+    * valid departure after the previous leg arrives (the first leg after `now`),
+    * reusing [[rightLegOnRightRoute]]. Keeps a reordered trip a real, rideable
+    * itinerary. A leg that can't be resolved in the new order keeps its time. */
+  def resequencePlan(
+    plan: Plan,
+    now: WallTime,
+  ): Plan =
+    plan.routeSegments.foldLeft(Plan(Seq.empty)) { (acc, seg) =>
+      rightLegOnRightRoute(seg.start.l, seg.end.l, acc, now) match
+        case Some(fixed) => acc.copy(l = acc.l :+ fixed)
+        case None        => acc.copy(l = acc.l :+ seg)
+    }
+
+  /** Move the segment with `id` one slot in `direction` (-1 up, +1 down), then
+    * re-time the whole chain. No-op when already at that end. */
+  def moveSegment(
+    plan: Plan,
+    id: Long,
+    direction: Int,
+    now: WallTime,
+  ): Plan =
+    val segs   = plan.routeSegments
+    val idx    = segs.indexWhere(_.id == id)
+    val target = idx + direction
+    if idx < 0 || target < 0 || target >= segs.size then plan
+    else
+      val buf   = segs.toBuffer
+      val moved = buf.remove(idx)
+      buf.insert(target, moved)
+      resequencePlan(Plan(buf.toSeq), now)
 
   def rightLegOnRightRoute(
     start: Location,
