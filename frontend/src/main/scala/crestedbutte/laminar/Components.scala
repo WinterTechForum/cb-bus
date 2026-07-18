@@ -379,12 +379,16 @@ object Components {
               // to prevent saving to wrong plan if currentSavedPlan changes
               val capturedSavedPlan = currentSavedPlan.now()
               div(
+                // Height enter/exit animates on add/remove of this keyed leg;
+                // it's NOT on the inner element, so re-timing (a value change,
+                // e.g. after a reorder) updates content in place without a
+                // grow/shrink flash.
+                transition.height,
                 child <--
                   routePieceSignal
                     .map {
                       routePieceInner =>
                         div(
-                          transition.height,
                           routePieceInner match {
                             case r: RouteGap =>
                               div(
@@ -1438,7 +1442,9 @@ object Components {
   ): Plan =
     plan.routeSegments.foldLeft(Plan(Seq.empty)) { (acc, seg) =>
       rightLegOnRightRoute(seg.start.l, seg.end.l, acc, now) match
-        case Some(fixed) => acc.copy(l = acc.l :+ fixed)
+        // Keep the leg's original id so splitTransition reconciles the existing
+        // element into its new slot instead of rebuilding the whole list.
+        case Some(fixed) => acc.copy(l = acc.l :+ fixed.withId(seg.id))
         case None        => acc.copy(l = acc.l :+ seg)
     }
 

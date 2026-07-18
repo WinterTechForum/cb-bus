@@ -511,6 +511,11 @@ case class RouteSegment private (
       case e.l if e.t == previousEndTime =>
         copy(e = e.copy(t = lwt.t), id = id)
       case other => this
+
+  /** Same leg (times and route) carrying a different stable id — used when
+    * re-timing a reordered plan so the UI can reconcile existing elements
+    * instead of rebuilding them. */
+  def withId(newId: Long): RouteSegment = copy(id = newId)
 }
 
 object RouteSegment {
