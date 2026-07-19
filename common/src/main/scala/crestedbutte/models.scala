@@ -467,13 +467,18 @@ case class RouteGap(
   id: Long)
     extends RoutePiece
 
+// NOTE: `id` is ephemeral UI-only state (see RouteSegment.Wire), but it is
+// still part of the auto-generated case-class equality. Two segments that are
+// logically identical but carry different ids therefore compare unequal — which
+// can produce a false "dirty" signal after an id is regenerated (e.g. decoding
+// a plan whose id was absent on the wire). Callers that need content equality
+// should compare on (route, start, end). See isDirty in laminar/Components.
 case class RouteSegment private (
   r: RouteName,
   s: LocationWithTime,
   e: LocationWithTime,
   id: Long)
-    extends RoutePiece
-    derives JsonCodec {
+    extends RoutePiece {
 
   assert(
     s.l != e.l,
@@ -519,6 +524,30 @@ case class RouteSegment private (
 }
 
 object RouteSegment {
+  /** Wire representation used for (de)serialization.
+    *
+    * `id` is ephemeral, UI-only state: a stable identity used to drive FLIP
+    * reorder animations and reconcile existing DOM elements within a session.
+    * It is NOT a meaningful part of a persisted/shared plan. Making it optional
+    * on the wire means a plan JSON that omits `id` — anything saved or shared
+    * before `id` existed, or produced by any other code path — still decodes
+    * (a fresh id is generated) instead of failing the whole plan and dropping
+    * the user to a blank schedule on reload. Plans that DO carry an `id`
+    * continue to round-trip byte-for-byte.
+    */
+  private case class Wire(
+    r: RouteName,
+    s: LocationWithTime,
+    e: LocationWithTime,
+    id: Option[Long] = None)
+      derives JsonCodec
+
+  implicit val codec: JsonCodec[RouteSegment] =
+    JsonCodec[Wire].transform(
+      w => RouteSegment(w.r, w.s, w.e, w.id.getOrElse(random.nextLong())),
+      rs => Wire(rs.r, rs.s, rs.e, Some(rs.id)),
+    )
+
   def attempt(
     r: RouteName,
     s: LocationWithTime,

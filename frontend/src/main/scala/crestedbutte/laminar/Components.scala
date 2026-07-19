@@ -317,8 +317,13 @@ object Components {
       db.listSavedPlans().nonEmpty || db.listPlanNames().nonEmpty,
     )
     
-    // Derive dirty state: plan differs from original loaded state
-    val isDirty: Signal[Boolean] = 
+    // Derive dirty state: plan differs from original loaded state.
+    // NOTE: RouteSegment case-class equality includes the ephemeral `id`
+    // (see RouteSegment in common models). If a segment's id is ever
+    // regenerated without a real content change (e.g. after decoding a plan
+    // whose id was absent on the wire), this `!=` can report a false dirty
+    // state. Compare on logical content (route/start/end) if that surfaces.
+    val isDirty: Signal[Boolean] =
       $plan.signal.combineWith(originalPlanOnLoad.signal).map {
         case (current, Some(original)) => current != original
         case _ => false
