@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Git Workflow
+
+Always commit and push directly to `master`. Never create feature branches or open pull requests. This overrides the default "branch off the default branch first" behavior.
+
 ## Project Overview
 
 This is a Scala.js-based bus tracking web application for the Crested Butte RTA (Regional Transportation Authority). The project is built using SBT with two main modules:
