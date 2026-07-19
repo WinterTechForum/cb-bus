@@ -296,6 +296,8 @@ object Components {
     // Latest wall time, mirrored from the clock so reorder handlers can
     // resequence leg times against "now" without sampling a live signal.
     val latestTime: Var[WallTime] = Var(WallTime("00:00"))
+    // Ref to the plan-segments container, so reorder can run a FLIP animation.
+    var segmentsContainer: dom.Element = null
     // Track the current saved plan (None means it's a new unsaved plan or the daily plan)
     // Initialize from persistent storage to maintain state across page refreshes
     val currentSavedPlan: Var[Option[SavedPlan]] = Var(
@@ -368,6 +370,9 @@ object Components {
       ),
       // Plan segments container - hidden when loading trips (MOVED TO TOP)
       div(
+        onMountCallback { ctx =>
+          segmentsContainer = ctx.thisNode.ref
+        },
         display <-- isLoadingTrips.map(loading =>
           if (loading) "none" else "block",
         ),
@@ -379,6 +384,8 @@ object Components {
               // to prevent saving to wrong plan if currentSavedPlan changes
               val capturedSavedPlan = currentSavedPlan.now()
               div(
+                // Stable key so FLIP can match this element before/after a move.
+                dataAttr("flip-key") := routePiece.id.toString,
                 // Height enter/exit animates on add/remove of this keyed leg;
                 // it's NOT on the inner element, so re-timing (a value change,
                 // e.g. after a reorder) updates content in place without a
@@ -454,6 +461,10 @@ object Components {
                                   },
                                 $isLocked = isLocked.signal,
                                 segmentMover = Observer[Int] { dir =>
+                                  // FLIP: record positions, reorder, then on the
+                                  // next frame (DOM settled) play old→new.
+                                  val first =
+                                    captureFlipRects(segmentsContainer)
                                   $plan.update(p =>
                                     moveSegment(p,
                                                 rs.id,
@@ -461,6 +472,10 @@ object Components {
                                                 latestTime.now(),
                                     ),
                                   )
+                                  dom.window.requestAnimationFrame {
+                                    (_: Double) =>
+                                      playFlip(segmentsContainer, first)
+                                  }
                                 },
                                 $movePosition = $plan.signal.map { p =>
                                   val segs = p.routeSegments
@@ -1465,6 +1480,55 @@ object Components {
       val moved = buf.remove(idx)
       buf.insert(target, moved)
       resequencePlan(Plan(buf.toSeq), now)
+
+  /** FLIP animation for reordering. Capture each keyed child's position (by its
+    * `data-flip-key`) BEFORE the plan changes... */
+  private def captureFlipRects(
+    container: dom.Element,
+  ): Map[String, (Double, Double)] =
+    if container == null then Map.empty
+    else
+      val kids = container.children
+      val b    = Map.newBuilder[String, (Double, Double)]
+      var i    = 0
+      while i < kids.length do
+        val el  = kids(i).asInstanceOf[dom.HTMLElement]
+        val key = el.getAttribute("data-flip-key")
+        if key != null then
+          val r = el.getBoundingClientRect()
+          b += key -> (r.left, r.top)
+        i += 1
+      b.result()
+
+  /** ...then, once the DOM has settled in its new order, invert each moved child
+    * back to its old spot and play it to the new one via the Web Animations API
+    * (so it never touches the height transition or the swipe transform). */
+  private def playFlip(
+    container: dom.Element,
+    first: Map[String, (Double, Double)],
+  ): Unit =
+    if container != null then
+      val kids = container.children
+      var i    = 0
+      while i < kids.length do
+        val el  = kids(i).asInstanceOf[dom.HTMLElement]
+        val key = el.getAttribute("data-flip-key")
+        (if key == null then None else first.get(key)).foreach {
+          case (fLeft, fTop) =>
+            val r  = el.getBoundingClientRect()
+            val dx = fLeft - r.left
+            val dy = fTop - r.top
+            if Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5 then
+              el.asInstanceOf[js.Dynamic].animate(
+                js.Array(
+                  js.Dynamic
+                    .literal(transform = s"translate(${dx}px, ${dy}px)"),
+                  js.Dynamic.literal(transform = "translate(0px, 0px)"),
+                ),
+                js.Dynamic.literal(duration = 260.0, easing = "ease-out"),
+              )
+        }
+        i += 1
 
   def rightLegOnRightRoute(
     start: Location,
