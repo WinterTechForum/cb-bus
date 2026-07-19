@@ -401,16 +401,32 @@ body {
     white-space: nowrap;
 }
 
-/* One-time onboarding nudge: peek the delete zone, then settle back. */
+/* One-time onboarding nudge: peek the delete zone, then settle back. Slides far
+   enough to expose the trash icon so the clue shows *what* the swipe does. */
 @keyframes swipe-peek {
     0%   { transform: translateX(0); }
-    30%  { transform: translateX(-46px); }
-    68%  { transform: translateX(-46px); }
+    30%  { transform: translateX(-72px); }
+    68%  { transform: translateX(-72px); }
     100% { transform: translateX(0); }
 }
 
 .plan-segments_row--peek {
     animation: swipe-peek 1150ms ease-in-out 450ms 1;
+}
+
+/* Reveal the red delete zone in lockstep with the peek slide above, so the
+   nudge shows the delete color (not the white row background) plus the trash
+   icon. Runs in CSS to override the inline opacity used for real swipes;
+   animations take precedence over inline styles. */
+@keyframes delete-reveal-peek {
+    0%   { opacity: 0; background-color: rgba(231, 76, 60, 0.25); color: #c0392b; }
+    30%  { opacity: 1; background-color: #e74c3c; color: var(--color-white); }
+    68%  { opacity: 1; background-color: #e74c3c; color: var(--color-white); }
+    100% { opacity: 0; background-color: rgba(231, 76, 60, 0.25); color: #c0392b; }
+}
+
+.plan-segments_delete-reveal--peek {
+    animation: delete-reveal-peek 1150ms ease-in-out 450ms 1;
 }
 
 .plan-segments_left {

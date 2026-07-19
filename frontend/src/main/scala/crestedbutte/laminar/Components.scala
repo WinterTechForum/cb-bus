@@ -1308,6 +1308,12 @@ object Components {
         $isLocked,
       )
 
+    // One-time onboarding nudge (per session). The same value drives both the
+    // row's slide and the delete zone's reveal so they animate in lockstep —
+    // otherwise the row peeks over a plain white background and the clue never
+    // shows *what* the swipe does.
+    val showSwipeHint = takeSwipeHint()
+
     div(
       cls := "plan-segments",
       // Red delete affordance, revealed behind the row as it slides away under a
@@ -1316,22 +1322,27 @@ object Components {
         cls := "plan-segments_delete-reveal",
         cls.toggle("plan-segments_delete-reveal--armed") <--
           offsetPx.signal.map(px => Math.abs(px) >= 120),
+        // Peek reveal is animated entirely in CSS so it stays in sync with the
+        // row's slide; the opacity binding below only governs real swipes.
+        cls.toggle("plan-segments_delete-reveal--peek") := showSwipeHint,
         styleProp("opacity") <--
           offsetPx.signal.map(px => Math.min(1.0, Math.abs(px) / 120.0).toString),
-        span(cls := "delete-reveal_icon", "🗑"),
+        // Trash icon sits at the trailing edge so it (a non-color indicator, for
+        // colorblind users) is the first thing revealed as the row slides away.
         span(
           cls := "delete-reveal_label",
           child.text <-- offsetPx.signal.map(px =>
             if (Math.abs(px) >= 120) "Release to delete" else "Swipe to delete",
           ),
         ),
+        span(cls := "delete-reveal_icon", "🗑"),
       ),
       // Slidable content
       div(
         cls := "plan-segments_row",
         // One-time nudge (per session) that peeks the delete zone to teach the
         // swipe gesture without permanent clutter.
-        cls.toggle("plan-segments_row--peek") := takeSwipeHint(),
+        cls.toggle("plan-segments_row--peek") := showSwipeHint,
         styleProp("transform") <-- offsetPx.signal.map(px =>
           if (px >= 0) s"translateX(-${px}px)"
           else s"translateX(${-px}px)",
