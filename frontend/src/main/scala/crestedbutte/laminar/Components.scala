@@ -1501,8 +1501,10 @@ object Components {
       b.result()
 
   /** ...then, once the DOM has settled in its new order, invert each moved child
-    * back to its old spot and play it to the new one via the Web Animations API
-    * (so it never touches the height transition or the swipe transform). */
+    * back to its old spot and spring it home. The vertical offset is driven by
+    * an Animus spring (`Var[Double].signal.spring`) applied to `transform`, so
+    * the motion has natural spring physics and never touches the height
+    * transition or the swipe transform. */
   private def playFlip(
     container: dom.Element,
     first: Map[String, (Double, Double)],
@@ -1514,19 +1516,20 @@ object Components {
         val el  = kids(i).asInstanceOf[dom.HTMLElement]
         val key = el.getAttribute("data-flip-key")
         (if key == null then None else first.get(key)).foreach {
-          case (fLeft, fTop) =>
-            val r  = el.getBoundingClientRect()
-            val dx = fLeft - r.left
-            val dy = fTop - r.top
-            if Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5 then
-              el.asInstanceOf[js.Dynamic].animate(
-                js.Array(
-                  js.Dynamic
-                    .literal(transform = s"translate(${dx}px, ${dy}px)"),
-                  js.Dynamic.literal(transform = "translate(0px, 0px)"),
-                ),
-                js.Dynamic.literal(duration = 260.0, easing = "ease-out"),
-              )
+          case (_, fTop) =>
+            val dy = fTop - el.getBoundingClientRect().top // old − new (vertical)
+            if Math.abs(dy) > 0.5 then
+              // Spring starts at the old offset (its initial value) and, once we
+              // set the target to 0, springs the element home to its new slot.
+              val offset = Var(dy)
+              val owner  = new com.raquo.airstream.ownership.ManualOwner
+              offset.signal.spring.foreach { v =>
+                el.style.transform =
+                  if Math.abs(v) < 0.3 then "" else s"translateY(${v}px)"
+              }(owner)
+              offset.set(0.0)
+              // Tear down once the spring has settled.
+              setTimeout(1500)(owner.killSubscriptions())
         }
         i += 1
 
