@@ -39,9 +39,9 @@ enum Location(
         "Gunnison Library",
       )
 
-  case EleventhAndVirginia extends Location("Eleventh & Virgina")
+  case EleventhAndVirginia extends Location("Eleventh & Virginia")
 
-  case Safeway extends Location("Safeway", "(Spruce & Highway 50)")
+  case Safeway extends Location("Safeway", "(Pine & Highway 50)")
 
   case TellerAndHighwayFifty
       extends Location("Teller & Highway 50", "")
@@ -54,9 +54,9 @@ enum Location(
   case SpencerAndHighwayOneThirtyFive
       extends Location("Spencer & Highway 135", "(Walmart)")
 
-  case GunnisonRiver extends Location("Gunnison River", "(Flag Stop)")
+  case TallTexan extends Location("Tall Texan", "(Flag Stop)")
 
-  case OhioCreek extends Location("OhioCreek", "(Flag Stop)")
+  case OhioCreek extends Location("Ohio Creek", "(Flag Stop)")
 
   case Almont extends Location("Almont", "(Flag Stop)")
 
