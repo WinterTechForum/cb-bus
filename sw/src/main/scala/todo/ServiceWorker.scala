@@ -326,7 +326,7 @@ object ServiceWorker {
           // This avoids misleading users since notification updates don't work cross-browser
           val departureTimeStr = departureTime.toDumbAmericanString
           val message =
-            s"Bus from $stopName departs at $departureTimeStr"
+            s"$departureTimeStr - Bus departs from $stopName"
 
           val options = org.scalajs.dom.NotificationOptions(
             body = message,
