@@ -29,6 +29,7 @@ object ScrollingWheel {
     initialSelectedElement: Option[T] = None,
     allowVerticalDrag: Var[Boolean] = Var(true),
     $isLocked: Signal[Boolean] = Val(false),
+    externalSelection: Option[Signal[T]] = None,
   ): (ReactiveHtmlElement[HTMLDivElement], Signal[T]) = {
     val itemHeight = 60 // Height of each visible item in pixels
     val visibleItems = 3
@@ -110,6 +111,15 @@ object ScrollingWheel {
 
     val wheelElement = div(
       cls := "scrolling-wheel scrolling-wheel-container",
+      externalSelection.map(_ --> Observer[T] { item =>
+        val index = items.indexOf(item)
+        if (index >= 0 && index != selectedIndex.now()) {
+          animationId.foreach(dom.window.cancelAnimationFrame)
+          velocity.set(0.0)
+          selectedIndex.set(index)
+          scrollPosition.set(index * itemHeight.toDouble)
+        }
+      }),
       // Track lock state changes
       $isLocked --> isCurrentlyLocked.writer,
       // Visual indicator when locked

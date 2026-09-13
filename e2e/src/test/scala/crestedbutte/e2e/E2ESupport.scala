@@ -135,10 +135,10 @@ object E2ESupport:
           s"No workable origin/destination pair at $FrozenTimeUrl",
         ),
       )
-    val originName = page.locator(cssForId(originId)).textContent().trim
+    val originName = page.locator(cssForId(originId)).locator(".stop-name").textContent().trim
     page.locator(cssForId(originId)).click()
     pollUntil(page)(headerText(page) == "Select your destination")
-    val destName = page.locator(cssForId(destId)).textContent().trim
+    val destName = page.locator(cssForId(destId)).locator(".stop-name").textContent().trim
     page.locator(cssForId(destId)).click()
     page.waitForSelector(
       PlannedSegment,

@@ -51,6 +51,38 @@ lazy val sw = (project in file("sw"))
   .enablePlugins(ScalaJSPlugin)
   .dependsOn(common)
   .settings(
+    // Version the complete offline shell from its source inputs. Each release
+    // installs in a separate cache, so a failed download cannot damage the
+    // working release. No generated bundles or source maps enter this hash.
+    Compile / sourceGenerators += Def.task {
+      val repo = baseDirectory.value.getParentFile
+      val resources = repo / "frontend" / "src" / "main" / "resources"
+      val assets = Seq(resources / "index.html", resources / "manifest.webmanifest",
+        resources / "favicon.ico", resources / "javascript" / "long-press-event.min.js") ++
+        (resources / "styling" ** "*.css").get ++
+        (resources / "glyphicons" ** "*.svg").get ++
+        (resources / "images" ** "*.png").get
+      val sources = Seq("common", "frontend", "sw").flatMap { module =>
+        (repo / module / "src" / "main" / "scala" ** "*.scala").get
+      }
+      val inputs = (assets ++ sources ++ Seq(repo / "build.sbt") ++ (repo / "project" * "*.sbt").get).sortBy(_.getPath)
+      val digest = java.security.MessageDigest.getInstance("SHA-256")
+      inputs.foreach { f =>
+        digest.update(IO.relativize(repo, f).get.getBytes("UTF-8"))
+        digest.update(IO.readBytes(f))
+      }
+      val version = digest.digest().map(b => f"${b & 0xff}%02x").mkString.take(20)
+      val paths = (Seq("/compiledJavascript/main.js") ++ assets.map(f => "/" + IO.relativize(resources, f).get)).sorted
+      val quoted = paths.map(p => "\"" + p + "\"").mkString(",\n")
+      val out = (Compile / sourceManaged).value / "todo" / "OfflineManifest.scala"
+      IO.write(out, s"""package todo
+object OfflineManifest {
+  val cacheName = "cb-bus-shell-$version"
+  val assets: List[String] = List($quoted)
+}
+""")
+      Seq(out)
+    }.taskValue,
     Compile / fullOptJS := (Compile / fullOptJS).dependsOn(Compile / scalafmt).value,
     Compile / fastOptJS / artifactPath := 
       baseDirectory.value.getParentFile / "frontend" / "src" / "main" / "resources" / "sw.js",

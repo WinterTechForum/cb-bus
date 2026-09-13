@@ -227,8 +227,8 @@ object Components {
 
     val $plan: Var[Plan] = Var(
       // Load from current SavedPlan if one exists, otherwise from "today"
-      db.getCurrentSavedPlan
-        .map(_.plan)
+      db.getDraft.map(_.plan)
+        .orElse(db.getCurrentSavedPlan.map(_.plan))
         .orElse(db.getCurrentPlan)
         .getOrElse(Plan(Seq.empty)),
     )
@@ -240,26 +240,11 @@ object Components {
     val selectedStop: Var[Option[SelectedStopInfo]] =
       Var(None)
 
-    // Demo wheel with sample data
-    val demoItems = Seq(
-      s"Apple\nto\nAppleDestination",
-      "Banana",
-      "Cherry",
-      "Date",
-      "Elderberry",
-      "Fig",
-      "Grape",
-      "Honeydew",
-      "Kiwi",
-      "Lemon",
-      "Mango",
-      "Orange",
-    )
-
     div(
-      onMountCallback: context =>
-        db.initializeOrResetStorage(),
+
       frontEndClock.clockElement,
+      OfflineStatus.element(db.storageProblem.signal.map(_.isEmpty)),
+      child <-- db.storageProblem.signal.map(_.map(message => p(cls := "notification is-warning", role := "alert", message)).getOrElse(emptyNode)),
       div(
         div(
           cls := ElementNames.BoxClass,
@@ -272,6 +257,7 @@ object Components {
             $plan,
             addingNewRoute,
             selectedStop.writer,
+            () => java.time.LocalDate.now(javaClock).toString,
           ),
           Option.when(appMode == AppMode.Local && false)(
             Experimental.Sandbox(
@@ -291,8 +277,15 @@ object Components {
     scheduleSelector: Observer[
       Option[SelectedStopInfo],
     ],
+    today: () => String,
   ) =
     val isLocked: Var[Boolean] = Var(db.getScheduleLocked)
+    val draftDate = Var(db.getDraft.map(_.date).getOrElse(today()))
+    val dateLabel = timeStamps.combineWith(draftDate.signal).map { case (_, date) =>
+      if (date == today()) "Today" else date
+    }
+    val tripNotice = Var(Option.empty[String])
+    val undoPlan = Var(Option.empty[(Plan, String)])
     // Latest wall time, mirrored from the clock so reorder handlers can
     // resequence leg times against "now" without sampling a live signal.
     val latestTime: Var[WallTime] = Var(WallTime("00:00"))
@@ -301,13 +294,16 @@ object Components {
     // Track the current saved plan (None means it's a new unsaved plan or the daily plan)
     // Initialize from persistent storage to maintain state across page refreshes
     val currentSavedPlan: Var[Option[SavedPlan]] = Var(
-      db.getCurrentSavedPlan,
+      db.getDraft match {
+        case Some(draft) => draft.savedPlanId.flatMap(db.getSavedPlan)
+        case None => db.getCurrentSavedPlan
+      },
     )
     
     // Track the original plan state when a saved plan is loaded
     // Used to detect unsaved changes (dirty state)
     val originalPlanOnLoad: Var[Option[Plan]] = Var(
-      db.getCurrentSavedPlan.map(_.plan),
+      currentSavedPlan.now().map(_.plan),
     )
 
     // Track whether we should open the load trips view when entering stop selector
@@ -353,8 +349,38 @@ object Components {
         case (loadMode, adding) => loadMode // || adding
       }
 
+    def useCurrentTripNow(): Unit =
+      TripPlanning.useNow($plan.now(), latestTime.now()) match {
+        case Left(message) => tripNotice.set(Some(message))
+        case Right(updated) if updated == $plan.now() && draftDate.now() == today() =>
+          tripNotice.set(Some("This trip already uses the next departures."))
+        case Right(updated) =>
+          undoPlan.set(Some(($plan.now(), draftDate.now())))
+          draftDate.set(today())
+          $plan.set(updated)
+          isLocked.set(false)
+          tripNotice.set(Some("Upcoming departures selected. Stopovers kept."))
+      }
+
     div(
       cls := "plan-layout",
+      $plan.signal.combineWith(currentSavedPlan.signal).combineWith(draftDate.signal) -->
+        Observer[(Plan, Option[SavedPlan], String)] { case (plan, saved, date) => db.saveDraft(plan, saved.map(_.id), date) },
+      div(cls := "trip-toolbar",
+        display <-- $plan.signal.combineWith(isLoadingTrips).map { case (p, loading) => if (p.l.nonEmpty && !loading) "flex" else "none" },
+        button(cls := "button", "Use this trip now", onClick --> Observer { _ => useCurrentTripNow() }),
+        button(cls := "text-button", "Saved trips",
+          display <-- hasSavedPlans.signal.map(has => if (has) "inline-flex" else "none"),
+          onClick --> Observer { _ => loadTripsMode.set(true); addingNewRoute.set(true) }),
+      ),
+      p(cls := "muted trip-date", child.text <-- dateLabel.map(d => s"$d · Mountain Time"),
+        display <-- $plan.signal.combineWith(isLoadingTrips).map { case (p, loading) => if (p.l.nonEmpty && !loading) "block" else "none" }),
+      child <-- tripNotice.signal.map(_.map(message => p(cls := "trip-notice", role := "status", message)).getOrElse(emptyNode)),
+      child <-- undoPlan.signal.map {
+        case None => emptyNode
+        case Some((previous, date)) => button(cls := "text-button", "Undo last trip change",
+          onClick --> Observer { _ => draftDate.set(date); $plan.set(previous); undoPlan.set(None); tripNotice.set(None) })
+      },
       persistLockedState,
       persistCurrentSavedPlan,
       timeStamps --> latestTime.writer,
@@ -414,9 +440,7 @@ object Components {
                                   if (r.endTime.isBefore(r.start))
                                     "Next Day"
                                   else
-                                    r.endTime
-                                      .between(r.start)
-                                      .humanFriendly,
+                                    s"Wait ${r.endTime.localTime.value - r.start.localTime.value} min",
                                 ),
                               )
                             case rs: RouteSegment =>
@@ -427,12 +451,14 @@ object Components {
                                 legDeleter =
                                   Observer { (rs: RouteSegment) =>
                                     val plan = $plan.now()
+                                    undoPlan.set(Some((plan, draftDate.now())))
+                                    isLocked.set(false)
                                     val newPlan =
                                       plan
                                         .copy(l =
                                           plan.l.filterNot(_ == rs),
                                         )
-                                    // Don't auto-save - wait for explicit Save
+                                    // Draft autosaves; named templates change only on Save.
                                     $plan.set(newPlan)
                                     if (newPlan.l.isEmpty) {
                                       addingNewRoute.set {
@@ -443,8 +469,9 @@ object Components {
                                 segmentUpdater = $plan.writer
                                   .contramap[RouteSegment] {
                                     segment =>
+                                      isLocked.set(false)
                                       val plan = $plan.now()
-                                      // Don't auto-save - wait for explicit Save
+                                      // Draft autosaves; named templates change only on Save.
                                       Plan(
                                         plan.l.map {
                                           case rs
@@ -460,12 +487,15 @@ object Components {
                                   .contramap[RouteSegment] {
                                     newSegment =>
                                       val plan = $plan.now()
-                                      // Don't auto-save - wait for explicit Save
+                                      // Draft autosaves; named templates change only on Save.
                                       addingNewRoute.set(false)
                                       plan.copy(l = plan.l :+ newSegment)
                                   },
                                 $isLocked = isLocked.signal,
+                                $now = timeStamps,
+                                $dateLabel = dateLabel,
                                 segmentMover = Observer[Int] { dir =>
+                                  isLocked.set(false)
                                   // FLIP: record positions, reorder, then on the
                                   // next frame (DOM settled) play old→new.
                                   val first =
@@ -591,14 +621,15 @@ object Components {
                     case Some(newSeg) =>
                       val updatedPlan =
                         currentPlan.copy(l = currentPlan.l :+ newSeg)
-                      // Don't auto-save - wait for explicit Save
+                      // Draft autosaves; named templates change only on Save.
                       $plan.set(updatedPlan)
                       addingNewRoute.set(false)
                       pendingReturnChoice.set(None)
                       setTimeout(300)(tripExpanded.set(false))
                     case None =>
                       val defaultMessage =
-                        "Couldn't find a matching return route from that stop."
+                        "No matching return departure remains today. Your trip has not changed."
+                      tripNotice.set(Some(defaultMessage))
                       val updated =
                         pendingReturnChoice
                           .now()
@@ -667,7 +698,7 @@ object Components {
                   display <-- tripExpanded.signal.map(expanded =>
                     if (expanded) "none" else "flex"
                   ),
-                  span("+"),
+                  span("Add another ride"),
                   onClick --> Observer { _ =>
                     tripExpanded.set(true)
                     isLocked.set(false) // Enter edit mode when adding trips
@@ -750,7 +781,7 @@ object Components {
                       span(cls := "trip-action-icon", "+"),
                       div(
                         cls := "trip-action-text",
-                        span(cls := "trip-action-title", "New route"),
+                        span(cls := "trip-action-title", "New ride"),
                         span(cls := "trip-action-subtitle", "Pick a new starting point"),
                       ),
                     ),
@@ -862,6 +893,7 @@ object Components {
                 hasSavedPlans,
                 originalPlanOnLoad,
                 initialStart,
+                () => draftDate.set(today()),
               ),
             )
         },
@@ -882,6 +914,7 @@ object Components {
           originalPlanOnLoad,
           addingNewRoute,
           loadTripsMode,
+          () => draftDate.set(today()),
         ),
       ),
     )
@@ -903,6 +936,7 @@ object Components {
     originalPlanOnLoad: Var[Option[Plan]],
     addingNewRoute: Var[Boolean],
     loadTripsMode: Var[Boolean],
+    resetDate: () => Unit,
   ) = {
     val menuOpen: Var[Boolean] = Var(false)
     val editingName: Var[String] = Var("")
@@ -930,7 +964,7 @@ object Components {
       val name = if (enteredName.nonEmpty) enteredName else suggestedName
       val plan = $plan.now()
       val newSavedPlan = SavedPlan.create(plan, name)
-      db.saveSavedPlan(newSavedPlan)
+      if (!db.saveSavedPlan(newSavedPlan)) return
       $currentSavedPlan.set(Some(newSavedPlan))
       originalPlanOnLoad.set(Some(plan))
       hasSavedPlans.set(true)
@@ -944,11 +978,12 @@ object Components {
         val finalName = editingName.now().trim
         val nameToUse = if (finalName.nonEmpty) finalName else sp.displayName
         val updatedPlan = sp.withName(nameToUse).withPlan($plan.now())
-        db.saveSavedPlan(updatedPlan)
-        $currentSavedPlan.set(Some(updatedPlan))
-        originalPlanOnLoad.set(Some($plan.now()))
-        isLocked.set(true)
-        editingName.set("")
+        if (db.saveSavedPlan(updatedPlan)) {
+          $currentSavedPlan.set(Some(updatedPlan))
+          originalPlanOnLoad.set(Some($plan.now()))
+          isLocked.set(true)
+          editingName.set("")
+        }
       }
     }
 
@@ -965,6 +1000,7 @@ object Components {
     }
 
     def startNewTrip(): Unit = {
+      resetDate()
       val emptyPlan = Plan(Seq.empty)
       db.saveDailyPlanOnly(emptyPlan)
       $plan.set(emptyPlan)
@@ -998,7 +1034,7 @@ object Components {
             // Edit times - only when locked and has segments
             BottomSheet.MenuItem(
               icon = "✏️",
-              label = "Edit times",
+              label = "Rename trip",
               onClick = () => isLocked.set(false),
               hidden = !locked || !hasSegments,
             ),
@@ -1009,9 +1045,10 @@ object Components {
               onClick = () => {
                 savedPlanO.foreach { sp =>
                   val updatedPlan = sp.withPlan($plan.now())
-                  db.saveSavedPlan(updatedPlan)
-                  $currentSavedPlan.set(Some(updatedPlan))
-                  originalPlanOnLoad.set(Some($plan.now()))
+                  if (db.saveSavedPlan(updatedPlan)) {
+                    $currentSavedPlan.set(Some(updatedPlan))
+                    originalPlanOnLoad.set(Some($plan.now()))
+                  }
                 }
               },
               hidden = !dirty || !isSaved || !hasSegments,
@@ -1045,10 +1082,7 @@ object Components {
               label = "Share link",
               onClick = () => {
                 val plan = $plan.now()
-                val url = if (dom.document.URL.contains("localhost"))
-                  s"http://localhost:8000/index.html?plan=${UrlEncoding.encode(plan)}"
-                else
-                  s"https://cbbus.netlify.app/index.html?plan=${UrlEncoding.encode(plan)}"
+                val url = s"${dom.window.location.origin}/?plan=${UrlEncoding.encode(plan)}"
                 if (js.typeOf(dom.window.navigator.asInstanceOf[js.Dynamic].share) != "undefined") {
                   dom.window.navigator.asInstanceOf[js.Dynamic].share(
                     js.Dynamic.literal(title = "Bus Schedule", url = url)
@@ -1240,7 +1274,7 @@ object Components {
           // Right side: Arrow button (ALWAYS here, rock solid position)
           button(
             cls := "bottom-bar-menu-btn",
-            "▼",
+            "Trip options",
             onClick --> Observer { _ => menuOpen.set(true) },
           ),
         ),
@@ -1248,140 +1282,20 @@ object Components {
     )
   }
 
-  // Show the swipe-to-delete nudge only once per session, on the first segment
-  // that renders, so we teach the gesture without nagging on every render.
-  private var swipeHintShown = false
-  private def takeSwipeHint(): Boolean =
-    if (swipeHintShown) false
-    else { swipeHintShown = true; true }
-
   def RouteLegElement(
     routeSegment: RouteSegment,
     addingNewRoute: Var[Boolean],
-    scheduleSelector: Observer[
-      Option[SelectedStopInfo],
-    ],
+    scheduleSelector: Observer[Option[SelectedStopInfo]],
     legDeleter: Observer[RouteSegment],
     segmentUpdater: Observer[RouteSegment],
     segmentAppender: Observer[RouteSegment],
     $isLocked: Signal[Boolean] = Val(false),
+    $now: Signal[WallTime] = Val(WallTime("00:00")),
+    $dateLabel: Signal[String] = Val("Today"),
     segmentMover: Observer[Int] = Observer.empty,
-    // (isFirst, isLast) — disables the up / down control at the ends.
     $movePosition: Signal[(Boolean, Boolean)] = Val((true, true)),
-  ) = {
-    val allSegments =
-      routeSegment.routeWithTimes
-        .allRouteSegmentsWithSameStartAndStop(routeSegment)
-
-    val returnSymbols = List(
-      "↩", // Return arrow
-      "⮐", // Return symbol
-      "⟲", // Clockwise gapped circle arrow
-      "🔄", // Clockwise arrows
-      "⇄", // Left right arrow
-      "⇋", // Left right wave arrow
-      "↺", // Anticlockwise open circle arrow
-      "⮌", // Clockwise top semicircle arrow
-    )
-
-    val offsetPx: Var[Double] = Var(0.0)
-
-    val (swipeModifier, allowVerticalDrag) =
-      TouchControls.swipeToDelete(
-        deleteTriggerRatio = 0.35,
-        minTriggerPx = 100.0,
-        offsetPx = offsetPx,
-        onDelete = () => legDeleter.onNext(routeSegment),
-        $isLocked = $isLocked,
-      )
-
-    val (wheelElement, selectedValue) =
-      ScrollingWheel.ScrollingWheel(
-        allSegments,
-        item =>
-          div(
-            item.s.t.toDumbAmericanString + "→" + item.e.t.toDumbAmericanString,
-          ),
-        0,
-        Some(routeSegment),
-        allowVerticalDrag,
-        $isLocked,
-      )
-
-    // One-time onboarding nudge (per session). The same value drives both the
-    // row's slide and the delete zone's reveal so they animate in lockstep —
-    // otherwise the row peeks over a plain white background and the clue never
-    // shows *what* the swipe does.
-    val showSwipeHint = takeSwipeHint()
-
-    div(
-      cls := "plan-segments",
-      // Red delete affordance, revealed behind the row as it slides away under a
-      // swipe; brightens and switches its label once past the delete threshold.
-      div(
-        cls := "plan-segments_delete-reveal",
-        cls.toggle("plan-segments_delete-reveal--armed") <--
-          offsetPx.signal.map(px => Math.abs(px) >= 120),
-        // Peek reveal is animated entirely in CSS so it stays in sync with the
-        // row's slide; the opacity binding below only governs real swipes.
-        cls.toggle("plan-segments_delete-reveal--peek") := showSwipeHint,
-        styleProp("opacity") <--
-          offsetPx.signal.map(px => Math.min(1.0, Math.abs(px) / 120.0).toString),
-        // Trash icon sits at the trailing edge so it (a non-color indicator, for
-        // colorblind users) is the first thing revealed as the row slides away.
-        span(
-          cls := "delete-reveal_label",
-          child.text <-- offsetPx.signal.map(px =>
-            if (Math.abs(px) >= 120) "Release to delete" else "Swipe to delete",
-          ),
-        ),
-        span(cls := "delete-reveal_icon", "🗑"),
-      ),
-      // Slidable content
-      div(
-        cls := "plan-segments_row",
-        // One-time nudge (per session) that peeks the delete zone to teach the
-        // swipe gesture without permanent clutter.
-        cls.toggle("plan-segments_row--peek") := showSwipeHint,
-        styleProp("transform") <-- offsetPx.signal.map(px =>
-          if (px >= 0) s"translateX(-${px}px)"
-          else s"translateX(${-px}px)",
-        ),
-        // Touch handlers for swipe-to-reveal (lock-aware via $isLocked signal)
-        swipeModifier,
-        div(
-          cls := "plan-segments_left",
-          div(
-            s"${routeSegment.start.l.name} → ${routeSegment.end.l.name}",
-          ),
-          selectedValue --> segmentUpdater, // TODO Eventually this should be restored
-          wheelElement,
-        ),
-        // Reorder controls: shift this leg up/down; re-times the whole chain.
-        div(
-          cls := "plan-segments_reorder",
-          display <-- $isLocked.map(locked => if (locked) "none" else "flex"),
-          button(
-            cls := "reorder-btn",
-            "▲",
-            disabled <-- $movePosition.map(_._1),
-            onClick.stopPropagation --> Observer { _ =>
-              segmentMover.onNext(-1)
-            },
-          ),
-          button(
-            cls := "reorder-btn",
-            "▼",
-            disabled <-- $movePosition.map(_._2),
-            onClick.stopPropagation --> Observer { _ =>
-              segmentMover.onNext(1)
-            },
-          ),
-        ),
-      ),
-    )
-
-  }
+  ) = DepartureCard(routeSegment, $now, $dateLabel, segmentUpdater,
+    legDeleter, segmentMover, $movePosition)
 
   def animatedButton(
     text: String,
@@ -1573,28 +1487,13 @@ object Components {
           )
         case _ => defaultOrder
 
-    val routeSegmentsO =
-      routesInPreferenceOrder.foldLeft(
-        Option.empty[Seq[RouteSegment]],
-      ) { case (acc, route) =>
-        acc.orElse(route.segment(start, end))
+    val cutoff = plan.l.lastOption.map(_.end.t).getOrElse(pageLoadTime)
+    routesInPreferenceOrder.flatMap { route =>
+      route.segment(start, end).flatMap { segments =>
+        segments.filter(s => s.start.t.isAfter(cutoff) && !s.end.t.isBefore(s.start.t))
+          .sortBy(_.start.t.localTime.value).headOption
       }
-
-    routeSegmentsO
-      .flatMap(routeSegments =>
-        routeSegments
-          .find { l =>
-            val lastArrivalTime =
-              plan.l.lastOption
-                .map(_.end.t)
-            val cutoff =
-              lastArrivalTime.getOrElse(pageLoadTime)
-            l.start.t.isAfter(cutoff)
-          }
-          .orElse {
-            routeSegments.headOption
-          },
-      )
+    }.headOption
 
   }
 
@@ -1613,7 +1512,11 @@ object Components {
     loadTripsMode: Var[Boolean],
     hasSavedPlans: Var[Boolean],
     originalPlanOnLoad: Var[Option[Plan]],
+    now: Signal[WallTime],
+    resetDate: () => Unit,
   ) = {
+    val latestTime = Var(WallTime("00:00"))
+    val reuseError = Var(Option.empty[String])
     // Load saved plans using the new UUID-based system, with fallback to legacy name-based system
     val $savedTripsVar: Var[Seq[(SavedPlan, Int)]] = Var(Seq.empty)
 
@@ -1630,15 +1533,14 @@ object Components {
             if (!savedPlans.exists(sp => sp.name.contains(name))) {
               // Migrate to new format
               val newSavedPlan = SavedPlan.create(plan, name)
-              db.saveSavedPlan(newSavedPlan)
-              Some(newSavedPlan)
+              Option.when(db.saveSavedPlan(newSavedPlan))(newSavedPlan)
             }
             else None
           }
           .flatten
       }
       // Purge all legacy plans now that migration is complete
-      if (legacyNames.nonEmpty) {
+      if (legacyNames.nonEmpty && legacyNames.forall(name => db.listSavedPlans().exists(_.name.contains(name)))) {
         db.purgeLegacyNamedPlans()
       }
       val allPlans = (savedPlans ++ legacyPlans).distinctBy(_.id)
@@ -1651,6 +1553,8 @@ object Components {
 
     div(
       cls := "saved-trips-selector",
+      now --> latestTime.writer,
+      child <-- reuseError.signal.map(_.map(message => p(role := "alert", cls := "trip-notice", message)).getOrElse(emptyNode)),
       onMountCallback { _ =>
         loadSavedTrips()
       },
@@ -1735,11 +1639,29 @@ object Components {
                   },
                 ),
                 button(
+                  cls := "button primary-action",
+                  "Use this trip now",
+                  onClick --> Observer { _ =>
+                    TripPlanning.useNow(savedPlan.plan, latestTime.now()) match {
+                      case Left(message) => reuseError.set(Some(message))
+                      case Right(updated) =>
+                        resetDate()
+                        currentSavedPlan.set(Some(savedPlan))
+                        originalPlanOnLoad.set(Some(savedPlan.plan))
+                        $plan.set(updated)
+                        loadTripsMode.set(false)
+                        addingNewRoute.set(false)
+                        isLocked.set(updated == savedPlan.plan)
+                    }
+                  },
+                ),
+                button(
                   cls := "button saved-trip-load-button",
-                  "Load this trip",
+                  "Load saved times",
                   onClick --> Observer { _ =>
                     // CRITICAL: Set currentSavedPlan BEFORE $plan to ensure observers
                     // use the correct plan ID if they fire during the transition
+                    resetDate()
                     currentSavedPlan.set(Some(savedPlan))
                     $plan.set(savedPlan.plan)
                     // Track original state for dirty detection
@@ -1769,212 +1691,31 @@ object Components {
     loadTripsMode: Var[Boolean],
     hasSavedPlans: Var[Boolean],
     originalPlanOnLoad: Var[Option[Plan]],
-    initialStartingPoint: Option[Location] = None, // Pre-select origin when continuing from last stop
+    initialStartingPoint: Option[Location] = None,
+    resetDate: () => Unit = () => (),
   ) =
-    val startingPoint: Var[Option[Location]] = Var(initialStartingPoint)
-    val $locationsVar: Var[Seq[(Location, Int)]] = Var(Seq.empty)
-    val $locations: Signal[Seq[(Location, Int)]] =
-      $locationsVar.signal
-    // Check if we should start in load trips mode
-    val initialMode =
-      if (loadTripsMode.now()) StopSelectorMode.LoadSavedTrip
-      else StopSelectorMode.SelectStop
-    val selectorMode: Var[StopSelectorMode] = Var(initialMode)
-
-    def loadLocations(): Unit = {
-      $locationsVar.set(Seq.empty)
-      locations.zipWithIndex.foreach { l =>
-        setTimeout(l._2 * 30) {
-          $locationsVar.update(_ :+ l)
-          // If this is the preselected starting point, scroll to it after it appears
-          initialStartingPoint.foreach { preselected =>
-            if (l._1 == preselected) {
-              // Small delay to let the DOM update
-              setTimeout(50) {
-                val elementId = s"stop-btn-${preselected.name.replace(" ", "-")}"
-                dom.document.getElementById(elementId) match {
-                  case el: dom.Element => 
-                    el.asInstanceOf[js.Dynamic].scrollIntoView(js.Dynamic.literal(
-                      behavior = "smooth",
-                      block = "center"
-                    ))
-                  case _ => ()
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-
+    val latestTime = Var(WallTime("00:00"))
     div(
-      onMountCallback { ctx =>
-        // Only load locations if we're in SelectStop mode (not LoadSavedTrip mode)
-        // Don't reset loadTripsMode here - let it be controlled by user actions (Back button or loading a trip)
-        if (initialMode == StopSelectorMode.SelectStop) {
-          loadLocations()
-        }
-      },
-      child <-- selectorMode.signal.map {
-        case StopSelectorMode.LoadSavedTrip =>
-          SavedTripsSelector(
-            db,
-            $plan,
-            addingNewRoute,
-            currentSavedPlan,
-            isLocked,
-            loadTripsMode,
-            hasSavedPlans,
-            originalPlanOnLoad,
-          )
-        case StopSelectorMode.SelectStop =>
-          div(
-            // Saved trips button - only show if there are saved trips
-            Option
-              .when(db.listPlanNames().nonEmpty)(
-                button(
-                  cls := "button button-outlined saved-trips-toggle m-2",
-                  "Load saved trip",
-                  onClick --> Observer { _ =>
-                    selectorMode.set(StopSelectorMode.LoadSavedTrip)
-                  },
-                ),
-              )
-              .getOrElse(emptyNode),
-            // Origin indicator - slides up when origin is selected
-            div(
-              cls := "origin-indicator-container",
-              cls <-- startingPoint.signal.map {
-                case Some(_) => "origin-indicator-visible"
-                case None    => ""
-              },
-              child <-- startingPoint.signal.map {
-                case Some(location) =>
-                  div(
-                    cls := "origin-indicator",
-                    span(
-                      cls := "origin-indicator-label",
-                      "From:",
-                    ),
-                    span(
-                      cls := "origin-indicator-name",
-                      location.name,
-                    ),
-                    button(
-                      cls := "origin-indicator-dismiss",
-                      "✕",
-                      onClick --> Observer { _ =>
-                        startingPoint.set(None)
-                      },
-                    ),
-                  )
-                case None =>
-                  emptyNode
-              },
-            ),
-            h2(
-              child.text <-- startingPoint.signal.map {
-                case Some(_) => "Select your destination"
-                case None    => "Select your origin"
-              },
-            ),
-            // Explain why some stops are dimmed once an origin is chosen: the
-            // route is a ~1½-hour loop, so stops "behind" the origin are only
-            // reachable by riding the whole loop around — not worth offering.
-            child <-- startingPoint.signal.map {
-              case Some(origin) =>
-                div(
-                  cls := "reachability-hint",
-                  span(cls := "reachability-hint_icon", "↻"),
-                  span(
-                    s"Dimmed stops sit behind ${origin.name} on the loop — " +
-                      "reaching them means riding the full loop (about 1½ hours), " +
-                      "so they aren't offered from here.",
-                  ),
-                )
-              case None => emptyNode
-            },
-            div(
-              children <-- $locations.splitTransition(identity) {
-                case (_, (location, _), _, transition) =>
-                  // Capture currentSavedPlan to prevent saving to wrong plan
-                  val capturedSavedPlan = currentSavedPlan.now()
-                  div(
-                    transition.height,
-                    child <-- $now.map {
-                      now =>
-                        // A stop is "unreachable" when an origin is chosen and no
-                        // forward leg exists to it in either loop direction (see
-                        // rightLegOnRightRoute) — i.e. it's behind you on the loop.
-                        val unreachable: Signal[Boolean] =
-                          startingPoint.signal.map {
-                            case Some(other) if other != location =>
-                              rightLegOnRightRoute(
-                                other,
-                                location,
-                                $plan.now(),
-                                now,
-                              ).isEmpty
-                            case _ => false
-                          }
-                        button(
-                          idAttr := s"stop-btn-${location.name.replace(" ", "-")}",
-                          disabled <-- unreachable,
-                          cls.toggle("stop-unreachable") <-- unreachable,
-                          title <-- unreachable.map(u =>
-                            if (u)
-                              s"${location.name} is on the far side of the loop from your start — the bus would ride the whole loop to reach it."
-                            else "",
-                          ),
-                          cls := "button m-2",
-                          onClick --> Observer {
-                            _ =>
-                              startingPoint.update {
-                                case Some(startingPointNow)
-                                    if startingPointNow == location =>
-                                  None
-                                case Some(other) =>
-                                  val matchingLegO =
-                                    rightLegOnRightRoute(
-                                      other,
-                                      location,
-                                      $plan.now(),
-                                      now,
-                                    )
-
-                                  matchingLegO match
-                                    case Some(matchingLeg) =>
-                                      $plan.update { case oldPlan =>
-                                        // Don't auto-save - wait for explicit Save
-                                        addingNewRoute.set(false)
-                                        oldPlan.copy(l =
-                                          oldPlan.l :+ matchingLeg,
-                                        )
-                                      }
-                                      Some(other)
-                                    case None =>
-                                      println(
-                                        "giving up and deselecting starting point",
-                                      )
-                                      None
-
-                                case None =>
-                                  Some(location)
-                              }
-                          },
-                          cls <-- startingPoint.signal.map {
-                            case Some(startingPointNow)
-                                if startingPointNow == location =>
-                              "selected-starting-point"
-                            case _ => ""
-                          },
-                          location.name,
-                        )
-                    },
-                  )
-              },
-            ),
-          )
+      $now --> latestTime.writer,
+      child <-- loadTripsMode.signal.map {
+        case true => SavedTripsSelector(db, $plan, addingNewRoute, currentSavedPlan,
+          isLocked, loadTripsMode, hasSavedPlans, originalPlanOnLoad, $now, resetDate)
+        case false => StopPicker(locations, db, initialStartingPoint, $now,
+          (start, end, now) => rightLegOnRightRoute(start, end, $plan.now(), now).isDefined,
+          (start, end) => {
+            rightLegOnRightRoute(start, end, $plan.now(), latestTime.now()).foreach { leg =>
+              if ($plan.now().l.isEmpty) resetDate()
+              db.rememberStop(start)
+              db.rememberStop(end)
+              $plan.update(p => p.copy(l = p.l :+ leg))
+              addingNewRoute.set(false)
+            }
+          },
+          hasSavedPlans.signal,
+          () => loadTripsMode.set(true),
+          () => addingNewRoute.set(false),
+          $plan.now().l.nonEmpty,
+        )
       },
     )
 

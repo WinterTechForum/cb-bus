@@ -25,4 +25,12 @@ object MyApp extends App {
     RoutingStuff.app,
   )
 
+  // Consume a shared link once. Reloads then recover the working draft instead
+  // of re-importing the original itinerary over subsequent edits.
+  val currentUrl = new dom.URL(dom.window.location.href)
+  if (currentUrl.searchParams.has("plan")) {
+    currentUrl.searchParams.delete("plan")
+    dom.window.history.replaceState(dom.window.history.state, "", currentUrl.toString)
+  }
+
 }

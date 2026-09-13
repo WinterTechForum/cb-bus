@@ -1,98 +1,79 @@
 package crestedbutte
 
-import org.scalajs.dom.ServiceWorkerRegistrationOptions
-import org.scalajs.dom.experimental.serviceworkers.toServiceWorkerNavigator
+import crestedbutte.laminar.OfflineStatus
 import org.scalajs.dom
-import org.scalajs.dom.Event
 import scala.scalajs.js
-
-import scala.util.{Failure, Success}
+import scala.scalajs.js.timers.*
+import scala.concurrent.ExecutionContext.Implicits.global
 
 object ServiceWorkerClient {
   def registerServiceWorker(): Unit = {
-    val window = org.scalajs.dom.window
-
-    val navigatorDyn = window.navigator.asInstanceOf[js.Dynamic]
-    if (js.isUndefined(navigatorDyn.selectDynamic("serviceWorker"))) {
+    val navigator = dom.window.navigator.asInstanceOf[js.Dynamic]
+    if (js.isUndefined(navigator.serviceWorker)) {
+      OfflineStatus.problem.set(Some("Offline installation is unavailable in this browser."))
       return
     }
+    val workers = navigator.serviceWorker
+    var applyUpdate = false
 
-    val serviceWorker = toServiceWorkerNavigator(
-      window.navigator,
-    ).serviceWorker
-
-    if (window.hasOwnProperty("OneSignalDeferred")) {
-      serviceWorker.register(
-        "./push/onesignal/OneSignalSDKWorker.js",
-        new ServiceWorkerRegistrationOptions {
-          scope = "/push/onesignal/myCustomScope"
-        },
-      )
+    def checkReady(): Unit = {
+      val controller = workers.controller
+      if (controller != null && !js.isUndefined(controller)) {
+        val channel = new dom.MessageChannel()
+        val timeout = setTimeout(10000) {
+          channel.port1.close()
+          if (!OfflineStatus.ready.now())
+            OfflineStatus.problem.set(Some("Offline download not confirmed. Reopen while connected to finish setup."))
+        }
+        channel.port1.onmessage = (event: dom.MessageEvent) => {
+          clearTimeout(timeout)
+          val ready = event.data.asInstanceOf[js.Dynamic].ready.asInstanceOf[Boolean]
+          OfflineStatus.ready.set(ready)
+          OfflineStatus.problem.set(if (ready) None else Some("Offline download incomplete. Reconnect and reopen the app."))
+          channel.port1.close()
+        }
+        controller.postMessage("OFFLINE_STATUS", js.Array(channel.port2))
+      }
     }
 
-    import scala.concurrent.ExecutionContext.Implicits.global
-    // Listen for messages from the SW and log them
-    serviceWorker.onmessage = (e: dom.MessageEvent) => {
-      val data = e.data.asInstanceOf[js.Dynamic]
-      val kind = data
-        .selectDynamic("kind")
-        .asInstanceOf[js.UndefOr[String]]
-        .toOption
-        .getOrElse("")
-      val msg = data
-        .selectDynamic("message")
-        .asInstanceOf[js.UndefOr[String]]
-        .toOption
-        .getOrElse(data.toString)
-      if (kind == "sw-log") println(s"SWC <- ${msg}")
-      else println(s"SWC <- message: ${msg}")
+    workers.oncontrollerchange = { (_: dom.Event) =>
+      OfflineStatus.update.set(None)
+      if (applyUpdate) dom.window.location.reload()
+      else checkReady()
+    }: js.Function1[dom.Event, Unit]
+
+    val registrationFuture = workers.register("/sw.js", js.Dynamic.literal(scope = "/", updateViaCache = "none"))
+      .asInstanceOf[js.Promise[js.Dynamic]].toFuture
+    registrationFuture.foreach { registration =>
+        def offerUpdate(): Unit = {
+          val waiting = registration.waiting
+          if (waiting != null && !js.isUndefined(waiting) && workers.controller != null) {
+            OfflineStatus.update.set(Some(() => {
+              applyUpdate = true
+              waiting.postMessage("ACTIVATE_UPDATE")
+            }))
+          }
+        }
+        offerUpdate()
+        def observeInstallation(): Unit = {
+          val installing = registration.installing
+          if (installing != null) {
+            installing.onstatechange = { (_: dom.Event) =>
+              val state = installing.state.asInstanceOf[String]
+              if (state == "installed") { offerUpdate(); checkReady() }
+              if (state == "redundant" && !OfflineStatus.ready.now())
+                OfflineStatus.problem.set(Some("Offline download failed. Reconnect and reopen the app to retry."))
+            }: js.Function1[dom.Event, Unit]
+          }
+        }
+        registration.onupdatefound = { (_: dom.Event) => observeInstallation() }: js.Function1[dom.Event, Unit]
+        observeInstallation()
+        checkReady()
+        workers.ready.asInstanceOf[js.Promise[js.Dynamic]].toFuture.foreach(_ => checkReady())
+      }
+    // Registration failures must be visible, including a blocked/private context.
+    registrationFuture.failed.foreach { _ =>
+      OfflineStatus.problem.set(Some("Offline setup unavailable. Reopen while connected to try again."))
     }
-
-    serviceWorker
-      .register("/sw.js",
-                new ServiceWorkerRegistrationOptions { scope = "/" },
-      )
-      .toFuture
-      .onComplete {
-        case Success(registration) =>
-          // Log install/update state changes for visibility
-          registration.onupdatefound = (_: Event) => {
-            val installing = registration.installing
-            if (installing != null) {
-              val swDyn = installing.asInstanceOf[js.Dynamic]
-              swDyn.updateDynamic("onstatechange")({ (_: Event) =>
-              }: js.Function1[Event, Any])
-            }
-          }
-          registration.update()
-
-          // If there's an active controller, log that
-          val controller = serviceWorker.controller
-          if (controller != null)
-            println("SWC: controller present -> " + controller.state)
-          serviceWorker.oncontrollerchange =
-            (_: Event) => println("SWC: controller changed")
-
-          // On localhost, send a TEST_NOTIFY to verify SW messaging & notifications
-          val isLocal =
-            window.location.hostname == "localhost" || window.location.hostname == "127.0.0.1"
-          if (isLocal) {
-            serviceWorker.ready.toFuture.foreach { reg =>
-              val mc = new dom.MessageChannel()
-              mc.port1.onmessage = (e: dom.MessageEvent) =>
-                println(s"SWC <- test ack: ${e.data}")
-              import zio.json.*
-              val msg = ServiceWorkerAction.TestNotify.toJson
-              reg.active.postMessage(msg, js.Array(mc.port2))
-            }(global)
-          }
-
-        case Failure(error) =>
-          println(
-            s"SWC: registration failed: ${error.getMessage}",
-          )
-      }(global)
-
   }
-
 }

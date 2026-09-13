@@ -29,10 +29,10 @@ case class BusPage(
             s"2025-02-21T${fixedTime.get.toEUString}:00.00-07:00",
           )
           .toInstant,
-        ZoneId.systemDefault(),
+        ZoneId.of("America/Denver"),
       )
     else
-      java.time.Clock.systemDefaultZone()
+      java.time.Clock.system(ZoneId.of("America/Denver"))
 }
 
 object BusPage {
@@ -63,9 +63,11 @@ object BusPage {
           val res = UrlEncoding.decodePlan(planUrl).toOption
           try
             val db = Persistence()
-            db.saveDailyPlanOnly(
-              res.getOrElse(???),
-            ) // TODO Should NOT be here.
+            res.foreach { imported =>
+              val date = if (time.isDefined) "2025-02-21" else
+                java.time.LocalDate.now(ZoneId.of("America/Denver")).toString
+              db.importSharedPlan(imported, date)
+            }
             db.setScheduleLocked(true) // Lock when loading from URL
           catch {
             case ex => println("Probably not running in a browser")

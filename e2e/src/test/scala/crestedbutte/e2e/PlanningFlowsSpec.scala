@@ -72,14 +72,10 @@ object PlanningFlowsSpec extends ZIOSpecDefault:
 
         def legLabels: List[String] =
           page
-            .querySelectorAll(".plan-segments_left")
+            .querySelectorAll(".departure-route")
             .asScala
             .toList
-            .map(el =>
-              Option(el.querySelector("div"))
-                .map(_.textContent().trim)
-                .getOrElse(""),
-            )
+            .map(_.textContent().trim)
 
         val before = legLabels
 
@@ -87,8 +83,7 @@ object PlanningFlowsSpec extends ZIOSpecDefault:
         page
           .locator(".plan-segments")
           .first()
-          .locator("button.reorder-btn")
-          .nth(1)
+          .getByText("Move down")
           .click()
 
         // For two legs, moving the first down swaps their order.
@@ -111,11 +106,11 @@ object PlanningFlowsSpec extends ZIOSpecDefault:
           pollUntil(page)(headerText(page) == "Select your destination")
         val originIndicator =
           pollUntil(page)(
-            Option(page.querySelector(".origin-indicator-name")).isDefined,
+            Option(page.querySelector(".selected-origin span")).isDefined,
           )
         val indicatorName =
-          Option(page.querySelector(".origin-indicator-name"))
-            .map(_.textContent().trim)
+          Option(page.querySelector(".selected-origin span"))
+            .map(_.textContent().trim.stripPrefix("From: "))
             .getOrElse("")
 
         assertTrue(

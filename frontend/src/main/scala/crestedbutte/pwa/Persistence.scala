@@ -6,9 +6,10 @@ import org.scalajs.dom
 import org.scalajs.dom.window
 import zio.json.*
 
+case class Draft(plan: Plan, savedPlanId: Option[String], date: String) derives JsonCodec
+
 class Persistence():
 
-  val localStorage = window.localStorage
 
   private val PlansIndexKey = "plans:index"
   private val PlanKeyPrefix = "plan:"
@@ -17,21 +18,67 @@ class Persistence():
   private val ScheduleLockedKey = "schedule:locked"
   private val CurrentSavedPlanIdKey = "current:savedplanid"
 
+  val storageProblem: Var[Option[String]] = Var(None)
+
+  private def safelyWrite(key: String, value: String): Unit =
+    try
+      window.localStorage.setItem(key, value)
+    catch
+      case _: Exception => storageProblem.set(Some("Couldn't save on this device. Keep this page open and share your trip as text to keep a copy."))
+
+  private def readItem(key: String): String =
+    try window.localStorage.getItem(key)
+    catch
+      case _: Exception =>
+        storageProblem.set(Some("Device storage is unavailable. This trip cannot be restored after closing."))
+        null
+
+  private def removeItem(key: String): Unit =
+    try window.localStorage.removeItem(key)
+    catch
+      case _: Exception => storageProblem.set(Some("Couldn't update saved data on this device."))
+
+  def getDraft: Option[Draft] =
+    Option(readItem("draft:v1")).flatMap { raw =>
+      raw.fromJson[Draft].toOption match
+        case Some(draft) => Some(draft)
+        case None =>
+          safelyWrite("draft:recovery", raw)
+          None
+    }
+
+  def saveDraft(plan: Plan, savedPlanId: Option[String], date: String): Unit =
+    safelyWrite("draft:v1", Draft(plan, savedPlanId, date).toJson)
+
+  /** A shared URL is an import, not an instruction to reset edits on each reload. */
+  def importSharedPlan(plan: Plan, date: String): Unit =
+    clearCurrentSavedPlanId()
+    saveDraft(plan, None, date)
+
+  def stopPreferences(key: String): List[Location] =
+    Option(readItem(key)).flatMap(_.fromJson[List[Location]].toOption).getOrElse(Nil)
+
+  def saveStopPreferences(key: String, stops: List[Location]): Unit =
+    safelyWrite(key, stops.distinct.toJson)
+
+  def rememberStop(stop: Location): Unit =
+    saveStopPreferences("stops:recent", (stop :: stopPreferences("stops:recent")).take(5))
+
   // ===== Schedule locked state =====
   def getScheduleLocked: Boolean =
-    val raw = localStorage.getItem(ScheduleLockedKey)
+    val raw = readItem(ScheduleLockedKey)
     if raw == null then false
     else raw == "true"
 
   def setScheduleLocked(
     locked: Boolean,
-  ): Unit = localStorage.setItem(ScheduleLockedKey, locked.toString)
+  ): Unit = safelyWrite(ScheduleLockedKey, locked.toString)
 
   // ===== Current SavedPlan ID state =====
   /** Get the ID of the currently loaded SavedPlan, if any.
     */
   def getCurrentSavedPlanId: Option[String] =
-    val raw = localStorage.getItem(CurrentSavedPlanIdKey)
+    val raw = readItem(CurrentSavedPlanIdKey)
     if raw == null || raw.isEmpty then None
     else Some(raw)
 
@@ -39,13 +86,13 @@ class Persistence():
     */
   def setCurrentSavedPlanId(
     id: String,
-  ): Unit = localStorage.setItem(CurrentSavedPlanIdKey, id)
+  ): Unit = safelyWrite(CurrentSavedPlanIdKey, id)
 
   /** Clear the current SavedPlan ID (when creating a new plan or
     * clearing).
     */
   def clearCurrentSavedPlanId(): Unit =
-    localStorage.removeItem(CurrentSavedPlanIdKey)
+    removeItem(CurrentSavedPlanIdKey)
 
   /** Get the currently loaded SavedPlan, if any.
     */
@@ -57,7 +104,7 @@ class Persistence():
   ): String = s"${PlanKeyPrefix}${name}"
 
   private def readPlanNamesIndex(): List[String] =
-    val raw = localStorage.getItem(PlansIndexKey)
+    val raw = readItem(PlansIndexKey)
     if raw == null then List.empty
     else
       raw
@@ -70,45 +117,29 @@ class Persistence():
 
   private def writePlanNamesIndex(
     names: List[String],
-  ): Unit = localStorage.setItem(PlansIndexKey, names.toJson)
+  ): Unit = safelyWrite(PlansIndexKey, names.toJson)
 
   def initializeOrResetStorage() =
-    try {
-      val retrieved =
-        localStorage
-          .getItem("today")
-          .fromJson[Option[Plan]]
-          .getOrElse(throw new Exception("Bad plan in localStorage"))
-    }
-    catch {
-      case e: Exception =>
-        println("Error retrieving existing plan: " + e)
-        println("Going to nuke all saved data")
-        localStorage.clear()
-        val opt: Option[Plan] = None
-        localStorage.setItem("today", opt.toJson)
-    }
+    getCurrentPlan
     ()
 
   // ===== Existing single-plan ("today") APIs =====
   def getCurrentPlan = {
     val previouslyStoredPlan =
-      localStorage
-        .getItem("today")
+      readItem("today")
 
     if (previouslyStoredPlan == null)
       val blankState = Option(Plan(Seq.empty)) // Ugh, wart
-      localStorage.setItem("today", blankState.toJson)
+      safelyWrite("today", blankState.toJson)
       blankState
     else
       previouslyStoredPlan
         .fromJson[Option[Plan]]
         .getOrElse:
-          println(
-            "Bad plan in localStorage. This can happen after serialization changes. \n" + previouslyStoredPlan,
-          )
+          // Retain the damaged record for recovery; never clear unrelated trips.
+          safelyWrite("today:recovery", previouslyStoredPlan)
           val blankState = Option(Plan(Seq.empty)) // Ugh, wart
-          localStorage.setItem("today", blankState.toJson)
+          safelyWrite("today", blankState.toJson)
           blankState
   }
 
@@ -128,13 +159,13 @@ class Persistence():
     $plan: Var[Plan],
   ) =
     Observer { _ =>
-      localStorage.setItem("today", plan.toJson)
+      safelyWrite("today", plan.toJson)
       $plan.set(plan)
     }
 
   def saveDailyPlanOnly(
     plan: Plan,
-  ) = localStorage.setItem("today", plan.toJson)
+  ) = safelyWrite("today", plan.toJson)
 
   // ===== New multi-plan (named) APIs =====
 
@@ -149,7 +180,7 @@ class Persistence():
     name: String,
   ): Option[Plan] =
     val key = planStorageKey(name)
-    val raw = localStorage.getItem(key)
+    val raw = readItem(key)
     if raw == null then None
     else
       raw
@@ -170,7 +201,7 @@ class Persistence():
     plan: Plan,
   ): Unit =
     val key = planStorageKey(name)
-    localStorage.setItem(key, Option(plan).toJson)
+    safelyWrite(key, Option(plan).toJson)
     val current = readPlanNamesIndex()
     if !current.contains(name) then
       writePlanNamesIndex(current :+ name)
@@ -182,7 +213,7 @@ class Persistence():
     name: String,
   ): Unit =
     val key = planStorageKey(name)
-    localStorage.removeItem(key)
+    removeItem(key)
     val current = readPlanNamesIndex()
     if current.contains(name) then
       writePlanNamesIndex(current.filterNot(_ == name))
@@ -198,20 +229,20 @@ class Persistence():
     val newKey = planStorageKey(newName)
     val oldKey = planStorageKey(oldName)
 
-    if localStorage.getItem(newKey) != null then
+    if readItem(newKey) != null then
       throw new IllegalArgumentException(
         s"A plan named '${newName}' already exists",
       )
 
-    val existing = localStorage.getItem(oldKey)
+    val existing = readItem(oldKey)
     if existing == null then
       // Nothing to rename; ensure index is clean
       writePlanNamesIndex(
         readPlanNamesIndex().filterNot(_ == oldName),
       )
     else
-      localStorage.setItem(newKey, existing)
-      localStorage.removeItem(oldKey)
+      safelyWrite(newKey, existing)
+      removeItem(oldKey)
       val names = readPlanNamesIndex()
       val updated =
         names.map(n => if n == oldName then newName else n).distinct
@@ -236,10 +267,10 @@ class Persistence():
     // Delete each plan entry
     legacyNames.foreach { name =>
       val key = planStorageKey(name)
-      localStorage.removeItem(key)
+      removeItem(key)
     }
     // Clear the index
-    localStorage.removeItem(PlansIndexKey)
+    removeItem(PlansIndexKey)
     println(
       s"Purged ${legacyNames.size} legacy name-based plans from localStorage",
     )
@@ -251,7 +282,7 @@ class Persistence():
   ): String = s"${SavedPlanKeyPrefix}${id}"
 
   private def readSavedPlanIdsIndex(): List[String] =
-    val raw = localStorage.getItem(SavedPlansIndexKey)
+    val raw = readItem(SavedPlansIndexKey)
     if raw == null then List.empty
     else
       raw
@@ -264,7 +295,7 @@ class Persistence():
 
   private def writeSavedPlanIdsIndex(
     ids: List[String],
-  ): Unit = localStorage.setItem(SavedPlansIndexKey, ids.toJson)
+  ): Unit = safelyWrite(SavedPlansIndexKey, ids.toJson)
 
   /** List all saved plan IDs.
     */
@@ -277,7 +308,7 @@ class Persistence():
     id: String,
   ): Option[SavedPlan] =
     val key = savedPlanStorageKey(id)
-    val raw = localStorage.getItem(key)
+    val raw = readItem(key)
     if raw == null then None
     else
       raw
@@ -300,12 +331,13 @@ class Persistence():
     */
   def saveSavedPlan(
     savedPlan: SavedPlan,
-  ): Unit =
+  ): Boolean =
     val key = savedPlanStorageKey(savedPlan.id)
-    localStorage.setItem(key, savedPlan.toJson)
+    safelyWrite(key, savedPlan.toJson)
     val current = readSavedPlanIdsIndex()
     if !current.contains(savedPlan.id) then
       writeSavedPlanIdsIndex(current :+ savedPlan.id)
+    getSavedPlan(savedPlan.id).contains(savedPlan) && listSavedPlanIds().contains(savedPlan.id)
 
   /** Delete a saved plan by ID.
     */
@@ -313,7 +345,7 @@ class Persistence():
     id: String,
   ): Unit =
     val key = savedPlanStorageKey(id)
-    localStorage.removeItem(key)
+    removeItem(key)
     val current = readSavedPlanIdsIndex()
     if current.contains(id) then
       writeSavedPlanIdsIndex(current.filterNot(_ == id))

@@ -5,6 +5,100 @@
     --color-highlight-bg: rgba(50, 115, 220, 0.1);
 }
 
+/* Mobile trip view: large controls, compact reading, editing in a top-layer sheet. */
+.offline-status {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-height: 32px;
+    color: #42625f;
+    font-size: .8rem;
+    padding: 6px 12px;
+}
+.trip-toolbar, .selector-toolbar, .ride-actions, .ride-reorder {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.trip-toolbar { justify-content: space-between; margin: 8px 0; }
+.selector-toolbar { justify-content: flex-end; }
+.muted, .schedule-label { color: #526360; }
+.trip-date { text-align: left; font-size: .85rem; margin: 8px 0; }
+.trip-notice { padding: 12px; background: #edf6f5; border-radius: 8px; text-align: left; }
+button.text-button {
+    background: transparent;
+    border: 0;
+    color: #007267;
+    padding: 8px 10px;
+    min-height: 44px;
+    font: inherit;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+button:focus-visible, input:focus-visible, select:focus-visible {
+    outline: 3px solid #136ab3;
+    outline-offset: 2px;
+}
+button.text-button:disabled { opacity: .45; cursor: default; }
+.plan-segments.departure-card {
+    padding: 16px;
+    margin: 12px 0;
+    border: 1px solid #bddbd7;
+    border-radius: 14px;
+    text-align: left;
+    overflow: visible;
+    background: white;
+}
+.departure-card-heading { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.departure-card-heading strong { font-size: 1.25rem; color: #085d55; }
+.schedule-label { font-size: .75rem; }
+.departure-route { font-weight: 600; margin: 8px 0; overflow-wrap: anywhere; }
+.departure-times { display: flex; flex-wrap: wrap; gap: 4px 18px; font-size: .95rem; }
+.ride-actions { margin: 4px -10px -8px; }
+.ride-reorder { width: 100%; }
+.modal-sheet {
+    position: fixed;
+    inset: auto 0 0;
+    margin: 0 auto;
+    width: 100%;
+    max-width: 600px;
+    max-height: 90dvh;
+    overflow-y: auto;
+    border: 0;
+    border-radius: 20px 20px 0 0;
+    padding: 16px 20px calc(20px + env(safe-area-inset-bottom));
+    color: #253b38;
+}
+.modal-sheet::backdrop { background: rgba(0, 0, 0, .4); }
+.sheet-heading { display: flex; justify-content: space-between; align-items: center; }
+.sheet-heading h2 { font-size: 1.2rem; font-weight: bold; }
+.departure-select, .stop-search { font: inherit; font-size: 16px; width: 100%; min-height: 48px; padding: 12px; border: 1px solid #91aaa6; border-radius: 10px; background: white; }
+.primary-action { width: 100%; min-height: 48px; margin-top: 12px; }
+.stop-picker { text-align: left; }
+.stop-picker h2 { font-size: 1.4rem; font-weight: 650; margin: 12px 0; }
+.stop-picker .muted { margin-bottom: 12px; font-size: .9rem; }
+.selected-origin { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 4px 12px; margin-bottom: 12px; border-radius: 10px; background: #edf6f5; }
+.stop-group { margin-top: 20px; }
+.stop-group h3 { font-size: .85rem; font-weight: 650; color: #526360; margin: 8px 0; }
+.stop-row { display: flex; align-items: stretch; border-bottom: 1px solid #dfebe9; }
+.stop-choice { display: flex; flex-direction: column; justify-content: center; align-items: flex-start; min-height: 64px; padding: 10px 12px; gap: 3px; flex: 1; min-width: 0; border: 0; border-radius: 8px; background: white; color: #203c37; text-align: left; font: inherit; cursor: pointer; }
+.stop-name { font-weight: 600; }
+.stop-subtitle, .stop-unavailable { font-size: .85rem; color: #526360; }
+.stop-choice:disabled { opacity: .55; cursor: default; }
+.stop-choice.selected-starting-point { background: #dcefeb; box-shadow: inset 3px 0 #007267; }
+.favorite-stop { flex: 0 0 48px; min-height: 48px; border: 0; background: white; color: #007267; font-size: 1.6rem; cursor: pointer; }
+.bottom-controls-wrapper .bottom-bar-menu-btn { width: auto; min-width: 112px; padding: 8px 12px; }
+.trip-button-container .floating-center-button { width: auto; min-height: 48px; }
+.bottom-sheet-container .bottom-sheet { max-height: 85dvh; overflow-y: auto; }
+.plan-layout { padding-bottom: calc(160px + env(safe-area-inset-bottom)); max-width: 600px; margin: auto; }
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+}
+
 html {
     /* -webkit-filter: grayscale(100%); */
     /* filter: grayscale(100%); */
@@ -840,7 +934,7 @@ body {
 /* Plan name row wrapper - makes sticky positioning work */
 /* Plan layout container - needs padding for fixed bottom controls */
 .plan-layout {
-    padding-bottom: 140px; /* Space for fixed bottom controls */
+    padding-bottom: calc(160px + env(safe-area-inset-bottom));
 }
 
 /* Bottom controls - fixed at bottom for thumb-friendly mobile access */

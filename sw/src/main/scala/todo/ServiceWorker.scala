@@ -26,7 +26,7 @@ import scala.concurrent.duration.*
 import scala.scalajs.js.JSON
 
 object ServiceWorker {
-  val busCache = "cb-bus"
+  val busCache = OfflineManifest.cacheName
 
   // Notification state
   private var notificationInterval: Option[SetIntervalHandle] = None
@@ -36,25 +36,10 @@ object ServiceWorker {
   private var lastNotificationMessage: Option[String] = None
 
   val todoAssets: js.Array[RequestInfo] =
-    if (false) {
-      List[RequestInfo](
-        "/",
-        "/index.html",
-        "/manifest.webmanifest",
-        "/compiledJavascript/main.js",
-        "/compiledJavascript/main.js.map",
-        "/favicon.ico",
-        "/images/BILLDING_LogoMark-256.png",
-        "/styling/style.css",
-        "/glyphicons/svg/individual-svg/glyphicons-basic-32-bus.svg",
-        "/glyphicons/svg/individual-svg/glyphicons-basic-592-map.svg",
-        "/styling/popup_nojs.css",
-        "/styling/bulma.min.css",
-      ).toJSArray
-    }
-    else {
-      List.empty.toJSArray
-    }
+    OfflineManifest.assets.map(path =>
+      js.Dynamic.newInstance(js.Dynamic.global.Request)(path, js.Dynamic.literal(cache = "reload"))
+        .asInstanceOf[RequestInfo]
+    ).toJSArray
 
   def main(
     args: Array[String],
@@ -62,26 +47,44 @@ object ServiceWorker {
     self.addEventListener(
       "install",
       (event: ExtendableEvent) => {
-        self.skipWaiting();
         event.waitUntil(toCache().toJSPromise)
       },
     )
     self.addEventListener(
-      "register",
-      (event: ExtendableEvent) =>
-        event.waitUntil(toCache().toJSPromise),
-    )
-
-    self.addEventListener(
       "activate",
       (event: ExtendableEvent) =>
-        // Keep existing cache so users can work offline; SW will update in background
-        self.clients.claim(),
+        event.waitUntil(self.clients.claim().toFuture.flatMap { _ =>
+          val caches = self.caches.get
+          caches.keys().toFuture.flatMap { names =>
+            // Retain the current release and one previous shell, never trip data.
+            val previous = names.toSeq.filter(n => n.startsWith("cb-bus-shell-") && n != busCache).lastOption
+            val obsolete = names.toSeq.filter(n => n == "cb-bus" ||
+              (n.startsWith("cb-bus-shell-") && n != busCache && !previous.contains(n)))
+            Future.sequence(obsolete.map(n => caches.delete(n).toFuture)).map(_ => ())
+          }
+        }.toJSPromise),
     )
 
     self.addEventListener(
       "message",
       (event: MessageEvent) => {
+        if (event.data.toString == "ACTIVATE_UPDATE") {
+          self.skipWaiting()
+        } else if (event.data.toString == "OFFLINE_STATUS") {
+          val work = self.caches.get.open(busCache).toFuture.flatMap { cache =>
+            Future.sequence(OfflineManifest.assets.map(path =>
+              cache.`match`(path).toFuture.map {
+                case _: Response => true
+                case _ => false
+              }
+            )).map { available =>
+              val ports = event.ports.asInstanceOf[js.Array[js.Dynamic]]
+              if (ports.length > 0)
+                ports(0).postMessage(js.Dynamic.literal(ready = available.forall(identity)))
+            }
+          }
+          event.asInstanceOf[ExtendableEvent].waitUntil(work.toJSPromise)
+        } else {
         val action =
           event.data.toString
             .fromJson[ServiceWorkerAction]
@@ -136,6 +139,7 @@ object ServiceWorker {
               )
             }
         }
+        }
       },
     )
 
@@ -143,13 +147,21 @@ object ServiceWorker {
       "fetch",
       (event: FetchEvent) => {
         val request = event.request
-        if (request.method.toString != "GET") {
-          event.respondWith(fetch(request).toFuture.toJSPromise)
-        }
-        else {
-          event.respondWith(
-            LLMGenerated.staleWhileRevalidate(event).toJSPromise,
-          )
+        val url = new java.net.URI(request.url)
+        val origin = new java.net.URI(self.location.href)
+        val sameOrigin = url.getScheme == origin.getScheme && url.getAuthority == origin.getAuthority
+        if (request.method.toString == "GET" && sameOrigin) {
+          // Query strings carry shared plans; every app URL uses the same shell.
+          val path = url.getPath
+          val key = if (path == "/" || path == "/index.html") "/index.html" else path
+          if (OfflineManifest.assets.contains(key)) {
+            event.respondWith(self.caches.get.open(busCache).toFuture.flatMap { cache =>
+              cache.`match`(key).toFuture.flatMap {
+                case cached: Response => Future.successful(cached)
+                case _ => fetch(request).toFuture
+              }
+            }.toJSPromise)
+          }
         }
       },
     )
@@ -162,120 +174,6 @@ object ServiceWorker {
         cache.addAll(todoAssets).toFuture
       })
       .getOrElse(throw new Exception("ServiceWorker.toCache failure"))
-
-  def fromCache(
-    request: Request,
-  ): Future[Response] =
-    self.caches
-      .map(
-        _.`match`(request).toFuture
-          .flatMap {
-            case response: Response =>
-              Future.successful(response)
-            case other =>
-              Future.failed(
-                new Exception("Could not find cached request"),
-              )
-          },
-      )
-      .get
-
-  def invalidateCache(): Unit =
-    self.caches
-      .map(
-        _.delete(busCache).toFuture
-          .map { invalidatedCache =>
-            if (invalidatedCache) {
-              toCache()
-            }
-          },
-      )
-      .get
-
-  object LLMGenerated {
-    def staleWhileRevalidate(
-      event: FetchEvent,
-    ): Future[Response] = {
-      val request = event.request
-      self.caches
-        .map(
-          _.open(busCache).toFuture.flatMap { cache =>
-            cache
-              .`match`(request)
-              .toFuture
-              .flatMap {
-                case cached: Response =>
-                  val updateF = fetch(request).toFuture
-                    .flatMap { networkResp =>
-                      if (networkResp != null && networkResp.ok) {
-                        val changed = hasUpdated(cached, networkResp)
-                        cache
-                          .put(request, networkResp.clone())
-                          .toFuture
-                          .flatMap { _ =>
-                            if (changed) reloadAllWindows()
-                            else Future.unit
-                          }
-                      }
-                      else Future.unit
-                    }
-                    .recover { case _ => () }
-                  event.waitUntil(updateF.toJSPromise)
-                  Future.successful(cached)
-                case _ =>
-                  fetch(request).toFuture.flatMap { networkResp =>
-                    if (networkResp != null && networkResp.ok) {
-                      cache
-                        .put(request, networkResp.clone())
-                        .toFuture
-                        .map(_ => networkResp)
-                    }
-                    else Future.successful(networkResp)
-                  }
-              }
-          },
-        )
-        .getOrElse(fetch(request).toFuture)
-    }
-
-    private def headerValue(
-      headers: Headers,
-      name: String,
-    ): Option[String] = Option(headers.get(name))
-
-    private def hasUpdated(
-      cached: Response,
-      fresh: Response,
-    ): Boolean = {
-      val cachedEtag = headerValue(cached.headers, "ETag")
-      val freshEtag = headerValue(fresh.headers, "ETag")
-      val cachedLm = headerValue(cached.headers, "Last-Modified")
-      val freshLm = headerValue(fresh.headers, "Last-Modified")
-      (cachedEtag, freshEtag, cachedLm, freshLm) match {
-        case (Some(a), Some(b), _, _) if a != b => true
-        case (_, _, Some(a), Some(b)) if a != b => true
-        case _                                  => false
-      }
-    }
-
-    private def reloadAllWindows(): Future[Unit] =
-      self.clients
-        .matchAll()
-        .toFuture
-        .flatMap { clients =>
-          val reloads = clients.toSeq.flatMap { c =>
-            val dyn = c.asInstanceOf[js.Dynamic]
-            val hasNavigate =
-              !js.isUndefined(dyn.selectDynamic("navigate"))
-            if (hasNavigate) {
-              val wc = c.asInstanceOf[serviceworkers.WindowClient]
-              Some(wc.navigate(wc.url).toFuture.map(_ => ()))
-            }
-            else None
-          }
-          Future.sequence(reloads).map(_ => ())
-        }
-  }
 
   private def startNotificationTimer(): Unit = {
     stopNotificationTimer()
@@ -306,7 +204,7 @@ object ServiceWorker {
       val now =
         WallTime(
           LocalTime
-            .now()
+            .now(java.time.ZoneId.of("America/Denver"))
             .format(
               DateTimeFormatter.ofPattern("HH:mm"),
             ),
